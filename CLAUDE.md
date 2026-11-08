@@ -13,17 +13,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 No hay build, dependencias, linter ni tests.
 
 - Jugar/probar localmente: abrir `index.html` en el navegador (para probar el táctil, usar emulación móvil de DevTools o Playwright con `hasTouch`).
-- Despliegue: cada push a `main` publica en GitHub Pages (`.github/workflows/deploy-pages.yml`). El paso "Preparar sitio" copia explícitamente `index.html`, `style.css` y `game.js` a `_site/`; si agregas archivos nuevos (assets, más scripts), añádelos a ese `cp`.
+- Despliegue: cada push a `main` publica en GitHub Pages (`.github/workflows/deploy-pages.yml`). El paso "Preparar sitio" copia explícitamente `index.html`, `style.css`, `game.js` y `favicon.svg` a `_site/`; si agregas archivos nuevos (assets, más scripts), añádelos a ese `cp`.
 
 ## Arquitectura
 
-Tres archivos, sin librerías:
+Tres archivos de código más el favicon, sin librerías:
 
 - `index.html`: solo estructura (marcador, `#bar`, `#field`, pantalla `#over`). Enlaza `style.css` en el `<head>` y carga `game.js` al final del `<body>` (el script asume que el DOM ya existe; si lo mueves al `<head>`, usa `defer`).
 - `style.css`: todos los estilos.
 - `game.js`: toda la lógica, una IIFE en JavaScript clásico (`var`, sin módulos).
+- `favicon.svg`: ícono de la pestaña (bloque azul con un 3), enlazado desde el `<head>`.
 
-Se evitan `fetch` externos, `alert` e imágenes que no sean `data:`/SVG inline para poder volver a publicarlo como artefacto de Claude; para eso hay que reincrustar el CSS y el JS en un solo HTML.
+Se evitan `fetch` externos, `alert` e imágenes que no sean `data:`/SVG inline para poder volver a publicarlo como artefacto de Claude; para eso hay que reincrustar el CSS y el JS en un solo HTML, y el favicon como `data:image/svg+xml`.
 
 - **Constantes de balance** al inicio de `game.js`: `START_TIME`, `MAX_LIVES`, `LIFE_MIN`, `LIFE_MAX`, `BOMB_PENALTY`, `BOMB_CHANCE`, `MISS_MULT`. Otras curvas de dificultad están en línea dentro de `spawn()` (`maxNum`) y `loop()` (`maxConc`, `spawnCd`).
 - **Bucle**: `requestAnimationFrame` en `loop()`, con `dt` limitado a 0.1 s. Ahí baja el tiempo, se generan bloques y se expiran (`expire`).

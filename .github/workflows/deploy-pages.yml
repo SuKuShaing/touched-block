@@ -27,7 +27,7 @@ jobs:
       - name: Preparar sitio
         run: |
           mkdir -p _site
-          cp index.html style.css game.js _site/
+          cp index.html style.css game.js favicon.svg _site/
           touch _site/.nojekyll
 
       - name: Configurar Pages
