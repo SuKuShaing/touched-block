@@ -13,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 No hay build, dependencias, linter ni tests.
 
 - Jugar/probar localmente: abrir `index.html` en el navegador (para probar el táctil, usar emulación móvil de DevTools o Playwright con `hasTouch`).
-- Despliegue: cada push a `main` publica en GitHub Pages (`.github/workflows/deploy-pages.yml`). El paso "Preparar sitio" copia explícitamente `index.html`, `style.css`, `game.js` y `favicon.svg` a `_site/`; si agregas archivos nuevos (assets, más scripts), añádelos a ese `cp`.
+- Despliegue: cada push a `main` publica en GitHub Pages (`.github/workflows/deploy-pages.yml`). El paso "Preparar sitio" copia explícitamente `index.html`, `style.css`, `game.js`, `favicon.svg` y `og-image.png` a `_site/`; si agregas archivos nuevos (assets, más scripts), añádelos a ese `cp`.
 
 ## Arquitectura
 
@@ -23,6 +23,7 @@ Tres archivos de código más el favicon, sin librerías:
 - `style.css`: todos los estilos.
 - `game.js`: toda la lógica, una IIFE en JavaScript clásico (`var`, sin módulos).
 - `favicon.svg`: ícono de la pestaña (bloque azul con un 3), enlazado desde el `<head>`.
+- `og-image.png`: imagen Open Graph (1200×630) para vistas previas al compartir. Las etiquetas `og:`/`twitter:` del `<head>` usan URLs absolutas a `https://sukushaing.github.io/touched-block/`; si cambia el dominio, actualizarlas.
 
 Se evitan `fetch` externos, `alert` e imágenes que no sean `data:`/SVG inline para poder volver a publicarlo como artefacto de Claude; para eso hay que reincrustar el CSS y el JS en un solo HTML, y el favicon como `data:image/svg+xml`.
 

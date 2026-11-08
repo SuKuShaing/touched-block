@@ -42,6 +42,7 @@ Para probar el táctil en el computador, usa la emulación de dispositivo móvil
 | `style.css` | Todos los estilos |
 | `game.js` | Toda la lógica, en JavaScript clásico sin librerías |
 | `favicon.svg` | Ícono de la pestaña |
+| `og-image.png` | Imagen de vista previa (1200×630) para redes sociales y mensajería |
 | `rompe-el-bloque.md` | Documento de diseño: reglas detalladas, historial de decisiones, riesgos e ideas pendientes |
 
 Las constantes de balance están al inicio de `game.js` (`START_TIME`, `MAX_LIVES`, `LIFE_MIN`, `LIFE_MAX`, `BOMB_PENALTY`, `BOMB_CHANCE`, `MISS_MULT`). Si las cambias, actualiza también las tablas de `rompe-el-bloque.md` y el texto de la pantalla de inicio en `index.html`.
@@ -50,7 +51,7 @@ El récord se guarda en `localStorage` del navegador (clave `tb_best1`). El soni
 
 ## Despliegue
 
-Cada push a `main` publica el sitio en GitHub Pages mediante `.github/workflows/deploy-pages.yml`. El workflow copia `index.html`, `style.css`, `game.js` y `favicon.svg`; si agregas archivos nuevos, súmalos al paso "Preparar sitio".
+Cada push a `main` publica el sitio en GitHub Pages mediante `.github/workflows/deploy-pages.yml`. El workflow copia `index.html`, `style.css`, `game.js`, `favicon.svg` y `og-image.png`; si agregas archivos nuevos, súmalos al paso "Preparar sitio".
 
 ## Autores
 
