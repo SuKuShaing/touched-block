@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Proyecto
 
-"Rompe el bloque": juego táctil para celular, en español. Aparecen bloques con un número; hay que tocar cada uno tantas veces como indica su número antes de que desaparezca. Supervivencia contra el reloj, con vidas y bloques trampa camuflados.
+"Touched Block" (antes "Rompe el bloque"): juego táctil para celular, en español. Aparecen bloques con un número; hay que tocar cada uno tantas veces como indica su número antes de que desaparezca. Supervivencia contra el reloj, con vidas y bloques trampa camuflados.
 
 `rompe-el-bloque.md` es el documento de traspaso: reglas con sus valores exactos, historial de decisiones (v1–v6) con sus motivos, riesgos e ideas pendientes. Léelo antes de cambiar reglas o balance. Si cambias reglas o constantes en `game.js`, actualiza también las tablas de reglas de ese documento. (Ya no guarda copia del código; su sección 6 solo apunta a los archivos.)
 
@@ -31,15 +31,15 @@ Se evitan `fetch` externos, `alert` e imágenes que no sean `data:`/SVG inline p
 - **Entrada**: `pointerdown`. Cada bloque llama `stopPropagation()` y luego `hit(b)`; el listener del `#field` (`missTap`) toma todo lo demás como toque fallido (−1 vida). Los bloques en estado `.gone` tienen `pointer-events:none`, así que tocar donde había uno cuenta como fallo — es intencional.
 - **Estado**: arreglo `blocks[]` (objetos con `el, sp, tb, n, left, total, bomb, life, max, x, y, size, dead`) más globales `killed, missed, lives, timeLeft, played, barMax, playing`. El castigo por bloque escapado usa `b.total` (número original), no `b.left` — pedido explícito del usuario.
 - **Trampas**: internamente se llaman `bomb` / `explodeBomb` por herencia, aunque visualmente ya no son bombas: se ven como un bloque normal con el número rojo (`.blk.bomb`). Si el color del número coincidiría con el fondo (n = 1, 2, 7), se usa la paleta `SAFE`.
-- **Récord**: `localStorage`, clave `rb_best3`. Se ha cambiado la clave cuando cambian las reglas para no comparar récords incompatibles.
+- **Récord**: `localStorage`, clave `tb_best1`. Se ha cambiado la clave cuando cambian las reglas para no comparar récords incompatibles.
 - Audio (WebAudio), vibración y `localStorage` van siempre envueltos en `try/catch` porque pueden no estar disponibles; mantener ese patrón.
 
 ## Preferencias del usuario
 
 - Quiere un juego difícil y tenso; las trampas deben ser sutiles. Ajusta los números a mano mientras juega.
 - La vida de un bloque **no** debe depender de su número (decisión explícita); consultar antes de cambiarlo.
-- Todo texto visible del juego va en español.
+- Todo texto visible del juego va en español, salvo el nombre del juego, "Touched Block", que va en inglés.
 
-## Inconsistencia conocida
+## Texto de la pantalla de inicio
 
-El texto de la pantalla de inicio (`#os`) dice "Empiezas con 30 segundos", pero `START_TIME=10`. Si se cambian constantes, revisar que ese texto coincida.
+El texto de `#os` en `index.html` repite valores de las constantes (tiempo inicial, vidas, multiplicador, castigo de trampa). Si se cambian constantes, actualizar ese texto también.

@@ -9,7 +9,7 @@
   var colors=['#e5484d','#f76b15','#e5a50a','#30a46c','#0091ff','#6e56cf','#d6409f','#12a594','#8e4ec6'];
   var blocks=[], killed=0, missed=0, lives=MAX_LIVES, timeLeft=START_TIME, played=0, barMax=START_TIME, playing=false, spawnCd=0, last=0, best=0;
 
-  try{ best=parseInt(localStorage.getItem('rb_best3')||'0',10)||0; }catch(e){}
+  try{ best=parseInt(localStorage.getItem('tb_best1')||'0',10)||0; }catch(e){}
   if(best>0) ob.textContent='Récord: '+best+' bloques';
 
   var ac=null;
@@ -223,7 +223,7 @@
     if(reason==='tiempo'){ elTime.textContent='0:00'; bar.style.width='0%'; }
     beep(200,0.5,'sawtooth',0.08); buzz(150);
     var rec=killed>best;
-    if(rec){ best=killed; try{localStorage.setItem('rb_best3',String(best));}catch(e){} }
+    if(rec){ best=killed; try{localStorage.setItem('tb_best1',String(best));}catch(e){} }
     ot.textContent=rec?'¡Nuevo récord!':(reason==='vidas'?'¡Sin vidas!':'¡Se acabó el tiempo!');
     os.innerHTML='Destruiste <b style="font-size:40px;color:#7cf">'+killed+'</b> bloques<br>Bloques que se escaparon: '+missed;
     ob.textContent='Récord: '+best+' bloques';

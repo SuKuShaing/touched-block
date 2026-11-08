@@ -1,11 +1,12 @@
-# Rompe el bloque — resumen del proyecto y decisiones de diseño
+# Touched Block — resumen del proyecto y decisiones de diseño
 
 Documento de traspaso para continuar el desarrollo en el computador. Contiene qué es el juego, las reglas actuales con sus valores exactos, las decisiones tomadas (y por qué), lo que está pendiente, y dónde está el código fuente (sección 6).
 
 - Idioma del juego y del usuario: **español**.
 - Plataforma objetivo: **celular (táctil)**, jugado dentro de un artefacto de Claude (página HTML autocontenida).
 - Estado: prototipo jugable, **no probado en un celular real por Claude** (solo se revisó el código). El usuario sí lo ha jugado y fue iterando.
-- Versión publicada: artefacto "Rompe el bloque" (versión 6 de 6). El usuario es el dueño y es privado; el código fuente está en el repositorio (`index.html`, `style.css`, `game.js`).
+- Nombre: **Touched Block** (antes se llamaba "Rompe el bloque"; el nombre del juego queda en inglés aunque el resto del texto sea en español).
+- Versión publicada: artefacto "Rompe el bloque", con el nombre anterior (versión 6 de 6). El usuario es el dueño y es privado; el código fuente está en el repositorio (`index.html`, `style.css`, `game.js`).
 
 ---
 
@@ -34,7 +35,7 @@ Todas las constantes están al inicio del script (`START_TIME`, `MAX_LIVES`, `LI
 | Tocar un bloque trampa (una sola vez basta) | **−30 s** inmediatos (`BOMB_PENALTY = 30`) |
 | Bloque trampa que desaparece solo | sin castigo |
 | Fin de partida | tiempo ≤ 0, **o** vidas = 0 |
-| Récord | mayor cantidad de bloques destruidos (se guarda en `localStorage`, clave `rb_best3`) |
+| Récord | mayor cantidad de bloques destruidos (se guarda en `localStorage`, clave `tb_best1`) |
 
 Detalles importantes:
 
@@ -116,7 +117,7 @@ Criterios que el usuario ha mostrado: quiere un juego **difícil y tenso**, que 
 - **Dificultad muy alta, sin balancear.** Con 10 s iniciales, ×5 de castigo, 3–5 s de vida y números de hasta 9 toques, dejar escapar un solo bloque de 2 o más puede terminar la partida. Ya se le ofreció al usuario bajar el multiplicador o subir el tiempo inicial; no lo ha pedido.
 - Bloques con números altos (7–9) en 3–5 s son casi imposibles en celular; podría convenir que la vida del bloque dependa un poco del número (el usuario pidió explícitamente que **no** dependa, así que consultarlo antes).
 - No se ha probado en un celular real desde el lado de Claude (rendimiento de animaciones, tamaños de bloque, audio, vibración).
-- La clave de récord cambió entre versiones (`rb_best`, `rb_best2`, `rb_best3`) porque las reglas cambiaban; los récords antiguos no se arrastran.
+- La clave de récord cambió entre versiones (`rb_best`, `rb_best2`, `rb_best3` y, con el cambio de nombre a Touched Block, `tb_best1`) porque las reglas o el nombre cambiaban; los récords antiguos no se arrastran.
 
 **Ideas posibles**
 
