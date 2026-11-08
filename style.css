@@ -63,3 +63,24 @@ button.main:active{transform:scale(.96)}
 #oh li.now span{opacity:1;color:#7cf;font-weight:700}
 #oh li.best b{color:#ffd166}
 #oh li.best b::before{content:'★ ';font-size:12px}
+/* pantalla de inicio */
+#ot .lg1{display:block;font-size:22px;font-weight:600;letter-spacing:.3em;text-transform:uppercase;opacity:.7;margin-bottom:6px}
+#ot .lg2{position:relative;display:inline-block;font-size:44px;font-weight:800;background:#0091ff;padding:4px 22px 8px;border-radius:16px;box-shadow:0 6px 0 rgba(0,0,0,.35);transform:rotate(-3deg)}
+#ot .lg2 i{position:absolute;top:-12px;right:-14px;font-style:normal;font-size:16px;width:30px;height:30px;line-height:30px;border-radius:9px;background:#30a46c;box-shadow:0 3px 0 rgba(0,0,0,.35);transform:rotate(10deg)}
+#os{width:100%;max-width:340px;line-height:1.5;display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:8px}
+#os .tag{font-size:17px;font-weight:600;opacity:1}
+#os .chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+#os .chips span{background:#1c1c28;border:1px solid #2a2a3d;border-radius:999px;padding:6px 14px;font-size:14px}
+#os .chips em{font-style:normal;color:#ff6369}
+#os .rules{list-style:none;margin:0;padding:0;width:100%;display:flex;flex-direction:column;gap:8px}
+#os .rules li{display:flex;align-items:center;gap:12px;text-align:left;background:#1c1c28;border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.35}
+#os .rules li span{opacity:.9}
+#os .rules small{opacity:.6;font-size:12px}
+#os .rules i{flex:none;font-style:normal;font-weight:800;font-size:14px;width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 0 rgba(0,0,0,.35)}
+#os .rules .ok{background:#30a46c}
+#os .rules .bad{background:#e5484d}
+#os .rules .life{background:#2a2a3d;color:#ff6369;font-size:18px}
+#os .rules .trap{background:#2a2a3d;color:#ffd166;font-size:20px}
+#over p#ob:empty{display:none}
+#over p#ob{background:#ffd16614;border:1px solid #ffd16640;border-radius:999px;padding:6px 16px}
+@media (max-height:640px){#ot .lg2{font-size:36px}#os{gap:10px}#os .rules li{padding:7px 10px}#os .rules i{width:32px;height:32px}}

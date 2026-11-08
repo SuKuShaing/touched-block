@@ -250,7 +250,7 @@
     if(hist.length>HIST_MAX) hist.length=HIST_MAX;
     saveHist();
     ot.textContent=rec?'¡Nuevo récord!':(reason==='vidas'?'¡Sin vidas!':'¡Se acabó el tiempo!');
-    os.innerHTML='Destruiste <b style="font-size:40px;color:#7cf">'+killed+'</b> bloques<br>Bloques que se escaparon: '+missed;
+    os.innerHTML='<p>Destruiste <b style="font-size:40px;color:#7cf">'+killed+'</b> bloques<br>Bloques que se escaparon: '+missed+'</p>';
     ob.textContent='Récord: '+best+' bloques';
     drawHist(true);
     startBtn.textContent='Jugar de nuevo';

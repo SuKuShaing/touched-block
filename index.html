@@ -37,8 +37,17 @@
   <div id="field"><div id="flash"></div></div>
 
   <div id="over" class="on">
-    <h1 id="ot">Touched Block</h1>
-    <p id="os">Toca cada bloque tantas veces como diga su número.<br>Empiezas con <b>10 segundos</b> y <b>5 vidas</b>.<br>Cada bloque que completas te <b>suma</b> su número en segundos.<br>Si un bloque desaparece sin completarlo, te <b>resta</b> su número <b>×5</b> (un 3 que se escapa = −15 s).<br>Si tocas fuera de un bloque, pierdes una vida.<br>Cuidado: hay bloques trampa. Si tocas uno, pierdes 30 segundos.</p>
+    <h1 id="ot"><span class="lg1">Touched</span><span class="lg2">Block<i>3</i></span></h1>
+    <div id="os">
+      <p class="tag">Toca cada bloque tantas veces como diga su número.</p>
+      <div class="chips"><span>⏱ <b>10 s</b> para empezar</span><span><em>♥</em> <b>5 vidas</b></span></div>
+      <ul class="rules">
+        <li><i class="ok">+N</i><span>Completar un bloque te <b>suma</b> su número en segundos.</span></li>
+        <li><i class="bad">×5</i><span>Si se escapa, te <b>resta</b> su número ×5 <small>(un 3 = −15&nbsp;s)</small>.</span></li>
+        <li><i class="life">♥</i><span>Tocar fuera de un bloque te quita <b>una&nbsp;vida</b>.</span></li>
+        <li><i class="trap">!</i><span>Hay bloques <b>trampa</b>: tocar uno te quita <b>30&nbsp;s</b>.</span></li>
+      </ul>
+    </div>
     <p id="ob"></p>
     <div id="oh"></div>
     <button class="main" id="start">Jugar</button>
