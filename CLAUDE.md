@@ -32,7 +32,7 @@ Se evitan `fetch` externos, `alert` e imágenes que no sean `data:`/SVG inline p
 - **Entrada**: `pointerdown`. Cada bloque llama `stopPropagation()` y luego `hit(b)`; el listener del `#field` (`missTap`) toma todo lo demás como toque fallido (−1 vida). Los bloques en estado `.gone` tienen `pointer-events:none`, así que tocar donde había uno cuenta como fallo — es intencional.
 - **Estado**: arreglo `blocks[]` (objetos con `el, sp, tb, n, left, total, bomb, life, max, x, y, size, dead`) más globales `killed, missed, lives, timeLeft, played, barMax, playing`. El castigo por bloque escapado usa `b.total` (número original), no `b.left` — pedido explícito del usuario.
 - **Trampas**: internamente se llaman `bomb` / `explodeBomb` por herencia, aunque visualmente ya no son bombas: se ven como un bloque normal con el número rojo (`.blk.bomb`). Si el color del número coincidiría con el fondo (n = 1, 2, 7), se usa la paleta `SAFE`.
-- **Récord**: `localStorage`, clave `tb_best1`. Se ha cambiado la clave cuando cambian las reglas para no comparar récords incompatibles.
+- **Récord e historial**: `localStorage`, claves `tb_best1` (récord) y `tb_hist1` (arreglo de `{k, m, d}`: destruidos, escapados, fecha en ms; máx. `HIST_MAX`=30, se muestran `HIST_SHOW`=10 en `#oh`). Se ha cambiado la clave cuando cambian las reglas para no comparar récords incompatibles.
 - Audio (WebAudio), vibración y `localStorage` van siempre envueltos en `try/catch` porque pueden no estar disponibles; mantener ese patrón.
 
 ## Preferencias del usuario

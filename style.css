@@ -48,3 +48,18 @@ header .right{align-items:flex-end}
 #over p{margin:0;opacity:.85;line-height:1.5}
 button.main{margin-top:12px;background:#7cf;color:#12121a;border:0;font-size:22px;font-weight:800;padding:16px 40px;border-radius:16px;font-family:inherit}
 button.main:active{transform:scale(.96)}
+#over{overflow-y:auto;justify-content:safe center}
+#over p#ob{font-weight:700;color:#ffd166;opacity:1}
+#oh{width:100%;max-width:320px}
+#oh:empty{display:none}
+#oh .ht{font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.6;margin-bottom:6px}
+#oh ol{list-style:none;margin:0;padding:0;max-height:28vh;overflow-y:auto;border-radius:12px;background:#1c1c28}
+#oh li{display:flex;align-items:center;gap:10px;padding:7px 14px;font-size:14px;border-bottom:1px solid #26263a}
+#oh li:last-child{border-bottom:0}
+#oh li span{flex:1;text-align:left;opacity:.7;font-variant-numeric:tabular-nums}
+#oh li b{font-size:18px;min-width:40px;text-align:right;font-variant-numeric:tabular-nums}
+#oh li em{font-style:normal;font-size:12px;opacity:.5;min-width:48px;text-align:right}
+#oh li.now{background:#7cf2}
+#oh li.now span{opacity:1;color:#7cf;font-weight:700}
+#oh li.best b{color:#ffd166}
+#oh li.best b::before{content:'★ ';font-size:12px}

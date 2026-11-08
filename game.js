@@ -3,7 +3,8 @@
   var field=document.getElementById('field');
   var elKilled=document.getElementById('killed'), elLives=document.getElementById('lives'), elTime=document.getElementById('time');
   var bar=document.getElementById('barfill'), flash=document.getElementById('flash');
-  var over=document.getElementById('over'), ot=document.getElementById('ot'), os=document.getElementById('os'), ob=document.getElementById('ob'), startBtn=document.getElementById('start');
+  var over=document.getElementById('over'), ot=document.getElementById('ot'), os=document.getElementById('os'), ob=document.getElementById('ob'), oh=document.getElementById('oh'), startBtn=document.getElementById('start');
+  var HIST_KEY='tb_hist1', HIST_MAX=30, HIST_SHOW=10;
 
   var SAFE=['#e5a50a','#30a46c','#0091ff','#6e56cf','#12a594','#8e4ec6'];
   var colors=['#e5484d','#f76b15','#e5a50a','#30a46c','#0091ff','#6e56cf','#d6409f','#12a594','#8e4ec6'];
@@ -11,6 +12,27 @@
 
   try{ best=parseInt(localStorage.getItem('tb_best1')||'0',10)||0; }catch(e){}
   if(best>0) ob.textContent='Récord: '+best+' bloques';
+
+  // historial de partidas: [{k:destruidos, m:escapados, d:fecha en ms}], la más reciente primero
+  var hist=[];
+  try{ hist=JSON.parse(localStorage.getItem(HIST_KEY)||'[]'); if(!Array.isArray(hist)) hist=[]; }catch(e){ hist=[]; }
+  function saveHist(){ try{ localStorage.setItem(HIST_KEY,JSON.stringify(hist)); }catch(e){} }
+  function fmtDate(ms){
+    var d=new Date(ms), p=function(n){ return ('0'+n).slice(-2); };
+    return p(d.getDate())+'/'+p(d.getMonth()+1)+' '+p(d.getHours())+':'+p(d.getMinutes());
+  }
+  // lista de las últimas partidas; si cur es true, la primera es la que acaba de terminar
+  function drawHist(cur){
+    if(!hist.length){ oh.innerHTML=''; return; }
+    var h='<div class="ht">Tus partidas</div><ol>';
+    for(var i=0;i<hist.length && i<HIST_SHOW;i++){
+      var g=hist[i], now=cur&&i===0;
+      var cls=(now?'now':'')+(best>0&&g.k===best?' best':'');
+      h+='<li class="'+cls+'"><span>'+(now?'Ahora':fmtDate(g.d))+'</span><b>'+g.k+'</b><em>'+g.m+' esc.</em></li>';
+    }
+    oh.innerHTML=h+'</ol>';
+  }
+  drawHist(false);
 
   var ac=null;
   function beep(f,d,type,v){
@@ -224,9 +246,13 @@
     beep(200,0.5,'sawtooth',0.08); buzz(150);
     var rec=killed>best;
     if(rec){ best=killed; try{localStorage.setItem('tb_best1',String(best));}catch(e){} }
+    hist.unshift({k:killed,m:missed,d:Date.now()});
+    if(hist.length>HIST_MAX) hist.length=HIST_MAX;
+    saveHist();
     ot.textContent=rec?'¡Nuevo récord!':(reason==='vidas'?'¡Sin vidas!':'¡Se acabó el tiempo!');
     os.innerHTML='Destruiste <b style="font-size:40px;color:#7cf">'+killed+'</b> bloques<br>Bloques que se escaparon: '+missed;
     ob.textContent='Récord: '+best+' bloques';
+    drawHist(true);
     startBtn.textContent='Jugar de nuevo';
     over.classList.add('on');
   }

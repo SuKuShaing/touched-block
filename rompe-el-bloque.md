@@ -36,6 +36,7 @@ Todas las constantes están al inicio del script (`START_TIME`, `MAX_LIVES`, `LI
 | Bloque trampa que desaparece solo | sin castigo |
 | Fin de partida | tiempo ≤ 0, **o** vidas = 0 |
 | Récord | mayor cantidad de bloques destruidos (se guarda en `localStorage`, clave `tb_best1`) |
+| Historial | últimas 30 partidas (destruidos, escapados, fecha) en `localStorage`, clave `tb_hist1`; se muestran las 10 más recientes |
 
 Detalles importantes:
 
@@ -63,7 +64,7 @@ Detalles importantes:
 
 - Cabecera: **Destruidos** (izquierda) · **Tiempo** (centro, grande, formato m:ss) · **Vidas** (derecha, corazones).
 - Barra de tiempo bajo la cabecera: ancho relativo al máximo de tiempo alcanzado en la partida (`barMax`). Se pone roja con ≤ 5 s (el reloj también).
-- Pantalla de inicio / fin (overlay): reglas, récord, botón "Jugar" / "Jugar de nuevo". Al terminar muestra bloques destruidos y bloques escapados.
+- Pantalla de inicio / fin (overlay): reglas, récord, lista "Tus partidas" (últimas 10: fecha, destruidos, escapados; ★ en la que igualó el récord), botón "Jugar" / "Jugar de nuevo". Al terminar muestra bloques destruidos y bloques escapados, y la partida recién jugada aparece primera como "Ahora".
 - Feedback: sonidos con WebAudio, vibración con `navigator.vibrate`, partículas al destruir, texto flotante (+Ns / −Ns), sacudida y destello rojo al perder vida o activar trampa, "✕" donde se tocó mal. Todo con `try/catch` porque puede no funcionar en el visor.
 
 ---
