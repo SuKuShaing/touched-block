@@ -7,6 +7,7 @@ import { config } from '@/config';
 import { auth } from '@/platform/auth';
 import { C } from '@/theme';
 import { Hint, SmallButton, TextField } from './form';
+import { LegalConsent } from './LegalLinks';
 
 /** Botón oficial de Google (GIS) dibujado dentro de un View. */
 function GoogleButton({ onCredential, onError }: { onCredential: (t: string) => void; onError: (m: string) => void }) {
@@ -107,6 +108,7 @@ export function LoginOptions({ onLoggedIn }: { onLoggedIn?: (r: LoginResponse) =
       {config.authDevFake ? <DevLogin onToken={login} busy={busy} /> : null}
       {busy ? <Text style={styles.busy}>Iniciando sesión…</Text> : null}
       {err ? <Hint tone="bad">{err}</Hint> : null}
+      {auth.googleAvailable || config.authDevFake ? <LegalConsent /> : null}
     </View>
   );
 }

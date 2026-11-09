@@ -1,0 +1,45 @@
+# Producción en Dokploy (servicio de tipo "Compose"): la API y su base de datos juntas.
+# Dokploy clona este repositorio, escribe las variables de la pestaña "Environment" en un .env
+# junto a este archivo y ejecuta `docker compose up`. La base de datos se crea sola la primera
+# vez (volumen tb_pgdata) y la API aplica las migraciones al arrancar.
+# Guía completa: docs/despliegue.md
+services:
+  api:
+    image: ghcr.io/sukushaing/touched-block-api:${API_TAG:-latest}
+    # siempre baja la imagen: el workflow deploy-api.yml publica :latest con cada tag vX.Y.Z
+    pull_policy: always
+    restart: unless-stopped
+    depends_on:
+      tb-db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://tb:${POSTGRES_PASSWORD:?falta POSTGRES_PASSWORD}@tb-db:5432/touched_block
+      JWT_SECRET: ${JWT_SECRET:?falta JWT_SECRET}
+      GOOGLE_CLIENT_IDS: ${GOOGLE_CLIENT_IDS:?falta GOOGLE_CLIENT_IDS}
+      APPLE_AUDIENCES: ${APPLE_AUDIENCES:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://sukushaing.github.io}
+    # sin puertos publicados en el host: el dominio (Traefik de Dokploy) llega al 3000 por la red interna
+    expose:
+      - 3000
+
+  # nombre poco común a propósito: evita choques de DNS con otros servicios "db" de Dokploy
+  tb-db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tb
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?falta POSTGRES_PASSWORD}
+      POSTGRES_DB: touched_block
+    volumes:
+      - tb_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U tb -d touched_block']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    # sin "ports": la base de datos nunca queda expuesta a internet
+
+volumes:
+  tb_pgdata: {}

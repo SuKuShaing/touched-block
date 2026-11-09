@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { features } from '@/config';
 import { fetchFollowing, fetchLeaderboard, fetchMe, fetchMyRuns, fetchProfile } from './endpoints';
 import { useSession } from './session';
@@ -25,6 +25,8 @@ export function useLeaderboard(scope: Scope, period: Period, country: string | n
     queryKey: ['lb', scope, period, country, v.key],
     queryFn: () => fetchLeaderboard(scope, period, country),
     enabled: features.accounts && enabled,
+    // al cambiar de pestaña o filtro se sigue viendo la lista anterior (atenuada) hasta que llega la nueva
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -34,6 +36,7 @@ export function useMyRuns(period: Period, enabled = true) {
     queryKey: ['myRuns', period, v.key],
     queryFn: () => fetchMyRuns(period),
     enabled: features.accounts && v.loggedIn && enabled,
+    placeholderData: keepPreviousData,
   });
 }
 

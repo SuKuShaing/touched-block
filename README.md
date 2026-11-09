@@ -8,14 +8,16 @@ Juego táctil para celular, en español: aparecen bloques con un número o una o
 
 - Toca cada bloque tantas veces como su resultado: un 6 = 6 toques, "2+3" = 5 toques, "8÷2" = 4 toques.
 - El tiempo baja sin parar. Cada bloque que completas **suma** su resultado en segundos.
-- Si un bloque se escapa, **resta** su resultado ×3 (números), ×4 (sumas y restas) o ×5 (multiplicaciones y divisiones), aunque ya le hayas dado algunos toques.
+- Si un bloque se escapa, **resta** su resultado ×5, aunque ya le hayas dado algunos toques. Desde que aparecen las sumas y restas, cualquier bloque que se escape resta ×6; desde las multiplicaciones y divisiones, ×7.
 - Tocar fuera de un bloque quita una vida.
-- **Solo toca números o resultados positivos.** Son trampa los bloques con el texto rojo y las restas que dan 0 o negativo ("3−4"). Un toque a una trampa quita 30 s; si las dejas desaparecer, no pasa nada.
+- **Solo toca números o resultados positivos.** Son trampa los bloques con el texto rojo y las restas que dan 0 o negativo ("3−4"): habría que tocarlas 0 veces o menos, o sea, dejarlas pasar. Un toque a una trampa quita 30 s; si las dejas desaparecer, no pasa nada.
 - **Combos**: 3 bloques seguidos sin errores dan +1 s, 5 dan +2 s, 10 dan +3 s, 15 dan +4 s y 20 dan +5 s; luego el ciclo se repite.
 - La dificultad sube siempre: los números llegan a 10, luego aparecen sumas y restas, después multiplicaciones y divisiones, y al final los bloques duran cada vez menos (4, 3, 2 y 1 s).
 - Puedes jugar como invitado o entrar con Google para aparecer en los rankings. Cada amigo que invitas te da un corazón extra (hasta 8).
 
-Las reglas detalladas, con sus valores exactos y el historial de decisiones, están en [`rompe-el-bloque.md`](rompe-el-bloque.md).
+Las reglas detalladas, con sus valores exactos y el historial de decisiones, están en [`docs/reglas-y-balance.md`](docs/reglas-y-balance.md). Toda la documentación del proyecto (arquitectura, decisiones, despliegue, pendientes) está en [`docs/`](docs/README.md).
+
+[Política de privacidad](https://sukushaing.github.io/touched-block/politica-de-privacidad/) · [Condiciones del servicio](https://sukushaing.github.io/touched-block/condiciones-del-servicio/)
 
 ## Estructura
 
@@ -23,7 +25,9 @@ Las reglas detalladas, con sus valores exactos y el historial de decisiones, est
 |---|---|
 | `packages/engine` | Motor del juego en TypeScript, determinista. Todas las reglas y constantes de balance |
 | `apps/client` | La web (Expo Router, lista para convertirse en app Android/iOS) |
-| `apps/api` | Backend NestJS + Prisma + PostgreSQL. Contrato en [`apps/api/API.md`](apps/api/API.md) |
+| `apps/api` | Backend NestJS + Prisma + PostgreSQL. Contrato en [`docs/api.md`](docs/api.md) |
+| `deploy` | `docker-compose.yml` de producción para Dokploy (API + Postgres) |
+| `docs` | Documentación: decisiones, arquitectura, reglas, despliegue, pendientes |
 | `legacy` | El juego original en HTML/CSS/JS (solo referencia) |
 
 ## Ejecutar localmente
@@ -48,7 +52,7 @@ Para que la web use la API, copia `apps/client/.env.example` a `apps/client/.env
 ## Despliegue
 
 - **Web**: cada push a `main` publica en GitHub Pages (`.github/workflows/deploy-pages.yml`).
-- **API**: cada tag `vX.Y.Z` construye la imagen Docker, la sube a GHCR y la despliega en Dokploy (`.github/workflows/deploy-api.yml`).
+- **API**: cada tag `vX.Y.Z` construye la imagen Docker, la sube a GHCR y despliega en Dokploy el Compose `deploy/docker-compose.yml`, que incluye la base de datos (`.github/workflows/deploy-api.yml`). Guía paso a paso en [`docs/despliegue.md`](docs/despliegue.md).
 
 Las variables de entorno de producción viven en Dokploy y en los secretos/variables de GitHub; nunca en el repositorio.
 

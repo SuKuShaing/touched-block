@@ -1,7 +1,7 @@
 import { useEffect, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
-import { BASE_LIVES, BOMB_PENALTY, COLORS, COMBO_REWARDS, MAX_LIVES_CAP, MISS_MULT_NUM, OP_SYMBOL, OP_WIDTH_RATIO } from '@tb/engine';
+import { BASE_LIVES, BOMB_PENALTY, COLORS, COMBO_REWARDS, MAX_LIVES_CAP, MISS_MULT_NUM_STAGE, OP_SYMBOL, OP_WIDTH_RATIO } from '@tb/engine';
 import { Block } from '@/components/Block';
 import { Flash, FxLayer, useFxList, useHurtFx } from '@/components/Fx';
 import { Clock, Hearts, Streak, TimeBar } from '@/components/Hud';
@@ -122,7 +122,7 @@ export function DemoEscape({ w, h, active, reduced }: DemoProps) {
   const bx = w / 2 - BS / 2;
   const by = fh / 2 - BS / 2;
   const color = COLORS[2];
-  const penalty = 3 * MISS_MULT_NUM;
+  const penalty = 3 * MISS_MULT_NUM_STAGE;
   const gone = t >= T3.expire;
   const seconds = T3.start - t / 1000 - (gone ? penalty : 0);
   useCues(
@@ -415,6 +415,65 @@ export function DemoPositive({ w, h, active, reduced }: DemoProps) {
   );
 }
 
+// ------------------------------------------------------------------ restas con resultado ≤ 0
+
+const TZ = { period: 4600, spawn: 200, resA: 800, resB: 1300, ask: 1900, answer: 2700, fade: 3400, start: 20 };
+const CUES_Z = { fade: 3400 };
+const Z_NEG = `3${OP_SYMBOL.sub}4`;
+const Z_ZERO = `2${OP_SYMBOL.sub}2`;
+
+/** Una resta que da −1 y otra que da 0: habría que tocarlas −1 y 0 veces, o sea, dejarlas pasar. */
+export function DemoZero({ w, h, active, reduced }: DemoProps) {
+  const t = useLoopTime(TZ.period, active, reduced ? 3000 : null);
+  const fxl = useFxList();
+  const fh = h - FIELD_TOP;
+  const bh = Math.min(62, fh * 0.32);
+  const bw = bh * OP_WIDTH_RATIO;
+  const gap = Math.min(36, (w - bw * 2) / 3);
+  const ax = w / 2 - bw - gap / 2;
+  const bx = w / 2 + gap / 2;
+  const ty = 10;
+  useCues(
+    t,
+    CUES_Z,
+    () => {
+      fxl.add({ kind: 'ghost', block: { x: ax, y: ty, w: bw, h: bh, label: '', color: COLORS[1] } });
+      fxl.add({ kind: 'ghost', block: { x: bx, y: ty, w: bw, h: bh, label: '', color: COLORS[6] } });
+      fxl.add({ kind: 'banner', x: w / 2, y: ty + bh + 6, text: 'Sin castigo', color: C.text, maxW: w, small: true });
+    },
+    active && !reduced,
+  );
+  const shown = t >= TZ.spawn && t < TZ.fade;
+  const life = 1 - (t - TZ.spawn) / (TZ.fade - TZ.spawn);
+  const resY = ty + bh + 6;
+  return (
+    <Stage
+      w={w}
+      h={h}
+      top={
+        <View style={styles.center}>
+          <Clock seconds={TZ.start - t / 1000} size={32} />
+        </View>
+      }
+    >
+      {shown ? (
+        <>
+          <Block x={ax} y={ty} w={bw} h={bh} label={Z_NEG} color={COLORS[1]} life={life} />
+          <Block x={bx} y={ty} w={bw} h={bh} label={Z_ZERO} color={COLORS[6]} life={life} />
+          {t >= TZ.resA ? <Text style={[styles.zeroRes, { left: ax, width: bw, top: resY }]}>= −1</Text> : null}
+          {t >= TZ.resB ? <Text style={[styles.zeroRes, { left: bx, width: bw, top: resY }]}>= 0</Text> : null}
+          {t >= TZ.ask ? (
+            <Text style={[styles.zeroCap, { top: resY + 40 }]}>
+              {t >= TZ.answer ? 'No se tocan: déjalas pasar' : '¿Tocar −1 veces? ¿0 veces?'}
+            </Text>
+          ) : null}
+        </>
+      ) : null}
+      <FxLayer items={fxl.items} />
+    </Stage>
+  );
+}
+
 // ------------------------------------------------------------------ combos
 
 const TCOMBO = { period: 4600, kills: [700, 1200, 1700, 2200, 2700] as const, start: 12 };
@@ -613,6 +672,8 @@ const styles = StyleSheet.create({
   comboAt: { color: C.text, opacity: 0.75, fontSize: 15, fontWeight: '800', lineHeight: 18 },
   comboB: { color: C.text, opacity: 0.6, fontSize: 12, fontWeight: '700', lineHeight: 15 },
   comboOnT: { color: C.gold, opacity: 1 },
+  zeroRes: { position: 'absolute', textAlign: 'center', fontWeight: '800', fontSize: 20, color: C.bad },
+  zeroCap: { position: 'absolute', left: 8, right: 8, textAlign: 'center', color: C.text, fontSize: 15, fontWeight: '700' },
   capNote: { position: 'absolute', bottom: 14, alignSelf: 'center', color: C.text, opacity: 0.55, fontSize: 12 },
   tabs: { flexDirection: 'row', justifyContent: 'center', gap: 8 },
   tab: { color: C.text, opacity: 0.6, fontSize: 13, paddingVertical: 5, paddingHorizontal: 12, borderRadius: 999, backgroundColor: C.panel },

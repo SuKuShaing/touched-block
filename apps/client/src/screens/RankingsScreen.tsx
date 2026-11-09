@@ -103,7 +103,7 @@ function MyHistory({ period, refreshKey }: { period: Period; refreshKey: number 
       </Center>
     );
   return (
-    <View style={styles.list}>
+    <View style={[styles.list, runs.isPlaceholderData && styles.stale]}>
       {list.map((r, i) => (
         <RunRow key={r.id} date={Date.parse(r.finishedAt)} killed={r.killed} missed={r.missed} best={r.isBest} last={i === list.length - 1} />
       ))}
@@ -111,7 +111,7 @@ function MyHistory({ period, refreshKey }: { period: Period; refreshKey: number 
   );
 }
 
-function Board({ data, onUser }: { data: Leaderboard; onUser: (u: string) => void }) {
+function Board({ data, onUser, stale }: { data: Leaderboard; onUser: (u: string) => void; stale?: boolean }) {
   if (!data.entries.length)
     return (
       <Center>
@@ -119,7 +119,7 @@ function Board({ data, onUser }: { data: Leaderboard; onUser: (u: string) => voi
       </Center>
     );
   return (
-    <View style={styles.list}>
+    <View style={[styles.list, stale && styles.stale]}>
       <View style={[styles.row, styles.head]}>
         <Text style={[styles.rank, styles.headT]}>#</Text>
         <Text style={[styles.user, styles.headT]}>Jugador</Text>
@@ -224,7 +224,7 @@ export function RankingsScreen() {
         {scope === 'friends' && lb.data.total <= 1 ? (
           <Text style={styles.note}>Sigue a tus amigos desde tu perfil para competir con ellos.</Text>
         ) : null}
-        <Board data={lb.data} onUser={openUser} />
+        <Board data={lb.data} onUser={openUser} stale={lb.isPlaceholderData} />
       </>
     );
 
@@ -254,6 +254,8 @@ export function RankingsScreen() {
 }
 
 const styles = StyleSheet.create({
+  // datos del filtro anterior mientras llegan los nuevos
+  stale: { opacity: 0.45 },
   screen: { flex: 1, backgroundColor: C.bg },
   flex1: { flex: 1 },
   top: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 8, gap: 10, width: '100%', maxWidth: 520, alignSelf: 'center' },

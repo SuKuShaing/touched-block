@@ -151,7 +151,7 @@ General: 120 por minuto (`THROTTLE_LIMIT`). Límites por ruta:
 `200`:
 
 ```json
-{ "status": "ok", "db": "ok", "rulesVersion": 2, "version": "v0.1.0", "time": "2026-11-09T14:13:54.353Z" }
+{ "status": "ok", "db": "ok", "rulesVersion": 3, "version": "v0.1.0", "time": "2026-11-09T14:13:54.353Z" }
 ```
 
 `503 db_unavailable` si la base no responde. Lo usan el `HEALTHCHECK` de Docker y Dokploy.
@@ -335,7 +335,7 @@ Ordenados del más reciente al más antiguo.
 
 Si la API no responde en el paso 1, se juega con una semilla local (`randomSeed()`) y esa partida no puede entrar al ranking.
 
-Las reglas actuales son la **versión 2** (`RULES_VERSION = 2` en `@tb/engine`): números hasta 10, bloques con sumas/restas y después multiplicaciones/divisiones, restas con resultado ≤ 0 como trampa, castigo por escape según el tipo (×3 / ×4 / ×5) y combos que suman segundos. Las reglas exactas están en el motor (`packages/engine/src/constants.ts`). Una buena partida puede durar 6–9 minutos: el límite de 2 h para enviarla y la comparación con el reloj real (+5 s) son relativos a la duración, así que no hay un tope de minutos de juego.
+Las reglas actuales son la **versión 3** (`RULES_VERSION = 3` en `@tb/engine`): números hasta 10, bloques con sumas/restas y después multiplicaciones/divisiones, restas con resultado ≤ 0 como trampa, castigo por escape según la etapa (×5 / ×6 / ×7) y combos que suman segundos. Las reglas exactas están en el motor (`packages/engine/src/constants.ts`) y en [`reglas-y-balance.md`](reglas-y-balance.md). Una buena partida puede durar 6–9 minutos: el límite de 2 h para enviarla y la comparación con el reloj real (+5 s) son relativos a la duración, así que no hay un tope de minutos de juego.
 
 ### `POST /runs` (sesión opcional)
 
@@ -352,7 +352,7 @@ Las reglas actuales son la **versión 2** (`RULES_VERSION = 2` en `@tb/engine`):
   "runId": "efe6332b-b2d1-4490-8c4d-94fd6200dc11",
   "seed": 17496603,
   "maxLives": 5,
-  "rulesVersion": 2,
+  "rulesVersion": 3,
   "fieldW": 390,
   "fieldH": 640,
   "startedAt": "2026-11-09T14:25:06.487Z",

@@ -106,20 +106,21 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # Dokploy corre deploy/docker-compose.yml (API + Postgres); con pull_policy: always baja la :latest recién publicada
       - name: Desplegar en Dokploy
         env:
           DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
           DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
-          DOKPLOY_APP_ID: ${{ secrets.DOKPLOY_APP_ID }}
+          DOKPLOY_COMPOSE_ID: ${{ secrets.DOKPLOY_COMPOSE_ID }}
         run: |
-          if [ -z "$DOKPLOY_URL" ] || [ -z "$DOKPLOY_API_KEY" ] || [ -z "$DOKPLOY_APP_ID" ]; then
-            echo "::error::Faltan los secretos DOKPLOY_URL, DOKPLOY_API_KEY o DOKPLOY_APP_ID"
+          if [ -z "$DOKPLOY_URL" ] || [ -z "$DOKPLOY_API_KEY" ] || [ -z "$DOKPLOY_COMPOSE_ID" ]; then
+            echo "::error::Faltan los secretos DOKPLOY_URL, DOKPLOY_API_KEY o DOKPLOY_COMPOSE_ID (ver docs/despliegue.md)"
             exit 1
           fi
-          curl -fsS -X POST "${DOKPLOY_URL%/}/api/application.deploy" \
+          curl -fsS -X POST "${DOKPLOY_URL%/}/api/compose.deploy" \
             -H "accept: application/json" \
             -H "Content-Type: application/json" \
             -H "x-api-key: ${DOKPLOY_API_KEY}" \
-            -d "{\"applicationId\":\"${DOKPLOY_APP_ID}\"}"
+            -d "{\"composeId\":\"${DOKPLOY_COMPOSE_ID}\",\"title\":\"${GITHUB_REF_NAME}\"}"
           echo
           echo "Despliegue de ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.version }} solicitado a Dokploy."

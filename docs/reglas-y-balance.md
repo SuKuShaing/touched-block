@@ -1,11 +1,11 @@
-# Touched Block — resumen del proyecto y decisiones de diseño
+# Reglas y balance
 
-Documento de traspaso para continuar el desarrollo. Contiene qué es el juego, las reglas actuales con sus valores exactos, las decisiones tomadas (y por qué), lo que está pendiente, y dónde está el código (sección 6).
+Qué es el juego, las reglas actuales con sus valores exactos y la historia de cada cambio de reglas (con su porqué). Si cambias una regla o una constante, actualiza este documento en el mismo cambio. Para el resto del proyecto (arquitectura, despliegue, decisiones técnicas) ver [`README.md`](README.md) de esta carpeta.
 
 - Idioma del juego y del usuario: **español**.
 - Plataforma: **web pensada para celular** (GitHub Pages), con cuentas y rankings. Después, si le va bien, app Android/iOS con el mismo código (Expo).
 - Nombre: **Touched Block** (antes "Rompe el bloque"; el nombre queda en inglés aunque el resto del texto sea en español).
-- Reglas actuales: **v2 del motor** (`RULES_VERSION = 2`), que corresponde a la decisión v7 de la sección 3.
+- Reglas actuales: **v3 del motor** (`RULES_VERSION = 3`), que corresponde a la decisión v8 de la sección 3.
 
 ---
 
@@ -29,17 +29,18 @@ Todas las constantes están en `packages/engine/src/constants.ts`.
 | Vidas | **5** de base, **+1 por cada amigo invitado, máximo 8** (`BASE_LIVES`, `MAX_LIVES_CAP`) |
 | Vida de cada bloque | **3 a 5 s, aleatorio**, independiente del número; en la etapa final, fija: **4 → 3 → 2 → 1 s** |
 | Completar un bloque | **suma** su resultado en segundos (un 6 → +6 s; "5×5" → +25 s) |
-| Bloque que escapa sin completarse | **resta su resultado original ×3** si es número, **×4** si es suma/resta, **×5** si es multiplicación/división |
+| Bloque que escapa sin completarse | **resta su resultado original × el multiplicador de la etapa**, sea cual sea el tipo de bloque: **×5** en la etapa de números, **×6** desde que aparecen las sumas y restas (140 s), **×7** desde que aparecen las multiplicaciones y divisiones (275 s) (`missMultAt`) |
 | Tocar fuera de un bloque | **−1 vida** (también si se toca donde había un bloque que ya desapareció) |
 | Tocar una trampa (un toque basta) | **−30 s** inmediatos (`BOMB_PENALTY`) |
 | Trampa que desaparece sola | sin castigo |
 | Combos (destruidos seguidos sin errores) | 3 → **+1 s**, 5 → **+2 s**, 10 → **+3 s**, 15 → **+4 s**, 20 → **+5 s**; luego el ciclo se repite (23 → +1 s…) |
 | Corte del combo | **cualquier error**: bloque escapado, trampa tocada o toque fuera. Los premios ya ganados se conservan (cortar en 18 = ya ganaste los de 3, 5, 10 y 15) |
 | Fin de partida | tiempo ≤ 0, **o** vidas = 0 |
-| Récord local | `localStorage` `tb_best2`; historial `tb_hist2` (últimas 30, se muestran 10) |
+| Récord local | `localStorage` `tb_best3`; historial `tb_hist3` (últimas 30, se muestran 10) |
 
 Detalles importantes:
 
+- El multiplicador depende de la **etapa en el momento en que el bloque se escapa**, no del tipo: un "4" que se escapa a los 300 s resta 4×7 = 28 s. Ejemplos extremos: "10+10" escapado en la etapa de sumas = −120 s; "5×5" = −175 s.
 - El castigo por bloque escapado usa el **resultado original** del bloque (`b.total`), aunque el jugador ya le haya hecho algunos toques. Pedido explícito del usuario.
 - El tiempo **puede superar** el inicial (no hay tope).
 - Un bloque escapado **no** quita vidas; solo tiempo. Las vidas se pierden **únicamente** por toques fuera de bloque.
@@ -49,9 +50,9 @@ Detalles importantes:
 
 | Desde | Qué aparece |
 |---|---|
-| 0 s | Números del 1 al 3; el máximo sube 1 cada **20 s** hasta **10** (a los 140 s) |
-| 140 s | **Sumas y restas** (bloques rectangulares), empezando por "1+1"; el operando máximo sube 1 cada **15 s** hasta "10+10" (a los 275 s) |
-| 275 s | **Multiplicaciones y divisiones**: "1×2"…"5×5" (25 toques) y divisiones **exactas** con **÷** ("9÷3", "8÷2"); el factor máximo sube 1 cada 15 s hasta 5 (a los 320 s) |
+| 0 s | Números del 1 al 3 (escapar resta ×5); el máximo sube 1 cada **20 s** hasta **10** (a los 140 s) |
+| 140 s | **Sumas y restas** (bloques rectangulares), empezando por "1+1"; escapar pasa a restar ×6; el operando máximo sube 1 cada **15 s** hasta "10+10" (a los 275 s) |
+| 275 s | **Multiplicaciones y divisiones** (escapar pasa a restar ×7): "1×2"…"5×5" (25 toques) y divisiones **exactas** con **÷** ("9÷3", "8÷2"); el factor máximo sube 1 cada 15 s hasta 5 (a los 320 s) |
 | 350 s | **Etapa final**: la vida de los bloques pasa a **4 s**, y baja 1 s cada **30 s** hasta **1 s** |
 
 - Al aparecer un tipo nuevo, los anteriores siguen apareciendo: con sumas/restas, 50 % números y 50 % sumas/restas; con multiplicaciones, 40 % números, 35 % sumas/restas y 25 % multiplicaciones/divisiones. Dentro de sumas/restas, 40 % son restas; dentro de multiplicaciones/divisiones, 40 % son divisiones.
@@ -63,7 +64,7 @@ Detalles importantes:
 ### Trampas
 
 - **Trampa roja**: se ve igual que un bloque normal (número u operación), pero con el **texto rojo** (`#ff2a2a`). Si su color de fondo es rojizo (rojo, naranjo o rosado), usa un color de la paleta `SAFE`.
-- **Resultado no positivo**: una resta que da **0 o negativo** ("3−3", "3−4") es trampa y se ve normal. Regla que se le explica al jugador: **"Solo toca números o resultados positivos"**.
+- **Resultado no positivo**: una resta que da **0 o negativo** ("3−3", "3−4") es trampa y se ve normal. La lógica: habría que tocarla 0 veces, o un número negativo de veces, que en la práctica es dejarla pasar. Regla que se le explica al jugador: **"Solo toca números o resultados positivos"** (tiene su propia slide en el tutorial).
 - Las trampas aparecen solo después de **8 s**; las rojas con **16 %** de probabilidad por bloque (`BOMB_CHANCE`). Nunca hay **más de 2 trampas a la vez**, sumando ambos tipos.
 
 ### Interfaz
@@ -71,7 +72,7 @@ Detalles importantes:
 - Cabecera: **Destruidos** · **Tiempo** (m:ss) · **Vidas** (corazones, de 5 a 8). Barra de tiempo relativa al máximo alcanzado; roja con ≤ 5 s.
 - Indicador de racha durante el juego, texto flotante con cada premio de combo y un aviso breve al cortarse la racha.
 - Pantalla de fin: título ("¡Nuevo récord!", "¡Sin vidas!", "¡Se acabó el tiempo!"), destruidos, escapados, mejor racha, posición en el ranking (si hay cuenta), Compartir e Invitar amigos.
-- **Tutorial (onboarding)**: slides animadas con los mismos componentes del juego, una por regla. Aparece solo la **primera vez en cada dispositivo** (`tb_onb1`); se repite desde el botón "Ver tutorial de nuevo" del **Perfil**.
+- **Tutorial (onboarding)**: slides animadas con los mismos componentes del juego, una por regla: tocar, tiempo, escapes, vidas, trampas rojas, operaciones, restas ≤ 0, solo positivos, combos (+ invitar y ranking si hay cuentas). Sus textos toman los números de las constantes del motor. Aparece solo la **primera vez en cada dispositivo** (`tb_onb1`); se repite desde el botón "Ver tutorial de nuevo" del **Perfil**.
 - Pestañas Jugar / Rankings / Perfil (solo con cuentas activadas). Rankings Tú / País / Mundial / Amigos con filtros Semana / Mes / Año / Histórico (períodos en UTC).
 
 ### Cuentas, rankings e invitaciones
@@ -93,7 +94,7 @@ Detalles importantes:
 5. **v4**: vida de bloques 3–5 s; bloque escapado resta su valor; aparecen bloques trampa (bomba 💣, −30 s).
 6. **v5**: tiempo inicial 10 s; la bomba era "demasiado evidente" → bloque negro con marco rojo.
 7. **v6**: aun así era evidente → la trampa usa los mismos colores que los normales y solo cambia el número a rojo. Castigo por bloque escapado ×5.
-8. **v7 (actual, motor v2)**: se pasa a web con cuentas, rankings e invitaciones (Expo + NestJS), con motor determinista compartido. Al revisar la validación de partidas se vio que, pasados ~90 s, la dificultad se estancaba y un jugador perfecto (o un bot) nunca perdía. El usuario decidió:
+8. **v7 (motor v2)**: se pasa a web con cuentas, rankings e invitaciones (Expo + NestJS), con motor determinista compartido. Al revisar la validación de partidas se vio que, pasados ~90 s, la dificultad se estancaba y un jugador perfecto (o un bot) nunca perdía. El usuario decidió:
    - Los números llegan hasta 10; luego aparecen **sumas y restas** hasta "10+10", y luego **multiplicaciones** hasta "5×5" y **divisiones exactas** con el símbolo **÷** (no "/", que parece fracción).
    - Las restas con resultado **0 o negativo** son trampa; también puede haber trampas rojas de cualquier tipo.
    - Los bloques con operación **mantienen la operación** al tocarlos.
@@ -101,6 +102,7 @@ Detalles importantes:
    - **Combos** por bloques seguidos (3/5/10/15/20 → +1…+5 s, en ciclo); cualquier error corta la racha, pero se conservan los premios ya ganados.
    - Castigo por escapar: **×3** números (antes ×5), **×4** sumas/restas, **×5** multiplicaciones/divisiones.
    - Vidas: **+1 corazón por amigo invitado**, hasta 8.
+9. **v8 (actual, motor v3, 9 nov 2026)**: el usuario seguía pensando en el ×5 de la v6 (la web publicada entonces) y pidió que el castigo **dependa de la etapa y no del tipo de bloque**: ×5 mientras solo hay números, **×6** desde que llegan las sumas y restas y **×7** desde que llegan las multiplicaciones y divisiones, para **cualquier** bloque que se escape. Se reemplazó el ×3/×4/×5 por tipo de la v7 (se interpretó que la etapa de números queda en ×5, el valor que él daba por vigente). También pidió una slide propia que explique por qué una resta ≤ 0 es trampa. Como la v2 ya estaba publicada, se subió `RULES_VERSION` a 3 y las claves locales a `tb_best3`/`tb_hist3`.
 
 Criterios que el usuario ha mostrado: quiere un juego **difícil y tenso**, que castigue el descuido; las trampas deben ser **sutiles**; prefiere ir ajustando números a mano a medida que juega.
 
@@ -121,8 +123,10 @@ Criterios que el usuario ha mostrado: quiere un juego **difícil y tenso**, que 
 
 - **Balance sin probar con personas**: la progresión (140 s / 275 s / 350 s), las proporciones de cada tipo y los castigos se eligieron como punto de partida; el usuario los ajustará jugando. Cambiar el balance después de abrir los rankings obliga a subir `RULES_VERSION` (reinicia los rankings).
 - **Bots**: el servidor verifica que la partida sea real, pero no puede distinguir un script que toca bien de una persona. La etapa final hace que todos pierdan, lo que limita el daño; si aparecen puntajes sospechosos, agregar heurísticas (precisión y ritmo inhumanos).
+- **Castigos muy altos al final**: con ×6/×7, un solo escape de una operación grande (−120 s / −175 s) casi decide la partida. Es lo pedido, pero conviene revisarlo jugando.
+- **Al empezar las restas casi todas son trampa**: con operandos 1–2, "1−1", "1−2" y "2−2" dan ≤ 0; entre 140 y 200 s cerca del 30 % de las operaciones son trampa. Opción si se siente injusto: que las restas partan después que las sumas.
 - La web pesa unos 2 MB de JS (≈600 KB comprimido) por React Native Web; se puede optimizar más adelante.
-- Las claves locales cambiaron (`rb_best*` → `tb_best1` → `tb_best2`) cada vez que cambiaron las reglas; los récords antiguos no se arrastran.
+- Las claves locales cambiaron (`rb_best*` → `tb_best1` → `tb_best2` → `tb_best3`) cada vez que cambiaron las reglas; los récords antiguos no se arrastran.
 
 **Ideas posibles**
 
@@ -139,5 +143,5 @@ Criterios que el usuario ha mostrado: quiere un juego **difícil y tenso**, que 
 - `packages/engine/src/game.ts`: reglas (generación, toques, escapes, trampas, combos).
 - `packages/engine/src/replay.ts`: repetición de partidas para validar puntajes.
 - `apps/client/`: la web (juego, onboarding, rankings, perfil).
-- `apps/api/`: el backend; contrato en `apps/api/API.md`.
+- `apps/api/`: el backend; contrato en [`api.md`](api.md).
 - `legacy/`: el juego original (v6) en HTML/CSS/JS.

@@ -10,9 +10,9 @@ import {
   BOMB_PENALTY,
   COMBO_CYCLE,
   MAX_LIVES_CAP,
-  MISS_MULT_ADDSUB,
-  MISS_MULT_MULDIV,
-  MISS_MULT_NUM,
+  MISS_MULT_ADD_STAGE,
+  MISS_MULT_MUL_STAGE,
+  MISS_MULT_NUM_STAGE,
   START_TIME,
 } from '@tb/engine';
 import { MainButton } from '@/components/ui';
@@ -31,6 +31,7 @@ import {
   DemoRanking,
   DemoTap,
   DemoTrap,
+  DemoZero,
 } from './demos';
 
 function B({ children }: { children: ReactNode }) {
@@ -75,10 +76,10 @@ const ALL_SLIDES: Slide[] = [
     Demo: DemoEscape,
     text: (
       <>
-        Si un bloque se escapa, te <B>resta</B> su número ×{MISS_MULT_NUM}.
+        Si un bloque se escapa, te <B>resta</B> su número ×{MISS_MULT_NUM_STAGE}.
       </>
     ),
-    note: `Un 3 que se escapa = −${3 * MISS_MULT_NUM} s. Las operaciones restan su resultado ×${MISS_MULT_ADDSUB} (+ −) o ×${MISS_MULT_MULDIV} (× ÷).`,
+    note: `Un 3 que se escapa = −${3 * MISS_MULT_NUM_STAGE} s. Cuando llegan las sumas y restas, cualquier bloque que se escape resta ×${MISS_MULT_ADD_STAGE}; con las multiplicaciones y divisiones, ×${MISS_MULT_MUL_STAGE}.`,
   },
   {
     key: 'vidas',
@@ -110,6 +111,16 @@ const ALL_SLIDES: Slide[] = [
     note: 'La operación no cambia mientras tocas: cuenta tú.',
   },
   {
+    key: 'restas',
+    Demo: DemoZero,
+    text: (
+      <>
+        Una resta que da <B>0 o negativo</B> también es <B>trampa</B>: habría que tocarla 0 veces, o menos… o sea, <B>déjala pasar</B>.
+      </>
+    ),
+    note: `Si la dejas pasar no pasa nada; si la tocas: −${BOMB_PENALTY} s.`,
+  },
+  {
     key: 'positivos',
     Demo: DemoPositive,
     text: (
@@ -117,7 +128,7 @@ const ALL_SLIDES: Slide[] = [
         Solo toca <B>números</B> o resultados <B>positivos</B>. Si da 0 o menos, es trampa.
       </>
     ),
-    note: `Si las dejas pasar no pasa nada. Ojo: también hay operaciones en rojo. Tocar una trampa: −${BOMB_PENALTY} s.`,
+    note: `Ojo: las operaciones también pueden tener el texto rojo. Tocar una trampa: −${BOMB_PENALTY} s.`,
   },
   {
     key: 'combos',

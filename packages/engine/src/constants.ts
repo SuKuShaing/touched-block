@@ -1,7 +1,7 @@
 // Constantes de balance. Si cambias alguna, actualiza también las tablas de
-// rompe-el-bloque.md y sube RULES_VERSION (las partidas con otra versión no se
+// docs/reglas-y-balance.md y sube RULES_VERSION (las partidas con otra versión no se
 // comparan en los rankings).
-export const RULES_VERSION = 2;
+export const RULES_VERSION = 3;
 
 export const START_TIME = 10; // segundos iniciales
 export const BASE_LIVES = 5; // vidas de base
@@ -15,16 +15,6 @@ export const BOMB_MAX_AT_ONCE = 2; // trampas simultáneas como máximo (rojas +
 
 /** Tipos de bloque. */
 export type BlockKind = 'num' | 'add' | 'sub' | 'mul' | 'div';
-
-// Castigo por bloque escapado: su resultado × multiplicador según el tipo
-export const MISS_MULT_NUM = 3; // números solos
-export const MISS_MULT_ADDSUB = 4; // sumas y restas
-export const MISS_MULT_MULDIV = 5; // multiplicaciones y divisiones
-export function missMultFor(kind: BlockKind): number {
-  if (kind === 'num') return MISS_MULT_NUM;
-  if (kind === 'add' || kind === 'sub') return MISS_MULT_ADDSUB;
-  return MISS_MULT_MULDIV;
-}
 
 // ---- Progresión (segundos jugados) ----
 export const NUM_MAX = 10; // los números llegan hasta 10
@@ -42,6 +32,18 @@ export const LIFE_STAGE_START = MUL_START + (MUL_MAX - 2) * MUL_STEP + 30; // 35
 export const LIFE_STAGE_STEP = 30; // cada cuánto baja 1 s la vida
 export const LIFE_STAGE_FIRST = 4;
 export const LIFE_STAGE_LAST = 1;
+
+// ---- Castigo por bloque escapado ----
+// Su resultado ORIGINAL × el multiplicador de la etapa en que se escapa, sea cual sea el tipo
+// de bloque (un número que se escapa en la etapa de multiplicaciones también resta ×7).
+export const MISS_MULT_NUM_STAGE = 5; // etapa de números (antes de ADD_START)
+export const MISS_MULT_ADD_STAGE = 6; // desde que aparecen sumas y restas
+export const MISS_MULT_MUL_STAGE = 7; // desde que aparecen multiplicaciones y divisiones (y en la etapa final)
+export function missMultAt(played: number): number {
+  if (played >= MUL_START) return MISS_MULT_MUL_STAGE;
+  if (played >= ADD_START) return MISS_MULT_ADD_STAGE;
+  return MISS_MULT_NUM_STAGE;
+}
 
 /** Proporción de cada familia de bloques cuando ya están disponibles. */
 export const MIX_WITH_ADD = { num: 0.5, add: 0.5 } as const;

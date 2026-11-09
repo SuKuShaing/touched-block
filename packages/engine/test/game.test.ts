@@ -8,9 +8,9 @@ import {
   type GameState,
   LIFE_MAX,
   LIFE_MIN,
-  MISS_MULT_NUM,
-  MISS_MULT_ADDSUB,
-  MISS_MULT_MULDIV,
+  MISS_MULT_NUM_STAGE,
+  MISS_MULT_ADD_STAGE,
+  MISS_MULT_MUL_STAGE,
   START_TIME,
   TICKS_PER_SECOND,
   type TapInput,
@@ -113,7 +113,7 @@ describe('reglas', () => {
     step(s);
     expect(s.missed).toBe(1);
     expect(s.blocks).not.toContain(b);
-    expect(s.timeLeft).toBeCloseTo(t0 - 1 / 60 - 6 * MISS_MULT_NUM);
+    expect(s.timeLeft).toBeCloseTo(t0 - 1 / 60 - 6 * MISS_MULT_NUM_STAGE);
   });
 
   it('tocar una trampa quita BOMB_PENALTY segundos de inmediato', () => {
@@ -286,6 +286,14 @@ describe('operaciones', () => {
     expect(firstMul.at).toBeLessThan(MUL_START + 10);
   });
 
+  it('en cada etapa siguen apareciendo los tipos anteriores', () => {
+    const kinds = (from: number, to: number) => new Set(all.filter(({ at }) => at >= from && at < to).map(({ b }) => b.kind));
+    const addStage = kinds(ADD_START, MUL_START);
+    expect([...addStage].sort()).toEqual(['add', 'num', 'sub']);
+    const mulStage = kinds(MUL_START, 480);
+    expect([...mulStage].sort()).toEqual(['add', 'div', 'mul', 'num', 'sub']);
+  });
+
   it('las operaciones parten pequeñas ("1+1") y llegan a "10+10" y "5×5"', () => {
     const early = all.filter((x) => x.at < ADD_START + ADD_STEP && (x.b.kind === 'add' || x.b.kind === 'sub'));
     expect(early.length).toBeGreaterThan(0);
@@ -365,21 +373,32 @@ describe('operaciones', () => {
     expect(s.timeLeft).toBeCloseTo(55);
   });
 
-  it('castigo al escapar: números ×3, sumas/restas ×4, multiplicaciones/divisiones ×5', () => {
-    const cases: [Partial<Block>, number][] = [
-      [{ kind: 'num', value: 4, total: 4, left: 4 }, 4 * MISS_MULT_NUM],
-      [{ kind: 'add', a: 2, b: 3, value: 5, total: 5, left: 5 }, 5 * MISS_MULT_ADDSUB],
-      [{ kind: 'sub', a: 7, b: 2, value: 5, total: 5, left: 5 }, 5 * MISS_MULT_ADDSUB],
-      [{ kind: 'mul', a: 2, b: 3, value: 6, total: 6, left: 6 }, 6 * MISS_MULT_MULDIV],
-      [{ kind: 'div', a: 8, b: 2, value: 4, total: 4, left: 1 }, 4 * MISS_MULT_MULDIV],
+  it('castigo al escapar: ×5 en la etapa de números, ×6 desde las sumas y ×7 desde las multiplicaciones, para cualquier tipo', () => {
+    const blocks: Partial<Block>[] = [
+      { kind: 'num', value: 4, total: 4, left: 4 },
+      { kind: 'add', a: 2, b: 3, value: 5, total: 5, left: 5 },
+      { kind: 'sub', a: 7, b: 2, value: 5, total: 5, left: 5 },
+      { kind: 'mul', a: 2, b: 3, value: 6, total: 6, left: 6 },
+      { kind: 'div', a: 8, b: 2, value: 4, total: 4, left: 1 },
     ];
-    for (const [over, pen] of cases) {
-      const s = newGame();
-      s.spawnCd = 999;
-      s.timeLeft = 500;
-      putBlock(s, { ...over, life: 0.01 });
-      step(s);
-      expect(s.timeLeft).toBeCloseTo(500 - 1 / 60 - pen);
+    const stages: [number, number][] = [
+      [0, MISS_MULT_NUM_STAGE],
+      [ADD_START - 1, MISS_MULT_NUM_STAGE],
+      [ADD_START + 1, MISS_MULT_ADD_STAGE],
+      [MUL_START - 1, MISS_MULT_ADD_STAGE],
+      [MUL_START + 1, MISS_MULT_MUL_STAGE],
+      [LIFE_STAGE_START + 200, MISS_MULT_MUL_STAGE],
+    ];
+    for (const [played, mult] of stages) {
+      for (const over of blocks) {
+        const s = newGame();
+        s.played = played;
+        s.spawnCd = 999;
+        s.timeLeft = 500;
+        putBlock(s, { ...over, life: 0.01 });
+        step(s);
+        expect(s.timeLeft).toBeCloseTo(500 - 1 / 60 - over.total! * mult);
+      }
     }
   });
 

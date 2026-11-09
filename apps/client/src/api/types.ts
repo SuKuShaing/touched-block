@@ -1,4 +1,4 @@
-/** Tipos de la API (ver apps/api/API.md). */
+/** Tipos de la API (ver docs/api.md). */
 
 export interface UserRef {
   id: string;

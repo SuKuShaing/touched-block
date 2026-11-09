@@ -1,9 +1,9 @@
 import { storage } from '@/platform/storage';
 
 // Las claves cambian cuando cambian las reglas, para no comparar récords incompatibles
-// (tb_best1/tb_hist1 = reglas de legacy/game.js y v1; se dejan como estaban, sin borrarlas).
-export const BEST_KEY = 'tb_best2';
-export const HIST_KEY = 'tb_hist2';
+// (tb_best1/tb_hist1 = reglas de legacy/game.js y v1, tb_best2/tb_hist2 = reglas v2; se dejan como estaban, sin borrarlas).
+export const BEST_KEY = 'tb_best3';
+export const HIST_KEY = 'tb_hist3';
 export const HIST_MAX = 30;
 export const HIST_SHOW = 10;
 

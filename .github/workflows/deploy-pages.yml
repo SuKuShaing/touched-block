@@ -3,8 +3,8 @@ name: Desplegar en GitHub Pages
 on:
   push:
     branches: [main]
-    # la API se despliega aparte (deploy-api.yml, por tag)
-    paths-ignore: ['apps/api/**']
+    # la API se despliega aparte (deploy-api.yml, por tag); los docs no cambian la web
+    paths-ignore: ['apps/api/**', 'deploy/**', 'docs/**']
   workflow_dispatch:
 
 permissions:

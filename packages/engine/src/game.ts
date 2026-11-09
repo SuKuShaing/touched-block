@@ -23,7 +23,7 @@ import {
   maxConcFor,
   maxMulFor,
   maxNumFor,
-  missMultFor,
+  missMultAt,
   spawnCooldown,
   stageLifeFor,
 } from './constants';
@@ -302,9 +302,9 @@ function expire(s: GameState, b: Block) {
     s.events.push({ type: 'trapGone', block: b });
     return;
   }
-  // bloque no completado: resta su resultado ORIGINAL × multiplicador del tipo (aunque tenga toques)
+  // bloque no completado: resta su resultado ORIGINAL × multiplicador de la etapa (aunque tenga toques)
   s.missed++;
-  const penalty = b.total * missMultFor(b.kind);
+  const penalty = b.total * missMultAt(s.played);
   s.timeLeft -= penalty;
   s.events.push({ type: 'expire', block: b, penalty });
   breakCombo(s);

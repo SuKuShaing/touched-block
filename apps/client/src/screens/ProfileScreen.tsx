@@ -12,6 +12,7 @@ import { ConfirmModal } from '@/components/ConfirmModal';
 import { notifyShare } from '@/components/EndPanel';
 import { Hint, SmallButton, TextField } from '@/components/form';
 import { Hearts } from '@/components/Hud';
+import { LegalLinks } from '@/components/LegalLinks';
 import { LoginOptions } from '@/components/LoginOptions';
 import { ProfileIcon } from '@/components/ProfileIcon';
 import { toast } from '@/components/Toast';
@@ -557,6 +558,8 @@ export function ProfileScreen() {
             </View>
           </ProfileSection>
         ) : null}
+
+        <LegalLinks />
       </ScrollView>
 
       <ConfirmModal
