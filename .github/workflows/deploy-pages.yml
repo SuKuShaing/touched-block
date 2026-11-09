@@ -3,6 +3,8 @@ name: Desplegar en GitHub Pages
 on:
   push:
     branches: [main]
+    # la API se despliega aparte (deploy-api.yml, por tag)
+    paths-ignore: ['apps/api/**']
   workflow_dispatch:
 
 permissions:
@@ -24,11 +26,39 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # La versión de pnpm sale de "packageManager" en el package.json raíz.
+      - name: Instalar pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Instalar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      # El cliente importa el motor desde su código fuente (metro.config.js), así que no hace
+      # falta compilarlo para la web; los tests sí se corren antes de publicar.
+      - name: Tests del motor
+        run: pnpm --filter @tb/engine test
+
+      # Cuentas/rankings: se activan definiendo las variables del repositorio (Settings →
+      # Variables → Actions) EXPO_PUBLIC_API_URL y EXPO_PUBLIC_GOOGLE_CLIENT_ID. Sin ellas el
+      # sitio queda solo para invitados (historial local).
+      - name: Exportar la web (Expo)
+        env:
+          EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL }}
+          EXPO_PUBLIC_GOOGLE_CLIENT_ID: ${{ vars.EXPO_PUBLIC_GOOGLE_CLIENT_ID }}
+        run: pnpm --filter @tb/client exec expo export -p web --output-dir dist
+
       - name: Preparar sitio
         run: |
-          mkdir -p _site
-          cp index.html style.css game.js favicon.svg og-image.png _site/
-          touch _site/.nojekyll
+          cd apps/client/dist
+          # SPA en Pages: las rutas como /touched-block/como-jugar caen en 404.html, que es la misma app
+          cp index.html 404.html
+          touch .nojekyll
 
       - name: Configurar Pages
         uses: actions/configure-pages@v5
@@ -36,7 +66,7 @@ jobs:
       - name: Subir artefacto
         uses: actions/upload-pages-artifact@v3
         with:
-          path: _site
+          path: apps/client/dist
 
       - name: Desplegar
         id: deployment

@@ -1,0 +1,9 @@
+{
+  "name": "touched-block",
+  "private": true,
+  "packageManager": "pnpm@12.16.1",
+  "scripts": {
+    "build:engine": "pnpm --filter @tb/engine build",
+    "test": "pnpm -r --if-present test"
+  }
+}

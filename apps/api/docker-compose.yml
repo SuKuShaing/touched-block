@@ -1,0 +1,24 @@
+# Postgres local para desarrollo y tests e2e.
+#   docker compose -f apps/api/docker-compose.yml up -d
+# Crea las bases touched_block (desarrollo) y touched_block_test (e2e).
+name: touched-block
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: tb
+      POSTGRES_PASSWORD: tb
+      POSTGRES_DB: touched_block
+    ports:
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - tb-pg:/var/lib/postgresql/data
+      - ./docker/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tb -d touched_block"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  tb-pg:

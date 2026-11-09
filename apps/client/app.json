@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "Touched Block",
+    "slug": "touched-block",
+    "scheme": "touchedblock",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#12121a",
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "lang": "es"
+    },
+    "experiments": {
+      "baseUrl": "/touched-block",
+      "typedRoutes": true
+    },
+    "plugins": ["expo-router", "expo-status-bar", "expo-font"]
+  }
+}

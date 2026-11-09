@@ -1,0 +1,147 @@
+// Esquema de Touched Block. Las fechas se guardan en UTC.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum RunStatus {
+  started
+  valid
+  rejected
+}
+
+enum PeriodType {
+  week
+  month
+  year
+  all
+}
+
+model User {
+  id               String    @id @default(uuid()) @db.Uuid
+  /// Único; solo [a-z0-9_.], así que ya está en minúsculas (único sin distinguir mayúsculas).
+  username         String    @unique @db.VarChar(20)
+  /// Nombre del proveedor (privado; no se muestra en rankings).
+  displayName      String?   @db.VarChar(100)
+  email            String?   @db.VarChar(320)
+  /// ISO 3166-1 alfa-2 en mayúsculas.
+  country          String?   @db.Char(2)
+  countryChangedAt DateTime?
+  invitedById      String?   @db.Uuid
+  invitedAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  invitedBy     User?          @relation("Invites", fields: [invitedById], references: [id], onDelete: SetNull)
+  invitees      User[]         @relation("Invites")
+  identities    AuthIdentity[]
+  refreshTokens RefreshToken[]
+  runs          Run[]
+  bestScores    BestScore[]
+  following     Follow[]       @relation("Following")
+  followers     Follow[]       @relation("Followers")
+
+  @@index([invitedById])
+}
+
+model AuthIdentity {
+  id        String   @id @default(uuid()) @db.Uuid
+  /// "google" | "apple"
+  provider  String   @db.VarChar(16)
+  subject   String   @db.VarChar(255)
+  userId    String   @db.Uuid
+  email     String?  @db.VarChar(320)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, subject])
+  @@index([userId])
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  /// sha256 (hex) del token opaco.
+  hash      String    @unique @db.Char(64)
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Run {
+  id             String    @id @default(uuid()) @db.Uuid
+  /// null mientras es una partida de invitado sin reclamar.
+  userId         String?   @db.Uuid
+  /// sha256 (hex) del claimToken (solo partidas de invitado).
+  claimTokenHash String?   @db.Char(64)
+  seed           Int
+  rulesVersion   Int
+  maxLives       Int
+  fieldW         Float
+  fieldH         Float
+  status         RunStatus @default(started)
+  killed         Int?
+  missed         Int?
+  ticks          Int?
+  durationMs     Int?
+  /// Toques [tick, x, y][] tal como los envió el cliente.
+  inputs         Json?
+  rejectReason   String?   @db.VarChar(32)
+  startedAt      DateTime  @default(now())
+  finishedAt     DateTime?
+  claimedAt      DateTime?
+
+  user       User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bestScores BestScore[]
+
+  @@index([userId, status, finishedAt(sort: Desc)])
+  @@index([status, startedAt])
+  @@index([startedAt])
+}
+
+model BestScore {
+  userId       String     @db.Uuid
+  /// Se guarda la versión de reglas: al subir RULES_VERSION los rankings parten de cero.
+  rulesVersion Int
+  periodType   PeriodType
+  /// "2026-W45", "2026-11", "2026" o "all" (UTC).
+  periodKey    String     @db.VarChar(8)
+  /// País del usuario, denormalizado (se actualiza al cambiar de país).
+  country      String?    @db.Char(2)
+  killed       Int
+  missed       Int
+  achievedAt   DateTime
+  runId        String     @db.Uuid
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  run  Run  @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@id([userId, rulesVersion, periodType, periodKey])
+  @@index([rulesVersion, periodType, periodKey, killed(sort: Desc), missed, achievedAt])
+  @@index([rulesVersion, periodType, periodKey, country, killed(sort: Desc), missed, achievedAt])
+  @@index([runId])
+}
+
+model Follow {
+  followerId String   @db.Uuid
+  followeeId String   @db.Uuid
+  createdAt  DateTime @default(now())
+
+  follower User @relation("Following", fields: [followerId], references: [id], onDelete: Cascade)
+  followee User @relation("Followers", fields: [followeeId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followeeId])
+  @@index([followeeId])
+}

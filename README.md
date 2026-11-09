@@ -1,57 +1,56 @@
 # Touched Block
 
-Juego táctil para celular, en español: aparecen bloques con un número y hay que tocar cada uno tantas veces como indica ese número antes de que desaparezca. Es de supervivencia contra el reloj, con vidas y bloques trampa camuflados.
+Juego táctil para celular, en español: aparecen bloques con un número o una operación y hay que tocar cada uno tantas veces como su resultado antes de que desaparezca. Es de supervivencia contra el reloj, con vidas, combos, bloques trampa y rankings por país y mundiales.
 
 **Jugar:** https://sukushaing.github.io/touched-block/
 
 ## Cómo se juega
 
-- Toca cada bloque tantas veces como diga su número (un 6 = 6 toques) para destruirlo.
-- El tiempo baja sin parar. Cada bloque que completas **suma** su número en segundos.
-- Si un bloque desaparece sin completarlo, **resta** su número × 5 en segundos (un 3 que se escapa = −15 s), aunque ya le hayas dado algunos toques.
-- Tocar fuera de un bloque (también donde había uno que ya desapareció) quita una vida.
-- Hay **bloques trampa**: se ven igual que los normales, pero su número es rojo. Un solo toque quita 30 s. Si los dejas desaparecer, no pasa nada.
-- La partida termina cuando se acaba el tiempo o las vidas. El récord es la mayor cantidad de bloques destruidos.
+- Toca cada bloque tantas veces como su resultado: un 6 = 6 toques, "2+3" = 5 toques, "8÷2" = 4 toques.
+- El tiempo baja sin parar. Cada bloque que completas **suma** su resultado en segundos.
+- Si un bloque se escapa, **resta** su resultado ×3 (números), ×4 (sumas y restas) o ×5 (multiplicaciones y divisiones), aunque ya le hayas dado algunos toques.
+- Tocar fuera de un bloque quita una vida.
+- **Solo toca números o resultados positivos.** Son trampa los bloques con el texto rojo y las restas que dan 0 o negativo ("3−4"). Un toque a una trampa quita 30 s; si las dejas desaparecer, no pasa nada.
+- **Combos**: 3 bloques seguidos sin errores dan +1 s, 5 dan +2 s, 10 dan +3 s, 15 dan +4 s y 20 dan +5 s; luego el ciclo se repite.
+- La dificultad sube siempre: los números llegan a 10, luego aparecen sumas y restas, después multiplicaciones y divisiones, y al final los bloques duran cada vez menos (4, 3, 2 y 1 s).
+- Puedes jugar como invitado o entrar con Google para aparecer en los rankings. Cada amigo que invitas te da un corazón extra (hasta 8).
 
-### Valores actuales
-
-| Regla | Valor |
-|---|---|
-| Tiempo inicial | 10 s |
-| Vidas | 5 |
-| Vida de cada bloque | 3 a 5 s, al azar (no depende del número) |
-| Bloque completado | + su número en segundos |
-| Bloque escapado | − su número × 5 segundos |
-| Toque fuera de un bloque | −1 vida |
-| Toque a una trampa | −30 s |
-| Trampas | desde los 8 s de juego, 16 % de probabilidad por bloque, máx. 2 a la vez |
-
-La dificultad sube con el tiempo jugado: los números van de 1–3 hasta 1–9, y los bloques simultáneos de 3 hasta 6.
-
-## Ejecutar localmente
-
-No hay build ni dependencias. Basta con abrir `index.html` en el navegador.
-
-Para probar el táctil en el computador, usa la emulación de dispositivo móvil de las DevTools del navegador.
+Las reglas detalladas, con sus valores exactos y el historial de decisiones, están en [`rompe-el-bloque.md`](rompe-el-bloque.md).
 
 ## Estructura
 
-| Archivo | Contenido |
+| Carpeta | Contenido |
 |---|---|
-| `index.html` | Estructura: marcador, barra de tiempo, campo de juego y pantalla de inicio/fin |
-| `style.css` | Todos los estilos |
-| `game.js` | Toda la lógica, en JavaScript clásico sin librerías |
-| `favicon.svg` | Ícono de la pestaña |
-| `og-image.png` | Imagen de vista previa (1200×630) para redes sociales y mensajería |
-| `rompe-el-bloque.md` | Documento de diseño: reglas detalladas, historial de decisiones, riesgos e ideas pendientes |
+| `packages/engine` | Motor del juego en TypeScript, determinista. Todas las reglas y constantes de balance |
+| `apps/client` | La web (Expo Router, lista para convertirse en app Android/iOS) |
+| `apps/api` | Backend NestJS + Prisma + PostgreSQL. Contrato en [`apps/api/API.md`](apps/api/API.md) |
+| `legacy` | El juego original en HTML/CSS/JS (solo referencia) |
 
-Las constantes de balance están al inicio de `game.js` (`START_TIME`, `MAX_LIVES`, `LIFE_MIN`, `LIFE_MAX`, `BOMB_PENALTY`, `BOMB_CHANCE`, `MISS_MULT`). Si las cambias, actualiza también las tablas de `rompe-el-bloque.md` y el texto de la pantalla de inicio en `index.html`.
+## Ejecutar localmente
 
-El récord se guarda en `localStorage` del navegador (clave `tb_best1`). El sonido usa WebAudio y la vibración `navigator.vibrate`; si no están disponibles, el juego sigue funcionando sin ellos.
+Requiere Node 24, pnpm y Docker.
+
+```bash
+pnpm install
+pnpm --filter @tb/engine test          # tests de las reglas
+pnpm --filter @tb/client web           # la web en http://localhost:8081 (modo invitado)
+
+# API (opcional, para cuentas y rankings)
+docker compose -f apps/api/docker-compose.yml up -d --wait
+cp apps/api/.env.example apps/api/.env
+pnpm --filter @tb/engine build
+pnpm --filter @tb/api prisma:deploy
+pnpm --filter @tb/api start:dev        # http://localhost:3000
+```
+
+Para que la web use la API, copia `apps/client/.env.example` a `apps/client/.env.local` y completa las variables.
 
 ## Despliegue
 
-Cada push a `main` publica el sitio en GitHub Pages mediante `.github/workflows/deploy-pages.yml`. El workflow copia `index.html`, `style.css`, `game.js`, `favicon.svg` y `og-image.png`; si agregas archivos nuevos, súmalos al paso "Preparar sitio".
+- **Web**: cada push a `main` publica en GitHub Pages (`.github/workflows/deploy-pages.yml`).
+- **API**: cada tag `vX.Y.Z` construye la imagen Docker, la sube a GHCR y la despliega en Dokploy (`.github/workflows/deploy-api.yml`).
+
+Las variables de entorno de producción viven en Dokploy y en los secretos/variables de GitHub; nunca en el repositorio.
 
 ## Autores
 
