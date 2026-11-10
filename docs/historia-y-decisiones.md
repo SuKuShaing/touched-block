@@ -130,6 +130,12 @@ El usuario preguntó si el backend puede quedar *open source*. Sí:
 - Se agregó una slide propia que explica por qué una resta ≤ 0 es trampa.
 - Se subió `RULES_VERSION` a 3 y las claves locales a `tb_best3`/`tb_hist3`, porque la v2 ya estaba publicada.
 
+### Motor v4: corazón de recuperación (decisión de reglas v9, 10 nov 2026)
+
+- El usuario pidió una forma de ganar vidas. Se le preguntó y eligió: cada racha múltiplo de 25 (25, 50, 75…), solo si falta algún corazón; no afecta la racha (ni al tocarlo ni al perderlo); no ocupa cupo de bloques simultáneos.
+- Dura 1 s (`HEART_LIFE`), un toque. Es un `Block` con `heart: true` (sin tipo nuevo), así el replay de la API lo maneja sin cambios. Eventos nuevos: `heal` y `heartGone`.
+- Se subió `RULES_VERSION` a 4 y las claves locales a `tb_best4`/`tb_hist4`.
+
 ### "¿Quién te invitó?" como buscador (10 nov 2026)
 
 El usuario pidió que no haya que saberse el usuario exacto de quien te invitó: al escribir "S", "Se", "Seb"… se van mostrando los usuarios que calzan, primero los que **empiezan** con lo escrito y después los que lo tienen en **cualquier otra parte**, y un aviso si no hay nadie.

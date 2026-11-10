@@ -7,6 +7,8 @@ import {
   COLORS,
   DIV_CHANCE,
   DT,
+  HEART_COMBO,
+  HEART_LIFE,
   LIFE_MAX,
   LIFE_MIN,
   MIX_WITH_ADD,
@@ -47,6 +49,8 @@ export interface Block {
   trap: boolean;
   /** Trampa roja: se ve igual que un bloque normal, pero con el texto rojo. */
   red: boolean;
+  /** Corazón de recuperación: un toque recupera una vida; no es trampa ni suma tiempo. */
+  heart: boolean;
   /** Segundos de vida restantes. */
   life: number;
   /** Vida inicial (para dibujar la barra). */
@@ -68,6 +72,10 @@ export type GameEvent =
   | { type: 'expire'; block: Block; penalty: number }
   | { type: 'trapGone'; block: Block }
   | { type: 'miss'; x: number; y: number }
+  /** Se tocó el corazón: +1 vida. */
+  | { type: 'heal'; block: Block }
+  /** El corazón se escapó sin tocarlo (sin consecuencias). */
+  | { type: 'heartGone'; block: Block }
   /** Se alcanzó un premio de combo: `streak` destruidos seguidos, +`bonus` s. */
   | { type: 'combo'; streak: number; bonus: number }
   /** Se cortó la racha; `earned` = segundos de combo ganados en ella. */
@@ -254,6 +262,7 @@ function spawn(s: GameState): boolean {
     left: total,
     trap,
     red,
+    heart: false,
     life,
     max: life,
     x: spot.x,
@@ -267,7 +276,43 @@ function spawn(s: GameState): boolean {
   return true;
 }
 
+/** Corazón de recuperación: aparece aparte de los bloques normales (no cuenta para el máximo). */
+function spawnHeart(s: GameState) {
+  const h = blockSizeFor(s.config.fieldW, s.config.fieldH);
+  const spot = findSpot(s, h, h);
+  if (!spot) return; // sin espacio: no aparece
+  const block: Block = {
+    id: s.nextId++,
+    kind: 'num',
+    a: 1,
+    b: 0,
+    label: '♥',
+    value: 1,
+    total: 1,
+    left: 1,
+    trap: false,
+    red: false,
+    heart: true,
+    life: HEART_LIFE,
+    max: HEART_LIFE,
+    x: spot.x,
+    y: spot.y,
+    w: h,
+    h,
+    color: '#ff4d8d',
+  };
+  s.blocks.push(block);
+  s.events.push({ type: 'spawn', block });
+}
+
 function hitBlock(s: GameState, b: Block) {
+  if (b.heart) {
+    // recupera una vida; no suma tiempo ni cuenta para la racha (tampoco la corta)
+    removeBlock(s, b);
+    if (s.lives < s.config.maxLives) s.lives++;
+    s.events.push({ type: 'heal', block: b });
+    return;
+  }
   if (b.trap) {
     // tocar una trampa: −BOMB_PENALTY segundos de inmediato
     s.timeLeft -= BOMB_PENALTY;
@@ -292,11 +337,17 @@ function hitBlock(s: GameState, b: Block) {
       s.comboEarned += bonus;
       s.events.push({ type: 'combo', streak: s.streak, bonus });
     }
+    if (s.streak % HEART_COMBO === 0 && s.lives < s.config.maxLives) spawnHeart(s);
   }
 }
 
 function expire(s: GameState, b: Block) {
   removeBlock(s, b);
+  if (b.heart) {
+    // el corazón que se escapa no cuesta nada
+    s.events.push({ type: 'heartGone', block: b });
+    return;
+  }
   if (b.trap) {
     // la trampa se esfuma sin consecuencias
     s.events.push({ type: 'trapGone', block: b });
@@ -345,7 +396,9 @@ export function step(s: GameState): void {
 
   const maxConc = maxConcFor(s.played);
   s.spawnCd -= DT;
-  if (s.spawnCd <= 0 && s.blocks.length < maxConc) {
+  let normal = 0;
+  for (const b of s.blocks) if (!b.heart) normal++;
+  if (s.spawnCd <= 0 && normal < maxConc) {
     if (spawn(s)) s.spawnCd = spawnCooldown(s.played, nextRandom(s));
     else s.spawnCd = 0.2;
   }

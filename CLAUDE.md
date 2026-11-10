@@ -37,7 +37,7 @@ No hay npm en esta máquina: usar `pnpm`, `pnpm exec` (en vez de npx) y `pnpm dl
 
 ## Reglas importantes al tocar código
 
-- **Las reglas viven solo en el motor.** El cliente dibuja a partir de los eventos (`drainEvents`) y nunca decide reglas; la API valida repitiendo la partida. Si cambias el balance: sube `RULES_VERSION` (los rankings guardan la versión y parten de cero solos) y cambia las claves locales (hoy `tb_best3`/`tb_hist3` → siguiente número), como se ha hecho en cada cambio de reglas.
+- **Las reglas viven solo en el motor.** El cliente dibuja a partir de los eventos (`drainEvents`) y nunca decide reglas; la API valida repitiendo la partida. Si cambias el balance: sube `RULES_VERSION` (los rankings guardan la versión y parten de cero solos) y cambia las claves locales (hoy `tb_best4`/`tb_hist4` → siguiente número), como se ha hecho en cada cambio de reglas.
 - El motor no puede usar `Math.random`, `Date`, ni funciones de `Math` cuyo resultado pueda variar entre motores JS (sin, cos, pow…): el replay del servidor debe dar exactamente lo mismo que el navegador.
 - El texto del onboarding toma los números de las constantes del motor; no escribirlos a mano.
 - Trampas: internamente `trap` (cualquier trampa) y `red` (trampa roja, texto `#ff2a2a`). Las restas con resultado ≤ 0 también son trampa y se ven normales. Si el color de fondo es rojizo (`REDDISH`), una trampa roja usa la paleta `SAFE`.

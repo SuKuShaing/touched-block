@@ -23,7 +23,7 @@ export function playBot(config: GameConfig, opts: { kills?: number; tapEvery?: n
   while (!s.over && s.tick < 60 * 60 * 60) {
     if (cooldown <= 0) {
       if (s.killed < kills) {
-        const target = s.blocks.find((b) => !b.trap && b.life > 0.3);
+        const target = s.blocks.find((b) => !b.trap && !b.heart && b.life > 0.3);
         if (target) {
           const x = target.x + target.w / 2;
           const y = target.y + target.h / 2;

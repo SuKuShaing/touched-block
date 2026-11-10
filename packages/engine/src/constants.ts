@@ -1,7 +1,7 @@
 // Constantes de balance. Si cambias alguna, actualiza también las tablas de
 // docs/reglas-y-balance.md y sube RULES_VERSION (las partidas con otra versión no se
 // comparan en los rankings).
-export const RULES_VERSION = 3;
+export const RULES_VERSION = 4;
 
 export const START_TIME = 10; // segundos iniciales
 export const BASE_LIVES = 5; // vidas de base
@@ -67,6 +67,13 @@ export function comboBonusFor(streak: number): number {
   for (const [at, bonus] of COMBO_REWARDS) if (at === p) return bonus;
   return 0;
 }
+
+// ---- Corazón de recuperación ----
+// Al llegar a una racha múltiplo de HEART_COMBO, si falta alguna vida, aparece un bloque con un
+// corazón que dura HEART_LIFE s. Un toque recupera una vida; si se escapa no pasa nada (ni tiempo
+// ni racha). No cuenta para el máximo de bloques simultáneos.
+export const HEART_COMBO = 25;
+export const HEART_LIFE = 1; // segundos
 
 /** Paso fijo de simulación (s). */
 export const DT = 1 / 60;

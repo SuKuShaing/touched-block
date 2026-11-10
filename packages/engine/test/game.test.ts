@@ -3,6 +3,8 @@ import {
   BOMB_MAX_AT_ONCE,
   BOMB_MIN_PLAYED,
   BOMB_PENALTY,
+  HEART_COMBO,
+  HEART_LIFE,
   BASE_LIVES,
   type Block,
   type GameState,
@@ -45,7 +47,7 @@ function stepUntilBlock(s: GameState, pred: (b: Block) => boolean = () => true):
 
 /** Coloca un bloque controlado en el campo (para probar reglas puntuales). */
 function putBlock(s: GameState, over: Partial<Block> = {}): Block {
-  const b: Block = { id: 9999, kind: 'num', a: 3, b: 0, label: '3', value: 3, total: 3, left: 3, trap: false, red: false, life: 4, max: 4, x: 100, y: 100, w: 80, h: 80, color: '#0091ff', ...over };
+  const b: Block = { id: 9999, kind: 'num', a: 3, b: 0, label: '3', value: 3, total: 3, left: 3, trap: false, red: false, heart: false, life: 4, max: 4, x: 100, y: 100, w: 80, h: 80, color: '#0091ff', ...over };
   s.blocks.push(b);
   return b;
 }
@@ -56,7 +58,7 @@ function playBot(s: GameState, maxTicks = 60 * TICKS_PER_SECOND): TapInput[] {
   let cooldown = 0;
   while (!s.over && s.tick < maxTicks) {
     if (cooldown <= 0) {
-      const target = s.blocks.find((b) => !b.trap && b.life > 0.3);
+      const target = s.blocks.find((b) => !b.trap && !b.heart && b.life > 0.3);
       if (target) {
         const [x, y] = center(target);
         inputs.push([s.tick, x, y]);
@@ -560,5 +562,61 @@ describe('determinismo y replay', () => {
     const res = replay(cfg, [[0, 1, 1], [0, 2, 2], [10, 1, 1]]);
     expect(res.endReason).toBe('vidas');
     expect(res.unusedInputs).toBe(2);
+  });
+});
+
+describe('corazón de recuperación', () => {
+  /** Deja la racha en HEART_COMBO − 1 con un bloque de 1 toque listo para completarla. */
+  function almost(lives: number) {
+    const s = newGame(7);
+    s.lives = lives;
+    s.streak = HEART_COMBO - 1;
+    s.blocks = [];
+    const b = putBlock(s, { total: 1, left: 1, value: 1, label: '1', life: 99, max: 99 });
+    return { s, b };
+  }
+  const heartOf = (s: GameState) => s.blocks.find((x) => x.heart);
+
+  it('aparece al llegar a la racha de 25 si falta una vida, y dura 1 s', () => {
+    const { s, b } = almost(BASE_LIVES - 1);
+    tap(s, ...center(b));
+    const h = heartOf(s)!;
+    expect(h).toBeTruthy();
+    expect(h.life).toBe(HEART_LIFE);
+    expect(h.trap).toBe(false);
+  });
+
+  it('no aparece si las vidas están completas', () => {
+    const { s, b } = almost(BASE_LIVES);
+    tap(s, ...center(b));
+    expect(heartOf(s)).toBeUndefined();
+  });
+
+  it('tocarlo recupera una vida sin tocar tiempo ni racha', () => {
+    const { s, b } = almost(BASE_LIVES - 2);
+    tap(s, ...center(b));
+    const h = heartOf(s)!;
+    const time = s.timeLeft;
+    const streak = s.streak;
+    tap(s, ...center(h));
+    expect(s.lives).toBe(BASE_LIVES - 1);
+    expect(s.timeLeft).toBe(time);
+    expect(s.streak).toBe(streak);
+    expect(heartOf(s)).toBeUndefined();
+    expect(drainEvents(s).some((e) => e.type === 'heal')).toBe(true);
+  });
+
+  it('si se escapa no resta tiempo, ni vida, ni corta la racha', () => {
+    const { s, b } = almost(BASE_LIVES - 1);
+    tap(s, ...center(b));
+    s.blocks = s.blocks.filter((x) => x.heart);
+    const time = s.timeLeft;
+    const streak = s.streak;
+    for (let i = 0; i < 70; i++) step(s); // > 1 s
+    expect(heartOf(s)).toBeUndefined();
+    expect(s.lives).toBe(BASE_LIVES - 1);
+    expect(s.streak).toBe(streak);
+    expect(s.timeLeft).toBeGreaterThan(time - 1.3);
+    expect(s.missed).toBe(0);
   });
 });

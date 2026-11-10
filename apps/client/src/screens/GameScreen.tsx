@@ -117,7 +117,16 @@ export function GameScreen() {
           fx.buzz(250);
           break;
         }
+        case 'heal': {
+          const { cx, cy } = centerOf(ev.block, sx, sy);
+          fxl.add({ kind: 'burst', x: cx, y: cy, color: ev.block.color, count: 20 });
+          fxl.add({ kind: 'float', x: cx, y: cy, text: '+1 ♥' });
+          [660, 880, 1320].forEach((f, i) => setTimeout(() => fx.beep(f, 0.1, 'triangle', 0.07), i * 70));
+          fx.buzz(40);
+          break;
+        }
         case 'expire':
+        case 'heartGone':
         case 'trapGone': {
           const b = ev.block;
           fxl.add({
@@ -297,7 +306,7 @@ export function GameScreen() {
                 w={b.w * sx}
                 h={b.h * sy}
                 // números: toques que faltan; operaciones: su operación (el jugador cuenta de memoria)
-                label={b.kind === 'num' ? String(b.left) : b.label}
+                label={b.heart ? '♥' : b.kind === 'num' ? String(b.left) : b.label}
                 color={b.color}
                 red={b.red}
                 life={b.life / b.max}
