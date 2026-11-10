@@ -16,7 +16,7 @@ Estado al **10 nov 2026**.
 - Los secretos `DOKPLOY_*` ya están en GitHub. El tag `v0.1.0` falló en el paso de Dokploy porque todavía no existían; `v0.1.1` funcionó completo.
 - Google Cloud: la app está "En producción". Los orígenes `https://sukushaing.github.io` y `http://localhost:8081` están autorizados. La verificación de marca sigue pendiente; es opcional con los scopes básicos.
 
-- **Corazón de recuperación (reglas v4)**: publicado el 10 nov 2026 (web y API `v0.2.0`). Falta mencionarlo en el tutorial (slide de vidas/combos).
+- **Corazón de recuperación (reglas v4)**: publicado el 10 nov 2026 (web y API `v0.2.0`). Tiene su slide en el tutorial avanzado.
 
 ## Lo que tiene que hacer el usuario
 

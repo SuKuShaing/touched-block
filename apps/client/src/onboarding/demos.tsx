@@ -1,7 +1,7 @@
 import { useEffect, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
-import { BASE_LIVES, BOMB_PENALTY, COLORS, COMBO_REWARDS, MAX_LIVES_CAP, MISS_MULT_NUM_STAGE, OP_SYMBOL, OP_WIDTH_RATIO } from '@tb/engine';
+import { BASE_LIVES, BOMB_PENALTY, COLORS, COMBO_REWARDS, HEART_LIFE, MAX_LIVES_CAP, MISS_MULT_NUM_STAGE, OP_SYMBOL, OP_WIDTH_RATIO } from '@tb/engine';
 import { Block } from '@/components/Block';
 import { Flash, FxLayer, useFxList, useHurtFx } from '@/components/Fx';
 import { Clock, Hearts, Streak, TimeBar } from '@/components/Hud';
@@ -578,6 +578,47 @@ export function DemoInvite({ w, h, active, reduced }: DemoProps) {
       {reduced ? <StaticFloat x={cx + 10} y={cy + 30} text="+1 ♥" /> : null}
       <FxLayer items={fxl.items} />
       <Text style={styles.capNote}>Máximo {MAX_LIVES_CAP} corazones</Text>
+    </Stage>
+  );
+}
+
+// ------------------------------------------------------------------ corazón de recuperación
+
+const T8 = { period: 3800, spawn: 500, tap: 1100 };
+const CUES8 = { heal: 1100 };
+const HEART_PINK = '#ff4d8d'; // el mismo color que el corazón del motor
+
+export function DemoHeart({ w, h, active, reduced }: DemoProps) {
+  const t = useLoopTime(T8.period, active, reduced ? 1400 : null);
+  const fxl = useFxList();
+  const fh = h - FIELD_TOP;
+  const bx = w / 2 - BS / 2;
+  const by = fh / 2 - BS / 2;
+  const healed = t >= T8.tap;
+  useCues(
+    t,
+    CUES8,
+    () => {
+      fxl.add({ kind: 'burst', x: bx + BS / 2, y: by + BS / 2, color: HEART_PINK, count: 20 });
+      fxl.add({ kind: 'float', x: bx + BS / 2, y: by + BS / 2, text: '+1 ♥' });
+    },
+    active && !reduced,
+  );
+  const shown = t >= T8.spawn && !healed;
+  return (
+    <Stage
+      w={w}
+      h={h}
+      top={
+        <View style={styles.center}>
+          <Hearts lives={healed ? BASE_LIVES : BASE_LIVES - 1} max={BASE_LIVES} size={26} />
+        </View>
+      }
+    >
+      {shown ? <Block x={bx} y={by} w={BS} h={BS} label="♥" color={HEART_PINK} life={1 - (t - T8.spawn) / (HEART_LIFE * 1000)} /> : null}
+      {reduced && healed ? <StaticFloat x={bx + BS / 2} y={by + BS / 2} text="+1 ♥" /> : null}
+      <FxLayer items={fxl.items} />
+      <TapFinger x={bx + BS / 2 + 24} y={by + BS / 2 + 28} tapKey={healed ? 1 : 0} visible={t >= 700 && t < 1500} />
     </Stage>
   );
 }

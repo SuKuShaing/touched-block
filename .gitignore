@@ -8,3 +8,4 @@ web-build/
 .env.*
 !.env.example
 expo-env.d.ts
+.playwright-mcp

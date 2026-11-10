@@ -9,6 +9,8 @@ import {
   BASE_LIVES,
   BOMB_PENALTY,
   COMBO_CYCLE,
+  HEART_COMBO,
+  HEART_LIFE,
   MAX_LIVES_CAP,
   MISS_MULT_ADD_STAGE,
   MISS_MULT_MUL_STAGE,
@@ -23,6 +25,7 @@ import {
   DemoCombo,
   DemoEscape,
   DemoGain,
+  DemoHeart,
   DemoInvite,
   DemoMiss,
   DemoOps,
@@ -139,6 +142,17 @@ const ALL_SLIDES: Slide[] = [
       </>
     ),
     note: `Ojo: las operaciones también pueden tener el texto rojo. Tocar una trampa: −${BOMB_PENALTY} s.`,
+  },
+  {
+    key: 'corazon',
+    level: 'avanzado',
+    Demo: DemoHeart,
+    text: (
+      <>
+        Con una racha de <B>{HEART_COMBO}</B> (y {HEART_COMBO * 2}, {HEART_COMBO * 3}…), si perdiste un corazón aparece un <B>bloque con ♥</B>: tócalo y <B>recuperas una vida</B>.
+      </>
+    ),
+    note: `Dura solo ${HEART_LIFE} s. Si se escapa no pasa nada: no resta tiempo ni corta la racha.`,
   },
   {
     key: 'combos',
