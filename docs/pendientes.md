@@ -4,7 +4,7 @@ Estado al **10 nov 2026**.
 
 ## Estado
 
-- **Web**: GitHub Pages, en modo invitado hasta que existan las variables de GitHub. Incluye las reglas v3, las páginas legales y los dos tutoriales (básico y avanzado).
+- **Web**: GitHub Pages **con cuentas y rankings activos** desde el 10 nov 2026 (variables `EXPO_PUBLIC_API_URL` y `EXPO_PUBLIC_GOOGLE_CLIENT_ID` creadas). Incluye las reglas v3, las páginas legales y los dos tutoriales (básico y avanzado). Se verificó de punta a punta: partida de invitado validada por el servidor, rankings y login real con Google.
 - **Dokploy** (panel `http://vps23906.cubepath.net:3000`, IP 144.225.147.103, Dokploy v0.31.0; ahí también vive el proyecto UltimaType con `ultimatype.xyz`):
   - Proyecto **Touched Block** (`6eSA39oT4nPDO4U034YGw`), entorno `production`.
   - Compose **API**: id `5ZlPmSATtXjdrF-3c-vPs`, appName `touched-block-bz408h`. Fuente Git `https://github.com/SuKuShaing/touched-block.git`, rama `main`, ruta `./deploy/docker-compose.yml`. *Isolated Deployment* activado y *autoDeploy* desactivado (se despliega por tag).
@@ -18,11 +18,9 @@ Estado al **10 nov 2026**.
 
 ## Lo que tiene que hacer el usuario
 
-Pasos detallados en [`despliegue.md`](despliegue.md).
-
-1. Crear la variable de GitHub `EXPO_PUBLIC_API_URL` = `https://vps23906.cubepath.net` y revisar que exista `EXPO_PUBLIC_GOOGLE_CLIENT_ID`. Después, volver a publicar la web (*Actions → Desplegar en GitHub Pages → Run workflow*).
-2. Probar el login real con Google: aún no se ha probado con un Client ID de verdad. Los orígenes ya están autorizados. El error "The given origin is not allowed" que dio `localhost:8081` el 10 nov 2026 debería desaparecer cuando Google propague el cambio.
-3. Seguridad: el panel de Dokploy va por HTTP, así que el token viaja sin cifrar. Conviene darle al panel un dominio con HTTPS.
+1. Seguridad: el panel de Dokploy va por HTTP, así que el token viaja sin cifrar. Conviene darle al panel un dominio con HTTPS.
+2. Opcional: pedir la verificación de marca en Google Cloud (Centro de verificación), para que el login muestre el nombre y el logo de la app.
+3. Opcional: mover la API a un subdominio propio (ver arriba).
 
 ## Riesgos conocidos
 

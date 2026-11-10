@@ -110,6 +110,12 @@ Ahora un bot que toca 10 veces por segundo pierde a los ~8–9 min. Detalle en `
   - Sin puertos publicados.
 - Detalle en [`despliegue.md`](despliegue.md).
 
+### Primera prueba en producción (10 nov 2026)
+
+- **Conexión en frío.** El cliente esperaba a lo más 1,5 s la semilla de `POST /runs` antes de empezar con una local. En frío (DNS + TLS + *preflight* de CORS) la primera llamada tardaba ~1,5 s, así que la primera partida quedaba "Sin conexión con el servidor"; con la conexión abierta tarda ~0,15 s. Se agregó `warmConnection()` (`GET /health` al abrir la web y al volver al inicio, como máximo una vez por minuto) y la espera máxima pasó a 3 s (`START_WAIT_MS`).
+- **Borde blanco del botón de Google.** La página declara `color-scheme: dark` y el iframe de Google es claro; cuando no coinciden, el navegador pinta un fondo blanco opaco detrás del iframe. Se arregla con `color-scheme: light` en el contenedor del botón (`platform/auth.web.ts`).
+- **Verificado de punta a punta en producción:** partida de invitado con semilla del servidor, 25 bloques validados por *replay* (`valid: true`, reclamable), rankings y login real con Google (el usuario ya aparece en el ranking mundial).
+
 ### Repositorio público
 
 El usuario preguntó si el backend puede quedar *open source*. Sí:

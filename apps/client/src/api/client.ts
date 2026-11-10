@@ -162,6 +162,28 @@ export async function api<T>(method: string, path: string, opts: RequestOpts = {
 
 /** Calienta la sesión (renueva el access token si venció) sin lanzar errores. */
 export function warmSession() {
+  warmConnection();
   if (!config.apiUrl || session.get().status !== 'authed' || session.accessToken()) return;
   refreshSession().catch(() => {});
+}
+
+/** Cada cuánto se vuelve a abrir la conexión con la API (los navegadores cierran las inactivas). */
+const WARM_EVERY_MS = 60_000;
+let lastWarm = 0;
+
+/**
+ * Abre de antemano la conexión con la API (DNS + TCP + TLS) con un GET /health sin cabeceras
+ * extra (no necesita preflight de CORS). En frío, el primer POST /runs tardaba ~1,5 s y la
+ * partida empezaba sin semilla del servidor; con la conexión abierta tarda ~0,15 s.
+ */
+export function warmConnection() {
+  if (!config.apiUrl) return;
+  const now = Date.now();
+  if (now - lastWarm < WARM_EVERY_MS) return;
+  lastWarm = now;
+  try {
+    fetch(config.apiUrl + '/health', { method: 'GET', cache: 'no-store' }).catch(() => {});
+  } catch {
+    // sin red: la partida igual empieza con semilla local
+  }
 }

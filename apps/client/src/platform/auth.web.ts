@@ -68,6 +68,9 @@ export const auth: Auth = {
         try {
           ensureInit(gis);
           el.innerHTML = '';
+          // La página es color-scheme: dark y el iframe de Google es claro: si no coinciden, el
+          // navegador pinta un fondo blanco opaco detrás del iframe (el "borde blanco" del botón).
+          el.style.colorScheme = 'light';
           gis.renderButton(el, {
             type: 'standard',
             theme: 'filled_black',

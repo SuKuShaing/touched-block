@@ -5,7 +5,7 @@ import { features } from '@/config';
 import type { GameResult } from './types';
 
 /** Máximo que se espera a POST /runs antes de empezar con una semilla local. */
-export const START_WAIT_MS = 1500;
+export const START_WAIT_MS = 3000;
 
 /** Cómo se juega la partida: con una semilla del servidor (puede entrar al ranking) o local. */
 export type RunMode =
