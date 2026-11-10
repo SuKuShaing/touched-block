@@ -9,26 +9,20 @@ Estado al **10 nov 2026**.
   - Proyecto **Touched Block** (`6eSA39oT4nPDO4U034YGw`), entorno `production`.
   - Compose **API**: id `5ZlPmSATtXjdrF-3c-vPs`, appName `touched-block-bz408h`. Fuente Git `https://github.com/SuKuShaing/touched-block.git`, rama `main`, ruta `./deploy/docker-compose.yml`. *Isolated Deployment* activado y *autoDeploy* desactivado (se despliega por tag).
   - Las variables de `deploy/.env` están cargadas.
-  - **Desplegado el 10 nov 2026** (v0.1.0): `api` y `tb-db` están *healthy*, las migraciones se aplicaron y la API escucha en el puerto 3000. **Todavía no tiene dominio**, así que no se puede llamar desde fuera.
+  - **API en producción: `https://vps23906.cubepath.net`** (hostname del VPS que da el proveedor). Certificado Let's Encrypt vigente hasta el 8 feb 2027, con renovación automática por Traefik. `/health` responde `rulesVersion: 3`, versión `v0.1.1`. CORS solo acepta `https://sukushaing.github.io`.
+  - Se despliega solo con cada tag: `v0.1.1` (10 nov 2026) corrió completo, tests → GHCR → Dokploy.
+  - Usar el hostname del VPS es provisorio. Si se cambia de VPS, o se le da HTTPS al panel de Dokploy en ese mismo host, hay que mover la API a un subdominio propio: cambiar el dominio en Dokploy y `EXPO_PUBLIC_API_URL`, y volver a publicar la web.
 - **GHCR**: la imagen `ghcr.io/sukushaing/touched-block-api` (`v0.1.0` y `latest`) es pública.
-- **Workflow del tag v0.1.0**: los tests y la imagen salieron bien, pero falló el paso "Desplegar en Dokploy". Probablemente faltan los secretos `DOKPLOY_*` en GitHub o están mal. El despliegue se hizo a mano con el MCP de Dokploy.
+- Los secretos `DOKPLOY_*` ya están en GitHub. El tag `v0.1.0` falló en el paso de Dokploy porque todavía no existían; `v0.1.1` funcionó completo.
+- Google Cloud: la app está "En producción". Los orígenes `https://sukushaing.github.io` y `http://localhost:8081` están autorizados. La verificación de marca sigue pendiente; es opcional con los scopes básicos.
 
 ## Lo que tiene que hacer el usuario
 
 Pasos detallados en [`despliegue.md`](despliegue.md).
 
-1. Elegir el dominio de la API y agregarlo en Dokploy (Compose API → Domains): servicio `api`, puerto 3000, HTTPS con Let's Encrypt. Opciones:
-   - `vps23906.cubepath.net`: ya apunta al VPS.
-   - Un subdominio propio, por ejemplo `api.ultimatype.xyz`, con un registro A en Cloudflare.
-2. Revisar los secretos de GitHub:
-   - `DOKPLOY_URL` = `http://vps23906.cubepath.net:3000`
-   - `DOKPLOY_API_KEY`
-   - `DOKPLOY_COMPOSE_ID` = `5ZlPmSATtXjdrF-3c-vPs`
-   - Y la variable `EXPO_PUBLIC_GOOGLE_CLIENT_ID`.
-3. Crear la variable `EXPO_PUBLIC_API_URL` = `https://<dominio de la API>` y volver a publicar la web.
-4. En Google Cloud, pasar la app a **producción** y poner las URLs legales con `/` final.
-5. Probar el login real con Google: aún no se ha probado con un Client ID de verdad. En Google Cloud falta `http://localhost:8081` como origen autorizado: Google lo rechaza con "The given origin is not allowed" (visto el 10 nov 2026). Revisar también que esté `https://sukushaing.github.io`.
-6. Seguridad: el panel de Dokploy va por HTTP, así que el token viaja sin cifrar. Conviene darle al panel un dominio con HTTPS.
+1. Crear la variable de GitHub `EXPO_PUBLIC_API_URL` = `https://vps23906.cubepath.net` y revisar que exista `EXPO_PUBLIC_GOOGLE_CLIENT_ID`. Después, volver a publicar la web (*Actions → Desplegar en GitHub Pages → Run workflow*).
+2. Probar el login real con Google: aún no se ha probado con un Client ID de verdad. Los orígenes ya están autorizados. El error "The given origin is not allowed" que dio `localhost:8081` el 10 nov 2026 debería desaparecer cuando Google propague el cambio.
+3. Seguridad: el panel de Dokploy va por HTTP, así que el token viaja sin cifrar. Conviene darle al panel un dominio con HTTPS.
 
 ## Riesgos conocidos
 
