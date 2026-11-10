@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { type ComponentType, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
@@ -17,7 +17,7 @@ import {
 } from '@tb/engine';
 import { MainButton } from '@/components/ui';
 import { features } from '@/config';
-import { markOnboardingSeen, requestStart } from '@/lib/onboarding';
+import { type OnbLevel, markOnboardingSeen, parseLevel, requestStart } from '@/lib/onboarding';
 import { C } from '@/theme';
 import {
   DemoCombo,
@@ -49,12 +49,15 @@ interface Slide {
   note?: ReactNode;
   /** Solo con cuentas (features.accounts). */
   accounts?: boolean;
+  /** Tutorial en que aparece: el básico (dinámica del juego) o el avanzado (operaciones). */
+  level: OnbLevel;
 }
 
 // Los números salen de las constantes del motor: si cambia el balance, el texto se actualiza solo.
 const ALL_SLIDES: Slide[] = [
   {
     key: 'tocar',
+    level: 'basico',
     Demo: DemoTap,
     text: (
       <>
@@ -64,6 +67,7 @@ const ALL_SLIDES: Slide[] = [
   },
   {
     key: 'tiempo',
+    level: 'basico',
     Demo: DemoGain,
     text: (
       <>
@@ -73,6 +77,7 @@ const ALL_SLIDES: Slide[] = [
   },
   {
     key: 'escapa',
+    level: 'basico',
     Demo: DemoEscape,
     text: (
       <>
@@ -83,6 +88,7 @@ const ALL_SLIDES: Slide[] = [
   },
   {
     key: 'vidas',
+    level: 'basico',
     Demo: DemoMiss,
     text: (
       <>
@@ -92,6 +98,7 @@ const ALL_SLIDES: Slide[] = [
   },
   {
     key: 'trampas',
+    level: 'basico',
     Demo: DemoTrap,
     text: (
       <>
@@ -102,6 +109,7 @@ const ALL_SLIDES: Slide[] = [
   },
   {
     key: 'operaciones',
+    level: 'avanzado',
     Demo: DemoOps,
     text: (
       <>
@@ -112,6 +120,7 @@ const ALL_SLIDES: Slide[] = [
   },
   {
     key: 'restas',
+    level: 'avanzado',
     Demo: DemoZero,
     text: (
       <>
@@ -122,6 +131,7 @@ const ALL_SLIDES: Slide[] = [
   },
   {
     key: 'positivos',
+    level: 'avanzado',
     Demo: DemoPositive,
     text: (
       <>
@@ -132,6 +142,7 @@ const ALL_SLIDES: Slide[] = [
   },
   {
     key: 'combos',
+    level: 'basico',
     Demo: DemoCombo,
     text: (
       <>
@@ -142,6 +153,7 @@ const ALL_SLIDES: Slide[] = [
   },
   {
     key: 'invitar',
+    level: 'basico',
     accounts: true,
     Demo: DemoInvite,
     text: (
@@ -152,6 +164,7 @@ const ALL_SLIDES: Slide[] = [
   },
   {
     key: 'ranking',
+    level: 'basico',
     accounts: true,
     Demo: DemoRanking,
     text: (
@@ -165,15 +178,17 @@ const ALL_SLIDES: Slide[] = [
 const SPRING = { duration: 280, easing: Easing.out(Easing.cubic) };
 
 /**
- * Onboarding ("¿Cómo se juega?"): carrusel deslizable de slides animadas. Se abre solo en la
- * primera visita (marca tb_onb1) y se puede repetir desde el perfil.
+ * Onboarding ("¿Cómo se juega?"): carrusel deslizable de slides animadas. Hay dos niveles
+ * (parámetro ?nivel=basico|avanzado): el básico se abre solo en la 1.ª visita y el avanzado en la
+ * 3.ª (ver lib/onboarding.ts). Los dos se pueden repetir desde el perfil.
  */
 export function Onboarding() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const reduced = useReducedMotion();
   const { width, height } = useWindowDimensions();
-  const slides = useMemo(() => ALL_SLIDES.filter((s) => !s.accounts || features.accounts), []);
+  const level = parseLevel(useLocalSearchParams<{ nivel?: string }>().nivel);
+  const slides = useMemo(() => ALL_SLIDES.filter((s) => s.level === level && (!s.accounts || features.accounts)), [level]);
   const last = slides.length - 1;
 
   const W = Math.min(width, 520);
@@ -185,7 +200,7 @@ export function Onboarding() {
   const pos = useSharedValue(0);
 
   // Basta con verla una vez (o saltarla) para que no se vuelva a abrir sola.
-  useEffect(() => markOnboardingSeen(), []);
+  useEffect(() => markOnboardingSeen(level), [level]);
 
   const goTo = useCallback(
     (i: number) => {
@@ -257,7 +272,7 @@ export function Onboarding() {
     <View style={[styles.screen, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <View style={[styles.col, { width: W }]}>
         <View style={styles.top}>
-          <Text style={styles.kicker}>¿Cómo se juega?</Text>
+          <Text style={styles.kicker}>{level === 'avanzado' ? 'Nivel avanzado' : '¿Cómo se juega?'}</Text>
           {index < last ? (
             <Pressable accessibilityRole="button" hitSlop={10} onPress={close} style={styles.skip}>
               <Text style={styles.skipT}>Saltar</Text>

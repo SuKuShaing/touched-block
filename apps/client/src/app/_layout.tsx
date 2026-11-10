@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ApiError, warmSession } from '@/api/client';
 import { ToastHost } from '@/components/Toast';
+import { startVisitTracking } from '@/lib/onboarding';
 import { features } from '@/config';
 import { C } from '@/theme';
 
@@ -29,6 +30,9 @@ export default function RootLayout() {
   useEffect(() => {
     if (features.accounts) warmSession();
   }, []);
+
+  // Cuenta las visitas de este dispositivo (deciden cuándo se abre cada tutorial).
+  useEffect(() => startVisitTracking(), []);
 
   return (
     <QueryClientProvider client={qc}>

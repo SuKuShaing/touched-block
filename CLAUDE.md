@@ -50,4 +50,4 @@ No hay npm en esta máquina: usar `pnpm`, `pnpm exec` (en vez de npx) y `pnpm dl
 - Quiere un juego difícil y tenso; las trampas deben ser sutiles. Ajusta los números a mano mientras juega.
 - La vida de un bloque **no** debe depender de su número ni de su operación (decisión explícita); solo del tiempo jugado (etapa final 4→1 s). Consultar antes de cambiarlo.
 - Todo texto visible va en español, salvo el nombre del juego, "Touched Block", que va en inglés.
-- El tutorial (onboarding) aparece solo la primera vez en cada dispositivo; se repite únicamente desde el botón del Perfil.
+- Hay dos tutoriales (`?nivel=basico|avanzado` en `/como-jugar`). El **básico** (tocar, tiempo, escapes, vidas, trampas rojas, combos, + invitar/ranking) se abre solo en la **1.ª visita** del dispositivo; en la **2.ª** se va directo a jugar; el **avanzado** (operaciones, restas ≤ 0, solo positivos) se abre solo en la **3.ª**. Una visita nueva = volver después de 30 min sin actividad (recargar no cuenta). Los dos se repiten únicamente desde los botones del Perfil. Lógica en `apps/client/src/lib/onboarding.ts`.

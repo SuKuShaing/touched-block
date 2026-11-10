@@ -1,3 +1,5 @@
+![Touched Block](apps/client/public/og-image.png)
+
 # Touched Block
 
 Juego táctil para celular, en español: aparecen bloques con un número o una operación y hay que tocar cada uno tantas veces como su resultado antes de que desaparezca. Es de supervivencia contra el reloj, con vidas, combos, bloques trampa y rankings por país y mundiales.

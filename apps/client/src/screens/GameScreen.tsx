@@ -1,4 +1,4 @@
-import { useFocusEffect, useRootNavigationState, useRouter } from 'expo-router';
+import { useFocusEffect, useNavigation, useRootNavigationState, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { type HostInstance, type LayoutChangeEvent, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -18,7 +18,7 @@ import type { GameResult } from '@/game/types';
 import { prepareRun, submitRun } from '@/game/rankedRun';
 import { useGameRunner } from '@/game/useGameRunner';
 import { type HistEntry, loadBest, loadHist, recordRun } from '@/lib/history';
-import { consumeStartRequest, onboardingSeen } from '@/lib/onboarding';
+import { consumeStartRequest, dueOnboarding, onNewVisit } from '@/lib/onboarding';
 import { setPlaying } from '@/lib/playing';
 import { useTabBarSpace } from '@/lib/tabBar';
 import { fx } from '@/platform/fx';
@@ -244,12 +244,21 @@ export function GameScreen() {
   }, [runner.playing, starting]);
   useEffect(() => () => setPlaying(false), []);
 
-  // Primera visita en este dispositivo: el onboarding se abre solo (una única vez).
+  // Tutoriales automáticos: el básico en la 1.ª visita y el avanzado en la 3.ª (lib/onboarding.ts).
+  const navigation = useNavigation();
+  const openDueOnboarding = useCallback(() => {
+    // nunca encima de otra pantalla ni en medio de una partida
+    if (!navigation.isFocused() || runnerRef.current.playing || startingRef.current) return;
+    const level = dueOnboarding();
+    if (level) router.push({ pathname: '/como-jugar', params: { nivel: level } });
+  }, [router, navigation]);
   useEffect(() => {
     if (!rootNav?.key) return;
-    if (!onboardingSeen()) router.push('/como-jugar');
+    openDueOnboarding();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rootNav?.key]);
+  // volver a una pestaña que quedó abierta también puede ser una visita nueva
+  useEffect(() => onNewVisit(openDueOnboarding), [openDueOnboarding]);
 
   // "¡Jugar!" en la última slide del onboarding vuelve aquí y empieza la partida.
   useFocusEffect(

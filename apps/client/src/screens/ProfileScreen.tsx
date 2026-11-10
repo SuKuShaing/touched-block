@@ -547,7 +547,8 @@ export function ProfileScreen() {
         </ProfileSection>
 
         <ProfileSection title="Ayuda">
-          <GhostButton title="Ver tutorial de nuevo" onPress={() => router.push('/como-jugar')} />
+          <GhostButton title="Tutorial básico" onPress={() => router.push({ pathname: '/como-jugar', params: { nivel: 'basico' } })} />
+          <GhostButton title="Tutorial avanzado" onPress={() => router.push({ pathname: '/como-jugar', params: { nivel: 'avanzado' } })} />
         </ProfileSection>
 
         {features.accounts && viewer.loggedIn ? (

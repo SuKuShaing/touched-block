@@ -45,7 +45,7 @@ docs/                           esta documentación
 | `/` | `(tabs)/index.tsx`: inicio y juego |
 | `/rankings` | `(tabs)/rankings.tsx` |
 | `/perfil` | `(tabs)/perfil.tsx` |
-| `/como-jugar` | `como-jugar.tsx`: onboarding |
+| `/como-jugar?nivel=basico|avanzado` | `como-jugar.tsx`: onboarding (básico o avanzado) |
 | `/u/[username]` | `u/[username].tsx`: perfil público |
 
 - Las pestañas solo aparecen con cuentas activadas.
@@ -69,7 +69,8 @@ docs/                           esta documentación
 | Clave | Contenido |
 |---|---|
 | `tb_best3` / `tb_hist3` | Récord e historial (últimas 30) de las reglas v3. Las claves anteriores (`tb_best1/2`, `tb_hist1/2`) no se borran |
-| `tb_onb1` | Ya vio el tutorial |
+| `tb_onb1` / `tb_onb_adv1` | Ya vio el tutorial básico / el avanzado (`tb_onb1` era el del tutorial único de antes; cuenta como básico) |
+| `tb_visits1` / `tb_last1` | Visitas del dispositivo y última actividad (ms). Deciden cuándo se abre cada tutorial |
 | `tb_rt1` | El *refresh token* (el de acceso solo vive en memoria) |
 | `tb_me1` | Copia en caché del perfil propio |
 
