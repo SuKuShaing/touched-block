@@ -20,6 +20,7 @@ import { GhostButton, RecordPill } from '@/components/ui';
 import { features } from '@/config';
 import { countryName, flag, sortedCountries } from '@/lib/countries';
 import { loadBest, loadHist } from '@/lib/history';
+import { replayView } from '@/lib/onboarding';
 import { SITE_URL, inviteText } from '@/lib/shareText';
 import { useTabBarSpace } from '@/lib/tabBar';
 import { share } from '@/platform/share';
@@ -547,8 +548,8 @@ export function ProfileScreen() {
         </ProfileSection>
 
         <ProfileSection title="Ayuda">
-          <GhostButton title="Tutorial básico" onPress={() => router.push({ pathname: '/como-jugar', params: { nivel: 'basico' } })} />
-          <GhostButton title="Tutorial avanzado" onPress={() => router.push({ pathname: '/como-jugar', params: { nivel: 'avanzado' } })} />
+          {/* si ya vio los dos tutoriales, repasa el completo (básico y luego avanzado); si no, el básico */}
+          <GhostButton title="Ver tutorial de nuevo" onPress={() => router.push({ pathname: '/como-jugar', params: { nivel: replayView() } })} />
         </ProfileSection>
 
         {features.accounts && viewer.loggedIn ? (

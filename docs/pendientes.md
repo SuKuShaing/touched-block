@@ -27,7 +27,7 @@ Pasos detallados en [`despliegue.md`](despliegue.md).
    - Y la variable `EXPO_PUBLIC_GOOGLE_CLIENT_ID`.
 3. Crear la variable `EXPO_PUBLIC_API_URL` = `https://<dominio de la API>` y volver a publicar la web.
 4. En Google Cloud, pasar la app a **producción** y poner las URLs legales con `/` final.
-5. Probar el login real con Google: aún no se ha probado con un Client ID de verdad.
+5. Probar el login real con Google: aún no se ha probado con un Client ID de verdad. En Google Cloud falta `http://localhost:8081` como origen autorizado: Google lo rechaza con "The given origin is not allowed" (visto el 10 nov 2026). Revisar también que esté `https://sukushaing.github.io`.
 6. Seguridad: el panel de Dokploy va por HTTP, así que el token viaja sin cifrar. Conviene darle al panel un dominio con HTTPS.
 
 ## Riesgos conocidos

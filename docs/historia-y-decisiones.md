@@ -80,7 +80,8 @@ Autores: José Pinilla y Sebastián Sanhueza (el usuario con quien se trabaja en
 **Onboarding** (pedido del usuario al revisar el plan).
 - Una slide por característica, con una animación que muestra lo que dice el texto. Usa los mismos componentes del juego para que se vea idéntico.
 - Aparece **solo la primera vez en cada dispositivo** (`tb_onb1`). Se repite **únicamente** desde el Perfil, no desde el inicio.
-- **Cambio (10 nov 2026): dos tutoriales.** El usuario sintió que era mucha información de una vez. El **básico** (slides 1–5 y combos, + invitar/ranking con cuentas) explica la dinámica y se abre en la 1.ª visita; en la 2.ª se va directo a jugar; el **avanzado** (operaciones, restas ≤ 0, solo positivos) se abre en la 3.ª. Una visita nueva = volver tras 30 min sin actividad, contado también al volver a una pestaña que quedó abierta (`visibilitychange`); recargar no cuenta. Nunca se abre en medio de una partida. El Perfil tiene un botón para cada uno.
+- **Cambio (10 nov 2026): dos tutoriales.** El usuario sintió que era mucha información de una vez. El **básico** (slides 1–5 y combos, + invitar/ranking con cuentas) explica la dinámica y se abre en la 1.ª visita; en la 2.ª se va directo a jugar; el **avanzado** (operaciones, restas ≤ 0, solo positivos) se abre en la 3.ª. Una visita nueva = volver tras 30 min sin actividad, contado también al volver a una pestaña que quedó abierta (`visibilitychange`); recargar no cuenta. Nunca se abre en medio de una partida.
+- En el Perfil, "Ver tutorial de nuevo" muestra el básico; si ya vio los dos, muestra el **completo** (básico y después avanzado, `?nivel=completo`), pedido del usuario el 10 nov 2026.
 - Los números del texto salen de las constantes del motor.
 - Con movimiento reducido se muestra un cuadro fijo.
 

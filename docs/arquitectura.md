@@ -45,7 +45,7 @@ docs/                           esta documentación
 | `/` | `(tabs)/index.tsx`: inicio y juego |
 | `/rankings` | `(tabs)/rankings.tsx` |
 | `/perfil` | `(tabs)/perfil.tsx` |
-| `/como-jugar?nivel=basico|avanzado` | `como-jugar.tsx`: onboarding (básico o avanzado) |
+| `/como-jugar?nivel=basico|avanzado|completo` | `como-jugar.tsx`: onboarding (básico, avanzado o los dos seguidos) |
 | `/u/[username]` | `u/[username].tsx`: perfil público |
 
 - Las pestañas solo aparecen con cuentas activadas.

@@ -5,9 +5,12 @@ import { storage } from '@/platform/storage';
  * Hay dos tutoriales:
  * - básico: la dinámica del juego. Se abre solo en la 1.ª visita al dispositivo.
  * - avanzado: operaciones, restas ≤ 0 y "solo positivos". Se abre solo en la 3.ª visita.
- * En la 2.ª visita no se abre nada: se va directo a jugar. Los dos se repiten desde el Perfil.
+ * En la 2.ª visita no se abre nada: se va directo a jugar. Desde el Perfil se repite el básico o,
+ * si ya vio los dos, el completo (básico y después avanzado).
  */
 export type OnbLevel = 'basico' | 'avanzado';
+/** Lo que muestra /como-jugar: un nivel, o el completo (básico y luego avanzado) para repasar. */
+export type OnbView = OnbLevel | 'completo';
 
 /** Marcas de "ya lo vio". tb_onb1 era la del tutorial único de antes; ahora es la del básico. */
 const SEEN_KEY: Record<OnbLevel, string> = { basico: 'tb_onb1', avanzado: 'tb_onb_adv1' };
@@ -23,7 +26,16 @@ export const NEW_VISIT_GAP_MS = 30 * 60 * 1000;
 export const onboardingSeen = (level: OnbLevel) => storage.get(SEEN_KEY[level]) === '1';
 export const markOnboardingSeen = (level: OnbLevel) => storage.set(SEEN_KEY[level], '1');
 
-export const parseLevel = (v: unknown): OnbLevel => (v === 'avanzado' ? 'avanzado' : 'basico');
+export const parseView = (v: unknown): OnbView => (v === 'avanzado' || v === 'completo' ? v : 'basico');
+
+/** Marca como vistos los niveles que incluye lo que se mostró. */
+export function markViewSeen(view: OnbView) {
+  if (view !== 'avanzado') markOnboardingSeen('basico');
+  if (view !== 'basico') markOnboardingSeen('avanzado');
+}
+
+/** Qué repasa el botón "Ver tutorial de nuevo" del Perfil: el completo si ya vio los dos; si no, el básico. */
+export const replayView = (): OnbView => (onboardingSeen('basico') && onboardingSeen('avanzado') ? 'completo' : 'basico');
 
 function readInt(key: string): number {
   const n = Number(storage.get(key));
