@@ -248,7 +248,7 @@ Ambos campos son opcionales. Enviar el mismo valor que ya tiene no hace nada.
 
 ### `GET /users/search?q=pe` (sesión opcional)
 
-Busca por prefijo del nombre de usuario. Devuelve hasta 20 resultados, en orden alfabético.
+Busca el texto en **cualquier parte** del nombre de usuario. Antes de comparar, `q` se pasa a minúsculas, se le quitan las tildes y se deja solo con letras y números; del usuario se ignoran los puntos y guiones bajos (`"Sebastián S"` encuentra a `sebastian.sanhueza`). Devuelve hasta 20 resultados: primero los que **empiezan** con el texto y después el resto, cada grupo en orden alfabético.
 
 `200`:
 
@@ -256,7 +256,7 @@ Busca por prefijo del nombre de usuario. Devuelve hasta 20 resultados, en orden 
 { "users": [{ "id": "…", "username": "pepa", "country": "CL", "isFollowing": true }] }
 ```
 
-`isFollowing` solo viene con sesión. Si `q` queda vacío después de normalizarlo, responde `{ "users": [] }`.
+`isFollowing` solo viene con sesión. Si `q` queda vacío después de normalizarlo, o nadie calza, responde `{ "users": [] }`.
 
 ### `GET /users/:username` (sesión opcional; perfil público)
 

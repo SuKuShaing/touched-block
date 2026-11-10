@@ -32,6 +32,19 @@ export function normalizeUsername(raw: unknown): string {
   return raw.trim().replace(/^@/, '').toLowerCase();
 }
 
+/**
+ * Clave de búsqueda: sin tildes, en minúsculas y solo con letras y números (sin espacios,
+ * puntos ni guiones bajos). Así "Sebastián S" encuentra a "sebastian.sanhueza".
+ */
+export function searchKey(raw: unknown): string {
+  if (typeof raw !== 'string') return '';
+  return raw
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+}
+
 /** Devuelve el problema (en español) de un nombre ya normalizado, o null si es válido. */
 export function usernameProblem(u: string): string | null {
   if (u.length < USERNAME_MIN || u.length > USERNAME_MAX) {

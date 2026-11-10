@@ -23,6 +23,7 @@ import { loadBest, loadHist } from '@/lib/history';
 import { replayView } from '@/lib/onboarding';
 import { SITE_URL, inviteText } from '@/lib/shareText';
 import { useTabBarSpace } from '@/lib/tabBar';
+import { SEARCH_LIMIT, matchRange, searchKey } from '@/lib/userSearch';
 import { share } from '@/platform/share';
 import { C } from '@/theme';
 
@@ -219,22 +220,72 @@ function CountryPicker({ me }: { me: Me }) {
 
 // ---------------------------------------------------------------- quién te invitó
 
+/** "@usuario" con la parte que calza con la búsqueda resaltada. */
+function MatchedName({ username, query }: { username: string; query: string }) {
+  const r = matchRange(username, query);
+  if (!r) return <>@{username}</>;
+  return (
+    <>
+      @{username.slice(0, r[0])}
+      <Text style={styles.match}>{username.slice(r[0], r[1])}</Text>
+      {username.slice(r[1])}
+    </>
+  );
+}
+
+/**
+ * Búsqueda en vivo (con debounce) contra GET /users/search: el texto puede calzar en
+ * cualquier parte del usuario y la API pone primero los que empiezan con él.
+ * `results` es null mientras no hay nada escrito.
+ */
+function useUserSearch(text: string, excludeId: string) {
+  const key = searchKey(text);
+  const deb = useDebounced(key, 250);
+  const [state, setState] = useState<{ key: string; users: SearchUser[]; full: boolean } | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!deb) {
+      setState(null);
+      setErr(null);
+      return;
+    }
+    const ctrl = new AbortController();
+    searchUsers(deb, ctrl.signal).then(
+      (r) => {
+        setState({ key: deb, users: r.users.filter((u) => u.id !== excludeId), full: r.users.length >= SEARCH_LIMIT });
+        setErr(null);
+      },
+      (e: unknown) => !ctrl.signal.aborted && setErr(errorMessage(e)),
+    );
+    return () => ctrl.abort();
+  }, [deb, excludeId]);
+
+  const results = key && state ? state.users : null;
+  // buscando: lo escrito todavía no tiene respuesta
+  const pending = !!key && !err && state?.key !== key;
+  const setResults = (fn: (us: SearchUser[]) => SearchUser[]) => setState((s) => (s ? { ...s, users: fn(s.users) } : s));
+  return { key, results, pending, err, setResults, more: !!state?.full };
+}
+
 function InviterEditor({ me }: { me: Me }) {
   const router = useRouter();
   const [value, setValue] = useState('');
+  const [picked, setPicked] = useState<SearchUser | null>(null);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
   const invalidate = useInvalidate();
+  const search = useUserSearch(value, me.id);
 
   const save = async () => {
-    const u = normUsername(value);
-    if (!u) return;
+    if (!picked) return;
     setSaving(true);
     setErr(null);
     try {
-      const r = await setInviter(u);
+      const r = await setInviter(picked.username);
       setDone(`¡Listo! +1 corazón para @${r.inviter.username}`);
+      setPicked(null);
       await fetchMe().catch(() => {});
       invalidate('following', 'lb', 'profile');
     } catch (e) {
@@ -263,23 +314,62 @@ function InviterEditor({ me }: { me: Me }) {
   }
   return (
     <View style={styles.stack}>
-      <Hint>Si alguien te invitó, escribe su usuario: gana +1 corazón y quedan siguiéndose. Solo se puede indicar una vez.</Hint>
+      <Hint>
+        Si alguien te invitó, empieza a escribir su nombre y elígelo de la lista: gana +1 corazón y quedan siguiéndose. Solo se
+        puede indicar una vez.
+      </Hint>
       <View style={styles.inline}>
         <TextField
-          prefix="@"
+          prefix="🔍"
           value={value}
-          onChangeText={(t) => {
-            setValue(t);
-            setErr(null);
-          }}
-          placeholder="usuario"
-          maxLength={21}
-          accessibilityLabel="Usuario de quien te invitó"
-          onSubmitEditing={() => void save()}
+          onChangeText={setValue}
+          placeholder="Busca a quien te invitó"
+          maxLength={40}
+          accessibilityLabel="Buscar a quien te invitó"
         />
-        <SmallButton title="Guardar" onPress={save} disabled={!normUsername(value)} busy={saving} />
       </View>
-      {err ? <Hint tone="bad">{err}</Hint> : null}
+      {search.err ? <Hint tone="bad">{search.err}</Hint> : null}
+      {search.pending && !search.results ? <Hint>Buscando…</Hint> : null}
+      {search.results ? (
+        search.results.length ? (
+          <>
+            <View style={[styles.userList, search.pending && styles.stale]}>
+              {search.results.map((u) => (
+                <Pressable
+                  key={u.id}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Elegir a ${u.username} como quien te invitó`}
+                  onPress={() => {
+                    setErr(null);
+                    setPicked(u);
+                  }}
+                  style={({ pressed }) => [styles.userRow, pressed && styles.pressed]}
+                >
+                  <Text style={[styles.userT, styles.flex1]} numberOfLines={1}>
+                    {flag(u.country)} <MatchedName username={u.username} query={search.key} />
+                  </Text>
+                  <Text style={styles.pickT}>Elegir</Text>
+                </Pressable>
+              ))}
+            </View>
+            {search.more ? <Hint>Hay más usuarios: escribe más letras para encontrarlo.</Hint> : null}
+          </>
+        ) : search.pending ? (
+          <Hint>Buscando…</Hint>
+        ) : (
+          <Hint>No hemos encontrado usuarios con "{value.trim()}".</Hint>
+        )
+      ) : null}
+      <ConfirmModal
+        visible={!!picked}
+        title={picked ? `¿Te invitó @${picked.username}?` : ''}
+        message="Ganará +1 corazón y quedarán siguiéndose. Solo se puede indicar una vez y no se puede cambiar."
+        confirmText="Sí, me invitó"
+        busy={saving}
+        error={err}
+        onConfirm={() => void save()}
+        onCancel={() => setPicked(null)}
+      />
     </View>
   );
 }
@@ -320,11 +410,13 @@ function InviteBox({ me }: { me: Me }) {
 
 function UserRow({
   user,
+  query = '',
   following,
   onToggle,
   busy,
 }: {
   user: { id: string; username: string; country: string | null };
+  query?: string;
   following: boolean;
   onToggle: () => void;
   busy: boolean;
@@ -339,7 +431,7 @@ function UserRow({
         onPress={() => router.push({ pathname: '/u/[username]', params: { username: user.username } })}
       >
         <Text style={styles.userT} numberOfLines={1}>
-          {flag(user.country)} @{user.username}
+          {flag(user.country)} <MatchedName username={user.username} query={query} />
         </Text>
       </Pressable>
       <SmallButton
@@ -355,36 +447,19 @@ function UserRow({
 
 function Follows({ me }: { me: Me }) {
   const [q, setQ] = useState('');
-  const deb = useDebounced(normUsername(q), 300);
-  const [results, setResults] = useState<SearchUser[] | null>(null);
-  const [searchErr, setSearchErr] = useState<string | null>(null);
+  const search = useUserSearch(q, me.id);
+  const results = search.results;
   const [busyId, setBusyId] = useState<string | null>(null);
   const following = useFollowing();
   const invalidate = useInvalidate();
   const followingIds = new Set(following.data?.users.map((u) => u.id) ?? []);
-
-  useEffect(() => {
-    if (!deb) {
-      setResults(null);
-      return;
-    }
-    const ctrl = new AbortController();
-    searchUsers(deb, ctrl.signal).then(
-      (r) => {
-        setResults(r.users.filter((u) => u.id !== me.id));
-        setSearchErr(null);
-      },
-      (e: unknown) => !ctrl.signal.aborted && setSearchErr(errorMessage(e)),
-    );
-    return () => ctrl.abort();
-  }, [deb, me.id]);
 
   const toggle = async (u: { id: string }, isF: boolean) => {
     setBusyId(u.id);
     try {
       if (isF) await unfollow(u.id);
       else await follow(u.id);
-      setResults((rs) => rs?.map((r) => (r.id === u.id ? { ...r, isFollowing: !isF } : r)) ?? null);
+      search.setResults((rs) => rs.map((r) => (r.id === u.id ? { ...r, isFollowing: !isF } : r)));
       invalidate('following', 'lb', 'profile', 'me');
     } catch (e) {
       toast(errorMessage(e));
@@ -396,19 +471,33 @@ function Follows({ me }: { me: Me }) {
   return (
     <View style={styles.stack}>
       <View style={styles.inline}>
-        <TextField prefix="@" value={q} onChangeText={setQ} placeholder="Buscar usuario" accessibilityLabel="Buscar usuario" maxLength={21} />
+        <TextField prefix="🔍" value={q} onChangeText={setQ} placeholder="Buscar usuario" accessibilityLabel="Buscar usuario" maxLength={40} />
       </View>
-      {searchErr ? <Hint tone="bad">{searchErr}</Hint> : null}
+      {search.err ? <Hint tone="bad">{search.err}</Hint> : null}
+      {search.pending && !results ? <Hint>Buscando…</Hint> : null}
       {results ? (
         results.length ? (
-          <View style={styles.userList}>
+          <View style={[styles.userList, search.pending && styles.stale]}>
             {results.map((u) => {
               const isF = u.isFollowing ?? followingIds.has(u.id);
-              return <UserRow key={u.id} user={u} following={isF} busy={busyId === u.id} onToggle={() => void toggle(u, isF)} />;
+              return (
+                <UserRow
+                  key={u.id}
+                  user={u}
+                  query={search.key}
+                  following={isF}
+                  busy={busyId === u.id}
+                  onToggle={() => void toggle(u, isF)}
+                />
+              );
             })}
           </View>
         ) : (
-          <Hint>No hay usuarios que empiecen con "{deb}".</Hint>
+          search.pending ? (
+            <Hint>Buscando…</Hint>
+          ) : (
+            <Hint>No hemos encontrado usuarios con "{q.trim()}".</Hint>
+          )
         )
       ) : null}
 
@@ -634,6 +723,9 @@ const styles = StyleSheet.create({
     borderBottomColor: C.rowBorder,
   },
   userT: { color: C.text, fontSize: 15, fontWeight: '600' },
+  match: { color: C.accent, fontWeight: '800' },
+  pickT: { color: C.accent, fontWeight: '700', fontSize: 14, paddingVertical: 10, paddingHorizontal: 8 },
+  stale: { opacity: 0.6 },
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center', padding: 20 },
   sheet: {
     width: '100%',

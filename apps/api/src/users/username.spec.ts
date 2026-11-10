@@ -1,9 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeUsername, usernameBase, usernameCandidates, usernameProblem } from './username';
+import { normalizeUsername, searchKey, usernameBase, usernameCandidates, usernameProblem } from './username';
 
 describe('nombre de usuario', () => {
   it('normaliza: minúsculas, sin espacios ni @ inicial', () => {
     expect(normalizeUsername('  @SeBa.Tapia ')).toBe('seba.tapia');
+  });
+
+  it('clave de búsqueda: sin tildes, minúsculas, solo letras y números', () => {
+    expect(searchKey('  @Sebastián S. ')).toBe('sebastians');
+    expect(searchKey('Peña_Núñez')).toBe('penanunez');
+    expect(searchKey('._ ')).toBe('');
+    expect(searchKey(undefined)).toBe('');
   });
 
   it.each([

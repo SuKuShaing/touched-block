@@ -5,10 +5,13 @@ import { badRequest, conflict, notFound } from '../common/errors';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import type { MeDto, PublicUserDto, UpdateMeDto } from './dto';
-import { normalizeUsername, usernameBase, usernameCandidates, usernameProblem } from './username';
+import { normalizeUsername, searchKey, usernameBase, usernameCandidates, usernameProblem } from './username';
 
 /** Días mínimos entre dos cambios de país. */
 export const COUNTRY_CHANGE_DAYS = 30;
+
+/** Máximo de resultados de GET /users/search. */
+export const SEARCH_LIMIT = 20;
 
 const isUniqueViolation = (e: unknown) => e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002';
 
@@ -191,14 +194,16 @@ export class UsersService {
   }
 
   async search(rawQ: string, viewerId?: string): Promise<(PublicUserDto & { isFollowing?: boolean })[]> {
-    const q = normalizeUsername(rawQ).replace(/[^a-z0-9_.]/g, '');
+    const q = searchKey(rawQ);
     if (!q) return [];
-    const users = await this.prisma.user.findMany({
-      where: { username: { startsWith: q } },
-      orderBy: { username: 'asc' },
-      take: 20,
-      select: { id: true, username: true, country: true },
-    });
+    // Busca el texto en cualquier parte del usuario, ignorando puntos y guiones bajos
+    // (strpos no tiene comodines, a diferencia de LIKE). Primero los que empiezan con él.
+    const users = await this.prisma.$queryRaw<PublicUserDto[]>`
+      SELECT id, username, country
+      FROM "User"
+      WHERE strpos(translate(username, '._', ''), ${q}) > 0
+      ORDER BY strpos(translate(username, '._', ''), ${q}) = 1 DESC, username ASC
+      LIMIT ${SEARCH_LIMIT}`;
     if (!viewerId) return users;
     const follows = await this.prisma.follow.findMany({
       where: { followerId: viewerId, followeeId: { in: users.map((u) => u.id) } },

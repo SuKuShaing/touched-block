@@ -130,6 +130,16 @@ El usuario preguntó si el backend puede quedar *open source*. Sí:
 - Se agregó una slide propia que explica por qué una resta ≤ 0 es trampa.
 - Se subió `RULES_VERSION` a 3 y las claves locales a `tb_best3`/`tb_hist3`, porque la v2 ya estaba publicada.
 
+### "¿Quién te invitó?" como buscador (10 nov 2026)
+
+El usuario pidió que no haya que saberse el usuario exacto de quien te invitó: al escribir "S", "Se", "Seb"… se van mostrando los usuarios que calzan, primero los que **empiezan** con lo escrito y después los que lo tienen en **cualquier otra parte**, y un aviso si no hay nadie.
+- `GET /users/search` pasó de buscar por prefijo a buscar en cualquier parte del usuario (también lo usa "Seguir").
+- La búsqueda ignora tildes, mayúsculas, espacios, puntos y guiones bajos: "Sebastián S" encuentra a `sebastian.sanhueza`, porque los usuarios se generan desde el nombre de Google.
+- Se hace con `strpos` en SQL y no con `LIKE`/`contains`, porque `_` es comodín en `LIKE` y es un carácter válido en los usuarios.
+- Solo se busca por **usuario**, no por el nombre de Google (`displayName`), que es privado.
+- Al tocar un resultado se pide confirmación, porque quien te invitó no se puede cambiar.
+- Sin índice: recorre la tabla de usuarios, que es chica. Si crece mucho, agregar un índice trigram (`pg_trgm`).
+
 ---
 
 ## Cómo se trabajó

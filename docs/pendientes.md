@@ -30,6 +30,7 @@ Estado al **10 nov 2026**.
   - Cambiar el balance después de abrir los rankings los reinicia (`RULES_VERSION`). Conviene ajustarlo antes de difundir.
 - **Bots**: el replay garantiza que la partida es real, pero no distingue un script que toca bien de una persona. La etapa final hace que todos pierdan. Si aparecen puntajes sospechosos, se pueden agregar heurísticas (precisión y ritmo inhumanos).
 - **Respaldos de la base**: no hay ninguno configurado todavía (ver `despliegue.md`).
+- **Búsqueda de usuarios** sin índice (`strpos` recorre la tabla). Basta con pocos miles de usuarios; si crece, agregar un índice trigram (`pg_trgm`).
 - **Peso de la web**: ~2 MB de JS (≈600 KB comprimido) por react-native-web.
 - Quien ya vio el tutorial único de antes (`tb_onb1`) no vuelve a ver el básico; verá el avanzado en su 3.ª visita contada desde este cambio.
 

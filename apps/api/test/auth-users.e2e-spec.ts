@@ -127,6 +127,22 @@ describe('usuarios', () => {
     expect(s.body.users.map((x: { username: string }) => x.username)).toContain('zoe.busca');
   });
 
+  it('búsqueda: en cualquier parte del usuario, primero los que empiezan con el texto', async () => {
+    await t.login('s-1', 'Rodolfo Quiróga');
+    await t.login('s-2', 'Ana Rodolfini');
+    await t.login('s-3', 'Rodo Tapia');
+    const names = async (q: string) =>
+      ((await t.http().get('/users/search').query({ q }).expect(200)).body.users as { username: string }[]).map((x) => x.username);
+
+    // "rodo": primero los que empiezan con "rodo" (en orden alfabético) y después el resto
+    expect(await names('Rodo')).toEqual(['rodo.tapia', 'rodolfo.quiroga', 'ana.rodolfini']);
+    // sin tildes, sin mayúsculas, y los espacios y puntos no cuentan
+    expect(await names('Rodolfo Quiró')).toEqual(['rodolfo.quiroga']);
+    expect(await names('anarod')).toEqual(['ana.rodolfini']);
+    expect(await names('yxz')).toEqual([]);
+    expect(await names('  ')).toEqual([]);
+  });
+
   it('DELETE /me borra la cuenta y sus datos', async () => {
     const u = await t.login('u-5', 'Borrar Me');
     await t.playRun(u, { kills: 2 });
