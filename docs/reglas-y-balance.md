@@ -5,7 +5,7 @@ Qué es el juego, las reglas actuales con sus valores exactos y la historia de c
 - Idioma del juego y del usuario: **español**.
 - Plataforma: **web pensada para celular** (GitHub Pages), con cuentas y rankings. Después, si le va bien, app Android/iOS con el mismo código (Expo).
 - Nombre: **Touched Block** (antes "Rompe el bloque"; el nombre queda en inglés aunque el resto del texto sea en español).
-- Reglas actuales: **v4 del motor** (`RULES_VERSION = 4`), que corresponde a la decisión v8 de la sección 3.
+- Reglas actuales: **v5 del motor** (`RULES_VERSION = 5`), que corresponde a la decisión v8 de la sección 3.
 
 ---
 
@@ -35,9 +35,9 @@ Todas las constantes están en `packages/engine/src/constants.ts`.
 | Trampa que desaparece sola | sin castigo |
 | Combos (destruidos seguidos sin errores) | 3 → **+1 s**, 5 → **+2 s**, 10 → **+3 s**, 15 → **+4 s**, 20 → **+5 s**; luego el ciclo se repite (23 → +1 s…) |
 | Corte del combo | **cualquier error**: bloque escapado, trampa tocada o toque fuera. Los premios ya ganados se conservan (cortar en 18 = ya ganaste los de 3, 5, 10 y 15) |
-| Corazón de recuperación | Al llegar la racha a **25, 50, 75…** (`HEART_COMBO`), **si falta alguna vida**, aparece un bloque rosado con ♥ que dura **1 s** (`HEART_LIFE`). Un toque → **+1 vida** (sin pasar del máximo); no suma tiempo ni toca la racha. Si se escapa: sin castigo, sin cortar la racha. No cuenta para el máximo de bloques simultáneos |
+| Corazón de recuperación | Al llegar la racha a **25, 50, 75…** (`HEART_COMBO`), **si falta alguna vida**, aparece un bloque rosado con ♥ que dura **2 s** (`HEART_LIFE`). Un toque → **+1 vida** (sin pasar del máximo); no suma tiempo ni toca la racha. Si se escapa: sin castigo, sin cortar la racha. No cuenta para el máximo de bloques simultáneos |
 | Fin de partida | tiempo ≤ 0, **o** vidas = 0 |
-| Récord local | `localStorage` `tb_best4`; historial `tb_hist4` (últimas 30, se muestran 10) |
+| Récord local | `localStorage` `tb_best5`; historial `tb_hist5` (últimas 30, se muestran 10) |
 
 Detalles importantes:
 
@@ -105,6 +105,7 @@ Detalles importantes:
    - Vidas: **+1 corazón por amigo invitado**, hasta 8.
 9. **v8 (actual, motor v3, 9 nov 2026)**: el usuario seguía pensando en el ×5 de la v6 (la web publicada entonces) y pidió que el castigo **dependa de la etapa y no del tipo de bloque**: ×5 mientras solo hay números, **×6** desde que llegan las sumas y restas y **×7** desde que llegan las multiplicaciones y divisiones, para **cualquier** bloque que se escape. Se reemplazó el ×3/×4/×5 por tipo de la v7 (se interpretó que la etapa de números queda en ×5, el valor que él daba por vigente). También pidió una slide propia que explique por qué una resta ≤ 0 es trampa. Como la v2 ya estaba publicada, se subió `RULES_VERSION` a 3 y las claves locales a `tb_best3`/`tb_hist3`.
 10. **v9 (motor v4, 10 nov 2026)**: el usuario pidió una forma de **recuperar vidas**. Decidido con él: cada racha múltiplo de 25, si falta algún corazón, aparece un bloque con ♥ de 1 s; un toque devuelve una vida; si se escapa, no pasa nada. No afecta la racha y no ocupa cupo de bloques simultáneos. Se subió `RULES_VERSION` a 4 y las claves locales a `tb_best4`/`tb_hist4`.
+11. **v10 (motor v5, 11 nov 2026)**: el corazón de recuperación dura **2 s** en vez de 1 s (1 s era demasiado corto, pedido del usuario). Se subió `RULES_VERSION` a 5 y las claves locales a `tb_best5`/`tb_hist5`.
 
 Criterios que el usuario ha mostrado: quiere un juego **difícil y tenso**, que castigue el descuido; las trampas deben ser **sutiles**; prefiere ir ajustando números a mano a medida que juega.
 
@@ -128,7 +129,7 @@ Criterios que el usuario ha mostrado: quiere un juego **difícil y tenso**, que 
 - **Castigos muy altos al final**: con ×6/×7, un solo escape de una operación grande (−120 s / −175 s) casi decide la partida. Es lo pedido, pero conviene revisarlo jugando.
 - **Al empezar las restas casi todas son trampa**: con operandos 1–2, "1−1", "1−2" y "2−2" dan ≤ 0; entre 140 y 200 s cerca del 30 % de las operaciones son trampa. Opción si se siente injusto: que las restas partan después que las sumas.
 - La web pesa unos 2 MB de JS (≈600 KB comprimido) por React Native Web; se puede optimizar más adelante.
-- Las claves locales cambiaron (`rb_best*` → `tb_best1` → `tb_best2` → `tb_best3` → `tb_best4`) cada vez que cambiaron las reglas; los récords antiguos no se arrastran.
+- Las claves locales cambiaron (`rb_best*` → `tb_best1` → `tb_best2` → `tb_best3` → `tb_best4` → `tb_best5`) cada vez que cambiaron las reglas; los récords antiguos no se arrastran.
 
 **Ideas posibles**
 

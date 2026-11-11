@@ -16,7 +16,7 @@ Estado al **10 nov 2026**.
 - Los secretos `DOKPLOY_*` ya están en GitHub. El tag `v0.1.0` falló en el paso de Dokploy porque todavía no existían; `v0.1.1` funcionó completo.
 - Google Cloud: la app está "En producción". Los orígenes `https://sukushaing.github.io` y `http://localhost:8081` están autorizados. La verificación de marca sigue pendiente; es opcional con los scopes básicos.
 
-- **Corazón de recuperación (reglas v4)**: publicado el 10 nov 2026 (web y API `v0.2.0`). Tiene su slide en el tutorial avanzado.
+- **Corazón de recuperación (reglas v5)**: publicado el 10 nov 2026 (web y API `v0.2.0`/`v0.2.1`) con 1 s de duración; el 11 nov 2026 pasó a 2 s (reglas v5), **pendiente de tag** para que la API de producción también use `RULES_VERSION = 5` (mientras tanto las partidas con ranking quedan como locales). Tiene su slide en el tutorial avanzado.
 
 ## Lo que tiene que hacer el usuario
 

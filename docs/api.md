@@ -335,7 +335,7 @@ Ordenados del más reciente al más antiguo.
 
 Si la API no responde en el paso 1, se juega con una semilla local (`randomSeed()`) y esa partida no puede entrar al ranking.
 
-Las reglas actuales son la **versión 4** (`RULES_VERSION = 4` en `@tb/engine`): números hasta 10, bloques con sumas/restas y después multiplicaciones/divisiones, restas con resultado ≤ 0 como trampa, castigo por escape según la etapa (×5 / ×6 / ×7) combos que suman segundos y un corazón de recuperación cada 25 de racha. Las reglas exactas están en el motor (`packages/engine/src/constants.ts`) y en [`reglas-y-balance.md`](reglas-y-balance.md). Una buena partida puede durar 6–9 minutos: el límite de 2 h para enviarla y la comparación con el reloj real (+5 s) son relativos a la duración, así que no hay un tope de minutos de juego.
+Las reglas actuales son la **versión 5** (`RULES_VERSION = 5` en `@tb/engine`): números hasta 10, bloques con sumas/restas y después multiplicaciones/divisiones, restas con resultado ≤ 0 como trampa, castigo por escape según la etapa (×5 / ×6 / ×7) combos que suman segundos y un corazón de recuperación cada 25 de racha. Las reglas exactas están en el motor (`packages/engine/src/constants.ts`) y en [`reglas-y-balance.md`](reglas-y-balance.md). Una buena partida puede durar 6–9 minutos: el límite de 2 h para enviarla y la comparación con el reloj real (+5 s) son relativos a la duración, así que no hay un tope de minutos de juego.
 
 ### `POST /runs` (sesión opcional)
 

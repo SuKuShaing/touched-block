@@ -136,6 +136,10 @@ El usuario preguntó si el backend puede quedar *open source*. Sí:
 - Dura 1 s (`HEART_LIFE`), un toque. Es un `Block` con `heart: true` (sin tipo nuevo), así el replay de la API lo maneja sin cambios. Eventos nuevos: `heal` y `heartGone`.
 - Se subió `RULES_VERSION` a 4 y las claves locales a `tb_best4`/`tb_hist4`.
 
+### Motor v5: el corazón dura 2 s (11 nov 2026)
+
+- 1 s era demasiado corto; el usuario pidió 2 s (`HEART_LIFE`). Se subió `RULES_VERSION` a 5 y las claves locales a `tb_best5`/`tb_hist5`. El texto del tutorial toma el valor de la constante.
+
 ### "¿Quién te invitó?" como buscador (10 nov 2026)
 
 El usuario pidió que no haya que saberse el usuario exacto de quien te invitó: al escribir "S", "Se", "Seb"… se van mostrando los usuarios que calzan, primero los que **empiezan** con lo escrito y después los que lo tienen en **cualquier otra parte**, y un aviso si no hay nadie.

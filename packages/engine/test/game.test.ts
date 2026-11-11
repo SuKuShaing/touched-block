@@ -577,7 +577,7 @@ describe('corazón de recuperación', () => {
   }
   const heartOf = (s: GameState) => s.blocks.find((x) => x.heart);
 
-  it('aparece al llegar a la racha de 25 si falta una vida, y dura 1 s', () => {
+  it('aparece al llegar a la racha de 25 si falta una vida, y dura HEART_LIFE s', () => {
     const { s, b } = almost(BASE_LIVES - 1);
     tap(s, ...center(b));
     const h = heartOf(s)!;
@@ -612,11 +612,11 @@ describe('corazón de recuperación', () => {
     s.blocks = s.blocks.filter((x) => x.heart);
     const time = s.timeLeft;
     const streak = s.streak;
-    for (let i = 0; i < 70; i++) step(s); // > 1 s
+    for (let i = 0; i < HEART_LIFE * 60 + 10; i++) step(s); // > HEART_LIFE s
     expect(heartOf(s)).toBeUndefined();
     expect(s.lives).toBe(BASE_LIVES - 1);
     expect(s.streak).toBe(streak);
-    expect(s.timeLeft).toBeGreaterThan(time - 1.3);
+    expect(s.timeLeft).toBeGreaterThan(time - (HEART_LIFE + 0.5));
     expect(s.missed).toBe(0);
   });
 });

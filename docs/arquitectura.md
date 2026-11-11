@@ -68,7 +68,7 @@ docs/                           esta documentación
 
 | Clave | Contenido |
 |---|---|
-| `tb_best4` / `tb_hist4` | Récord e historial (últimas 30) de las reglas v4. Las claves anteriores (`tb_best1/2/3`, `tb_hist1/2/3`) no se borran |
+| `tb_best5` / `tb_hist5` | Récord e historial (últimas 30) de las reglas v5. Las claves anteriores (`tb_best1/2/3/4`, `tb_hist1/2/3/4`) no se borran |
 | `tb_onb1` / `tb_onb_adv1` | Ya vio el tutorial básico / el avanzado (`tb_onb1` era el del tutorial único de antes; cuenta como básico) |
 | `tb_visits1` / `tb_last1` | Visitas del dispositivo y última actividad (ms). Deciden cuándo se abre cada tutorial |
 | `tb_rt1` | El *refresh token* (el de acceso solo vive en memoria) |
