@@ -140,6 +140,11 @@ El usuario preguntó si el backend puede quedar *open source*. Sí:
 
 - 1 s era demasiado corto; el usuario pidió 2 s (`HEART_LIFE`). Se subió `RULES_VERSION` a 5 y las claves locales a `tb_best5`/`tb_hist5`. El texto del tutorial toma el valor de la constante.
 
+### Los registros de los jugadores no se rompen (11 nov 2026)
+
+- Al pasar el corazón de 1 a 2 s se subió `RULES_VERSION` a 5 (reinicio de rankings y récord local) siguiendo la regla de entonces. El usuario preguntó por qué se reiniciaba y decidió: queda en la v5, pero **de ahora en más no se rompen los registros** salvo un cambio muy grande que lo amerite, sobre todo porque se lanzará como app.
+- Anotado en `CLAUDE.md`, `docs/desarrollo.md`, `docs/reglas-y-balance.md` y `docs/pendientes.md`.
+
 ### "¿Quién te invitó?" como buscador (10 nov 2026)
 
 El usuario pidió que no haya que saberse el usuario exacto de quien te invitó: al escribir "S", "Se", "Seb"… se van mostrando los usuarios que calzan, primero los que **empiezan** con lo escrito y después los que lo tienen en **cualquier otra parte**, y un aviso si no hay nadie.

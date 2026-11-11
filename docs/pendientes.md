@@ -29,7 +29,8 @@ Estado al **10 nov 2026**.
 - **Balance sin probar con personas**:
   - Los castigos ×6/×7 son muy altos: "10+10" escapado resta −120 s y "5×5" resta −175 s.
   - Al empezar las restas, cerca del 30 % de las operaciones son trampas ("1−1", "1−2", "2−2").
-  - Cambiar el balance después de abrir los rankings los reinicia (`RULES_VERSION`). Conviene ajustarlo antes de difundir.
+  - Cambiar el balance después de abrir los rankings los reinicia (`RULES_VERSION`). **Desde el 11 nov 2026 no se deben romper los registros de los jugadores** salvo un cambio muy grande y aprobado.
+  - Idea para cumplirlo: separar los cambios compatibles (no reinician nada) de los que rompen la comparación (temporadas con rankings archivados) y migrar el récord local en vez de cambiar su clave. Sin hacer.
 - **Bots**: el replay garantiza que la partida es real, pero no distingue un script que toca bien de una persona. La etapa final hace que todos pierdan. Si aparecen puntajes sospechosos, se pueden agregar heurísticas (precisión y ritmo inhumanos).
 - **Respaldos de la base**: no hay ninguno configurado todavía (ver `despliegue.md`).
 - **Búsqueda de usuarios** sin índice (`strpos` recorre la tabla). Basta con pocos miles de usuarios; si crece, agregar un índice trigram (`pg_trgm`).

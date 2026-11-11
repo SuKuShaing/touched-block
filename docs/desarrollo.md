@@ -66,9 +66,10 @@ Resultado esperado al 9 nov 2026: motor **38/38**, API unitarios **40/40**, API 
 - Audio, vibración y almacenamiento local siempre envueltos en `try/catch`.
 - **Commits** en español, estilo *conventional commits*: `feat: se añade…`, `refactor: se mejora…`, `docs: …`.
 - **Commit y push solo cuando el usuario lo pide.** Un push a `main` reemplaza la web publicada.
+- **No romper los registros de los jugadores** (decisión del usuario, 11 nov 2026): subir `RULES_VERSION` o cambiar las claves locales reinicia rankings y récords. Solo con un cambio muy grande que lo amerite y con aprobación expresa; si no, buscar una alternativa compatible.
 - Al cambiar reglas:
-  1. Subir `RULES_VERSION`.
-  2. Cambiar las claves locales (`tb_bestN`/`tb_histN`).
+  1. Evaluar si el cambio obliga a reiniciar (casi nunca debería). Si sí y está aprobado: subir `RULES_VERSION`.
+  2. En ese caso, cambiar las claves locales (`tb_bestN`/`tb_histN`).
   3. Actualizar `docs/reglas-y-balance.md` y los tests del motor.
   - Los textos del onboarding se actualizan solos si usan las constantes.
 

@@ -124,7 +124,7 @@ Criterios que el usuario ha mostrado: quiere un juego **difícil y tenso**, que 
 
 **Riesgos conocidos**
 
-- **Balance sin probar con personas**: la progresión (140 s / 275 s / 350 s), las proporciones de cada tipo y los castigos se eligieron como punto de partida; el usuario los ajustará jugando. Cambiar el balance después de abrir los rankings obliga a subir `RULES_VERSION` (reinicia los rankings).
+- **Balance sin probar con personas**: la progresión (140 s / 275 s / 350 s), las proporciones de cada tipo y los castigos se eligieron como punto de partida; el usuario los ajustará jugando. Cambiar el balance después de abrir los rankings obliga a subir `RULES_VERSION` (reinicia los rankings). **Regla del usuario (11 nov 2026): no romper los registros de la gente** (ya hay jugadores y habrá app móvil); solo un cambio muy grande que lo amerite, con su aprobación, justifica un reinicio.
 - **Bots**: el servidor verifica que la partida sea real, pero no puede distinguir un script que toca bien de una persona. La etapa final hace que todos pierdan, lo que limita el daño; si aparecen puntajes sospechosos, agregar heurísticas (precisión y ritmo inhumanos).
 - **Castigos muy altos al final**: con ×6/×7, un solo escape de una operación grande (−120 s / −175 s) casi decide la partida. Es lo pedido, pero conviene revisarlo jugando.
 - **Al empezar las restas casi todas son trampa**: con operandos 1–2, "1−1", "1−2" y "2−2" dan ≤ 0; entre 140 y 200 s cerca del 30 % de las operaciones son trampa. Opción si se siente injusto: que las restas partan después que las sumas.
