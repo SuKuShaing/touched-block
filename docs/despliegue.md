@@ -141,6 +141,7 @@ El volumen `tb_pgdata` guarda todo. **Decisión D10 (12 nov 2026)**: respaldos f
 - **Tarea programada de Dokploy** `touched-block-respaldo` (en el Compose **API**, pestaña *Schedules*, servicio `tb-db`), todos los días a las **07:00 UTC** (04:00 en Chile). Corre `pg_dump -Fc` (formato comprimido de Postgres) dentro de `tb-db`.
 - **Dónde quedan**: en el VPS, en `/var/backups/touched-block/` (`touched_block-AAAAMMDD-HHMMSS.dump`). `deploy/docker-compose.yml` monta esa carpeta en `tb-db` como `/respaldos`.
 - **Se borran solos**: la tarea guarda los **14 más recientes** y borra los más viejos.
+- **Verifica cada respaldo**: lee el archivo nuevo con `pg_restore -l` (escribe cuántas tablas tienen datos) y solo entonces escribe `OK`. Si `pg_dump` falla, queda un `parcial.tmp` que la próxima corrida sobrescribe; los `.dump` buenos no se tocan. El 12 nov 2026 se probó que corre sola: se movió la hora a unos minutos después, corrió a las 14:24 UTC con `OK` (13 tablas con datos, 142 KB) y se dejó de nuevo a las 07:00.
 - **Antes de cada versión con migraciones nuevas**: correr la tarea a mano (*Run now* en Dokploy) y revisar en su registro que diga `OK`.
 - **El respaldo diario del proveedor del VPS** copia el disco entero, así que también se lleva estos archivos fuera del VPS. Son complementarios: el del proveedor sirve si se pierde el VPS, pero restaurarlo devuelve todo el servidor (también los otros proyectos) al estado de ese día; el `pg_dump` deja volver solo esta base a un momento exacto, por ejemplo justo antes de una migración, y es consistente aunque la base esté en uso.
 
@@ -154,6 +155,8 @@ pg_restore -U tb -d touched_block --clean --if-exists /respaldos/touched_block-A
 Para bajar uno al computador: `scp root@<vps>:/var/backups/touched-block/<archivo>.dump .`
 
 ### Publicar el plan de jugabilidad (fases 2 a 5)
+
+**Ya se publicó el 12 nov 2026 (API `v0.3.0`)**; el detalle de cómo se hizo está en `pendientes.md`. Estos pasos quedan como referencia para una versión parecida.
 
 La API nueva es **compatible con la web anterior** (campos nuevos opcionales y endpoints nuevos; nada se renombró ni se eliminó), así que el orden es siempre: **API primero, web después**.
 

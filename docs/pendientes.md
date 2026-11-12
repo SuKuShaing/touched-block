@@ -8,8 +8,9 @@ Estado al **12 nov 2026**.
 - **Dokploy** (panel `http://vps23906.cubepath.net:3000`, IP 144.225.147.103, Dokploy v0.31.0; ahí también vive el proyecto UltimaType con `ultimatype.xyz`):
   - Proyecto **Touched Block** (`6eSA39oT4nPDO4U034YGw`), entorno `production`.
   - Compose **API**: id `5ZlPmSATtXjdrF-3c-vPs`, appName `touched-block-bz408h`. Fuente Git `https://github.com/SuKuShaing/touched-block.git`, rama `main`, ruta `./deploy/docker-compose.yml`. *Isolated Deployment* activado y *autoDeploy* desactivado (se despliega por tag).
-  - Las variables de `deploy/.env` están cargadas.
-  - **API en producción: `https://vps23906.cubepath.net`** (hostname del VPS que da el proveedor). Certificado Let's Encrypt vigente hasta el 8 feb 2027, con renovación automática por Traefik. `/health` responde `rulesVersion: 5`, versión `v0.2.2`. CORS solo acepta `https://sukushaing.github.io`.
+  - Las variables de `deploy/.env` están cargadas (incluida `DAILY_SECRET` desde el 12 nov 2026).
+  - **API en producción: `https://vps23906.cubepath.net`** (hostname del VPS que da el proveedor). Certificado Let's Encrypt vigente hasta el 8 feb 2027, con renovación automática por Traefik. `/health` responde `rulesVersion: 5`, versión `v0.3.0` (desde el 12 nov 2026). CORS solo acepta `https://sukushaing.github.io`.
+  - Tarea programada `touched-block-respaldo` (respaldo diario de la base, ver `despliegue.md`).
   - Se despliega solo con cada tag: `v0.1.1` y `v0.1.2` (10 nov 2026, buscador de "¿Quién te invitó?") corrieron completos, tests → GHCR → Dokploy.
   - Usar el hostname del VPS es provisorio. Si se cambia de VPS, o se le da HTTPS al panel de Dokploy en ese mismo host, hay que mover la API a un subdominio propio: cambiar el dominio en Dokploy y `EXPO_PUBLIC_API_URL`, y volver a publicar la web.
 - **GHCR**: la imagen `ghcr.io/sukushaing/touched-block-api` (`v0.1.0` y `latest`) es pública.
@@ -20,14 +21,24 @@ Estado al **12 nov 2026**.
 
 ## Plan de jugabilidad y retención (12 nov 2026)
 
-Plan por fases en [`plan-jugabilidad.md`](plan-jugabilidad.md). **Fases 1 a 5 implementadas y probadas en local (12 nov 2026), sin commitear ni publicar.** Decisiones de la implementación en `historia-y-decisiones.md`.
+Plan por fases en [`plan-jugabilidad.md`](plan-jugabilidad.md). **Fases 1 a 5 publicadas el 12 nov 2026** (API `v0.3.0` y web). Decisiones de la implementación en `historia-y-decisiones.md`.
 
-**Para publicar** (en este orden; la API primero porque la web nueva usa sus endpoints):
-1. Configurar los respaldos de la base en Dokploy y sacar uno (D10).
-2. Agregar `DAILY_SECRET` (32 caracteres o más, aleatoria) en la pestaña Environment del Compose y en `deploy/.env`. Sin ella la API no arranca, a propósito.
-3. Commit, tag de la API (`vX.Y.Z`) y verificar `/health`. Las 5 migraciones nuevas solo agregan; la API las aplica al arrancar.
-4. Correr una vez `docker compose exec api node scripts/backfill-streaks.mjs` (rellena la mejor racha de las partidas guardadas de las reglas v5).
+Cómo se publicó (12 nov 2026), en orden:
+1. `tb-db` monta `/var/backups/touched-block` del VPS y la tarea de Dokploy `touched-block-respaldo` hace un `pg_dump` diario (07:00 UTC, guarda 14). Se sacó un respaldo justo antes de las migraciones (`touched_block-20261112-135728.dump`).
+2. `DAILY_SECRET` agregada al Environment del Compose. Un script local leyó el Environment, comprobó que las otras 5 variables eran iguales a `deploy/.env` y agregó solo esa línea, sin mostrar valores. El primer despliegue del tag había fallado a propósito por no tenerla, sin tocar los contenedores.
+3. Tag `v0.3.0`: las 5 migraciones se aplicaron al arrancar y `/health` responde `v0.3.0`, `rulesVersion: 5`. Antes se probó la imagen en local sobre una base de la v0.2.2 con partidas reales.
+4. Relleno de rachas con una tarea temporal de Dokploy (ya borrada): 17 partidas de las reglas v5, todas coincidieron con su repetición; 1 jugador con mejor racha nueva.
 5. Push de la web a `main`.
+
+**Revisión en producción** (12 nov 2026, Playwright con pantalla de celular, como invitado):
+- 1.ª visita: se abre el tutorial básico; inicio sin reto diario ni retos (regla del jugador nuevo).
+- Partida normal validada por el servidor (`valid: true`, 94 bloques): "¡Nuevo récord!", mejor racha, primera insignia (Madera II) con sus premios y "Probar ahora", camino de etapas.
+- 2.ª visita: "Retar a un amigo", tarjeta del reto #1 (jueves: solo multiplicaciones y divisiones), misiones del día; tarjeta para instalar la web (Chromium la reconoce como instalable).
+- Reto diario validado (`valid: true`): "Habrías quedado 1.º de 1", racha de 1 día, tira de la semana y misión "Juega el reto del día" cumplida. El ranking del día sigue vacío (las partidas de invitado no se guardan ahí).
+- Reto a un amigo: creado (`?reto=…`, campo común 360 × 540); un invitado nuevo que abre el enlace ve primero el tutorial y vuelve al reto; al jugarlo, la comparación ("¡Empate!"), Revancha y Compartir resultado.
+- Colección (insignia, nivel, paletas, sonidos, efectos, fondos del campo, logros), Rankings (general y "Reto de hoy") y Perfil (sonido, vibración, Colección, instalar). La consola solo muestra los 404 esperados de las rutas directas en Pages.
+- Las claves locales siguen siendo `tb_best5`/`tb_hist5`.
+- Lo que no se pudo probar en producción: lo que necesita una cuenta (misiones guardadas en el servidor, reclamar partidas, ranking del día con cuenta), porque el login de Google no se puede automatizar. Está cubierto por los tests e2e de la API y por la prueba de punta a punta en local con el login de desarrollo. Datos de prueba que quedaron: 4 partidas de invitado y un reto (`2MHKV5VF`, vence el 12 dic 2026).
 
 **Confirmado por el usuario (12 nov 2026)**: los valores provisorios quedan tal cual (umbrales de las insignias, catálogo de premios, nivel `25·n·(n−1)`, paleta Constancia a los 7 días, misiones, racha con perdón y logros) y el jueves del reto diario parte en la dificultad de las multiplicaciones.
 

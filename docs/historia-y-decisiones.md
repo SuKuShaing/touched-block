@@ -156,7 +156,7 @@ El usuario preguntó cómo hacer que la gente vuelva a jugar y comparta. De la c
 
 ### Implementación del plan de jugabilidad (12 nov 2026)
 
-Se implementaron las fases 1 a 5 del [plan](plan-jugabilidad.md) en una sola sesión, con agentes en paralelo (motor, API, cliente) y revisiones independientes. Sin publicar todavía. Decisiones tomadas al implementar, con su motivo:
+Se implementaron las fases 1 a 5 del [plan](plan-jugabilidad.md) en una sola sesión, con agentes en paralelo (motor, API, cliente) y revisiones independientes. Se publicaron el mismo día (API `v0.3.0` y web). Decisiones tomadas al implementar, con su motivo:
 
 **Motor**
 - **Prueba dorada antes de tocar nada**: 40 partidas de un bot (20 semillas × 2 campos) generadas con el motor v5 sin modificadores; después de agregar los modificadores sigue pasando sin regenerarse. Una revisión aparte compiló el `game.ts` anterior (de `git`) y confirmó que da los mismos 40 resultados.
@@ -210,6 +210,7 @@ Correcciones de la revisión de las fases 2 a 5, pedidas por el coordinador:
 - **Valores provisorios confirmados tal cual** por el usuario: umbrales de las insignias, catálogo de premios, nivel `25·n·(n−1)`, misiones y logros. Se vuelven a medir con jugadores reales (los umbrales se mueven sin migraciones).
 - **Jueves del reto diario**: "solo multiplicaciones y divisiones" ahora también parte en su dificultad (`startAt: MUL_START`). Sin eso eran unos 275 s de "2×2", largo y fácil.
 - **Respaldos en el mismo VPS** (D10), porque el usuario no quiere pagar otro servicio: `pg_dump` diario con una tarea programada de Dokploy, en `/var/backups/touched-block/`, guardando los 14 más recientes. El respaldo diario del proveedor del VPS se lleva esos archivos fuera del servidor; el `pg_dump` sirve para volver solo esta base a un momento exacto, como justo antes de una migración. Detalle en `despliegue.md`.
+- **Cómo se cargó `DAILY_SECRET` en Dokploy**: la herramienta de Dokploy que usa Claude oculta el Environment, y guardarlo desde ahí reemplaza el bloque entero, con riesgo de pisar las contraseñas. Por eso un script local lo leyó por la API de Dokploy, comprobó que las otras variables eran idénticas a `deploy/.env`, agregó solo la línea nueva y verificó el resultado, sin mostrar ningún valor. El Compose exige la variable (`${DAILY_SECRET:?…}`), así que el primer despliegue del tag, que corrió antes de cargarla, falló sin tocar los contenedores que estaban en uso.
 - **Pruebas que no hacen falta ahora**: instalar la web en un Android real no es necesario, porque la web es para afinar el juego con amigos; quienes la instalen lo harán cuando sea app. iOS/Safari lo prueba el usuario en un iPhone antiguo. El login real de Google ya se probó en la versión anterior y no cambió.
 
 ### El antitrampas actual basta (12 nov 2026)

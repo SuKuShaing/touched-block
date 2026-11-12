@@ -2,16 +2,16 @@
 
 Plan de implementación acordado el **12 nov 2026**. Objetivo: que quien prueba Touched Block **quiera volver a jugar, vuelva al día siguiente y se lo mande a alguien**. Sale de una conversación con el usuario en la que se eligieron estas ideas: camino de etapas, "una más", reto a un amigo, reto diario, insignias (madera, bronce, plata, oro, diamante) y premios desbloqueables (colores, sonidos, efectos).
 
-**Estado (12 nov 2026): fases 0 a 5 hechas; las 1 a 5, probadas en local y sin publicar.** La fase 0 se midió en producción (resultados en 0.2); falta que el usuario confirme los umbrales de las insignias con esos datos. Las decisiones tomadas al implementar están en [`historia-y-decisiones.md`](historia-y-decisiones.md) ("Implementación del plan de jugabilidad") y lo que falta para publicar, en [`pendientes.md`](pendientes.md). Los números marcados *provisorios* siguen sin confirmar por el usuario (regla 8).
+**Estado (12 nov 2026): fases 0 a 5 hechas y publicadas** (API `v0.3.0` y web, 12 nov 2026). La fase 0 se midió en producción (resultados en 0.2). El usuario confirmó tal cual los números *provisorios* (regla 8); se vuelven a medir con jugadores reales. Las decisiones tomadas al implementar están en [`historia-y-decisiones.md`](historia-y-decisiones.md) ("Implementación del plan de jugabilidad") y lo que queda por revisar, en [`pendientes.md`](pendientes.md).
 
 | Fase | Estado |
 |---|---|
-| 0 | Consultas corridas en producción el 12 nov 2026 (resultados en 0.2). Falta que el usuario confirme los umbrales (D1) |
-| 1 | Implementada |
-| 2 | Implementada (antes de publicarla: respaldos de la base, D10) |
-| 3 | Implementada |
-| 4 | Implementada (antes de publicarla: `DAILY_SECRET` en Dokploy) |
-| 5 | Implementada |
+| 0 | Consultas corridas en producción el 12 nov 2026 (resultados en 0.2). Umbrales confirmados por el usuario; volver a medir en unas semanas |
+| 1 | Publicada |
+| 2 | Publicada (con respaldos diarios de la base, D10, y el relleno de rachas ya corrido) |
+| 3 | Publicada |
+| 4 | Publicada (`DAILY_SECRET` en Dokploy; el reto #1 es el del 12 nov 2026) |
+| 5 | Publicada |
 
 Dos reglas cambiaron al implementar, por revisiones de seguridad y de no ventaja: la ventana de fechas del reto diario (4.1) y la regla de las paletas (2.4).
 
@@ -95,7 +95,7 @@ La web se publica con cada push a `main` y la API con cada tag. Por eso, en toda
 | D7 | Cambio de día del reto diario | **A la medianoche de cada jugador** | Fase 4 |
 | D8 | Intentos del reto diario | **3 con cuenta y 1 como invitado** | Fase 4 |
 | D9 | Paleta para daltónicos | **Gratis desde el inicio**, con la misma regla de contraste que las demás | Fase 2 |
-| D10 | Respaldos de la base | **Sí, antes de publicar la fase 2** (hoy no hay ninguno) | Fase 2 |
+| D10 | Respaldos de la base | **Sí, antes de publicar la fase 2**. Hecho el 12 nov 2026: `pg_dump` diario en el VPS (`despliegue.md`) | Fase 2 |
 
 Además: la base de datos se puede modificar, pero solo para agregar (regla 9 de la sección 2).
 
