@@ -38,7 +38,14 @@ Cómo se publicó (12 nov 2026), en orden:
 - Reto a un amigo: creado (`?reto=…`, campo común 360 × 540); un invitado nuevo que abre el enlace ve primero el tutorial y vuelve al reto; al jugarlo, la comparación ("¡Empate!"), Revancha y Compartir resultado.
 - Colección (insignia, nivel, paletas, sonidos, efectos, fondos del campo, logros), Rankings (general y "Reto de hoy") y Perfil (sonido, vibración, Colección, instalar). La consola solo muestra los 404 esperados de las rutas directas en Pages.
 - Las claves locales siguen siendo `tb_best5`/`tb_hist5`.
-- Lo que no se pudo probar en producción: lo que necesita una cuenta (misiones guardadas en el servidor, reclamar partidas, ranking del día con cuenta), porque el login de Google no se puede automatizar. Está cubierto por los tests e2e de la API y por la prueba de punta a punta en local con el login de desarrollo. Datos de prueba que quedaron: 4 partidas de invitado y un reto (`2MHKV5VF`, vence el 12 dic 2026).
+- Lo que necesita una cuenta no se puede probar en producción porque el login de Google no se automatiza. Se probó el mismo día en local con el código publicado (API compilada con `AUTH_DEV_FAKE=1` y web de desarrollo, Playwright con pantalla de celular), además de los e2e de la API (63 en verde):
+  - Un invitado juega el reto diario, entra con "Entrar (dev)" desde la pantalla final y la partida se **reclama** (`POST /runs/:id/claim` → válida): la cuenta queda con 1 de 3 intentos y la pantalla pasa a "Otro intento (quedan 2)".
+  - **Ranking del día con cuenta**: la cuenta aparece con "TU POSICIÓN".
+  - **Misiones guardadas en el servidor**: "Juega el reto del día" premiada al reclamar; después de una partida normal, "Llega al 5" y "Destruye 30 bloques hoy" también; `bonusXp` 80 y la tarjeta muestra 3/3.
+  - **Partida normal con cuenta** validada: `UserStats` en el servidor (mejor racha, bloques, partidas), "¡Subiste a Madera III!" con sus premios y récord en el ranking.
+  - **Colección y Perfil con sesión**: insignia y nivel de la cuenta (bloques + misiones), usuario, país, "¿Quién te invitó?" e invitar amigos.
+  - **2.º intento del reto** con cuenta: empieza directo y queda "Te queda 1 intento".
+- Datos de prueba que quedaron en producción: 4 partidas de invitado y un reto (`2MHKV5VF`, vence el 12 dic 2026). En la base local, la cuenta `prueba.publicacion`.
 
 **Confirmado por el usuario (12 nov 2026)**: los valores provisorios quedan tal cual (umbrales de las insignias, catálogo de premios, nivel `25·n·(n−1)`, paleta Constancia a los 7 días, misiones, racha con perdón y logros) y el jueves del reto diario parte en la dificultad de las multiplicaciones.
 
