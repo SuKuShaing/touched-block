@@ -34,6 +34,8 @@ services:
       POSTGRES_DB: touched_block
     volumes:
       - tb_pgdata:/var/lib/postgresql/data
+      # respaldos (pg_dump) en el disco del VPS; los genera la tarea programada de Dokploy (ver docs/despliegue.md)
+      - /var/backups/touched-block:/respaldos
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U tb -d touched_block']
       interval: 5s
