@@ -1,4 +1,5 @@
 import {
+  ADD_START,
   BOMB_CHANCE,
   BOMB_MAX_AT_ONCE,
   BOMB_MIN_PLAYED,
@@ -11,8 +12,10 @@ import {
   HEART_LIFE,
   LIFE_MAX,
   LIFE_MIN,
+  MAX_LIVES_CAP,
   MIX_WITH_ADD,
   MIX_WITH_MUL,
+  MUL_START,
   OP_SYMBOL,
   OP_WIDTH_RATIO,
   REDDISH,
@@ -82,11 +85,28 @@ export type GameEvent =
   | { type: 'comboBreak'; streak: number; earned: number }
   | { type: 'end'; reason: EndReason };
 
+/**
+ * Modificadores de una partida (retos con modificador, plan 5.1). Todos opcionales; sin ellos
+ * (o con `mods` nulo) el motor se comporta exactamente como en una partida normal.
+ */
+export interface GameMods {
+  /** La dificultad parte como si ya se hubieran jugado estos segundos (entero 0–600). */
+  startAt?: number;
+  /** Solo una familia de bloques: números, sumas y restas, o multiplicaciones y divisiones. */
+  only?: 'num' | 'add' | 'mul';
+  /** Vidas de la partida (entero 1–MAX_LIVES_CAP); reemplaza a `maxLives`. */
+  lives?: number;
+  /** Sin trampas rojas (las restas con resultado ≤ 0 siguen siendo trampa). */
+  noRed?: boolean;
+}
+
 export interface GameConfig {
   seed: number;
   maxLives: number;
   fieldW: number;
   fieldH: number;
+  /** Modificadores; ausente o null en las partidas normales. */
+  mods?: GameMods | null;
 }
 
 export interface GameState {
@@ -117,14 +137,47 @@ export interface GameState {
   events: GameEvent[];
 }
 
+/** Tope de `mods.startAt` (s). */
+export const MODS_START_AT_MAX = 600;
+const MOD_KEYS: readonly string[] = ['startAt', 'only', 'lives', 'noRed'];
+const MOD_FAMILIES: readonly string[] = ['num', 'add', 'mul'];
+
+/**
+ * Comprueba que los modificadores sean válidos (null/undefined también lo son: partida normal).
+ * Lanza un Error si no. Rechaza claves desconocidas, para que el servidor nunca repita una
+ * partida ignorando un modificador que el cliente sí usó.
+ */
+export function validateMods(mods: unknown): asserts mods is GameMods | null | undefined {
+  if (mods === null || mods === undefined) return;
+  if (typeof mods !== 'object' || Array.isArray(mods)) throw new Error('mods debe ser un objeto');
+  const m = mods as Record<string, unknown>;
+  for (const k of Object.keys(m)) if (!MOD_KEYS.includes(k)) throw new Error(`modificador desconocido: ${k}`);
+  const int = (v: unknown, min: number, max: number) => typeof v === 'number' && Number.isInteger(v) && v >= min && v <= max;
+  if (m.startAt !== undefined && !int(m.startAt, 0, MODS_START_AT_MAX)) {
+    throw new Error(`mods.startAt debe ser un entero entre 0 y ${MODS_START_AT_MAX}`);
+  }
+  if (m.lives !== undefined && !int(m.lives, 1, MAX_LIVES_CAP)) {
+    throw new Error(`mods.lives debe ser un entero entre 1 y ${MAX_LIVES_CAP}`);
+  }
+  if (m.only !== undefined && !(typeof m.only === 'string' && MOD_FAMILIES.includes(m.only))) {
+    throw new Error(`mods.only debe ser uno de: ${MOD_FAMILIES.join(', ')}`);
+  }
+  if (m.noRed !== undefined && typeof m.noRed !== 'boolean') throw new Error('mods.noRed debe ser true o false');
+}
+
 export function createGame(config: GameConfig): GameState {
   if (!(config.fieldW > 0 && config.fieldH > 0)) throw new Error('fieldW y fieldH deben ser positivos');
   if (!(config.maxLives >= 1)) throw new Error('maxLives debe ser ≥ 1');
+  validateMods(config.mods);
+  // con mods.lives, las vidas de la partida (y el tope del corazón de recuperación) son esas
+  const cfg: GameConfig = config.mods
+    ? { ...config, mods: { ...config.mods }, maxLives: config.mods.lives ?? config.maxLives }
+    : { ...config };
   return {
-    config: { ...config },
+    config: cfg,
     rng: config.seed | 0,
     tick: 0,
-    lives: config.maxLives,
+    lives: cfg.maxLives,
     timeLeft: START_TIME,
     played: 0,
     barMax: START_TIME,
@@ -140,6 +193,15 @@ export function createGame(config: GameConfig): GameState {
     endReason: null,
     events: [],
   };
+}
+
+/**
+ * Tiempo que usan las curvas de dificultad: los segundos jugados más `mods.startAt`. Sin
+ * modificadores es exactamente `s.played` (x + 0 === x), así que las partidas normales no
+ * cambian. `s.played` sigue siendo el tiempo real jugado.
+ */
+export function difficultyTime(s: GameState): number {
+  return s.played + (s.config.mods?.startAt ?? 0);
 }
 
 function end(s: GameState, reason: EndReason) {
@@ -195,10 +257,18 @@ interface Shape {
 
 /** Elige el tipo y los números del bloque según la etapa del juego. */
 function makeShape(s: GameState, allowNonPositive: boolean): Shape {
-  const addMax = maxAddFor(s.played);
-  const mulMax = maxMulFor(s.played);
+  const t = difficultyTime(s);
+  const only = s.config.mods?.only;
+  let addMax = maxAddFor(t);
+  let mulMax = maxMulFor(t);
   let family: 'num' | 'add' | 'mul' = 'num';
-  if (mulMax > 0) {
+  if (only) {
+    // familia forzada (mods.only); si la curva todavía no la habilita, parte en su valor
+    // inicial ("1+1", "2×2") y después sigue la curva
+    family = only;
+    if (addMax === 0) addMax = maxAddFor(ADD_START);
+    if (mulMax === 0) mulMax = maxMulFor(MUL_START);
+  } else if (mulMax > 0) {
     const r = nextRandom(s);
     family = r < MIX_WITH_MUL.num ? 'num' : r < MIX_WITH_MUL.num + MIX_WITH_MUL.add ? 'add' : 'mul';
   } else if (addMax > 0) {
@@ -231,23 +301,25 @@ function makeShape(s: GameState, allowNonPositive: boolean): Shape {
     return { kind: 'mul', a, b, value: a * b, label: `${a}${OP_SYMBOL.mul}${b}` };
   }
 
-  const n = randInt(s, 1, maxNumFor(s.played));
+  const n = randInt(s, 1, maxNumFor(t));
   return { kind: 'num', a: n, b: 0, value: n, label: String(n) };
 }
 
 function spawn(s: GameState): boolean {
+  const t = difficultyTime(s);
   let trapCount = 0;
   for (const b of s.blocks) if (b.trap) trapCount++;
-  const canTrap = s.played > BOMB_MIN_PLAYED && trapCount < BOMB_MAX_AT_ONCE;
-  // de vez en cuando aparece una trampa roja (máx. 2 trampas a la vez, no al comienzo)
-  const red = canTrap && nextRandom(s) < BOMB_CHANCE;
+  const canTrap = t > BOMB_MIN_PLAYED && trapCount < BOMB_MAX_AT_ONCE;
+  // de vez en cuando aparece una trampa roja (máx. 2 trampas a la vez, no al comienzo).
+  // Con mods.noRed no hay rojas; sin él se consumen los mismos números aleatorios que siempre.
+  const red = !s.config.mods?.noRed && canTrap && nextRandom(s) < BOMB_CHANCE;
   const shape = makeShape(s, canTrap && !red);
   const h = blockSizeFor(s.config.fieldW, s.config.fieldH);
   const w = shape.kind === 'num' ? h : Math.min(h * OP_WIDTH_RATIO, s.config.fieldW - 12);
   const spot = findSpot(s, w, h);
   if (!spot) return false;
   // vida del bloque: aleatoria (o fija en la etapa final), nunca depende de su número
-  const stage = stageLifeFor(s.played);
+  const stage = stageLifeFor(t);
   const life = stage ?? LIFE_MIN + nextRandom(s) * (LIFE_MAX - LIFE_MIN);
   let color: string =
     shape.kind === 'num' ? COLORS[(shape.value - 1) % COLORS.length] : COLORS[Math.floor(nextRandom(s) * COLORS.length)];
@@ -355,7 +427,7 @@ function expire(s: GameState, b: Block) {
   }
   // bloque no completado: resta su resultado ORIGINAL × multiplicador de la etapa (aunque tenga toques)
   s.missed++;
-  const penalty = b.total * missMultAt(s.played);
+  const penalty = b.total * missMultAt(difficultyTime(s));
   s.timeLeft -= penalty;
   s.events.push({ type: 'expire', block: b, penalty });
   breakCombo(s);
@@ -394,12 +466,13 @@ export function step(s: GameState): void {
   s.timeLeft -= DT;
   s.played += DT;
 
-  const maxConc = maxConcFor(s.played);
+  const t = difficultyTime(s);
+  const maxConc = maxConcFor(t);
   s.spawnCd -= DT;
   let normal = 0;
   for (const b of s.blocks) if (!b.heart) normal++;
   if (s.spawnCd <= 0 && normal < maxConc) {
-    if (spawn(s)) s.spawnCd = spawnCooldown(s.played, nextRandom(s));
+    if (spawn(s)) s.spawnCd = spawnCooldown(t, nextRandom(s));
     else s.spawnCd = 0.2;
   }
   for (let i = s.blocks.length - 1; i >= 0; i--) {

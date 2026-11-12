@@ -1,0 +1,362 @@
+{
+  "1@360x540": {
+    "killed": 12,
+    "missed": 0,
+    "bestStreak": 12,
+    "ticks": 616,
+    "endReason": "tiempo",
+    "spawns": 13,
+    "blocksHash": "f34ad0d7"
+  },
+  "2@360x540": {
+    "killed": 12,
+    "missed": 0,
+    "bestStreak": 12,
+    "ticks": 661,
+    "endReason": "tiempo",
+    "spawns": 14,
+    "blocksHash": "7e793a91"
+  },
+  "3@360x540": {
+    "killed": 71,
+    "missed": 0,
+    "bestStreak": 33,
+    "ticks": 3730,
+    "endReason": "vidas",
+    "spawns": 83,
+    "blocksHash": "9e9a7657"
+  },
+  "7@360x540": {
+    "killed": 96,
+    "missed": 1,
+    "bestStreak": 23,
+    "ticks": 5053,
+    "endReason": "vidas",
+    "spawns": 114,
+    "blocksHash": "25a3a3a2"
+  },
+  "42@360x540": {
+    "killed": 62,
+    "missed": 0,
+    "bestStreak": 16,
+    "ticks": 3345,
+    "endReason": "vidas",
+    "spawns": 71,
+    "blocksHash": "8fae4b5a"
+  },
+  "99@360x540": {
+    "killed": 48,
+    "missed": 0,
+    "bestStreak": 12,
+    "ticks": 2519,
+    "endReason": "vidas",
+    "spawns": 56,
+    "blocksHash": "e63e702b"
+  },
+  "123@360x540": {
+    "killed": 53,
+    "missed": 0,
+    "bestStreak": 19,
+    "ticks": 2875,
+    "endReason": "tiempo",
+    "spawns": 62,
+    "blocksHash": "acfd183b"
+  },
+  "256@360x540": {
+    "killed": 69,
+    "missed": 0,
+    "bestStreak": 22,
+    "ticks": 3741,
+    "endReason": "vidas",
+    "spawns": 80,
+    "blocksHash": "dcab472f"
+  },
+  "1000@360x540": {
+    "killed": 14,
+    "missed": 0,
+    "bestStreak": 11,
+    "ticks": 671,
+    "endReason": "tiempo",
+    "spawns": 15,
+    "blocksHash": "3f380cd9"
+  },
+  "2024@360x540": {
+    "killed": 104,
+    "missed": 0,
+    "bestStreak": 27,
+    "ticks": 5191,
+    "endReason": "vidas",
+    "spawns": 122,
+    "blocksHash": "3a5bb529"
+  },
+  "31337@360x540": {
+    "killed": 258,
+    "missed": 23,
+    "bestStreak": 83,
+    "ticks": 12672,
+    "endReason": "tiempo",
+    "spawns": 324,
+    "blocksHash": "83da01f8"
+  },
+  "65535@360x540": {
+    "killed": 187,
+    "missed": 10,
+    "bestStreak": 59,
+    "ticks": 9051,
+    "endReason": "vidas",
+    "spawns": 231,
+    "blocksHash": "1c905aed"
+  },
+  "99991@360x540": {
+    "killed": 379,
+    "missed": 25,
+    "bestStreak": 92,
+    "ticks": 18242,
+    "endReason": "tiempo",
+    "spawns": 488,
+    "blocksHash": "0a6ff924"
+  },
+  "123456@360x540": {
+    "killed": 423,
+    "missed": 24,
+    "bestStreak": 83,
+    "ticks": 19465,
+    "endReason": "tiempo",
+    "spawns": 526,
+    "blocksHash": "49503406"
+  },
+  "777777@360x540": {
+    "killed": 407,
+    "missed": 27,
+    "bestStreak": 81,
+    "ticks": 19865,
+    "endReason": "tiempo",
+    "spawns": 529,
+    "blocksHash": "026bc8da"
+  },
+  "1000003@360x540": {
+    "killed": 578,
+    "missed": 32,
+    "bestStreak": 103,
+    "ticks": 26604,
+    "endReason": "tiempo",
+    "spawns": 733,
+    "blocksHash": "56e71208"
+  },
+  "2147483647@360x540": {
+    "killed": 523,
+    "missed": 27,
+    "bestStreak": 290,
+    "ticks": 23482,
+    "endReason": "tiempo",
+    "spawns": 653,
+    "blocksHash": "e622efa2"
+  },
+  "3000000000@360x540": {
+    "killed": 590,
+    "missed": 30,
+    "bestStreak": 172,
+    "ticks": 26838,
+    "endReason": "tiempo",
+    "spawns": 746,
+    "blocksHash": "56dce367"
+  },
+  "4294967295@360x540": {
+    "killed": 612,
+    "missed": 37,
+    "bestStreak": 191,
+    "ticks": 28113,
+    "endReason": "tiempo",
+    "spawns": 775,
+    "blocksHash": "23411a92"
+  },
+  "0@360x540": {
+    "killed": 612,
+    "missed": 24,
+    "bestStreak": 135,
+    "ticks": 27832,
+    "endReason": "vidas",
+    "spawns": 775,
+    "blocksHash": "2da6d923"
+  },
+  "1@412x732": {
+    "killed": 12,
+    "missed": 0,
+    "bestStreak": 12,
+    "ticks": 616,
+    "endReason": "tiempo",
+    "spawns": 13,
+    "blocksHash": "40690d5e"
+  },
+  "2@412x732": {
+    "killed": 54,
+    "missed": 0,
+    "bestStreak": 20,
+    "ticks": 2880,
+    "endReason": "tiempo",
+    "spawns": 64,
+    "blocksHash": "6f8cbdc5"
+  },
+  "3@412x732": {
+    "killed": 82,
+    "missed": 0,
+    "bestStreak": 21,
+    "ticks": 4303,
+    "endReason": "vidas",
+    "spawns": 94,
+    "blocksHash": "87dc648d"
+  },
+  "7@412x732": {
+    "killed": 63,
+    "missed": 0,
+    "bestStreak": 18,
+    "ticks": 3209,
+    "endReason": "vidas",
+    "spawns": 71,
+    "blocksHash": "dd3c73f2"
+  },
+  "42@412x732": {
+    "killed": 11,
+    "missed": 0,
+    "bestStreak": 11,
+    "ticks": 522,
+    "endReason": "tiempo",
+    "spawns": 12,
+    "blocksHash": "a6f2691d"
+  },
+  "99@412x732": {
+    "killed": 49,
+    "missed": 0,
+    "bestStreak": 12,
+    "ticks": 2554,
+    "endReason": "vidas",
+    "spawns": 56,
+    "blocksHash": "4a493eda"
+  },
+  "123@412x732": {
+    "killed": 133,
+    "missed": 8,
+    "bestStreak": 40,
+    "ticks": 6927,
+    "endReason": "vidas",
+    "spawns": 165,
+    "blocksHash": "f00e1a3e"
+  },
+  "256@412x732": {
+    "killed": 66,
+    "missed": 0,
+    "bestStreak": 24,
+    "ticks": 3143,
+    "endReason": "vidas",
+    "spawns": 72,
+    "blocksHash": "48c64345"
+  },
+  "1000@412x732": {
+    "killed": 14,
+    "missed": 0,
+    "bestStreak": 11,
+    "ticks": 671,
+    "endReason": "tiempo",
+    "spawns": 15,
+    "blocksHash": "a511856e"
+  },
+  "2024@412x732": {
+    "killed": 88,
+    "missed": 0,
+    "bestStreak": 21,
+    "ticks": 4504,
+    "endReason": "vidas",
+    "spawns": 103,
+    "blocksHash": "d83b22bc"
+  },
+  "31337@412x732": {
+    "killed": 263,
+    "missed": 14,
+    "bestStreak": 59,
+    "ticks": 13075,
+    "endReason": "vidas",
+    "spawns": 342,
+    "blocksHash": "55de2053"
+  },
+  "65535@412x732": {
+    "killed": 189,
+    "missed": 7,
+    "bestStreak": 55,
+    "ticks": 9260,
+    "endReason": "vidas",
+    "spawns": 234,
+    "blocksHash": "e0b448d8"
+  },
+  "99991@412x732": {
+    "killed": 331,
+    "missed": 18,
+    "bestStreak": 83,
+    "ticks": 15906,
+    "endReason": "vidas",
+    "spawns": 429,
+    "blocksHash": "85c5e721"
+  },
+  "123456@412x732": {
+    "killed": 433,
+    "missed": 29,
+    "bestStreak": 118,
+    "ticks": 20174,
+    "endReason": "tiempo",
+    "spawns": 555,
+    "blocksHash": "549af8b0"
+  },
+  "777777@412x732": {
+    "killed": 389,
+    "missed": 28,
+    "bestStreak": 86,
+    "ticks": 18667,
+    "endReason": "tiempo",
+    "spawns": 506,
+    "blocksHash": "302e1ddf"
+  },
+  "1000003@412x732": {
+    "killed": 518,
+    "missed": 30,
+    "bestStreak": 155,
+    "ticks": 23669,
+    "endReason": "tiempo",
+    "spawns": 653,
+    "blocksHash": "19c30941"
+  },
+  "2147483647@412x732": {
+    "killed": 537,
+    "missed": 29,
+    "bestStreak": 184,
+    "ticks": 24103,
+    "endReason": "tiempo",
+    "spawns": 670,
+    "blocksHash": "983a5aa0"
+  },
+  "3000000000@412x732": {
+    "killed": 621,
+    "missed": 35,
+    "bestStreak": 160,
+    "ticks": 27674,
+    "endReason": "tiempo",
+    "spawns": 784,
+    "blocksHash": "065bb1f3"
+  },
+  "4294967295@412x732": {
+    "killed": 602,
+    "missed": 36,
+    "bestStreak": 183,
+    "ticks": 26956,
+    "endReason": "tiempo",
+    "spawns": 759,
+    "blocksHash": "d539dd22"
+  },
+  "0@412x732": {
+    "killed": 632,
+    "missed": 10,
+    "bestStreak": 141,
+    "ticks": 26535,
+    "endReason": "vidas",
+    "spawns": 766,
+    "blocksHash": "e0746c17"
+  }
+}
