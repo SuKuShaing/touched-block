@@ -27,6 +27,8 @@ export const DAILY_KEY = 'tb_daily1';
 
 /** Desde qué visita se presentan el reto diario y las misiones (la 1.ª es solo para jugar). */
 export const DAILY_FROM_VISIT = 2;
+/** …o desde cuántas partidas terminadas, lo que llegue primero (ver `dailyVisible`). */
+export const DAILY_FROM_RUNS = 3;
 
 /**
  * Con menos jugadores que esto en un día se muestra la posición ("Vas 2.º de 4") en vez del
@@ -504,8 +506,39 @@ export const shouldShowYesterday = (local: DailyLocal, yesterday: { date: DateKe
 
 // ---------------------------------------------------------------- inicio
 
-/** ¿Se presentan el reto y las misiones? Desde la 2.ª visita y con la API configurada. */
-export const dailyVisible = (visits: number, accounts: boolean) => accounts && visits >= DAILY_FROM_VISIT;
+/** Lo que decide si ya se presentan el reto, las misiones y "Retar a un amigo". */
+export interface UnlockState {
+  /** ¿Hay API configurada? Sin ella no existen. */
+  accounts: boolean;
+  /** Visitas de este dispositivo (`onboarding.ts`). */
+  visits: number;
+  /** Partidas terminadas: las de este dispositivo o las de la cuenta, la mayor (`playedRuns`). */
+  runs: number;
+}
+
+/**
+ * ¿Se presentan el reto y las misiones (y "Retar a un amigo")? Con la API configurada, desde la
+ * 2.ª visita del dispositivo o desde DAILY_FROM_RUNS partidas, lo que llegue primero. Contar las
+ * partidas de la cuenta hace que la misma cuenta en un celular nuevo los vea al tiro.
+ */
+export const dailyVisible = (o: UnlockState) => o.accounts && (o.visits >= DAILY_FROM_VISIT || o.runs >= DAILY_FROM_RUNS);
+
+/** Partidas que cuentan para desbloquear: las de este dispositivo o las de la cuenta, la mayor. */
+export const playedRuns = (localRuns: number, user?: { stats?: { totalRuns: number } } | null) =>
+  Math.max(localRuns, user?.stats?.totalRuns ?? 0);
+
+/**
+ * Cuántas partidas le faltan para desbloquearlos, para avisarle que jugar los activa; null si ya
+ * se ven, si no hay API o si todavía no termina ninguna (la 1.ª partida es solo para jugar).
+ */
+export function runsToUnlock(o: UnlockState): number | null {
+  if (!o.accounts || dailyVisible(o) || o.runs < 1) return null;
+  return DAILY_FROM_RUNS - o.runs;
+}
+
+/** "Te faltan 2 partidas para desbloquear el reto del día y las misiones." */
+export const unlockHintText = (left: number) =>
+  `Te ${left === 1 ? 'falta 1 partida' : `faltan ${left} partidas`} para desbloquear el reto del día y las misiones.`;
 
 /** Parámetro del enlace que comparte el reto: `…/touched-block/?diario=1`. */
 export const DAILY_PARAM = 'diario';

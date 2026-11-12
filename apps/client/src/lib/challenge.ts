@@ -1,4 +1,5 @@
 import { storage } from '@/platform/storage';
+import { DAILY_FROM_RUNS } from './daily';
 import { SITE_URL } from './shareText';
 
 /**
@@ -124,10 +125,11 @@ export const CHALLENGE_FROM_VISIT = 2;
 
 /**
  * ¿Se ofrece "Retar a un amigo" (inicio y pantalla final)? Con la API configurada, desde la 2.ª
- * visita; o antes si el jugador llegó por un enlace de reto (ya sabe de qué se trata).
+ * visita o desde DAILY_FROM_RUNS partidas (se desbloquea junto con el reto del día); o antes si
+ * el jugador llegó por un enlace de reto (ya sabe de qué se trata).
  */
-export const challengeOfferVisible = (o: { accounts: boolean; visits: number; arrivedByLink: boolean }) =>
-  o.accounts && (o.visits >= CHALLENGE_FROM_VISIT || o.arrivedByLink);
+export const challengeOfferVisible = (o: { accounts: boolean; visits: number; runs: number; arrivedByLink: boolean }) =>
+  o.accounts && (o.visits >= CHALLENGE_FROM_VISIT || o.runs >= DAILY_FROM_RUNS || o.arrivedByLink);
 
 /** Texto para compartir el resultado: "Tú 52 · @seba 47 en un reto de Touched Block. ¿Me superas?". */
 export function resultShareText(me: { killed: number }, rival: ChallengeScore | null): string {

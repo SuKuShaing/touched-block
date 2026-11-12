@@ -323,9 +323,35 @@ describe('dailyStatus con sesión', () => {
 describe('inicio', () => {
   it('el reto y las misiones desde la 2.ª visita y con la API', async () => {
     const d = await load();
-    expect(d.dailyVisible(1, true)).toBe(false);
-    expect(d.dailyVisible(2, true)).toBe(true);
-    expect(d.dailyVisible(5, false)).toBe(false);
+    expect(d.dailyVisible({ accounts: true, visits: 1, runs: 0 })).toBe(false);
+    expect(d.dailyVisible({ accounts: true, visits: 2, runs: 0 })).toBe(true);
+    expect(d.dailyVisible({ accounts: false, visits: 5, runs: 9 })).toBe(false);
+  });
+  it('o desde la 3.ª partida, aunque sea la 1.ª visita', async () => {
+    const d = await load();
+    expect(d.DAILY_FROM_RUNS).toBe(3);
+    expect(d.dailyVisible({ accounts: true, visits: 1, runs: 2 })).toBe(false);
+    expect(d.dailyVisible({ accounts: true, visits: 1, runs: 3 })).toBe(true);
+  });
+  it('cuentan las partidas del dispositivo o las de la cuenta, la mayor', async () => {
+    const d = await load();
+    expect(d.playedRuns(1, null)).toBe(1);
+    expect(d.playedRuns(1, undefined)).toBe(1);
+    expect(d.playedRuns(1, {})).toBe(1);
+    expect(d.playedRuns(0, { stats: { totalRuns: 40 } })).toBe(40);
+    expect(d.playedRuns(5, { stats: { totalRuns: 2 } })).toBe(5);
+  });
+  it('aviso de cuántas partidas faltan: después de la 1.ª y hasta desbloquearlos', async () => {
+    const d = await load();
+    const at = (runs: number, visits = 1, accounts = true) => d.runsToUnlock({ accounts, visits, runs });
+    expect(at(0)).toBeNull(); // la 1.ª partida es solo para jugar
+    expect(at(1)).toBe(2);
+    expect(at(2)).toBe(1);
+    expect(at(3)).toBeNull();
+    expect(at(1, 2)).toBeNull(); // 2.ª visita: ya se ven
+    expect(at(1, 1, false)).toBeNull(); // sin API no existen
+    expect(d.unlockHintText(2)).toBe('Te faltan 2 partidas para desbloquear el reto del día y las misiones.');
+    expect(d.unlockHintText(1)).toBe('Te falta 1 partida para desbloquear el reto del día y las misiones.');
   });
 
   it('enlace ?diario=1 y botón de otro intento', async () => {

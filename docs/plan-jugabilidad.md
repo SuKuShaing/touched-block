@@ -67,7 +67,7 @@ Todo esto mejora la experiencia solo si no se interpone entre el jugador y la pa
 | Durante la partida (avisos de hito, récord, amigo superado, combos) | Un solo aviso a la vez, en la franja superior, nunca sobre un bloque. Si coinciden varios, se muestra el más importante y el resto se descarta. Tocar fuera de un bloque cuesta una vida, así que ningún aviso puede tapar ni parecer un bloque |
 | Pantalla final (camino, cercanía, premios, ranking, compartir) | "Jugar de nuevo" siempre visible sin desplazarse y disponible de inmediato. Nada de ventanas que haya que cerrar: los premios y celebraciones son tarjetas dentro de la pantalla, y duran poco |
 | Inicio (reto del día, misiones, instalar) | "Jugar" sigue siendo el botón principal. Como máximo una tarjeta promocional a la vez; la de instalar se puede descartar para siempre |
-| Jugador nuevo | En su primera partida solo ve lo de hoy más el camino de etapas. La Colección, los retos y las misiones se presentan cuando le sirven (primer premio, segunda visita), no todos juntos |
+| Jugador nuevo | En su primera partida solo ve lo de hoy más el camino de etapas. La Colección, los retos y las misiones se presentan cuando le sirven (primer premio, segunda visita o tercera partida, con aviso de cuántas faltan), no todos juntos |
 | Quien no quiere premios ni retos | Todo es opcional. El juego se ve y suena como hoy mientras no elija otra cosa |
 | Retos en celulares altos | Sobra una franja sin usar; los toques ahí se ignoran y no cuestan vida |
 | Celulares lentos | Los elementos nuevos del marcador no pueden bajar la fluidez; se prueba con el procesador limitado en las herramientas del navegador |

@@ -39,6 +39,7 @@ import { ProfileIcon } from '@/components/ProfileIcon';
 import { StageTrack } from '@/components/StageTrack';
 import { TierBadge } from '@/components/TierBadge';
 import { GhostButton, HistoryList, Logo, MainButton, RecordPill, SoundToggle } from '@/components/ui';
+import { UnlockHint } from '@/components/UnlockHint';
 import { features } from '@/config';
 import { type CatalogItem, SETTING_KEY } from '@/cosmetics/catalog';
 import { tierStepOf } from '@/cosmetics/tiers';
@@ -78,9 +79,11 @@ import {
   localStreakBest,
   localUsed,
   markDailyStarted,
+  playedRuns,
   readDailyParam,
   recordDailyFinish,
   recordDailyGuestResult,
+  runsToUnlock,
   useToday,
 } from '@/lib/daily';
 import { type HistEntry, loadBest, loadHist, recordRun } from '@/lib/history';
@@ -264,8 +267,17 @@ export function GameScreen() {
     dailyLinkPending.current = true;
   }, [paramDaily]);
   const [openRules, setOpenRules] = useState(false);
-  const showDaily = features.accounts && (dailyVisible(visits, features.accounts) || dailyLinked);
-  const missionsOn = dailyVisible(visits, features.accounts);
+  // se desbloquean en la 2.ª visita o con la 3.ª partida (contando las de la cuenta: la misma
+  // cuenta en un celular nuevo los ve al tiro); mientras tanto se avisa cuántas partidas faltan
+  const runsPlayed = playedRuns(localStats.runs, viewer.user);
+  const unlock = { accounts: features.accounts, visits, runs: runsPlayed };
+  const showDaily = features.accounts && (dailyVisible(unlock) || dailyLinked);
+  const missionsOn = dailyVisible(unlock);
+  const runsLeft = runsToUnlock(unlock);
+  const missionsOnRef = useRef(missionsOn);
+  missionsOnRef.current = missionsOn;
+  /** ¿Seguían bloqueados al empezar esta partida? (si al terminarla ya no, se celebra) */
+  const lockedAtStart = useRef(false);
   const { status: todayDaily } = useDailyStatus(today, showDaily);
   const { missions } = useTodayMissions(today, missionsOn);
   const missionsRef = useRef(missions);
@@ -550,6 +562,7 @@ export function GameScreen() {
       // misiones de hoy al empezar: al terminar se muestran las que se cumplieron en esta partida
       missionsBefore.current = missionsRef.current;
       missionsViewer.current = viewerKeyRef.current;
+      lockedAtStart.current = !missionsOnRef.current;
       dailyRun.current = null;
       if (prep.kind === 'server' && prep.mode === 'daily' && opts.mode === 'daily') {
         // el intento se gasta al empezar (también en este dispositivo: el invitado tiene 1)
@@ -687,8 +700,8 @@ export function GameScreen() {
   const startFromEnd = (o: RunOptions) => {
     if (endReady()) void startGame(o);
   };
-  // "Retar a un amigo" (inicio y pantalla final): desde la 2.ª visita, o si llegó por un enlace de reto
-  const challengeOffer = challengeOfferVisible({ accounts: features.accounts, visits, arrivedByLink });
+  // "Retar a un amigo" (inicio y pantalla final): junto con el reto del día, o si llegó por un enlace de reto
+  const challengeOffer = challengeOfferVisible({ accounts: features.accounts, visits, runs: runsPlayed, arrivedByLink });
 
   const seconds = s ? s.timeLeft : START_TIME;
   const low = seconds <= LOW_TIME;
@@ -734,6 +747,21 @@ export function GameScreen() {
     if (!end || !missionsOn) setEndMissions([]);
     else if (end.missionsViewer === viewer.key) setEndMissions(newlyCompleted(end.missionsBefore, missions));
   }, [end, missionsOn, missions, viewer.key]);
+  // la partida que los desbloqueó: en su pantalla final ya se ven el reto y las misiones
+  const justUnlocked = !!end && lockedAtStart.current && missionsOn;
+  const dailyBlock = (fromEnd: boolean) => (
+    <>
+      <DailyCard
+        date={today}
+        onStart={(d) => (fromEnd ? startFromEnd({ mode: 'daily', date: d }) : void startGame({ mode: 'daily', date: d }))}
+        busy={starting && startingDaily}
+        error={dailyFail?.message ?? null}
+        openRules={openRules}
+        onRulesOpened={() => setOpenRules(false)}
+      />
+      {missionsOn && missions ? <MissionList missions={missions} /> : null}
+    </>
+  );
 
   return (
     <View style={[styles.app, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
@@ -819,6 +847,14 @@ export function GameScreen() {
                 {otherFail ? <Text style={styles.fail}>{otherFail.message}</Text> : null}
                 <MainButton title={mainTitle} onPress={onMain} />
                 {endMissions.length ? <MissionList key={`miss${end.id}`} variant="end" missions={endMissions} /> : null}
+                {justUnlocked ? (
+                  <>
+                    <UnlockHint left={0} />
+                    {dailyBlock(true)}
+                  </>
+                ) : runsLeft !== null ? (
+                  <UnlockHint left={runsLeft} />
+                ) : null}
                 {features.accounts && endRun ? (
                   <EndPanel key={endRun.id} run={endRun} onStart={startFromEnd} onDaily={onDailyResult} challengeOffer={challengeOffer} />
                 ) : null}
@@ -841,19 +877,11 @@ export function GameScreen() {
                   <GhostButton small title="Retar a un amigo" onPress={() => void startGame({ mode: 'duel' })} />
                 ) : null}
                 {invite ? null : homeSlot === 'daily' ? (
-                  <>
-                    <DailyCard
-                      date={today}
-                      onStart={(d) => void startGame({ mode: 'daily', date: d })}
-                      busy={starting && startingDaily}
-                      error={dailyFail?.message ?? null}
-                      openRules={openRules}
-                      onRulesOpened={() => setOpenRules(false)}
-                    />
-                    {missionsOn && missions ? <MissionList missions={missions} /> : null}
-                  </>
+                  dailyBlock(false)
                 ) : homeSlot === 'install' ? (
                   <InstallCard />
+                ) : runsLeft !== null ? (
+                  <UnlockHint left={runsLeft} />
                 ) : null}
                 <RecordPill best={best} />
                 <HistoryList hist={hist} best={best} current={false} />

@@ -188,17 +188,22 @@ describe('challengeHead: encabezado del resultado del reto', () => {
   });
 });
 
-describe('challengeOfferVisible: Retar a un amigo desde la 2.ª visita', () => {
-  it('1.ª visita: no, salvo que haya llegado por un enlace de reto', () => {
-    expect(challengeOfferVisible({ accounts: true, visits: 1, arrivedByLink: false })).toBe(false);
-    expect(challengeOfferVisible({ accounts: true, visits: 0, arrivedByLink: false })).toBe(false);
-    expect(challengeOfferVisible({ accounts: true, visits: 1, arrivedByLink: true })).toBe(true);
+describe('challengeOfferVisible: Retar a un amigo desde la 2.ª visita o la 3.ª partida', () => {
+  it('1.ª visita y pocas partidas: no, salvo que haya llegado por un enlace de reto', () => {
+    expect(challengeOfferVisible({ accounts: true, visits: 1, runs: 0, arrivedByLink: false })).toBe(false);
+    expect(challengeOfferVisible({ accounts: true, visits: 0, runs: 0, arrivedByLink: false })).toBe(false);
+    expect(challengeOfferVisible({ accounts: true, visits: 1, runs: 2, arrivedByLink: false })).toBe(false);
+    expect(challengeOfferVisible({ accounts: true, visits: 1, runs: 0, arrivedByLink: true })).toBe(true);
   });
   it('desde la 2.ª visita, sí', () => {
-    expect(challengeOfferVisible({ accounts: true, visits: CHALLENGE_FROM_VISIT, arrivedByLink: false })).toBe(true);
-    expect(challengeOfferVisible({ accounts: true, visits: 7, arrivedByLink: false })).toBe(true);
+    expect(challengeOfferVisible({ accounts: true, visits: CHALLENGE_FROM_VISIT, runs: 0, arrivedByLink: false })).toBe(true);
+    expect(challengeOfferVisible({ accounts: true, visits: 7, runs: 0, arrivedByLink: false })).toBe(true);
+  });
+  it('desde la 3.ª partida (de este dispositivo o de la cuenta), sí', () => {
+    expect(challengeOfferVisible({ accounts: true, visits: 1, runs: 3, arrivedByLink: false })).toBe(true);
+    expect(challengeOfferVisible({ accounts: true, visits: 1, runs: 40, arrivedByLink: false })).toBe(true);
   });
   it('sin API, nunca', () => {
-    expect(challengeOfferVisible({ accounts: false, visits: 9, arrivedByLink: true })).toBe(false);
+    expect(challengeOfferVisible({ accounts: false, visits: 9, runs: 9, arrivedByLink: true })).toBe(false);
   });
 });
