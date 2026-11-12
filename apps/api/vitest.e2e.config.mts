@@ -21,6 +21,7 @@ export default defineConfig({
       CORS_ORIGINS: 'http://localhost:8081',
       THROTTLE_DISABLED: '1',
       CLEANUP_INTERVAL_MS: '0',
+      DAILY_SECRET: 'e2e-daily-secret-e2e-daily-secret-e2e',
     },
   },
 });

@@ -3,18 +3,7 @@ import { RULES_VERSION } from '@tb/engine';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { type Period, periodKey, periodKeysFor } from './periods';
-import { type Score, betterThan } from './ranking';
-
-/** Filtro de Prisma para "puntajes estrictamente peores que `s`". */
-function worseThan(s: Score) {
-  return {
-    OR: [
-      { killed: { lt: s.killed } },
-      { killed: s.killed, missed: { gt: s.missed } },
-      { killed: s.killed, missed: s.missed, achievedAt: { gt: s.achievedAt } },
-    ],
-  };
-}
+import { type Score, betterThan, worseThan } from './ranking';
 
 const isUniqueViolation = (e: unknown) => e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002';
 

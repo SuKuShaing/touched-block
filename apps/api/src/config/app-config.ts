@@ -30,12 +30,22 @@ export class AppConfig {
   readonly trustProxy = process.env.TRUST_PROXY ?? 'loopback, linklocal, uniquelocal';
   readonly accessTokenTtlSec = 15 * 60;
   readonly refreshTokenTtlDays = 60;
+  /**
+   * Secreto de la semilla del reto diario (HMAC-SHA256 de la fecha). Obligatorio en producción;
+   * fuera de producción tiene un valor de desarrollo para que local y tests funcionen sin configurarlo.
+   */
+  readonly dailySecret =
+    process.env.DAILY_SECRET || (process.env.NODE_ENV === 'production' ? '' : 'desarrollo-secreto-del-reto-diario-no-usar-en-produccion');
 
   constructor() {
     if (!this.databaseUrl) throw new Error('Falta la variable de entorno DATABASE_URL');
     if (!this.jwtSecret) throw new Error('Falta la variable de entorno JWT_SECRET');
     if (this.nodeEnv === 'production' && this.jwtSecret.length < 32) {
       throw new Error('JWT_SECRET debe tener al menos 32 caracteres en producción');
+    }
+    if (!this.dailySecret) throw new Error('Falta la variable de entorno DAILY_SECRET');
+    if (this.nodeEnv === 'production' && this.dailySecret.length < 32) {
+      throw new Error('DAILY_SECRET debe tener al menos 32 caracteres en producción');
     }
   }
 }

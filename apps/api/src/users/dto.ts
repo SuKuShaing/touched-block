@@ -1,4 +1,6 @@
+import type { TierRef } from '@tb/engine';
 import { IsOptional, IsString, MaxLength } from 'class-validator';
+import type { PlayerStats } from '../stats/stats.service';
 
 export class UpdateMeDto {
   @IsOptional()
@@ -41,6 +43,10 @@ export interface MeDto {
   followingCount: number;
   followersCount: number;
   createdAt: string;
+  /** Estadísticas acumuladas (fase 2). */
+  stats: PlayerStats;
+  /** Insignia según la mejor duración; null si todavía no terminó ninguna partida válida. */
+  tier: TierRef | null;
 }
 
 export interface PublicUserDto {

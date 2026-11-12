@@ -1,12 +1,14 @@
 import 'reflect-metadata';
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import type { GameMods } from '@tb/engine';
 import request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { configureApp } from '../../src/app.setup';
 import { GoogleVerifier, type VerifiedIdentity } from '../../src/auth/verifiers';
 import { unauthorized } from '../../src/common/errors';
 import { PrismaService } from '../../src/prisma/prisma.service';
+import { CommonFieldService } from '../../src/runs/common-field.service';
 import { type BotResult, playBot } from './bot';
 
 /**
@@ -41,8 +43,10 @@ export async function createTestApp() {
   /** Vacía todas las tablas. */
   async function reset() {
     await prisma.$executeRawUnsafe(
-      'TRUNCATE "BestScore", "Follow", "Run", "RefreshToken", "AuthIdentity", "User" RESTART IDENTITY CASCADE',
+      'TRUNCATE "MissionReward", "DailyEntry", "DailyChallenge", "ChallengeEntry", "Challenge", "UserStats", ' +
+        '"BestScore", "Follow", "Run", "RefreshToken", "AuthIdentity", "User" RESTART IDENTITY CASCADE',
     );
+    app.get(CommonFieldService).invalidate();
   }
 
   async function login(sub: string, name: string, country?: string): Promise<TestUser> {
@@ -63,30 +67,54 @@ export async function createTestApp() {
     await prisma.run.update({ where: { id: runId }, data: { startedAt: new Date(Date.now() - minutes * 60_000) } });
   }
 
-  /**
-   * Crea una partida, la juega con el bot y la envía.
-   * `tamper` permite modificar lo que se envía (para probar trampas).
-   */
-  async function playRun(
+  /** Empieza una partida (POST /runs) y devuelve la respuesta; `body` se suma a `{ fieldW: 390, fieldH: 640 }`. */
+  function startRun(user: TestUser | null, body: Record<string, unknown> = {}) {
+    const auth = (r: request.Test) => (user ? r.set('Authorization', `Bearer ${user.token}`) : r);
+    return auth(http().post('/runs')).send({ fieldW: 390, fieldH: 640, ...body });
+  }
+
+  /** Juega con el bot una partida ya creada (con el campo, las vidas y los modificadores que devolvió el servidor) y la envía. */
+  async function finishRun(
     user: TestUser | null,
+    start: { runId: string; seed: number; maxLives: number; fieldW: number; fieldH: number; mods?: unknown; claimToken?: string },
     opts: { kills?: number; tamper?: (g: BotResult) => Partial<BotResult>; backdateMin?: number } = {},
   ) {
     const auth = (r: request.Test) => (user ? r.set('Authorization', `Bearer ${user.token}`) : r);
-    const start = await auth(http().post('/runs')).send({ fieldW: 390, fieldH: 640 }).expect(201);
-    const { runId, seed, maxLives, claimToken } = start.body;
-    if (opts.backdateMin !== 0) await backdate(runId, opts.backdateMin ?? 10);
-    const game = playBot({ seed, maxLives, fieldW: 390, fieldH: 640 }, { kills: opts.kills ?? 5 });
+    if (opts.backdateMin !== 0) await backdate(start.runId, opts.backdateMin ?? 10);
+    const game = playBot(
+      { seed: start.seed, maxLives: start.maxLives, fieldW: start.fieldW, fieldH: start.fieldH, mods: (start.mods ?? null) as GameMods | null },
+      { kills: opts.kills ?? 5 },
+    );
     const sent = { ...game, ...(opts.tamper?.(game) ?? {}) };
-    const finish = await auth(http().post(`/runs/${runId}/finish`)).send({
+    const finish = await auth(http().post(`/runs/${start.runId}/finish`)).send({
       inputs: sent.inputs,
       killed: sent.killed,
       missed: sent.missed,
-      ...(claimToken ? { claimToken } : {}),
+      ...(start.claimToken ? { claimToken: start.claimToken } : {}),
     });
+    return { game, finish };
+  }
+
+  /**
+   * Crea una partida, la juega con el bot y la envía.
+   * `tamper` permite modificar lo que se envía (para probar trampas); `body` agrega campos a
+   * POST /runs (modo, reto, fecha, tamaño del campo).
+   */
+  async function playRun(
+    user: TestUser | null,
+    opts: {
+      kills?: number;
+      tamper?: (g: BotResult) => Partial<BotResult>;
+      backdateMin?: number;
+      body?: Record<string, unknown>;
+    } = {},
+  ) {
+    const start = await startRun(user, opts.body).expect(201);
+    const { game, finish } = await finishRun(user, start.body, opts);
     return { start: start.body, game, finish };
   }
 
-  return { app, prisma, http, reset, login, backdate, playRun };
+  return { app, prisma, http, reset, login, backdate, startRun, finishRun, playRun };
 }
 
 export type TestApp = Awaited<ReturnType<typeof createTestApp>>;

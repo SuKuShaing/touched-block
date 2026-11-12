@@ -25,6 +25,17 @@ export function betterThan(s: Score) {
   };
 }
 
+/** Filtro de Prisma para "puntajes estrictamente peores que `s`". */
+export function worseThan(s: Score) {
+  return {
+    OR: [
+      { killed: { lt: s.killed } },
+      { killed: s.killed, missed: { gt: s.missed } },
+      { killed: s.killed, missed: s.missed, achievedAt: { gt: s.achievedAt } },
+    ],
+  };
+}
+
 /** Orden de Prisma equivalente a compareScores. */
 export const RANKING_ORDER = [
   { killed: 'desc' as const },

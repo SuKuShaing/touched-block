@@ -33,8 +33,26 @@ describe('verifyRun', () => {
     expect(game.killed).toBe(6);
   });
 
-  it('acepta una partida honesta', () => {
-    expect(verifyRun(r, game, now)).toEqual({ valid: true, killed: 6, missed: game.missed, ticks: game.ticks });
+  it('acepta una partida honesta y devuelve la mejor racha y el motivo del final', () => {
+    const v = verifyRun(r, game, now);
+    expect(v).toEqual({
+      valid: true,
+      killed: 6,
+      missed: game.missed,
+      ticks: game.ticks,
+      bestStreak: expect.any(Number),
+      endReason: 'vidas',
+    });
+    expect(v.bestStreak).toBeGreaterThanOrEqual(1);
+    expect(v.bestStreak).toBeLessThanOrEqual(6);
+  });
+
+  it('repite con los modificadores guardados en la partida (Run.config)', () => {
+    const mods = { startAt: 140, lives: 3 };
+    const g = playBot({ seed: r.seed, maxLives: 3, ...FIELD, mods }, { kills: 6 });
+    expect(verifyRun(run({ maxLives: 3, config: mods }), g, now)).toMatchObject({ valid: true, killed: 6, missed: g.missed });
+    // sin los modificadores es otra partida: no coincide
+    expect(verifyRun(run({ maxLives: 3 }), g, now).valid).toBe(false);
   });
 
   it('rechaza un puntaje inflado', () => {

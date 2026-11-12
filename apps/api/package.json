@@ -8,7 +8,8 @@
   "files": [
     "dist",
     "prisma",
-    "prisma.config.ts"
+    "prisma.config.ts",
+    "scripts/backfill-streaks.mjs"
   ],
   "scripts": {
     "build": "prisma generate && tsc -p tsconfig.build.json",

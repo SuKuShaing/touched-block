@@ -23,6 +23,14 @@ enum PeriodType {
   all
 }
 
+/// Modo de una partida (fase 3). Las partidas de reto (duel, daily) no entran a los rankings
+/// generales ni al récord (D6).
+enum RunMode {
+  normal
+  duel
+  daily
+}
+
 model User {
   id               String    @id @default(uuid()) @db.Uuid
   /// Único; solo [a-z0-9_.], así que ya está en minúsculas (único sin distinguir mayúsculas).
@@ -38,14 +46,19 @@ model User {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  invitedBy     User?          @relation("Invites", fields: [invitedById], references: [id], onDelete: SetNull)
-  invitees      User[]         @relation("Invites")
-  identities    AuthIdentity[]
-  refreshTokens RefreshToken[]
-  runs          Run[]
-  bestScores    BestScore[]
-  following     Follow[]       @relation("Following")
-  followers     Follow[]       @relation("Followers")
+  invitedBy      User?            @relation("Invites", fields: [invitedById], references: [id], onDelete: SetNull)
+  invitees       User[]           @relation("Invites")
+  identities     AuthIdentity[]
+  refreshTokens  RefreshToken[]
+  runs           Run[]
+  bestScores     BestScore[]
+  following      Follow[]         @relation("Following")
+  followers      Follow[]         @relation("Followers")
+  stats          UserStats?
+  challenges     Challenge[]      @relation("ChallengesCreated")
+  challengeRuns  ChallengeEntry[]
+  dailyEntries   DailyEntry[]
+  missionRewards MissionReward[]
 
   @@index([invitedById])
 }
@@ -99,16 +112,132 @@ model Run {
   /// Toques [tick, x, y][] tal como los envió el cliente.
   inputs         Json?
   rejectReason   String?   @db.VarChar(32)
+  /// Mejor racha de la partida según la repetición (null en partidas anteriores a la fase 2 sin relleno).
+  bestStreak     Int?
+  /// "tiempo" | "vidas" según la repetición.
+  endReason      String?   @db.VarChar(16)
+  /// Modo de la partida; las anteriores a la fase 3 quedan como normal.
+  mode           RunMode   @default(normal)
+  /// Código del reto a un amigo (solo modo duel).
+  challengeCode  String?   @db.VarChar(8)
+  /// Fecha del reto diario 'AAAA-MM-DD' (solo modo daily).
+  dailyDate      String?   @db.VarChar(10)
+  /// Modificadores de la partida (GameMods del motor); null en las partidas sin modificador.
+  config         Json?
   startedAt      DateTime  @default(now())
   finishedAt     DateTime?
   claimedAt      DateTime?
 
-  user       User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  bestScores BestScore[]
+  user           User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bestScores     BestScore[]
+  challengeEntry ChallengeEntry?
+  dailyEntries   DailyEntry[]
 
   @@index([userId, status, finishedAt(sort: Desc)])
   @@index([status, startedAt])
   @@index([startedAt])
+  @@index([userId, dailyDate])
+}
+
+/// Reto diario (fase 4): se crea con la primera partida de esa fecha y fija el campo del día
+/// para todos. La semilla no se guarda: sale de HMAC-SHA256(DAILY_SECRET, fecha).
+model DailyChallenge {
+  /// 'AAAA-MM-DD' (fecha local de los jugadores, D7).
+  date      String   @id @db.VarChar(10)
+  fieldW    Float
+  fieldH    Float
+  createdAt DateTime @default(now())
+}
+
+/// Mejor resultado de un jugador con cuenta en el reto de una fecha (como BestScore, por día).
+model DailyEntry {
+  userId     String   @db.Uuid
+  date       String   @db.VarChar(10)
+  runId      String?  @db.Uuid
+  killed     Int
+  missed     Int
+  ticks      Int
+  bestStreak Int
+  /// Intentos usados ese día (al registrar el último resultado).
+  attempts   Int      @default(1)
+  achievedAt DateTime
+  /// País del usuario, denormalizado (se actualiza al cambiar de país).
+  country    String?  @db.Char(2)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  run  Run? @relation(fields: [runId], references: [id], onDelete: SetNull)
+
+  @@id([userId, date])
+  @@index([date, killed(sort: Desc), missed, achievedAt])
+  @@index([date, country, killed(sort: Desc), missed, achievedAt])
+  @@index([runId])
+}
+
+/// Reto a un amigo (fase 3): una semilla y un campo fijos que cualquiera con el código puede jugar.
+model Challenge {
+  /// 8 caracteres sin ambiguos (sin I, L, O, 0 ni 1).
+  code         String   @id @db.VarChar(8)
+  seed         Int
+  fieldW       Float
+  fieldH       Float
+  rulesVersion Int
+  createdById  String?  @db.Uuid
+  /// Partida con la que se creó (sin FK: las partidas de invitado se borran a las 24 h).
+  creatorRunId String?  @db.Uuid
+  createdAt    DateTime @default(now())
+  expiresAt    DateTime
+
+  createdBy User?            @relation("ChallengesCreated", fields: [createdById], references: [id], onDelete: SetNull)
+  entries   ChallengeEntry[]
+
+  @@index([createdById])
+  /// Al reclamar la partida con que un invitado creó el reto (ChallengesService.claimEntry).
+  @@index([creatorRunId])
+}
+
+/// Resultado de una partida válida de un reto. Guarda su propia copia del resultado porque las
+/// partidas de invitado se borran a las 24 h. Con cuenta, solo el primer intento de cada jugador.
+model ChallengeEntry {
+  id            String   @id @default(uuid()) @db.Uuid
+  challengeCode String   @db.VarChar(8)
+  /// null = invitado (toma el usuario si reclama la partida).
+  userId        String?  @db.Uuid
+  runId         String?  @unique @db.Uuid
+  /// Es la partida con que se creó el reto.
+  isCreator     Boolean  @default(false)
+  killed        Int
+  missed        Int
+  ticks         Int
+  createdAt     DateTime @default(now())
+
+  challenge Challenge @relation(fields: [challengeCode], references: [code], onDelete: Cascade)
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  run       Run?      @relation(fields: [runId], references: [id], onDelete: SetNull)
+
+  @@unique([challengeCode, userId])
+  @@index([challengeCode, killed(sort: Desc), missed, createdAt])
+  @@index([userId])
+}
+
+/// Estadísticas acumuladas de un jugador (fase 2). Se actualizan con una sola sentencia atómica
+/// al terminar o reclamar una partida válida (StatsService.record).
+model UserStats {
+  userId       String   @id @db.Uuid
+  /// Duración (ticks) de la mejor partida de modo normal sin modificadores: define la insignia.
+  bestTicks    Int      @default(0)
+  /// Mejor racha en partidas de modo normal sin modificadores.
+  bestStreak   Int      @default(0)
+  /// Bloques destruidos en todas las partidas válidas (todos los modos).
+  totalKilled  Int      @default(0)
+  /// Partidas válidas (todos los modos).
+  totalRuns    Int      @default(0)
+  /// Bloques extra para el nivel ganados con misiones (fase 5).
+  bonusXp      Int      @default(0)
+  /// Mejor porcentaje logrado en un reto diario ("mejor que el N %"), o null si nunca participó (fase 5.3).
+  bestDailyPct Int?
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model BestScore {
@@ -144,4 +273,20 @@ model Follow {
 
   @@id([followerId, followeeId])
   @@index([followeeId])
+}
+
+/// Premio de una misión del día ya entregado (fase 5.2): uno por usuario, fecha y misión.
+model MissionReward {
+  userId    String   @db.Uuid
+  /// Fecha local del jugador 'AAAA-MM-DD'.
+  date      String   @db.VarChar(10)
+  /// Mission.id del motor.
+  missionId String   @db.VarChar(32)
+  /// Bloques extra sumados a UserStats.bonusXp.
+  reward    Int
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, date, missionId])
 }

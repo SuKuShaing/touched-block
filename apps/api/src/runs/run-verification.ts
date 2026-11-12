@@ -1,4 +1,6 @@
 import {
+  type EndReason,
+  type GameMods,
   InvalidInputsError,
   MAX_REPLAY_TICKS,
   RULES_VERSION,
@@ -57,6 +59,8 @@ export interface RunToVerify {
   fieldH: number;
   rulesVersion: number;
   startedAt: Date;
+  /** Modificadores guardados al crear la partida (Run.config); null o ausente si no tiene. */
+  config?: unknown;
 }
 
 export interface Claimed {
@@ -65,9 +69,23 @@ export interface Claimed {
   missed: number;
 }
 
+/** Lo que calcula la repetición. */
+export interface Replayed {
+  killed: number;
+  missed: number;
+  ticks: number;
+  bestStreak: number;
+  endReason: EndReason | null;
+}
+
 export type Verification =
-  | { valid: true; killed: number; missed: number; ticks: number }
-  | { valid: false; reason: RejectReason; killed?: number; missed?: number; ticks?: number };
+  | ({ valid: true } & Replayed)
+  | ({ valid: false; reason: RejectReason } & Partial<Replayed>);
+
+/** Los modificadores de Run.config tal como se pasan al motor (los escribe solo el servidor). */
+export function modsOf(config: unknown): GameMods | null {
+  return config && typeof config === 'object' && !Array.isArray(config) ? (config as GameMods) : null;
+}
 
 /**
  * Valida una partida repitiéndola con el motor. El resultado del servidor manda: si lo que
@@ -102,8 +120,19 @@ export function verifyRun(run: RunToVerify, claimed: Claimed, now = new Date()):
     MAX_REPLAY_TICKS,
     Math.ceil(((Math.max(0, elapsedMs) + WALL_CLOCK_SLACK_MS) / 1000) * TICKS_PER_SECOND),
   );
-  const r = replay({ seed: run.seed, maxLives: run.maxLives, fieldW: run.fieldW, fieldH: run.fieldH }, inputs, allowedTicks);
-  const result = { killed: r.killed, missed: r.missed, ticks: r.ticks };
+  const mods = modsOf(run.config);
+  const r = replay(
+    { seed: run.seed, maxLives: run.maxLives, fieldW: run.fieldW, fieldH: run.fieldH, ...(mods ? { mods } : {}) },
+    inputs,
+    allowedTicks,
+  );
+  const result: Replayed = {
+    killed: r.killed,
+    missed: r.missed,
+    ticks: r.ticks,
+    bestStreak: r.bestStreak,
+    endReason: r.endReason,
+  };
   if (!r.over) return { valid: false, reason: 'not_finished', ...result };
   if (r.unusedInputs > 0) return { valid: false, reason: 'unused_inputs', ...result };
   if (r.killed !== claimed.killed || r.missed !== claimed.missed) return { valid: false, reason: 'mismatch', ...result };

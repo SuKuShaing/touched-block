@@ -4,6 +4,7 @@ import { normalizeCountry } from '../common/countries';
 import { badRequest, conflict, notFound } from '../common/errors';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { StatsService } from '../stats/stats.service';
 import type { MeDto, PublicUserDto, UpdateMeDto } from './dto';
 import { normalizeUsername, searchKey, usernameBase, usernameCandidates, usernameProblem } from './username';
 
@@ -25,7 +26,10 @@ export interface NewUserInput {
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly stats: StatsService,
+  ) {}
 
   /** Vidas (corazones) del usuario: 5 + invitados, con tope 8. */
   async maxLivesOf(userId: string): Promise<number> {
@@ -78,6 +82,7 @@ export class UsersService {
       },
     });
     if (!u) throw notFound('Usuario no encontrado.', 'user_not_found');
+    const { stats, tier } = await this.stats.withTier(u.id);
     return {
       id: u.id,
       username: u.username,
@@ -90,6 +95,8 @@ export class UsersService {
       followingCount: u._count.following,
       followersCount: u._count.followers,
       createdAt: u.createdAt.toISOString(),
+      stats,
+      tier,
     };
   }
 
@@ -128,7 +135,10 @@ export class UsersService {
       try {
         await this.prisma.$transaction(async (tx) => {
           await tx.user.update({ where: { id: userId }, data });
-          if (newCountry) await tx.bestScore.updateMany({ where: { userId }, data: { country: newCountry } });
+          if (newCountry) {
+            await tx.bestScore.updateMany({ where: { userId }, data: { country: newCountry } });
+            await tx.dailyEntry.updateMany({ where: { userId }, data: { country: newCountry } });
+          }
         });
       } catch (e) {
         if (isUniqueViolation(e)) throw conflict('Ese nombre de usuario ya está tomado.', 'username_taken');
@@ -139,7 +149,8 @@ export class UsersService {
   }
 
   async deleteMe(userId: string): Promise<void> {
-    // borra en cascada identidades, sesiones, partidas, récords y seguimientos
+    // borra en cascada identidades, sesiones, partidas, récords, seguimientos, estadísticas,
+    // resultados de retos y del reto diario, y premios de misiones (los retos que creó quedan sin creador)
     await this.prisma.user.delete({ where: { id: userId } });
   }
 
@@ -180,10 +191,12 @@ export class UsersService {
             where: { followerId_followeeId: { followerId: viewerId, followeeId: u.id } },
           }))
         : undefined;
+    const tier = (await this.stats.tiersFor([u.id])).get(u.id) ?? null;
     return {
       id: u.id,
       username: u.username,
       country: u.country,
+      tier,
       best: best ? { killed: best.killed, missed: best.missed, achievedAt: best.achievedAt.toISOString() } : null,
       invitedCount: u._count.invitees,
       followersCount: u._count.followers,
