@@ -45,7 +45,10 @@ Cómo se publicó (12 nov 2026), en orden:
   - **Partida normal con cuenta** validada: `UserStats` en el servidor (mejor racha, bloques, partidas), "¡Subiste a Madera III!" con sus premios y récord en el ranking.
   - **Colección y Perfil con sesión**: insignia y nivel de la cuenta (bloques + misiones), usuario, país, "¿Quién te invitó?" e invitar amigos.
   - **2.º intento del reto** con cuenta: empieza directo y queda "Te queda 1 intento".
-- Datos de prueba que quedaron en producción: 4 partidas de invitado y un reto (`2MHKV5VF`, vence el 12 dic 2026). En la base local, la cuenta `prueba.publicacion`.
+  - **Ranking general con cuenta**: aparece con su insignia y "TU POSICIÓN #1 de 4".
+  - **Reto a un amigo entre dos cuentas**: `prueba.publicacion` lo crea (`DHF3DZGQ`; su resultado guarda usuario e insignia); `amigo.prueba` abre el enlace ("Reto de @prueba.publicacion: 0 bloques"), lo juega y ve "¡Ganaste por 10!" con los dos resultados; el enlace muestra ambos a cualquiera que lo abra.
+- No se puede automatizar: el login real de Google en la web publicada (el usuario lo probó en la versión anterior y no cambió) ni Safari en iOS (lo prueba el usuario en un iPhone antiguo).
+- Datos de prueba que quedaron en producción: 4 partidas de invitado y un reto (`2MHKV5VF`, vence el 12 dic 2026). En la base local, las cuentas `prueba.publicacion` y `amigo.prueba`.
 
 **Confirmado por el usuario (12 nov 2026)**: los valores provisorios quedan tal cual (umbrales de las insignias, catálogo de premios, nivel `25·n·(n−1)`, paleta Constancia a los 7 días, misiones, racha con perdón y logros) y el jueves del reto diario parte en la dificultad de las multiplicaciones.
 
