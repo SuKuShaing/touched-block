@@ -1,6 +1,6 @@
 # Pendientes, riesgos e ideas
 
-Estado al **11 nov 2026**.
+Estado al **12 nov 2026**.
 
 ## Estado
 
@@ -18,6 +18,10 @@ Estado al **11 nov 2026**.
 
 - **Corazón de recuperación (reglas v5)**: publicado el 10 nov 2026 (web y API `v0.2.0`/`v0.2.1`) con 1 s de duración; el 11 nov 2026 pasó a 2 s (reglas v5), API de producción con `RULES_VERSION = 5` desde el tag `v0.2.2` (11 nov 2026). Tiene su slide en el tutorial avanzado.
 
+## Plan de jugabilidad y retención (12 nov 2026)
+
+Plan por fases en [`plan-jugabilidad.md`](plan-jugabilidad.md): medir, camino de etapas y "una más", insignias y Colección, reto a un amigo, reto diario, modificadores y misiones. **Sin empezar.** Las decisiones D1–D10 del usuario ya están tomadas (sección 3 del plan). Lo siguiente es correr las consultas de la fase 0 en la base de producción y empezar la fase 1, que no depende de la API. Antes de publicar la fase 2 hay que configurar los respaldos de la base.
+
 ## Lo que tiene que hacer el usuario
 
 1. Seguridad: el panel de Dokploy va por HTTP, así que el token viaja sin cifrar. Conviene darle al panel un dominio con HTTPS.
@@ -31,7 +35,7 @@ Estado al **11 nov 2026**.
   - Al empezar las restas, cerca del 30 % de las operaciones son trampas ("1−1", "1−2", "2−2").
   - Cambiar el balance después de abrir los rankings los reinicia (`RULES_VERSION`). **Desde el 11 nov 2026 no se deben romper los registros de los jugadores** salvo un cambio muy grande y aprobado.
   - Idea para cumplirlo: separar los cambios compatibles (no reinician nada) de los que rompen la comparación (temporadas con rankings archivados) y migrar el récord local en vez de cambiar su clave. Sin hacer.
-- **Bots**: el replay garantiza que la partida es real, pero no distingue un script que toca bien de una persona. La etapa final hace que todos pierdan. Si aparecen puntajes sospechosos, se pueden agregar heurísticas (precisión y ritmo inhumanos).
+- **Bots**: el replay garantiza que la partida es real, pero no distingue un script que toca bien de una persona. La etapa final hace que todos pierdan. Decidido (12 nov 2026): con lo actual basta para un juego casual. Solo si aparecen puntajes sospechosos se agregarían heurísticas (precisión y ritmo inhumanos).
 - **Respaldos de la base**: no hay ninguno configurado todavía (ver `despliegue.md`).
 - **Búsqueda de usuarios** sin índice (`strpos` recorre la tabla). Basta con pocos miles de usuarios; si crece, agregar un índice trigram (`pg_trgm`).
 - **Peso de la web**: ~2 MB de JS (≈600 KB comprimido) por react-native-web.

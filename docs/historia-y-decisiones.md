@@ -140,6 +140,25 @@ El usuario preguntó si el backend puede quedar *open source*. Sí:
 
 - 1 s era demasiado corto; el usuario pidió 2 s (`HEART_LIFE`). Se subió `RULES_VERSION` a 5 y las claves locales a `tb_best5`/`tb_hist5`. El texto del tutorial toma el valor de la constante.
 
+### Plan de jugabilidad y retención (12 nov 2026)
+
+El usuario preguntó cómo hacer que la gente vuelva a jugar y comparta. De la conversación salió [`plan-jugabilidad.md`](plan-jugabilidad.md), con seis fases. Decisiones del usuario y su motivo:
+
+- **La base de datos solo crece.** Se puede modificar, pero manteniendo o aumentando lo que hay; ninguna migración borra datos de jugadores.
+- **Las partidas de invitado se siguen borrando a las 24 h** y no se agrega un identificador por dispositivo. Costo aceptado: solo se puede medir con detalle a las cuentas.
+- **Insignias de madera, bronce, plata, oro y diamante** (idea del usuario), atadas a las etapas del juego y ajustables con datos reales. Se calculan a partir de la duración de la mejor partida; no se guardan.
+- **El campo de los retos se ajusta a la pantalla más chica** (idea del usuario): los celulares ya envían su tamaño y el servidor determina el campo. Se implementa como el percentil 5 de los tamaños reales, no el mínimo, para que una ventana minúscula no achique el campo de todos. En el reto a un amigo el campo se fija al crearlo, porque quien lo crea juega antes de que se conozca la pantalla del otro.
+- **Las partidas de reto no cuentan para el ranking general ni el récord**: una misma semilla se puede repetir y practicar.
+- **El reto diario cambia a la medianoche de cada jugador** (en UTC, en Chile cambiaría a las 21:00), con 3 intentos con cuenta y 1 como invitado.
+- **La paleta para daltónicos es gratis** y cumple la misma regla de contraste que las demás, para que ninguna paleta haga más visibles las trampas.
+- **Respaldos de la base antes de publicar la fase 2**, que es cuando se empieza a guardar progreso de los jugadores.
+- El modo normal no cambia: sigue usando la pantalla completa de cada celular.
+
+### El antitrampas actual basta (12 nov 2026)
+
+- Se repasó el sistema: replay con semilla del servidor, límites de toques por segundo, plazo de 2 h, duración compatible con el reloj real y una sola entrega por partida.
+- Decisión del usuario: **alcanza para un juego pensado para usuarios comunes**. No se agregan heurísticas contra bots (precisión o ritmo inhumanos) por ahora; solo se reconsideran si aparecen puntajes sospechosos en los rankings. Las partidas rechazadas y sus toques quedan guardados por si hay que investigar.
+
 ### Los registros de los jugadores no se rompen (11 nov 2026)
 
 - Al pasar el corazón de 1 a 2 s se subió `RULES_VERSION` a 5 (reinicio de rankings y récord local) siguiendo la regla de entonces. El usuario preguntó por qué se reiniciaba y decidió: queda en la v5, pero **de ahora en más no se rompen los registros** salvo un cambio muy grande que lo amerite, sobre todo porque se lanzará como app.
