@@ -23,6 +23,7 @@ pnpm --filter @tb/engine build       # genera dist/, que usa la API (el cliente 
 # Cliente
 pnpm --filter @tb/client web                      # http://localhost:8081 (en la raíz; el baseUrl /touched-block solo aplica al exportar)
 pnpm --filter @tb/client exec tsc --noEmit
+pnpm --filter @tb/client test                     # vitest, solo módulos puros (lib/, cosmetics/, game/*.ts)
 pnpm --filter @tb/client exec expo export -p web --output-dir dist
 
 # API
@@ -39,12 +40,16 @@ docker compose -p tbprueba -f deploy/docker-compose.yml --env-file <ese .env> up
 docker compose -p tbprueba -f deploy/docker-compose.yml --env-file <ese .env> down -v
 ```
 
-Resultado esperado al 9 nov 2026: motor **38/38**, API unitarios **40/40**, API e2e **28/28** y `tsc` del cliente sin errores.
+Resultado esperado al 12 nov 2026 (plan de jugabilidad): motor **160/160** (incluye la prueba dorada), API unitarios **77/77**, API e2e **63/63**, cliente **249/249**, `tsc` del cliente sin errores y `expo export` sin errores.
+
+La API de desarrollo necesita `DAILY_SECRET` solo en producción (en local usa un valor de desarrollo). Para probar con el cliente: `AUTH_DEV_FAKE=1`, `CORS_ORIGINS=http://localhost:8081` y, si el puerto 3000 está ocupado, otro `PORT`; el cliente con `EXPO_PUBLIC_API_URL` apuntando a ese puerto y `EXPO_PUBLIC_AUTH_DEV_FAKE=1`. Expo con `CI=1` no recarga los cambios del código.
 
 ## Cómo probar el juego
 
 - **Playwright (MCP)** con viewport de celular (por ejemplo 390×844) y toques reales.
-- En desarrollo, `window.__tb_debug` expone el estado del motor, para inspeccionar o forzar situaciones.
+- En desarrollo, `window.__tb_debug` expone el estado del motor, para inspeccionar o forzar situaciones (p. ej. `__tb_debug.state.played = 139` para ver el aviso de las sumas).
+- Para simular una visita nueva (tarjetas del inicio, tutorial avanzado), hay que retroceder `tb_last1` más de 30 min con `addInitScript` de Playwright: al salir de la página (`pagehide`) la app lo vuelve a escribir.
+- Para probar el cambio de día del reto diario, se desplaza el reloj del navegador; la API solo acepta fechas que alguna zona horaria real tenga en ese momento.
 - Para probar cuentas sin Google: API con `AUTH_DEV_FAKE=1` y cliente con `EXPO_PUBLIC_AUTH_DEV_FAKE=1`.
 - Si el puerto 8081 queda ocupado por un servidor de Expo anterior, hay que cerrarlo (`taskkill /PID <pid> /F`). Si el clasificador de permisos le niega eso a un subagente, se le pide al usuario; no se intenta por otra vía.
 

@@ -154,6 +154,64 @@ El usuario preguntó cómo hacer que la gente vuelva a jugar y comparta. De la c
 - **Respaldos de la base antes de publicar la fase 2**, que es cuando se empieza a guardar progreso de los jugadores.
 - El modo normal no cambia: sigue usando la pantalla completa de cada celular.
 
+### Implementación del plan de jugabilidad (12 nov 2026)
+
+Se implementaron las fases 1 a 5 del [plan](plan-jugabilidad.md) en una sola sesión, con agentes en paralelo (motor, API, cliente) y revisiones independientes. Sin publicar todavía. Decisiones tomadas al implementar, con su motivo:
+
+**Motor**
+- **Prueba dorada antes de tocar nada**: 40 partidas de un bot (20 semillas × 2 campos) generadas con el motor v5 sin modificadores; después de agregar los modificadores sigue pasando sin regenerarse. Una revisión aparte compiló el `game.ts` anterior (de `git`) y confirmó que da los mismos 40 resultados.
+- **Modificadores**: un solo reloj de dificultad, `difficultyTime(s) = s.played + startAt`, en todas las curvas; sin modificadores es `x + 0 === x`, así que no cambia nada. `validateMods` rechaza claves desconocidas para que el servidor nunca repita una partida ignorando un modificador que el cliente sí usó. `mods.lives` reemplaza a `maxLives` en la configuración (el tope del corazón también).
+- **Misiones de tipos distintos** cada día (evita "Racha de 10" y "Racha de 25" juntas).
+- **Racha de días**: una fecha posterior a "hoy" (por la zona horaria) mantiene viva la racha.
+
+**API**
+- **Todas las migraciones agregan** (4 del plan y 1 de índice); ninguna borra ni reescribe datos. El relleno de `UserStats` usa las partidas válidas de todas las versiones de reglas, como el SQL del plan.
+- **Columnas extra** (aditivas): `Challenge.creatorRunId` y `ChallengeEntry.isCreator` (saber quién creó el reto aunque sea invitado), `MissionReward.reward`, y `DailyEntry.runId` opcional (si se borra la partida, queda el resultado).
+- **Reto a un amigo**: cuenta el primer resultado **válido** de cada cuenta (las partidas abandonadas o rechazadas no bloquean). Si al reclamar la cuenta ya tenía un resultado en ese reto, queda el más antiguo.
+- **Insignia** `null` solo sin partidas válidas; quien solo jugó retos queda en Madera I.
+- **Porcentaje del reto diario**: con un solo jugador vale 0; para un invitado, el total lo incluye. Con menos de 10 jugadores en el día, el mejor porcentaje guardado para el logro es 0 (solo participación), para que un día casi vacío no regale el logro máximo.
+- Las copias de resultados de invitados en `ChallengeEntry` se conservan (plan 3.3: las partidas de invitado se borran a las 24 h y el reto sigue mostrando el resultado). No tienen datos personales.
+
+**Cliente**
+- **Franja de avisos fuera del campo**: la regla "un aviso a la vez, nunca sobre un bloque" se cumple poniendo todos los avisos (hito, récord, amigo, combo, racha cortada) en una franja bajo la barra de tiempo, que no recibe toques. Costo: el campo de la partida normal es unos 22 px más bajo (el tamaño de bloque no cambia en celulares, porque depende del ancho).
+- **Inicio**: "Jugar" queda primero y después la única tarjeta (reto de hoy con misiones, o instalar); ícono de sonido arriba a la izquierda, también en la pantalla final.
+- **Avisos de amigos**: solo de los amigos que todavía no superaste esta semana, para no repetir lo mismo en cada partida. "Te faltaron N bloques para tu récord" usa lo necesario para superarlo (récord − destruidos + 1).
+- **Web instalable sin service worker**; un script corto en `index.html` guarda `beforeinstallprompt` apenas llega, porque las pantallas se cargan por partes. Chrome la reconoce como instalable sin errores.
+- **Regla de no ventaja de las paletas ampliada al tono**: la primera versión solo comparaba contraste de luminancia, pero el texto rojo de la trampa se distingue sobre todo por el tono. Con solo luminancia, Diamante y Alto contraste quitaban el caso difícil de la Clásica (ventaja) y Dorado dejaba todas las trampas difíciles (castigo injusto a un premio de Oro). Ahora el test exige el rango de tono de la Clásica, un caso tan difícil como el suyo y una media cercana; Dorado, Diamante y Alto contraste se rediseñaron.
+- **Estadísticas locales**: antes de escribir `tb_stats1` se vuelve a leer (otra pestaña pudo guardar más) y, si está dañado, se reconstruye desde el historial en vez de partir en cero. Las claves del récord pasaron a `lib/historyKeys.ts` (sin cambiar su valor) para cortar un ciclo de imports.
+- **Retos**: después de un reto, "Jugar de nuevo" empieza una partida normal (la revancha tiene su botón). El reto pendiente durante el tutorial se guarda en `tb_reto1` (2 h). El parámetro `reto` se borra de la URL al usarlo.
+- **Reto diario**: el intento de invitado se cuenta por dispositivo, también los empezados con cuenta (cerrar sesión no da intentos nuevos). Después de un reto, el botón principal es "Otro intento (quedan N)" mientras queden. `?diario=1` en la primera visita abre el tutorial y después la tarjeta con sus reglas: el intento se gasta solo con "Empezar", para que un jugador nuevo no pierda su único intento sin querer. Las celdas de compartir cuentan la dificultad alcanzada (con `startAt`). "Ayer ganó…" se muestra una vez por dispositivo, también a quien no jugó ayer.
+- **Correcciones de la revisión del cliente**:
+  - Durante 450 ms después de terminar se ignoran los botones que empiezan otra partida ("Jugar de nuevo", "Probar ahora", "Retar a un amigo", "Revancha"), para que quien estaba tocando bloques no se salte la pantalla final sin querer (`game/endGuard.ts`).
+  - Con sesión, la partida se suma también a las estadísticas de la cuenta al calcular qué se desbloqueó, y el camino de etapas usa como mejor previa el máximo entre el dispositivo y la cuenta (si no, en un dispositivo nuevo felicitaba por hitos ya alcanzados).
+  - En los retos el camino no muestra "tu mejor" ni "¡Llegaste a…!", porque no cuentan para la insignia (D6). Con `startAt` usa la dificultad alcanzada; con `only` se omite, porque los hitos no se cumplen en esa partida.
+  - "Retar a un amigo" aparece desde la 2.ª visita, salvo que el jugador haya llegado por un enlace de reto (regla del jugador nuevo).
+  - Un reto cuya respuesta no trae un campo válido no empieza (antes usaba el tamaño de la pantalla y el servidor la habría rechazado).
+  - La misión "Juega el reto del día" premiada en el dispositivo y otra vez en la cuenta al reclamar no se suma dos veces: la Colección toma el máximo de ambos, no la suma.
+
+### El mejor porcentaje del reto diario se guarda al cerrar el día (12 nov 2026)
+
+- El logro "Mejor resultado en un reto diario" usa `UserStats.bestDailyPct`, que se queda con el mayor valor guardado. La primera versión lo guardaba al leer el resumen de "ayer" en `GET /daily`, pero ese día todavía se está jugando en otras zonas horarias (la ventana acepta fechas hasta un día después de la UTC): pidiendo `GET /daily` con la fecha de mañana se guardaba el porcentaje de hoy a media jornada, inflado para siempre. Pasaba también sin querer a quienes viven en UTC+10 a +14.
+- Ahora se guarda solo cuando el día **cerró** (su fecha salió de la ventana, más 2 h para terminar partidas y 1 h para reclamarlas: con la ventana de abajo, el del 12 cierra el 13 a las 15:00 UTC), revisando al leer `GET /daily` los días jugados de la semana anterior. Costo aceptado: el logro aparece un día después, y un día que el jugador no revisa en la semana siguiente no cuenta. Como dice el plan (5.3), "al cerrar cada día".
+
+### Reto diario: ventana de fechas, reclamos de invitado y limpieza (12 nov 2026)
+
+Correcciones de la revisión de las fases 2 a 5, pedidas por el coordinador:
+
+- **Ventana de fechas por zonas horarias reales.** El plan decía "a no más de un día de la fecha UTC", pero así, entre las 00:00 y las 10:00 UTC, el servidor entregaba la semilla de una fecha que todavía no empezaba en ningún lugar (en UTC+14 aún era el día anterior), y un invitado podía practicarla sin límite; además, una cuenta podía jugar ayer, hoy y mañana el mismo día real y sacar una racha de 3 días al instante. Ahora la fecha D se acepta solo si alguna zona real (UTC−12 a UTC+14) está en D: `D 00:00 UTC − 14 h ≤ ahora < (D+1) 00:00 UTC + 12 h`. D7 sigue igual: un jugador con el reloj bien puesto siempre está dentro. Vale para `POST /runs` diario, `GET /daily` y `GET /missions`; `GET /daily/leaderboard` acepta además las fechas pasadas (no las que todavía no empezaron). Riesgo que queda: quien finge estar en UTC+14 recibe la semilla hasta 14 h antes que UTC (inevitable con D7).
+- **Reclamar una partida diaria de invitado.** Antes se podía reclamar mientras la cuenta tuviera menos de 3 intentos: jugando N partidas de invitado (misma semilla, sin límite en el servidor) se reclamaban las 3 mejores. Ahora el intento de invitado (1, D8) pasa a ser el **primero** de la cuenta: se reclama solo si la cuenta todavía no empezó el reto de esa fecha, así que hay como máximo una partida diaria reclamada por cuenta y fecha, y después quedan 2 intentos con la cuenta. Si no, `409 daily_attempts_exhausted`. Sigue siendo posible practicar como invitado (riesgo aceptado en el plan).
+- **Intentos abandonados de una cuenta**: se borran a las 72 h (antes, nunca). Para entonces su fecha ya cerró, así que no se recupera ningún intento.
+- **`GET /daily` trae `week`**: las fechas jugadas en los 7 días que terminan en `date`, para la tira de la semana de la pantalla final.
+- **Índice en `Challenge.creatorRunId`** (migración `add_challenge_creator_run_index`, solo agrega el índice): al reclamar una partida de reto se buscaba el reto por ese campo recorriendo toda la tabla.
+- **Riesgo conocido, sin cambio**: en `GET /missions` el cliente elige la fecha y la zona horaria, así que unas mismas partidas pueden contar para las misiones de hasta 3 fechas (más `bonusXp`). Solo afecta el nivel, que es cosmético; arreglarlo exige asignar cada partida a una sola fecha local al terminarla.
+
+### Decisiones antes de publicar el plan (12 nov 2026)
+
+- **Valores provisorios confirmados tal cual** por el usuario: umbrales de las insignias, catálogo de premios, nivel `25·n·(n−1)`, misiones y logros. Se vuelven a medir con jugadores reales (los umbrales se mueven sin migraciones).
+- **Jueves del reto diario**: "solo multiplicaciones y divisiones" ahora también parte en su dificultad (`startAt: MUL_START`). Sin eso eran unos 275 s de "2×2", largo y fácil.
+- **Respaldos en el mismo VPS** (D10), porque el usuario no quiere pagar otro servicio: `pg_dump` diario con una tarea programada de Dokploy, en `/var/backups/touched-block/`, guardando los 14 más recientes. El respaldo diario del proveedor del VPS se lleva esos archivos fuera del servidor; el `pg_dump` sirve para volver solo esta base a un momento exacto, como justo antes de una migración. Detalle en `despliegue.md`.
+- **Pruebas que no hacen falta ahora**: instalar la web en un Android real no es necesario, porque la web es para afinar el juego con amigos; quienes la instalen lo harán cuando sea app. iOS/Safari lo prueba el usuario en un iPhone antiguo. El login real de Google ya se probó en la versión anterior y no cambió.
+
 ### El antitrampas actual basta (12 nov 2026)
 
 - Se repasó el sistema: replay con semilla del servidor, límites de toques por segundo, plazo de 2 h, duración compatible con el reloj real y una sola entrega por partida.

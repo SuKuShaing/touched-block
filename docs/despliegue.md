@@ -68,6 +68,7 @@ El archivo `deploy/.env` (ignorado por git) ya tiene los valores reales generado
 |---|---|
 | `POSTGRES_PASSWORD` | Solo letras y números (va dentro de la URL de conexión). Se fija al crear el volumen: cambiarla después **no** cambia la contraseña de la base existente |
 | `JWT_SECRET` | 48 bytes aleatorios. Si cambia, todas las sesiones se cierran |
+| `DAILY_SECRET` | **Obligatoria desde la fase 4** (reto diario): sin ella el Compose no arranca (`falta DAILY_SECRET`) y la API tampoco. 48 bytes aleatorios (mínimo 32 caracteres): `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"`. Es la llave de la semilla del reto diario (`HMAC-SHA256(DAILY_SECRET, fecha)`): sin ella nadie puede adivinar la partida de mañana. **No cambiarla** una vez publicada: cambiaría la partida del día en curso a mitad del día |
 | `GOOGLE_CLIENT_IDS` | Client ID web; más adelante, también los de Android/iOS, separados por coma |
 | `CORS_ORIGINS` | `https://sukushaing.github.io` |
 | `API_TAG` | `latest`. Para volver a una versión anterior: `v0.1.0`, etc. |
@@ -131,18 +132,55 @@ Si falta un secreto, el último paso falla con un mensaje claro.
 
 En Dokploy, cambia `API_TAG=v0.1.0` (o la versión que quieras) en Environment y presiona *Deploy*. Para volver a la normalidad, deja `API_TAG=latest`.
 
-Las migraciones de Prisma no se deshacen solas. Si la versión nueva cambió el esquema, revisa la compatibilidad antes de volver atrás.
+Las migraciones de Prisma no se deshacen solas. Si la versión nueva cambió el esquema, revisa la compatibilidad antes de volver atrás. Las migraciones del plan de jugabilidad (fases 2 a 5) solo **agregan** tablas, columnas opcionales o con valor por defecto e índices, así que una API anterior sigue funcionando sobre la base nueva (ignora lo que no conoce).
 
 ### Respaldos
 
-El volumen `tb_pgdata` guarda todo. Dokploy no lo respalda solo en un Compose. Opciones:
-- Programar `pg_dump` (por ejemplo con *Schedules* de Dokploy):
-  ```bash
-  docker compose exec tb-db pg_dump -U tb touched_block > respaldo.sql
-  ```
-- Usar *Volume Backups* de Dokploy hacia S3.
+El volumen `tb_pgdata` guarda todo. **Decisión D10 (12 nov 2026)**: respaldos funcionando antes de publicar la fase 2. El usuario eligió un volcado en el mismo VPS, sin servicios pagados (12 nov 2026):
 
-Pendiente de decidir con el usuario.
+- **Tarea programada de Dokploy** `touched-block-respaldo` (en el Compose **API**, pestaña *Schedules*, servicio `tb-db`), todos los días a las **07:00 UTC** (04:00 en Chile). Corre `pg_dump -Fc` (formato comprimido de Postgres) dentro de `tb-db`.
+- **Dónde quedan**: en el VPS, en `/var/backups/touched-block/` (`touched_block-AAAAMMDD-HHMMSS.dump`). `deploy/docker-compose.yml` monta esa carpeta en `tb-db` como `/respaldos`.
+- **Se borran solos**: la tarea guarda los **14 más recientes** y borra los más viejos.
+- **Antes de cada versión con migraciones nuevas**: correr la tarea a mano (*Run now* en Dokploy) y revisar en su registro que diga `OK`.
+- **El respaldo diario del proveedor del VPS** copia el disco entero, así que también se lleva estos archivos fuera del VPS. Son complementarios: el del proveedor sirve si se pierde el VPS, pero restaurarlo devuelve todo el servidor (también los otros proyectos) al estado de ese día; el `pg_dump` deja volver solo esta base a un momento exacto, por ejemplo justo antes de una migración, y es consistente aunque la base esté en uso.
+
+Restaurar (solo si hiciera falta; **reemplaza** lo que haya en la base). En la terminal del contenedor `tb-db` en Dokploy:
+
+```bash
+ls -la /respaldos
+pg_restore -U tb -d touched_block --clean --if-exists /respaldos/touched_block-AAAAMMDD-HHMMSS.dump
+```
+
+Para bajar uno al computador: `scp root@<vps>:/var/backups/touched-block/<archivo>.dump .`
+
+### Publicar el plan de jugabilidad (fases 2 a 5)
+
+La API nueva es **compatible con la web anterior** (campos nuevos opcionales y endpoints nuevos; nada se renombró ni se eliminó), así que el orden es siempre: **API primero, web después**.
+
+1. **Respaldo** de la base (sección anterior): correr a mano la tarea `touched-block-respaldo` y revisar que diga `OK`.
+2. **`DAILY_SECRET`** en la pestaña *Environment* de Dokploy (y en tu copia local `deploy/.env`). Sin ella el despliegue falla, porque `deploy/docker-compose.yml` la exige.
+3. **Tag de la API** (`git tag vX.Y.Z && git push origin vX.Y.Z`). Al arrancar, el contenedor aplica las migraciones pendientes:
+
+   | Migración | Qué agrega |
+   |---|---|
+   | `add_user_stats` (fase 2) | Columnas `Run.bestStreak` y `Run.endReason` (opcionales) y la tabla `UserStats`, con un **relleno inicial**: cada cuenta recibe sus totales de partidas válidas (mejor duración, bloques, partidas). Solo inserta filas nuevas |
+   | `add_run_modes_and_challenges` (fase 3) | `Run.mode` (por defecto `normal`: las partidas existentes quedan así sin reescribirse), `Run.challengeCode`, `Run.dailyDate`, `Run.config` (opcionales) y las tablas `Challenge` y `ChallengeEntry` |
+   | `add_daily_challenge` (fase 4) | Tablas `DailyChallenge` y `DailyEntry` |
+   | `add_mission_rewards` (fase 5) | Tabla `MissionReward` |
+   | `add_challenge_creator_run_index` | Índice en `Challenge.creatorRunId` (solo un índice; no toca datos) |
+
+   Ninguna borra ni reescribe datos de jugadores.
+4. Verifica `https://api.<tu-dominio>/health` (`status: "ok"`, `rulesVersion: 5`, la versión nueva).
+5. **Relleno de rachas** (una vez, después del primer despliegue con la fase 2). La mejor racha no estaba guardada: este script la calcula repitiendo las partidas válidas guardadas de las reglas actuales (las de versiones anteriores no se pueden repetir y quedan sin racha) y sube `UserStats.bestStreak`. Es **idempotente**: si se corta o se corre dos veces, no pasa nada.
+
+   ```bash
+   # en el VPS, en la carpeta del Compose (o en la terminal del contenedor "api" de Dokploy, sin "docker compose exec api")
+   docker compose exec api node scripts/backfill-streaks.mjs --dry-run   # prueba: muestra cuántas partidas actualizaría
+   docker compose exec api node scripts/backfill-streaks.mjs             # lo hace
+   ```
+
+   Muestra al final cuántas partidas repitió y actualizó, cuántas no coinciden con su repetición (no se tocan), y cuántos jugadores subieron su mejor racha. Usa la `DATABASE_URL` del contenedor.
+6. **Push de la web** a `main`.
 
 ## 4. Desarrollo local con cuentas
 

@@ -2,7 +2,18 @@
 
 Plan de implementación acordado el **12 nov 2026**. Objetivo: que quien prueba Touched Block **quiera volver a jugar, vuelva al día siguiente y se lo mande a alguien**. Sale de una conversación con el usuario en la que se eligieron estas ideas: camino de etapas, "una más", reto a un amigo, reto diario, insignias (madera, bronce, plata, oro, diamante) y premios desbloqueables (colores, sonidos, efectos).
 
-**Estado: sin empezar.** Ninguna fase está implementada. Las diez decisiones del usuario ya están tomadas (sección 3). Al terminar cada fase, marcarla aquí y mover lo que quede a [`pendientes.md`](pendientes.md).
+**Estado (12 nov 2026): fases 0 a 5 hechas; las 1 a 5, probadas en local y sin publicar.** La fase 0 se midió en producción (resultados en 0.2); falta que el usuario confirme los umbrales de las insignias con esos datos. Las decisiones tomadas al implementar están en [`historia-y-decisiones.md`](historia-y-decisiones.md) ("Implementación del plan de jugabilidad") y lo que falta para publicar, en [`pendientes.md`](pendientes.md). Los números marcados *provisorios* siguen sin confirmar por el usuario (regla 8).
+
+| Fase | Estado |
+|---|---|
+| 0 | Consultas corridas en producción el 12 nov 2026 (resultados en 0.2). Falta que el usuario confirme los umbrales (D1) |
+| 1 | Implementada |
+| 2 | Implementada (antes de publicarla: respaldos de la base, D10) |
+| 3 | Implementada |
+| 4 | Implementada (antes de publicarla: `DAILY_SECRET` en Dokploy) |
+| 5 | Implementada |
+
+Dos reglas cambiaron al implementar, por revisiones de seguridad y de no ventaja: la ventana de fechas del reto diario (4.1) y la regla de las paletas (2.4).
 
 ---
 
@@ -148,6 +159,29 @@ WHERE status = 'valid';
 ```
 
 **Hecho cuando:** hay una tabla con los porcentajes por etapa y los tamaños de pantalla, y el usuario confirmó los umbrales de las insignias.
+
+### 0.2 Resultados (12 nov 2026, 06:58 UTC)
+
+Se corrieron las cuatro consultas en `tb-db` con una tarea manual de Dokploy en sesión de **solo lectura** (`default_transaction_read_only = on`); la tarea se borró después de correrla.
+
+**Por partida** (partidas válidas guardadas; las de invitado sin reclamar se borran a las 24 h, así que las v5 son todas de invitado de las últimas 24 h):
+
+| Reglas | Partidas | Mediana | p90 | < 20 s | ≥ 40 s (el 5) | ≥ 100 s (el 8) | ≥ 140 s (sumas) | ≥ 275 s | ≥ 350 s |
+|---|---|---|---|---|---|---|---|---|---|
+| v3 | 38 | 49 s | 73 s | 12 (32 %) | 22 (58 %) | 1 (3 %) | 0 | 0 | 0 |
+| v4 | 17 | 52 s | 80 s | 8 (47 %) | 9 (53 %) | 0 | 0 | 0 | 0 |
+| v5 | 15 | 8 s | 20 s | 13 (87 %) | 1 (7 %) | 0 | 0 | 0 | 0 |
+
+**Por jugador con cuenta** (su mejor partida): 6 jugadores, 9,2 partidas cada uno. Madera II (40 s): 5 (83 %); Madera III (100 s): 1 (17 %); Bronce, Plata, Oro y Diamante: 0.
+
+**Retorno de las cuentas**: 5 jugaron un solo día; 1 jugó dos días.
+
+**Tamaño del campo** (70 partidas): ancho mínimo 375, p5 411, mediana 434; alto mínimo 519, p5 632, mediana 773. Igual en los últimos 30 días.
+
+**Lectura** (para que decida el usuario):
+- La muestra es muy chica (6 cuentas, 70 partidas, casi todas con reglas anteriores), pero **nadie llegó nunca a las sumas (140 s)**. Con los umbrales de hoy, Bronce queda lejos de la meta "un tercio de los jugadores". El plan prevé atarlo a un tiempo menor; como la insignia se calcula y no se guarda, se puede mover en cualquier momento sin migraciones. Recomendación: publicar con los umbrales actuales, medir de nuevo con unas semanas de partidas v5 de cuentas y entonces fijar Bronce (y quizás Plata) con datos.
+- Las partidas v5 de invitado de las últimas 24 h son muy cortas (mediana 8 s). Puede ser gente que prueba y se va, o pruebas propias; conviene repetir la consulta otros días (como dice 0.1).
+- Campo de los retos: con menos de 200 partidas el servidor usa el respaldo 360 × 540, más chico que el p5 real (411 × 632), así que en casi todos los celulares el reto se ve sin achicarse. Solo el alto mínimo registrado (519) es menor que 540: esa pantalla vería el reto apenas reducido (4 %).
 
 ---
 
@@ -311,7 +345,7 @@ Catálogo inicial (*provisorio*):
 **Paletas** (`cosmetics/palettes.ts`):
 
 - El motor sigue asignando sus colores. El cliente traduce por posición en `COLORS` (9 colores) al dibujar el bloque, las partículas y el bloque que se apaga. El corazón de recuperación no cambia.
-- Regla de no ventaja: el motor solo pone trampas rojas sobre los colores `SAFE` (posiciones 2, 3, 4, 5, 7 y 8). En cada paleta, el contraste entre el rojo de la trampa (`#ff2a2a`) y esos seis colores debe quedar dentro del rango de la paleta Clásica; y el texto blanco debe leerse igual o mejor.
+- Regla de no ventaja: el motor solo pone trampas rojas sobre los colores `SAFE` (posiciones 2, 3, 4, 5, 7 y 8). En cada paleta, el contraste entre el rojo de la trampa (`#ff2a2a`) y esos seis colores debe quedar dentro del rango de la paleta Clásica; y el texto blanco debe leerse igual o mejor. Al implementar se amplió al **tono** (el rojo se distingue sobre todo por el tono): cada color dentro del rango de tono de la Clásica, un caso tan difícil como el suyo y una media cercana (detalle en `reglas-y-balance.md`).
 - Un test lo comprueba para todas las paletas. El cliente no tiene tests hoy: se agrega `vitest` solo para módulos puros (`lib/`, `cosmetics/`).
 
 **Sonidos** (`game/sounds.ts`):
@@ -446,7 +480,7 @@ Hoy el campo es el tamaño de la pantalla de cada celular, y la posición de los
 - **3 intentos** con cuenta; cuenta el mejor. **1 intento** como invitado (D8).
 - Un intento se gasta al **empezar** la partida, no al terminarla. Así nadie mira los primeros bloques y abandona gratis. Si se corta la conexión a mitad, el intento se pierde; el texto lo avisa antes de empezar.
 - Ranking propio por día. No entra al ranking general (D6).
-- **Día**: la fecha local del jugador (D7). El cliente manda `date` (`AAAA-MM-DD`) y el servidor la acepta si está a no más de un día de la fecha UTC. Con UTC, en Chile el reto cambiaría a las 21:00.
+- **Día**: la fecha local del jugador (D7). El cliente manda `date` (`AAAA-MM-DD`) y el servidor la acepta solo si en ese momento alguna zona horaria real (UTC−12 a UTC+14) está en esa fecha: `D 00:00 UTC − 14 h ≤ ahora < (D+1) 00:00 UTC + 12 h`. (Al principio decía "a no más de un día de la fecha UTC", pero así se entregaba la semilla de un día que todavía no empezaba en ningún lugar.) Con UTC, en Chile el reto cambiaría a las 21:00.
 - **Número del reto**: días desde una fecha de inicio fija ("Reto #42").
 
 ### 4.2 API
@@ -555,7 +589,7 @@ Se muestran en la Colección, con su avance. El último necesita guardar el mejo
 | Insignias demasiado fáciles o imposibles | Umbrales con datos reales (fase 0); se pueden mover porque la insignia se calcula, no se guarda |
 | Se pierde el progreso de los jugadores | Respaldos de la base antes de la fase 2 (D10) |
 | Más peso de la web (ya son ~2 MB) | Sin librerías nuevas en el cliente; sonidos generados por código; insignias dibujadas con `View` |
-| Diferencia de un día en la fecha local del reto | Ventana de ±1 día respecto de UTC; pruebas cambiando la zona horaria |
+| Diferencia de un día en la fecha local del reto | Se acepta la fecha si alguna zona horaria real está en ella; pruebas cambiando la zona horaria |
 | Un celular más chico que el campo del reto ve los bloques reducidos | El campo común es el percentil 5 de las pantallas reales, así que afecta a pocos y por poco; se revisa con la consulta de la fase 0 |
 | Solo se puede medir a las cuentas (las partidas de invitado se borran a las 24 h) | Repetir las consultas de la fase 0 en varios días para tener muestra de invitados |
 | Lo nuevo distrae o tapa el juego | Reglas de "Para que lo nuevo no estorbe" (sección 2), revisadas con Playwright en cada fase |
