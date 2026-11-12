@@ -105,6 +105,25 @@ export function TimeBar({ ratio, low, style }: { ratio: number; low: boolean; st
   );
 }
 
+/**
+ * Línea fina que se llena hacia el próximo hito de la partida, con su ícono al final ("5",
+ * "+ −", "× ÷", "4 s"). Sin ícono cuando ya se cruzaron todos. `dim` la atenúa (hay un aviso encima).
+ */
+export function MilestoneLine({ ratio, icon, dim }: { ratio: number; icon: string | null; dim?: boolean }) {
+  return (
+    <View style={[styles.mline, dim && styles.mlineDim]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <View style={styles.mtrack}>
+        <View style={[styles.mfill, { width: `${Math.min(100, Math.max(0, ratio * 100))}%` }]} />
+      </View>
+      {icon ? (
+        <Text style={styles.micon} selectable={false} numberOfLines={1}>
+          {icon}
+        </Text>
+      ) : null}
+    </View>
+  );
+}
+
 /** Marcador de arriba: Destruidos / Tiempo / Vidas. */
 export function Header({
   killed,
@@ -159,6 +178,11 @@ const styles = StyleSheet.create({
   off: { color: C.heartOff },
   bar: { height: 6, backgroundColor: C.barBg, borderRadius: 3, overflow: 'hidden' },
   fill: { height: '100%' },
+  mline: { flexDirection: 'row', alignItems: 'center', gap: 8, height: '100%' },
+  mlineDim: { opacity: 0.2 },
+  mtrack: { flex: 1, height: 3, borderRadius: 2, backgroundColor: C.barBg, overflow: 'hidden' },
+  mfill: { height: '100%', backgroundColor: 'rgba(119,204,255,0.6)' },
+  micon: { color: C.text, opacity: 0.6, fontSize: 11, fontWeight: '800', minWidth: 22, textAlign: 'right' },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',

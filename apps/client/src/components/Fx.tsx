@@ -1,6 +1,9 @@
+import { COLORS } from '@tb/engine';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
+import { useActiveEffect, useActivePalette } from '@/cosmetics/active';
+import { getPalette, paletteColor } from '@/cosmetics/palettes';
 import { C } from '@/theme';
 import { Block, type BlockProps } from './Block';
 
@@ -8,14 +11,30 @@ const EASE_OUT = Easing.bezier(0, 0, 0.58, 1);
 
 // ---------------------------------------------------------------- partículas
 
+/** Efecto al destruir (premio cosmético): `normal`, `chispas`, `confeti` o `corazones`. */
+export type BurstEffect = 'normal' | 'chispas' | 'confeti' | 'corazones';
+
 interface ParticleSpec {
+  /** Ángulo y distancia del vuelo. */
   a: number;
   d: number;
+  /** Giro total (grados) y giro inicial. */
   rot: number;
+  rot0: number;
   dur: number;
+  /** Desplazamiento vertical extra al final (+ cae, − sube). */
+  fall: number;
+  /** Escala al final. */
+  end: number;
+  w: number;
+  h: number;
+  radius: number;
+  color: string;
+  /** Si hay, la partícula es este carácter (♥) en vez de un rectángulo. */
+  glyph?: string;
 }
 
-function Particle({ x, y, color, spec }: { x: number; y: number; color: string; spec: ParticleSpec }) {
+function Particle({ x, y, spec }: { x: number; y: number; spec: ParticleSpec }) {
   const p = useSharedValue(0);
   useEffect(() => {
     p.value = withTiming(1, { duration: spec.dur, easing: EASE_OUT });
@@ -24,28 +43,78 @@ function Particle({ x, y, color, spec }: { x: number; y: number; color: string; 
     opacity: 1 - p.value,
     transform: [
       { translateX: Math.cos(spec.a) * spec.d * p.value },
-      { translateY: (Math.sin(spec.a) * spec.d + 30) * p.value },
-      { rotate: `${spec.rot * p.value}deg` },
-      { scale: 1 - 0.8 * p.value },
+      { translateY: (Math.sin(spec.a) * spec.d + spec.fall) * p.value },
+      { rotate: `${spec.rot0 + spec.rot * p.value}deg` },
+      { scale: 1 - (1 - spec.end) * p.value },
     ],
   }));
-  return <Animated.View pointerEvents="none" style={[styles.p, { left: x - 5, top: y - 5, backgroundColor: color }, style]} />;
+  if (spec.glyph) {
+    return (
+      <Animated.View pointerEvents="none" style={[styles.glyphBox, { left: x - spec.w / 2, top: y - spec.h / 2, width: spec.w, height: spec.h }, style]}>
+        <Text style={[styles.glyph, { color: spec.color, fontSize: spec.h, lineHeight: spec.h }]} selectable={false}>
+          {spec.glyph}
+        </Text>
+      </Animated.View>
+    );
+  }
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        styles.p,
+        { left: x - spec.w / 2, top: y - spec.h / 2, width: spec.w, height: spec.h, borderRadius: spec.radius, backgroundColor: spec.color },
+        style,
+      ]}
+    />
+  );
 }
 
-/** Explosión de partículas desde (x, y), como burst() de legacy. */
-export function Burst({ x, y, color, count = 14 }: { x: number; y: number; color: string; count?: number }) {
-  const [specs] = useState<ParticleSpec[]>(() =>
-    Array.from({ length: count }, () => ({
-      a: Math.random() * Math.PI * 2,
-      d: 40 + Math.random() * 80,
-      rot: Math.random() * 400,
-      dur: 450 + Math.random() * 250,
-    })),
-  );
+const SPARK = '#fff3b0';
+
+/**
+ * Partículas de un estallido según el efecto. Mismo número de partículas y duraciones dentro de
+ * las de siempre (≤ 700 ms, el estallido se desmonta a los 750) en todos: mismo costo.
+ */
+function makeSpecs(effect: BurstEffect, count: number, color: string, palette: readonly string[]): ParticleSpec[] {
+  const r = Math.random;
+  return Array.from({ length: count }, (_, i): ParticleSpec => {
+    const a = r() * Math.PI * 2;
+    switch (effect) {
+      case 'chispas':
+        // trazos finos que salen disparados en su dirección, sin girar
+        return { a, d: 60 + r() * 90, rot: 0, rot0: (a * 180) / Math.PI + 90, dur: 330 + r() * 220, fall: 10, end: 0.3, w: 3, h: 13, radius: 2, color: i % 2 ? SPARK : color };
+      case 'confeti':
+        // papelitos de todos los colores de la paleta, que giran y caen
+        return { a, d: 40 + r() * 80, rot: 300 + r() * 500, rot0: r() * 180, dur: 450 + r() * 250, fall: 60, end: 0.7, w: 6, h: 10, radius: 1, color: palette[Math.floor(r() * palette.length)] };
+      case 'corazones':
+        // corazones que suben un poco
+        return { a, d: 30 + r() * 70, rot: r() * 60 - 30, rot0: 0, dur: 450 + r() * 250, fall: -25, end: 0.5, w: 16, h: 13 + Math.round(r() * 5), radius: 0, color, glyph: '♥' };
+      default:
+        // como burst() de legacy
+        return { a, d: 40 + r() * 80, rot: r() * 400, rot0: 0, dur: 450 + r() * 250, fall: 30, end: 0.2, w: 10, h: 10, radius: 3, color };
+    }
+  });
+}
+
+const ENGINE_COLORS = new Set<string>(COLORS);
+
+/**
+ * Explosión de partículas desde (x, y), como burst() de legacy. El color es el del motor y se
+ * traduce a la paleta elegida. La forma sale del efecto elegido en la Colección, pero solo cuando
+ * se destruye un bloque (su color está en `COLORS`): la trampa (`C.bad`) y el corazón siguen con
+ * las partículas de siempre. `effect` lo fuerza (vistas previas; `'normal'` = las de siempre).
+ */
+export function Burst({ x, y, color, count = 14, effect }: { x: number; y: number; color: string; count?: number; effect?: BurstEffect }) {
+  const activeEffect = useActiveEffect() as BurstEffect;
+  const palette = useActivePalette();
+  const [specs] = useState<ParticleSpec[]>(() => {
+    const eff = effect ?? (ENGINE_COLORS.has(color.toLowerCase()) ? activeEffect : 'normal');
+    return makeSpecs(eff, count, paletteColor(color, palette), getPalette(palette).colors);
+  });
   return (
     <>
       {specs.map((s, i) => (
-        <Particle key={i} x={x} y={y} color={color} spec={s} />
+        <Particle key={i} x={x} y={y} spec={s} />
       ))}
     </>
   );
@@ -117,7 +186,7 @@ export function MissMark({ x, y }: { x: number; y: number }) {
 // ---------------------------------------------------------------- lista de efectos
 
 export type FxSpec =
-  | { kind: 'burst'; x: number; y: number; color: string; count?: number }
+  | { kind: 'burst'; x: number; y: number; color: string; count?: number; effect?: BurstEffect }
   | { kind: 'float'; x: number; y: number; text: string; neg?: boolean; color?: string }
   | { kind: 'banner'; x: number; y: number; text: string; color?: string; maxW: number; small?: boolean }
   | { kind: 'miss'; x: number; y: number }
@@ -166,7 +235,7 @@ export function FxLayer({ items }: { items: FxItem[] }) {
       {items.map((it) => {
         switch (it.kind) {
           case 'burst':
-            return <Burst key={it.id} x={it.x} y={it.y} color={it.color} count={it.count} />;
+            return <Burst key={it.id} x={it.x} y={it.y} color={it.color} count={it.count} effect={it.effect} />;
           case 'float':
             return <FloatText key={it.id} x={it.x} y={it.y} text={it.text} neg={it.neg} color={it.color} />;
           case 'banner':
@@ -208,7 +277,9 @@ export function Flash({ style }: { style: ReturnType<typeof useHurtFx>['flashSty
 }
 
 const styles = StyleSheet.create({
-  p: { position: 'absolute', width: 10, height: 10, borderRadius: 3 },
+  p: { position: 'absolute' },
+  glyphBox: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
+  glyph: { fontWeight: '800', textAlign: 'center' },
   floatBox: { position: 'absolute', width: 120 },
   pts: { fontWeight: '800', fontSize: 22 },
   missBox: { position: 'absolute', width: 60 },

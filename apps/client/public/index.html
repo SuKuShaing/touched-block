@@ -29,6 +29,24 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/touched-block/favicon-192.png" />
     <link rel="icon" type="image/svg+xml" href="/touched-block/favicon.svg" />
     <link rel="apple-touch-icon" sizes="180x180" href="/touched-block/apple-touch-icon.png" />
+    <!-- Web instalable (sin service worker): manifest y etiquetas para "Agregar a inicio" en iOS. -->
+    <link rel="manifest" href="/touched-block/manifest.webmanifest" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Touched Block" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <script>
+      // El aviso de instalación de Chrome puede llegar antes que el código de la app (que se
+      // carga por partes): se guarda aquí y lo toma src/platform/install.web.ts.
+      window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        window.__tbInstallPrompt = e;
+      });
+      window.addEventListener('appinstalled', function () {
+        window.__tbInstallPrompt = null;
+        window.__tbInstalled = true;
+      });
+    </script>
     <style id="expo-reset">
       html,
       body {

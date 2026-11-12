@@ -151,7 +151,7 @@
 
       <main>
         <h1>Política de privacidad</h1>
-        <p class="updated">Última actualización: 9 de noviembre de 2026</p>
+        <p class="updated">Última actualización: 12 de noviembre de 2026</p>
 
         <section>
           <h2>Quiénes somos</h2>
@@ -180,6 +180,11 @@
               y para que, si inicias sesión justo después, puedas guardar esa partida en tu cuenta (tienes 1 hora para hacerlo).
             </li>
             <li>Las partidas de invitado que nadie guarda en una cuenta se borran automáticamente a las 24 horas.</li>
+            <li>
+              Si juegas como invitado un reto que te mandó un amigo, tu resultado en ese reto (bloques destruidos y escapados, y
+              duración) queda guardado junto al reto, sin ningún dato que te identifique, para que quien te retó pueda compararlo. Lo
+              ve cualquiera que tenga el enlace del reto.
+            </li>
           </ul>
         </section>
 
@@ -220,6 +225,14 @@
             </li>
             <li><strong>Tus récords</strong> por semana, mes, año e histórico, para los rankings.</li>
             <li>
+              <strong>Tus estadísticas de juego</strong>: la duración de tu partida más larga, tu mejor racha, y el total de bloques
+              destruidos y de partidas jugadas. Con ellas calculamos tu insignia, tu nivel y los premios de la Colección.
+            </li>
+            <li>
+              <strong>Tus resultados en retos</strong>: en el reto diario y en los retos a un amigo guardamos tu resultado en cada
+              reto (bloques destruidos y escapados, duración y mejor racha) y cuántos intentos usaste.
+            </li>
+            <li>
               <strong>Sesiones</strong>: para que no tengas que entrar cada vez, guardamos solo una huella irreversible (un
               <em>hash</em>) de tu token de sesión, nunca el token en sí. Las sesiones vencen a los 60 días o cuando cierras sesión.
             </li>
@@ -232,8 +245,19 @@
             <li>Tu nombre de usuario y tu país.</li>
             <li>Tus puntajes y tu posición en los rankings (mundial, por país y de amigos).</li>
             <li>
-              Tu perfil público (<code>/u/tu-usuario</code>): récord histórico, cantidad de seguidores, a cuántos sigues y cuántas
-              personas invitaste.
+              Tu <strong>insignia</strong> (Madera, Bronce, Plata, Oro o Diamante), que sale de tu partida más larga y aparece junto a
+              tu nombre en los rankings y en tu perfil público.
+            </li>
+            <li>
+              Tus resultados en el <strong>reto diario</strong> y tu posición en su ranking, igual que en los demás rankings.
+            </li>
+            <li>
+              Tus resultados en un <strong>reto a un amigo</strong> (tu nombre de usuario y tu puntaje en ese reto): los puede ver
+              cualquiera que tenga el enlace del reto.
+            </li>
+            <li>
+              Tu perfil público (<code>/u/tu-usuario</code>): récord histórico, insignia, cantidad de seguidores, a cuántos sigues y
+              cuántas personas invitaste.
             </li>
             <li>Cualquiera puede buscarte por tu nombre de usuario.</li>
           </ul>
@@ -278,6 +302,11 @@
           <p>El juego usa el <code>localStorage</code> de tu navegador (no cookies) para guardar:</p>
           <ul>
             <li>tu récord y tu historial de partidas en este dispositivo,</li>
+            <li>
+              tus estadísticas en este dispositivo (partida más larga, mejor racha, bloques destruidos y partidas jugadas), que deciden
+              tu insignia y tus premios si juegas sin cuenta,
+            </li>
+            <li>tus ajustes: sonido, vibración y los premios que elegiste en la Colección,</li>
             <li>si ya viste el tutorial,</li>
             <li>si iniciaste sesión: tu token de sesión y una copia de los datos de tu perfil, para no pedirte entrar de nuevo.</li>
           </ul>
@@ -289,7 +318,8 @@
           <ul>
             <li>
               Desde el juego: entra a <strong>Perfil → Eliminar cuenta</strong>. Se borran de inmediato tu cuenta, tu correo y nombre
-              de Google, tus sesiones, tus partidas, tus récords en los rankings y a quién sigues. Si invitaste a alguien, a esa
+              de Google, tus sesiones, tus partidas, tus récords en los rankings, tus estadísticas, tus resultados en retos y a quién
+              sigues. Si invitaste a alguien, a esa
               persona simplemente le queda sin indicar quién la invitó.
             </li>
             <li>

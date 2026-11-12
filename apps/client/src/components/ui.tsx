@@ -1,7 +1,97 @@
-import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View, type ViewStyle, useWindowDimensions } from 'react-native';
 import { HIST_SHOW, type HistEntry } from '@/lib/history';
 import { fmtDate } from '@/lib/format';
+import { updateSettings, useSettings } from '@/lib/settings';
+import { fx } from '@/platform/fx';
 import { C } from '@/theme';
+
+/** Parlante dibujado con Views (sin fuentes de íconos): con ondas si suena, con ✕ si está en silencio. */
+export function SoundIcon({ on, size = 20, color = C.text }: { on: boolean; size?: number; color?: string }) {
+  const s = size;
+  const wave = (d: number, o: number) => (
+    <View
+      style={{
+        position: 'absolute',
+        left: s * 0.42 - d / 2,
+        top: (s - d) / 2,
+        width: d,
+        height: d,
+        borderRadius: d / 2,
+        borderWidth: Math.max(1.5, s * 0.08),
+        borderColor: 'transparent',
+        borderRightColor: color,
+        opacity: o,
+      }}
+    />
+  );
+  const bar = (rot: string) => (
+    <View
+      style={{
+        position: 'absolute',
+        left: s * 0.62,
+        top: s * 0.5 - s * 0.04,
+        width: s * 0.34,
+        height: Math.max(1.5, s * 0.09),
+        borderRadius: 1,
+        backgroundColor: color,
+        transform: [{ rotate: rot }],
+      }}
+    />
+  );
+  return (
+    <View style={{ width: s, height: s, opacity: 0.85 }}>
+      <View style={{ position: 'absolute', left: s * 0.06, top: s * 0.36, width: s * 0.2, height: s * 0.28, backgroundColor: color, borderRadius: 1 }} />
+      <View
+        style={{
+          position: 'absolute',
+          left: s * 0.12,
+          top: s * 0.14,
+          width: 0,
+          height: 0,
+          borderTopWidth: s * 0.36,
+          borderBottomWidth: s * 0.36,
+          borderRightWidth: s * 0.36,
+          borderTopColor: 'transparent',
+          borderBottomColor: 'transparent',
+          borderRightColor: color,
+        }}
+      />
+      {on ? (
+        <>
+          {wave(s * 0.5, 1)}
+          {wave(s * 0.86, 0.8)}
+        </>
+      ) : (
+        <>
+          {bar('45deg')}
+          {bar('-45deg')}
+        </>
+      )}
+    </View>
+  );
+}
+
+/** Botón redondo que enciende y apaga el sonido del juego (ajuste del dispositivo). */
+export function SoundToggle({ style }: { style?: ViewStyle }) {
+  const { sound } = useSettings();
+  const toggle = () => {
+    updateSettings({ sound: !sound });
+    // al encenderlo, un pitido corto: confirma y habilita el audio dentro del toque (iOS)
+    if (!sound) fx.beep(660, 0.08, 'triangle', 0.06);
+  };
+  return (
+    <Pressable
+      accessibilityRole="switch"
+      accessibilityLabel="Sonido"
+      accessibilityState={{ checked: sound }}
+      hitSlop={10}
+      onPress={toggle}
+      style={({ pressed }) => [styles.round, style, pressed && styles.pressed]}
+    >
+      <SoundIcon on={sound} />
+    </Pressable>
+  );
+}
 
 /** Logo: "TOUCHED" arriba y "Block" dentro de un bloque azul con un mini bloque "3". */
 export function Logo({ scale = 1 }: { scale?: number }) {
@@ -133,6 +223,16 @@ const styles = StyleSheet.create({
   },
   mainT: { color: C.bg, fontSize: 22, fontWeight: '800' },
   pressed: { transform: [{ scale: 0.96 }] },
+  round: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: C.panel,
+    borderWidth: 1,
+    borderColor: C.panelBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   ghost: {
     borderWidth: 1,
     borderColor: C.panelBorder,

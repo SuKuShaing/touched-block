@@ -3,25 +3,40 @@ import { type ReactNode, useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { errorMessage } from '@/api/client';
+import { useDailyLeaderboard } from '@/api/dailyHooks';
 import { useLeaderboard, useMyRuns, useViewer } from '@/api/hooks';
-import type { Leaderboard, Period, Scope } from '@/api/types';
+import type { LeaderboardEntry, Period, Scope } from '@/api/types';
 import { SmallButton } from '@/components/form';
 import { LoginOptions } from '@/components/LoginOptions';
 import { Segmented } from '@/components/Segmented';
+import { TierBadge } from '@/components/TierBadge';
+import { features } from '@/config';
 import { browserCountry, countryName, flag } from '@/lib/countries';
+import { dailyInfo, dailyVisible, todayLine, useToday } from '@/lib/daily';
 import { fmtDate } from '@/lib/format';
 import { type HistEntry, loadHist } from '@/lib/history';
+import { registerVisit, visitCount } from '@/lib/onboarding';
 import { PERIOD_EMPTY, PERIODS, periodStart } from '@/lib/periods';
 import { useTabBarSpace } from '@/lib/tabBar';
 import { C } from '@/theme';
 
 type Tab = 'me' | Scope;
+/** Ranking general (por período) o el del reto diario de hoy. */
+type BoardKind = 'general' | 'daily';
 
 const TABS: { value: Tab; label: string }[] = [
   { value: 'me', label: 'Tú' },
   { value: 'country', label: 'País' },
   { value: 'world', label: 'Mundial' },
   { value: 'friends', label: 'Amigos' },
+];
+
+// El reto diario no tiene historial propio ("Tú"): solo mundo, país y amigos.
+const DAILY_TABS = TABS.filter((t) => t.value !== 'me');
+
+const BOARDS: { value: BoardKind; label: string }[] = [
+  { value: 'general', label: 'General' },
+  { value: 'daily', label: 'Reto de hoy' },
 ];
 
 function Center({ children }: { children: ReactNode }) {
@@ -111,23 +126,33 @@ function MyHistory({ period, refreshKey }: { period: Period; refreshKey: number 
   );
 }
 
-function Board({ data, onUser, stale }: { data: Leaderboard; onUser: (u: string) => void; stale?: boolean }) {
-  if (!data.entries.length)
+function Board({
+  entries,
+  emptyText,
+  onUser,
+  stale,
+}: {
+  entries: LeaderboardEntry[];
+  emptyText: string;
+  onUser: (u: string) => void;
+  stale?: boolean;
+}) {
+  if (!entries.length)
     return (
       <Center>
-        <Text style={styles.muted}>Nadie tiene puntaje {PERIOD_EMPTY[data.period]} en este ranking.</Text>
+        <Text style={styles.muted}>{emptyText}</Text>
       </Center>
     );
   return (
     <View style={[styles.list, stale && styles.stale]}>
       <View style={[styles.row, styles.head]}>
         <Text style={[styles.rank, styles.headT]}>#</Text>
-        <Text style={[styles.user, styles.headT]}>Jugador</Text>
+        <Text style={[styles.user, styles.headT, styles.flex1]}>Jugador</Text>
         <Text style={[styles.k, styles.headT]}>Bloques</Text>
         <Text style={[styles.m, styles.headT]}>Esc.</Text>
       </View>
-      {data.entries.map((e, i) => (
-        <View key={e.userId} style={[styles.row, e.isMe && styles.rowMe, i === data.entries.length - 1 && styles.rowLast]}>
+      {entries.map((e, i) => (
+        <View key={e.userId} style={[styles.row, e.isMe && styles.rowMe, i === entries.length - 1 && styles.rowLast]}>
           <Text style={[styles.rank, e.rank <= 3 && styles.gold]}>{e.rank}</Text>
           <Pressable
             accessibilityRole="link"
@@ -136,9 +161,12 @@ function Board({ data, onUser, stale }: { data: Leaderboard; onUser: (u: string)
             style={styles.userBtn}
             hitSlop={4}
           >
-            <Text style={[styles.user, e.isMe && styles.me]} numberOfLines={1}>
-              {flag(e.country)} {e.username}
-            </Text>
+            <View style={styles.userRow}>
+              <Text style={[styles.user, e.isMe && styles.me]} numberOfLines={1}>
+                {flag(e.country)} {e.username}
+              </Text>
+              <TierBadge tier={e.tier} size="sm" />
+            </View>
           </Pressable>
           <Text style={styles.k}>{e.killed}</Text>
           <Text style={styles.m}>{e.missed}</Text>
@@ -148,8 +176,25 @@ function Board({ data, onUser, stale }: { data: Leaderboard; onUser: (u: string)
   );
 }
 
+/** Lo que necesita la fila fija: mi posición (o null) y el total del ranking. */
+interface MeData {
+  me?: { rank: number; killed: number; missed: number } | null;
+  total: number;
+}
+
 /** Fila fija abajo con mi posición. */
-function MeRow({ data, loggedIn, onLogin }: { data: Leaderboard | undefined; loggedIn: boolean; onLogin: () => void }) {
+function MeRow({
+  data,
+  loggedIn,
+  onLogin,
+  noScoreText,
+}: {
+  data: MeData | undefined;
+  loggedIn: boolean;
+  onLogin: () => void;
+  /** "Sin puntaje esta semana.", "Todavía no juegas el reto de hoy." */
+  noScoreText: string;
+}) {
   if (!loggedIn) {
     return (
       <View style={styles.meRow}>
@@ -170,7 +215,7 @@ function MeRow({ data, loggedIn, onLogin }: { data: Leaderboard | undefined; log
           <Text style={styles.m}>{data.me.missed} esc.</Text>
         </>
       ) : (
-        <Text style={[styles.meT, styles.flex1]}>Sin puntaje {PERIOD_EMPTY[data.period]}.</Text>
+        <Text style={[styles.meT, styles.flex1]}>{noScoreText}</Text>
       )}
     </View>
   );
@@ -183,12 +228,30 @@ export function RankingsScreen() {
   const viewer = useViewer();
   const [tab, setTab] = useState<Tab>('world');
   const [period, setPeriod] = useState<Period>('week');
+  const [kind, setKind] = useState<BoardKind>('general');
+  const today = useToday();
+
+  // El reto diario se presenta desde la 2.ª visita (la 1.ª es solo para jugar).
+  const [visits] = useState(() => {
+    registerVisit();
+    return visitCount();
+  });
+  const showDaily = dailyVisible(visits, features.accounts);
+  const daily = showDaily && kind === 'daily';
+  const pickKind = (k: BoardKind) => {
+    setKind(k);
+    if (k === 'daily' && tab === 'me') setTab('world');
+  };
 
   const myCountry = viewer.loggedIn ? (viewer.user?.country ?? null) : browserCountry();
   const scope: Scope = tab === 'me' ? 'world' : tab;
   const needsCountry = scope === 'country' && !myCountry;
   const needsLogin = scope === 'friends' && !viewer.loggedIn;
-  const lb = useLeaderboard(scope, period, scope === 'country' ? myCountry : null, tab !== 'me' && !needsCountry && !needsLogin);
+  const canFetch = !needsCountry && !needsLogin;
+  const general = useLeaderboard(scope, period, scope === 'country' ? myCountry : null, !daily && tab !== 'me' && canFetch);
+  const dailyLb = useDailyLeaderboard(today, scope, scope === 'country' ? myCountry : null, daily && canFetch);
+  const lb = daily ? dailyLb : general;
+  const todayInfo = useMemo(() => dailyInfo(today), [today]);
 
   // Al volver a la pestaña se relee el historial local (los datos del servidor se invalidan al
   // terminar cada partida).
@@ -198,8 +261,11 @@ export function RankingsScreen() {
   const openUser = (u: string) => router.push({ pathname: '/u/[username]', params: { username: u } });
   const goProfile = () => router.navigate('/perfil');
 
+  const emptyText = daily ? 'Nadie ha jugado el reto de hoy en este ranking todavía.' : `Nadie tiene puntaje ${PERIOD_EMPTY[period]} en este ranking.`;
+  const noScoreText = daily ? 'Todavía no juegas el reto de hoy.' : `Sin puntaje ${PERIOD_EMPTY[period]}.`;
+
   let body: ReactNode;
-  if (tab === 'me') body = <MyHistory period={period} refreshKey={focusTick} />;
+  if (tab === 'me' && !daily) body = <MyHistory period={period} refreshKey={focusTick} />;
   else if (needsLogin)
     body = (
       <Center>
@@ -224,11 +290,11 @@ export function RankingsScreen() {
         {scope === 'friends' && lb.data.total <= 1 ? (
           <Text style={styles.note}>Sigue a tus amigos desde tu perfil para competir con ellos.</Text>
         ) : null}
-        <Board data={lb.data} onUser={openUser} stale={lb.isPlaceholderData} />
+        <Board entries={lb.data.entries} emptyText={emptyText} onUser={openUser} stale={lb.isPlaceholderData} />
       </>
     );
 
-  const showMeRow = tab !== 'me' && !needsLogin && !needsCountry && (lb.isSuccess || !viewer.loggedIn);
+  const showMeRow = (daily || tab !== 'me') && !needsLogin && !needsCountry && (lb.isSuccess || !viewer.loggedIn);
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top, paddingBottom: tabSpace }]}>
@@ -236,9 +302,16 @@ export function RankingsScreen() {
         <Text style={styles.title} accessibilityRole="header">
           Rankings
         </Text>
-        <Segmented label="Ranking" options={TABS} value={tab} onChange={setTab} />
-        <Segmented label="Período" chips options={PERIODS} value={period} onChange={setPeriod} />
-        {scope === 'country' && myCountry && tab !== 'me' ? (
+        {showDaily ? <Segmented label="Tipo de ranking" chips options={BOARDS} value={kind} onChange={pickKind} /> : null}
+        <Segmented label="Ranking" options={daily ? DAILY_TABS : TABS} value={tab} onChange={setTab} />
+        {daily ? (
+          <Text style={styles.sub}>
+            Reto #{todayInfo.number} · {todayLine(todayInfo.title)}
+          </Text>
+        ) : (
+          <Segmented label="Período" chips options={PERIODS} value={period} onChange={setPeriod} />
+        )}
+        {scope === 'country' && myCountry && (daily || tab !== 'me') ? (
           <Text style={styles.sub}>
             {flag(myCountry)} {countryName(myCountry)}
             {viewer.loggedIn ? '' : ' · según tu navegador'}
@@ -248,7 +321,7 @@ export function RankingsScreen() {
       <ScrollView style={styles.flex1} contentContainerStyle={styles.content}>
         {body}
       </ScrollView>
-      {showMeRow ? <MeRow data={lb.data} loggedIn={viewer.loggedIn} onLogin={goProfile} /> : null}
+      {showMeRow ? <MeRow data={lb.data} loggedIn={viewer.loggedIn} onLogin={goProfile} noScoreText={noScoreText} /> : null}
     </View>
   );
 }
@@ -281,7 +354,9 @@ const styles = StyleSheet.create({
   rowMe: { backgroundColor: C.accentSoft },
   rank: { width: 30, color: C.text, opacity: 0.8, fontSize: 15, fontWeight: '700', fontVariant: ['tabular-nums'] },
   userBtn: { flex: 1, minWidth: 0 },
-  user: { flex: 1, color: C.text, fontSize: 15, fontWeight: '600' },
+  // nombre + insignia: el nombre se corta antes que la insignia
+  userRow: { flexDirection: 'row', alignItems: 'center', gap: 6, minWidth: 0 },
+  user: { flexShrink: 1, color: C.text, fontSize: 15, fontWeight: '600' },
   me: { color: C.accent },
   date: { flex: 1, color: C.text, opacity: 0.7, fontSize: 14, fontVariant: ['tabular-nums'] },
   k: { color: C.text, fontSize: 17, fontWeight: '800', minWidth: 44, textAlign: 'right', fontVariant: ['tabular-nums'] },

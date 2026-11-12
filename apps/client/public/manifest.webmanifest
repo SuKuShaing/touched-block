@@ -1,0 +1,21 @@
+{
+  "id": "/touched-block/",
+  "name": "Touched Block",
+  "short_name": "Touched Block",
+  "description": "Juego táctil de reflejos: toca cada bloque tantas veces como diga su número antes de que desaparezca.",
+  "lang": "es",
+  "dir": "ltr",
+  "start_url": "/touched-block/",
+  "scope": "/touched-block/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#12121a",
+  "theme_color": "#12121a",
+  "categories": ["games"],
+  "prefer_related_applications": false,
+  "icons": [
+    { "src": "favicon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

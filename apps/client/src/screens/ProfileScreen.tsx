@@ -1,9 +1,9 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BASE_LIVES, MAX_LIVES_CAP } from '@tb/engine';
+import { BASE_LIVES, MAX_LIVES_CAP, tierRefForTicks } from '@tb/engine';
 import { errorMessage, isApiError } from '@/api/client';
 import { checkUsername, deleteAccount, fetchMe, follow, logout, searchUsers, setInviter, unfollow, updateMe } from '@/api/endpoints';
 import { useFollowing, useInvalidate, useMeRefresh, useViewer } from '@/api/hooks';
@@ -12,18 +12,26 @@ import { ConfirmModal } from '@/components/ConfirmModal';
 import { notifyShare } from '@/components/EndPanel';
 import { Hint, SmallButton, TextField } from '@/components/form';
 import { Hearts } from '@/components/Hud';
+import { InstallRow } from '@/components/InstallCard';
 import { LegalLinks } from '@/components/LegalLinks';
 import { LoginOptions } from '@/components/LoginOptions';
 import { ProfileIcon } from '@/components/ProfileIcon';
+import { TierBadge } from '@/components/TierBadge';
 import { toast } from '@/components/Toast';
 import { GhostButton, RecordPill } from '@/components/ui';
 import { features } from '@/config';
+import { useActiveCosmetics } from '@/cosmetics/active';
+import { tierStepOf } from '@/cosmetics/tiers';
 import { countryName, flag, sortedCountries } from '@/lib/countries';
 import { loadBest, loadHist } from '@/lib/history';
+import { levelFor, xpOf } from '@/lib/level';
+import { useLocalStats } from '@/lib/stats';
 import { replayView } from '@/lib/onboarding';
+import { updateSettings, useSettings } from '@/lib/settings';
 import { SITE_URL, inviteText } from '@/lib/shareText';
 import { useTabBarSpace } from '@/lib/tabBar';
 import { SEARCH_LIMIT, matchRange, searchKey } from '@/lib/userSearch';
+import { fx } from '@/platform/fx';
 import { share } from '@/platform/share';
 import { C } from '@/theme';
 
@@ -519,6 +527,86 @@ function Follows({ me }: { me: Me }) {
   );
 }
 
+// ---------------------------------------------------------------- en este dispositivo
+
+function SettingSwitch({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <View style={styles.setRow}>
+      <Text style={[styles.value, styles.flex1]}>{label}</Text>
+      <Switch
+        accessibilityLabel={label}
+        value={value}
+        onValueChange={onChange}
+        trackColor={{ false: C.barBg, true: C.accent }}
+        thumbColor={C.text}
+        // react-native-web usa su propio color (verde azulado) para el botón encendido
+        {...({ activeThumbColor: C.text } as object)}
+      />
+    </View>
+  );
+}
+
+/**
+ * Fila de la Colección con la insignia y el nivel. La insignia es la pública: con sesión la de la
+ * cuenta (`Me.tier`); sin sesión, la de este dispositivo. El nivel es el de la Colección de este
+ * dispositivo (el máximo entre lo local y la cuenta).
+ */
+function CollectionRow({ onPress }: { onPress: () => void }) {
+  const viewer = useViewer();
+  const local = useLocalStats();
+  const { stats } = useActiveCosmetics();
+  const tier = features.accounts && viewer.user ? (viewer.user.tier ?? null) : local.runs > 0 ? tierRefForTicks(local.bestTicks) : null;
+  const step = tierStepOf(tier);
+  const lv = levelFor(xpOf(stats));
+  const what = `${step ? step.name : 'Sin insignia'} · Nivel ${lv.level}`;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`Colección. ${what}`}
+      onPress={onPress}
+      style={({ pressed }) => [styles.setRow, styles.linkRow, pressed && styles.pressed]}
+    >
+      {step ? <TierBadge tier={step} size="md" /> : <View style={styles.noBadge} />}
+      <View style={styles.flex1}>
+        <Text style={styles.value}>Colección</Text>
+        <Text style={styles.collSub}>{what}</Text>
+        <View style={styles.lvBar}>
+          <View style={[styles.lvFill, { width: `${Math.max(0, Math.min(1, lv.progress)) * 100}%` }]} />
+        </View>
+      </View>
+      <Text style={styles.chevron}>›</Text>
+    </Pressable>
+  );
+}
+
+/** Sonido, vibración, Colección e instalar: ajustes que valen solo en este dispositivo. */
+function DeviceSettings() {
+  const router = useRouter();
+  const { sound, haptics } = useSettings();
+  return (
+    <View style={styles.stack}>
+      <SettingSwitch
+        label="Sonido"
+        value={sound}
+        onChange={(v) => {
+          updateSettings({ sound: v });
+          if (v) fx.beep(660, 0.08, 'triangle', 0.06);
+        }}
+      />
+      <SettingSwitch
+        label="Vibración"
+        value={haptics}
+        onChange={(v) => {
+          updateSettings({ haptics: v });
+          if (v) fx.buzz(30);
+        }}
+      />
+      <CollectionRow onPress={() => router.push('/coleccion')} />
+      <InstallRow />
+    </View>
+  );
+}
+
 // ---------------------------------------------------------------- pantalla
 
 /**
@@ -634,6 +722,7 @@ export function ProfileScreen() {
               {games === 0 ? 'Todavía no hay partidas.' : games === 1 ? '1 partida guardada' : `${games} partidas guardadas`}
             </Text>
           </View>
+          <DeviceSettings />
         </ProfileSection>
 
         <ProfileSection title="Ayuda">
@@ -725,6 +814,13 @@ const styles = StyleSheet.create({
   userT: { color: C.text, fontSize: 15, fontWeight: '600' },
   match: { color: C.accent, fontWeight: '800' },
   pickT: { color: C.accent, fontWeight: '700', fontSize: 14, paddingVertical: 10, paddingHorizontal: 8 },
+  setRow: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 40, borderTopWidth: 1, borderTopColor: C.rowBorder, paddingTop: 8 },
+  linkRow: { paddingBottom: 2 },
+  chevron: { color: C.text, opacity: 0.5, fontSize: 24, lineHeight: 26, paddingHorizontal: 4 },
+  noBadge: { width: 32, height: 32, borderRadius: 16, backgroundColor: C.barBg },
+  collSub: { color: C.text, opacity: 0.65, fontSize: 13, marginTop: 1 },
+  lvBar: { height: 4, borderRadius: 2, backgroundColor: C.barBg, overflow: 'hidden', marginTop: 5, marginBottom: 2 },
+  lvFill: { height: '100%', backgroundColor: C.accent },
   stale: { opacity: 0.6 },
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center', padding: 20 },
   sheet: {

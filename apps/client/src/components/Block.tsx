@@ -1,6 +1,8 @@
 import { memo, useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
+import { useActivePalette } from '@/cosmetics/active';
+import { getPalette, paletteColor } from '@/cosmetics/palettes';
 import { C } from '@/theme';
 
 export interface BlockProps {
@@ -11,7 +13,10 @@ export interface BlockProps {
   h: number;
   /** Lo que se escribe en el bloque: los toques que faltan, la operación ("2+3"), '' o '✕'. */
   label: string;
+  /** Color del motor; se dibuja traducido a la paleta elegida (`cosmetics/palettes.ts`). */
   color: string;
+  /** Paleta a usar en vez de la elegida en la Colección (vistas previas). */
+  palette?: string;
   /** Trampa roja: mismo bloque, pero con el texto rojo. */
   red?: boolean;
   /** Vida restante 0..1 (barra blanca de abajo). */
@@ -40,7 +45,10 @@ const SPAWN_EASE = Easing.bezier(0.2, 1.6, 0.4, 1);
 const CSS_EASE = Easing.bezier(0.25, 0.1, 0.25, 1);
 
 /** Bloque del juego. Lo usan la partida y las animaciones del onboarding. */
-export const Block = memo(function Block({ x, y, w, h, label, color, red, life, hitKey = 0, gone, spawn = true }: BlockProps) {
+export const Block = memo(function Block({ x, y, w, h, label, color, palette, red, life, hitKey = 0, gone, spawn = true }: BlockProps) {
+  const activePalette = useActivePalette();
+  const pal = palette ?? activePalette;
+  const shine = !gone && !!getPalette(pal).shine;
   const scale = useSharedValue(gone ? 1 : spawn ? 0 : 1);
   const rot = useSharedValue(gone || !spawn ? 0 : -20);
   const opacity = useSharedValue(1);
@@ -81,10 +89,18 @@ export const Block = memo(function Block({ x, y, w, h, label, color, red, life, 
       pointerEvents="none"
       style={[
         styles.blk,
-        { left: x, top: y, width: w, height: h, backgroundColor: gone ? C.gone : color },
+        { left: x, top: y, width: w, height: h, backgroundColor: gone ? C.gone : paletteColor(color, pal) },
         anim,
       ]}
     >
+      {shine ? (
+        // brillo de la paleta Diamante: un reflejo fijo en la esquina, lejos del número (igual en
+        // todos los bloques, trampas incluidas, para no delatar nada)
+        <>
+          <View style={[styles.gleam, { width: w * 0.24, height: Math.max(3, h * 0.07), top: h * 0.08, left: w * 0.08 }]} />
+          <View style={[styles.gleamDot, { width: Math.max(3, h * 0.06), height: Math.max(3, h * 0.06), top: h * 0.2, left: w * 0.07 }]} />
+        </>
+      ) : null}
       <Animated.Text
         style={[styles.num, { fontSize, lineHeight: fontSize * 1.15 }, red && !gone ? styles.trap : null]}
         selectable={false}
@@ -123,4 +139,11 @@ const styles = StyleSheet.create({
     height: 6,
     backgroundColor: 'rgba(255,255,255,0.85)',
   },
+  gleam: {
+    position: 'absolute',
+    borderRadius: 99,
+    backgroundColor: 'rgba(255,255,255,0.42)',
+    transform: [{ rotate: '-24deg' }],
+  },
+  gleamDot: { position: 'absolute', borderRadius: 99, backgroundColor: 'rgba(255,255,255,0.32)' },
 });

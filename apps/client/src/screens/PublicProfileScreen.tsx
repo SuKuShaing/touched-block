@@ -7,7 +7,9 @@ import { follow, unfollow } from '@/api/endpoints';
 import { useInvalidate, useProfile, useViewer } from '@/api/hooks';
 import { SmallButton } from '@/components/form';
 import { ProfileIcon } from '@/components/ProfileIcon';
+import { TierBadge } from '@/components/TierBadge';
 import { toast } from '@/components/Toast';
+import { tierStepOf } from '@/cosmetics/tiers';
 import { countryName, flag } from '@/lib/countries';
 import { C } from '@/theme';
 
@@ -60,14 +62,19 @@ export function PublicProfileScreen() {
     );
   else {
     const p = q.data;
+    const tier = tierStepOf(p.tier);
     body = (
       <>
         <View style={styles.avatar}>
           <ProfileIcon size={34} />
         </View>
-        <Text style={styles.title} accessibilityRole="header">
-          @{p.username}
-        </Text>
+        <View style={styles.titleRow}>
+          <Text style={[styles.title, styles.shrink]} accessibilityRole="header">
+            @{p.username}
+          </Text>
+          <TierBadge tier={p.tier} size="md" />
+        </View>
+        {tier ? <Text style={styles.tierT}>Insignia {tier.name}</Text> : null}
         {p.country ? (
           <Text style={styles.sub}>
             {flag(p.country)} {countryName(p.country)}
@@ -138,6 +145,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   title: { color: C.text, fontSize: 26, fontWeight: '800' },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, maxWidth: '100%' },
+  shrink: { flexShrink: 1 },
+  tierT: { color: C.text, opacity: 0.75, fontSize: 14, fontWeight: '600', marginTop: -8 },
   sub: { color: C.text, opacity: 0.75, fontSize: 15 },
   muted: { color: C.text, opacity: 0.65, fontSize: 14, textAlign: 'center' },
   card: { width: '100%', maxWidth: 360, backgroundColor: C.panel, borderRadius: 16, padding: 16, gap: 10, alignItems: 'center' },

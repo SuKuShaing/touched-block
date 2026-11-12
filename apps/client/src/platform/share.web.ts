@@ -1,3 +1,5 @@
+import type { TierRef } from '@tb/engine';
+import { TIER_LOOK, tierGlyph, tierStepOf } from '@/cosmetics/tiers';
 import type { ResultCard, Share, ShareOutcome } from './share.types';
 
 // Web Share API con la tarjeta dibujada en un <canvas>. Si el navegador no comparte archivos,
@@ -25,6 +27,83 @@ function fitFont(ctx: CanvasRenderingContext2D, text: string, weight: number, si
     s -= 2;
     ctx.font = `${weight} ${s}px ${FONT}`;
   }
+}
+
+/** Rombo (cuadrado girado 45°) centrado en (cx, cy), con "radio" r hasta las puntas. */
+function diamondPath(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number) {
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - r);
+  ctx.lineTo(cx + r, cy);
+  ctx.lineTo(cx, cy + r);
+  ctx.lineTo(cx - r, cy);
+  ctx.closePath();
+}
+
+/** Insignia como en components/TierBadge.tsx: medalla (o rombo en Diamante) y su nombre debajo. */
+function drawBadge(ctx: CanvasRenderingContext2D, ref: TierRef, cx: number, cy: number, r: number) {
+  const t = tierStepOf(ref);
+  if (!t) return;
+  const look = TIER_LOOK[t.tier];
+  const diamond = t.tier === 'diamante';
+  ctx.save();
+  if (look.frame) {
+    // marco con brillo (Oro y Diamante)
+    ctx.shadowColor = look.glow ?? look.frame;
+    ctx.shadowBlur = r * 0.6;
+    ctx.strokeStyle = look.frame;
+    ctx.lineWidth = r * 0.1;
+    if (diamond) diamondPath(ctx, cx, cy, r * 1.22);
+    else {
+      ctx.beginPath();
+      ctx.arc(cx, cy, r * 1.14, 0, Math.PI * 2);
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+  if (diamond) {
+    ctx.fillStyle = look.rim;
+    diamondPath(ctx, cx, cy, r);
+    ctx.fill();
+    ctx.fillStyle = look.face;
+    diamondPath(ctx, cx, cy, r * 0.8);
+    ctx.fill();
+    // faceta clara arriba a la izquierda
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - r * 0.8);
+    ctx.lineTo(cx - r * 0.8, cy);
+    ctx.lineTo(cx - r * 0.2, cy);
+    ctx.lineTo(cx, cy - r * 0.2);
+    ctx.closePath();
+    ctx.fill();
+  } else {
+    ctx.fillStyle = look.rim;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = look.face;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 0.78, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.28)';
+    ctx.beginPath();
+    ctx.ellipse(cx - r * 0.25, cy - r * 0.48, r * 0.3, r * 0.11, -0.35, 0, Math.PI * 2);
+    ctx.fill();
+    const glyph = tierGlyph(t);
+    if (glyph) {
+      ctx.fillStyle = look.ink;
+      ctx.textBaseline = 'middle';
+      ctx.font = `900 ${Math.round(r * (glyph.length >= 3 ? 0.62 : glyph.length === 2 ? 0.78 : 0.9))}px ${FONT}`;
+      ctx.fillText(glyph, cx, cy + r * 0.05);
+      ctx.textBaseline = 'alphabetic';
+    }
+  }
+  ctx.fillStyle = '#ffffff';
+  ctx.globalAlpha = 0.9;
+  ctx.font = `700 ${Math.round(r * 0.46)}px ${FONT}`;
+  ctx.fillText(t.name, cx, cy + r * (diamond || look.frame ? 1.78 : 1.62));
+  ctx.globalAlpha = 1;
+  ctx.restore();
 }
 
 function draw(card: ResultCard): HTMLCanvasElement {
@@ -80,15 +159,27 @@ function draw(card: ResultCard): HTMLCanvasElement {
   ctx.fillText(card.killed === 1 ? 'bloque' : 'bloques', W / 2, 790);
   ctx.globalAlpha = 1;
 
+  // etapa alcanzada (opcional): "Llegué a las multiplicaciones y divisiones"
+  if (card.stage) {
+    ctx.fillStyle = '#ffffff';
+    ctx.globalAlpha = 0.92;
+    fitFont(ctx, card.stage, 700, 40, W - 220);
+    ctx.fillText(card.stage, W / 2, 858);
+    ctx.globalAlpha = 1;
+  }
+
   const ranks: string[] = [];
   if (card.worldRank) ranks.push(`#${card.worldRank} en el mundo`);
   if (card.countryRank) ranks.push(`#${card.countryRank} en ${card.countryName || 'mi país'}`);
   if (ranks.length) {
     const line = ranks.join(' · ');
     ctx.fillStyle = '#ffd166';
-    fitFont(ctx, line, 700, 42, W - 220);
-    ctx.fillText(line, W / 2, 880);
+    fitFont(ctx, line, 700, card.stage ? 38 : 42, W - 220);
+    ctx.fillText(line, W / 2, card.stage ? 918 : 880);
   }
+
+  // insignia (opcional), arriba a la derecha del panel
+  if (card.tier) drawBadge(ctx, card.tier, W - 185, 182, 64);
 
   ctx.globalAlpha = 0.6;
   ctx.fillStyle = '#ffffff';
@@ -157,10 +248,14 @@ async function shareData(data: ShareData): Promise<ShareOutcome | null> {
   }
 }
 
+/** Texto y enlace juntos: el enlace en su propia línea si el texto tiene varias (el del reto diario). */
+const withUrl = (text: string, url: string) => (text.includes('\n') ? `${text}\n${url}` : `${text} ${url}`);
+
 async function shareText(text: string, url: string): Promise<ShareOutcome> {
-  const r = await shareData({ text, url });
+  // un texto de varias líneas va entero (con el enlace al final) para que cada app lo muestre igual
+  const r = await shareData(text.includes('\n') ? { text: withUrl(text, url) } : { text, url });
   if (r) return r;
-  return (await copyText(`${text} ${url}`)) ? 'copied' : 'failed';
+  return (await copyText(withUrl(text, url))) ? 'copied' : 'failed';
 }
 
 export const share: Share = {

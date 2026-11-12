@@ -5,7 +5,8 @@ import type { Share } from './share.types';
 // agrega la imagen (react-native-view-shot + expo-sharing) y el portapapeles (expo-clipboard).
 async function shareText(text: string, url: string) {
   try {
-    const r = await RNShare.share({ message: `${text} ${url}`, url });
+    // el enlace en su propia línea si el texto tiene varias (el del reto diario)
+    const r = await RNShare.share({ message: text.includes('\n') ? `${text}\n${url}` : `${text} ${url}`, url });
     return r.action === RNShare.dismissedAction ? ('cancelled' as const) : ('shared' as const);
   } catch {
     return 'failed' as const;
