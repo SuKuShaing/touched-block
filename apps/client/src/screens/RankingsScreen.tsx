@@ -1,5 +1,5 @@
 import { useFocusEffect, useRouter } from 'expo-router';
-import { type ReactNode, useCallback, useMemo, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { errorMessage } from '@/api/client';
@@ -12,10 +12,10 @@ import { Segmented } from '@/components/Segmented';
 import { TierBadge } from '@/components/TierBadge';
 import { features } from '@/config';
 import { browserCountry, countryName, flag } from '@/lib/countries';
-import { dailyInfo, dailyVisible, playedRuns, todayLine, useToday } from '@/lib/daily';
+import { dailyInfo, dailyVisible, playedRuns, todayLine, useToday, useUnlockRemembered } from '@/lib/daily';
 import { fmtDate } from '@/lib/format';
 import { type HistEntry, loadHist } from '@/lib/history';
-import { registerVisit, visitCount } from '@/lib/onboarding';
+import { onNewVisit, registerVisit, visitCount } from '@/lib/onboarding';
 import { PERIOD_EMPTY, PERIODS, periodStart } from '@/lib/periods';
 import { useLocalStats } from '@/lib/stats';
 import { useTabBarSpace } from '@/lib/tabBar';
@@ -233,12 +233,15 @@ export function RankingsScreen() {
   const today = useToday();
 
   // El reto diario se presenta desde la 2.ª visita o la 3.ª partida (la 1.ª es solo para jugar).
-  const [visits] = useState(() => {
+  // Una vez desbloqueado queda así en el dispositivo; una visita nueva con la pantalla abierta también cuenta.
+  const [visits, setVisits] = useState(() => {
     registerVisit();
     return visitCount();
   });
+  useEffect(() => onNewVisit(() => setVisits(visitCount())), []);
   const localStats = useLocalStats();
-  const showDaily = dailyVisible({ accounts: features.accounts, visits, runs: playedRuns(localStats.runs, viewer.user) });
+  const remembered = useUnlockRemembered();
+  const showDaily = dailyVisible({ accounts: features.accounts, visits, runs: playedRuns(localStats.runs, viewer.user), remembered });
   const daily = showDaily && kind === 'daily';
   const pickKind = (k: BoardKind) => {
     setKind(k);

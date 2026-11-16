@@ -341,6 +341,18 @@ describe('inicio', () => {
     expect(d.playedRuns(0, { stats: { totalRuns: 40 } })).toBe(40);
     expect(d.playedRuns(5, { stats: { totalRuns: 2 } })).toBe(5);
   });
+  it('una vez desbloqueados quedan así en el dispositivo (tb_unlock1), aunque se cierre la sesión', async () => {
+    let d = await load();
+    expect(d.unlockRemembered()).toBe(false);
+    expect(d.dailyVisible({ accounts: true, visits: 1, runs: 0, remembered: true })).toBe(true);
+    expect(d.dailyVisible({ accounts: false, visits: 1, runs: 0, remembered: true })).toBe(false);
+    expect(d.runsToUnlock({ accounts: true, visits: 1, runs: 1, remembered: true })).toBeNull();
+    d.rememberUnlock();
+    d.rememberUnlock(); // idempotente
+    expect(mem.get(d.UNLOCK_KEY)).toBe('1');
+    d = await load(); // otra carga de la página
+    expect(d.unlockRemembered()).toBe(true);
+  });
   it('aviso de cuántas partidas faltan: después de la 1.ª y hasta desbloquearlos', async () => {
     const d = await load();
     const at = (runs: number, visits = 1, accounts = true) => d.runsToUnlock({ accounts, visits, runs });

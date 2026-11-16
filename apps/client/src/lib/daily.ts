@@ -514,14 +514,45 @@ export interface UnlockState {
   visits: number;
   /** Partidas terminadas: las de este dispositivo o las de la cuenta, la mayor (`playedRuns`). */
   runs: number;
+  /** ¿Este dispositivo ya los desbloqueó antes (`tb_unlock1`)? Así no se vuelven a bloquear al cerrar sesión. */
+  remembered?: boolean;
 }
 
 /**
  * ¿Se presentan el reto y las misiones (y "Retar a un amigo")? Con la API configurada, desde la
  * 2.ª visita del dispositivo o desde DAILY_FROM_RUNS partidas, lo que llegue primero. Contar las
- * partidas de la cuenta hace que la misma cuenta en un celular nuevo los vea al tiro.
+ * partidas de la cuenta hace que la misma cuenta en un celular nuevo los vea al tiro; una vez
+ * desbloqueados quedan así en el dispositivo (aunque después se cierre la sesión).
  */
-export const dailyVisible = (o: UnlockState) => o.accounts && (o.visits >= DAILY_FROM_VISIT || o.runs >= DAILY_FROM_RUNS);
+export const dailyVisible = (o: UnlockState) =>
+  o.accounts && (!!o.remembered || o.visits >= DAILY_FROM_VISIT || o.runs >= DAILY_FROM_RUNS);
+
+/** Clave local que recuerda que este dispositivo ya desbloqueó el reto y las misiones. */
+export const UNLOCK_KEY = 'tb_unlock1';
+const unlockListeners = new Set<() => void>();
+let unlockCache: boolean | null = null;
+
+/** ¿Este dispositivo ya los desbloqueó? (`storage` ya envuelve localStorage en try/catch) */
+export const unlockRemembered = (): boolean => {
+  if (unlockCache === null) unlockCache = storage.get(UNLOCK_KEY) === '1';
+  return unlockCache;
+};
+
+/** Recuerda el desbloqueo en este dispositivo (idempotente). */
+export function rememberUnlock() {
+  if (unlockRemembered()) return;
+  unlockCache = true;
+  storage.set(UNLOCK_KEY, '1');
+  unlockListeners.forEach((l) => l());
+}
+
+const subscribeUnlock = (fn: () => void) => {
+  unlockListeners.add(fn);
+  return () => void unlockListeners.delete(fn);
+};
+
+/** `unlockRemembered` como estado de React (se actualiza en todas las pantallas al desbloquear). */
+export const useUnlockRemembered = () => useSyncExternalStore(subscribeUnlock, unlockRemembered, unlockRemembered);
 
 /** Partidas que cuentan para desbloquear: las de este dispositivo o las de la cuenta, la mayor. */
 export const playedRuns = (localRuns: number, user?: { stats?: { totalRuns: number } } | null) =>

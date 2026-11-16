@@ -1,5 +1,5 @@
 import { storage } from '@/platform/storage';
-import { DAILY_FROM_RUNS } from './daily';
+import { type UnlockState, dailyVisible } from './daily';
 import { SITE_URL } from './shareText';
 
 /**
@@ -120,16 +120,13 @@ export function challengeHead(o: { settled: boolean; hasView: boolean; hasRival:
 
 // ---------------------------------------------------------------- dónde se ofrece
 
-/** Desde qué visita se ofrece "Retar a un amigo" (la 1.ª es solo para jugar). */
-export const CHALLENGE_FROM_VISIT = 2;
-
 /**
- * ¿Se ofrece "Retar a un amigo" (inicio y pantalla final)? Con la API configurada, desde la 2.ª
- * visita o desde DAILY_FROM_RUNS partidas (se desbloquea junto con el reto del día); o antes si
- * el jugador llegó por un enlace de reto (ya sabe de qué se trata).
+ * ¿Se ofrece "Retar a un amigo" (inicio y pantalla final)? Con la API configurada, junto con el
+ * reto del día (`dailyVisible`: 2.ª visita o DAILY_FROM_RUNS partidas); o antes si el jugador llegó
+ * por un enlace de reto (ya sabe de qué se trata).
  */
-export const challengeOfferVisible = (o: { accounts: boolean; visits: number; runs: number; arrivedByLink: boolean }) =>
-  o.accounts && (o.visits >= CHALLENGE_FROM_VISIT || o.runs >= DAILY_FROM_RUNS || o.arrivedByLink);
+export const challengeOfferVisible = (o: UnlockState & { arrivedByLink: boolean }) =>
+  o.accounts && (dailyVisible(o) || o.arrivedByLink);
 
 /** Texto para compartir el resultado: "Tú 52 · @seba 47 en un reto de Touched Block. ¿Me superas?". */
 export function resultShareText(me: { killed: number }, rival: ChallengeScore | null): string {

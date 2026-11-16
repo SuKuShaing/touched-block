@@ -10,7 +10,6 @@ vi.mock('@/platform/storage', () => ({
 }));
 
 import {
-  CHALLENGE_FROM_VISIT,
   PENDING_TTL_MS,
   challengeHead,
   challengeLink,
@@ -196,12 +195,15 @@ describe('challengeOfferVisible: Retar a un amigo desde la 2.ª visita o la 3.ª
     expect(challengeOfferVisible({ accounts: true, visits: 1, runs: 0, arrivedByLink: true })).toBe(true);
   });
   it('desde la 2.ª visita, sí', () => {
-    expect(challengeOfferVisible({ accounts: true, visits: CHALLENGE_FROM_VISIT, runs: 0, arrivedByLink: false })).toBe(true);
+    expect(challengeOfferVisible({ accounts: true, visits: 2, runs: 0, arrivedByLink: false })).toBe(true);
     expect(challengeOfferVisible({ accounts: true, visits: 7, runs: 0, arrivedByLink: false })).toBe(true);
   });
   it('desde la 3.ª partida (de este dispositivo o de la cuenta), sí', () => {
     expect(challengeOfferVisible({ accounts: true, visits: 1, runs: 3, arrivedByLink: false })).toBe(true);
     expect(challengeOfferVisible({ accounts: true, visits: 1, runs: 40, arrivedByLink: false })).toBe(true);
+  });
+  it('si este dispositivo ya lo desbloqueó, sigue (aunque se cierre la sesión)', () => {
+    expect(challengeOfferVisible({ accounts: true, visits: 1, runs: 0, remembered: true, arrivedByLink: false })).toBe(true);
   });
   it('sin API, nunca', () => {
     expect(challengeOfferVisible({ accounts: false, visits: 9, runs: 9, arrivedByLink: true })).toBe(false);

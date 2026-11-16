@@ -73,6 +73,7 @@ import {
 import {
   DAILY_PARAM,
   anotherAttemptText,
+  DAILY_FROM_RUNS,
   dailyVisible,
   homeCard,
   loadDailyLocal,
@@ -83,8 +84,10 @@ import {
   readDailyParam,
   recordDailyFinish,
   recordDailyGuestResult,
+  rememberUnlock,
   runsToUnlock,
   useToday,
+  useUnlockRemembered,
 } from '@/lib/daily';
 import { type HistEntry, loadBest, loadHist, recordRun } from '@/lib/history';
 import { newlyCompleted } from '@/lib/missions';
@@ -132,6 +135,8 @@ interface EndInfo {
   missionsBefore: MissionView[] | null;
   /** De quién eran esas misiones (`useViewer().key`): si después cambia la sesión, no se comparan. */
   missionsViewer: string;
+  /** ¿Esta partida desbloqueó el reto y las misiones? (se celebra en su pantalla final) */
+  unlockedByRun: boolean;
 }
 
 /** Partida del reto diario en curso: su fecha e intentos que quedan después de empezarla. */
@@ -270,7 +275,8 @@ export function GameScreen() {
   // se desbloquean en la 2.ª visita o con la 3.ª partida (contando las de la cuenta: la misma
   // cuenta en un celular nuevo los ve al tiro); mientras tanto se avisa cuántas partidas faltan
   const runsPlayed = playedRuns(localStats.runs, viewer.user);
-  const unlock = { accounts: features.accounts, visits, runs: runsPlayed };
+  const remembered = useUnlockRemembered();
+  const unlock = { accounts: features.accounts, visits, runs: runsPlayed, remembered };
   const showDaily = features.accounts && (dailyVisible(unlock) || dailyLinked);
   const missionsOn = dailyVisible(unlock);
   const runsLeft = runsToUnlock(unlock);
@@ -278,6 +284,10 @@ export function GameScreen() {
   missionsOnRef.current = missionsOn;
   /** ¿Seguían bloqueados al empezar esta partida? (si al terminarla ya no, se celebra) */
   const lockedAtStart = useRef(false);
+  // una vez desbloqueados quedan así en el dispositivo (no se vuelven a bloquear al cerrar sesión)
+  useEffect(() => {
+    if (missionsOn && !remembered) rememberUnlock();
+  }, [missionsOn, remembered]);
   const { status: todayDaily } = useDailyStatus(today, showDaily);
   const { missions } = useTodayMissions(today, missionsOn);
   const missionsRef = useRef(missions);
@@ -460,6 +470,11 @@ export function GameScreen() {
       dailyBestAfter,
     });
     const prize = endPrize(es.before, es.after, { accounts: features.accounts, daily: features.accounts });
+    // ¿los desbloqueó esta partida? Seguían bloqueados al empezar y es ella la que llega a las
+    // partidas que faltaban (no una visita nueva ni la sesión que cargó a mitad de partida)
+    const unlockedByRun =
+      features.accounts && lockedAtStart.current && es.before.runs < DAILY_FROM_RUNS && es.after.runs >= DAILY_FROM_RUNS;
+    if (unlockedByRun) rememberUnlock();
     endedAt.current = Date.now();
     setEnd({
       id,
@@ -477,6 +492,7 @@ export function GameScreen() {
       daily: rd ? { date: rd.date, left: rd.left } : null,
       missionsBefore: missionsBefore.current,
       missionsViewer: missionsViewer.current,
+      unlockedByRun,
     });
   };
 
@@ -701,7 +717,7 @@ export function GameScreen() {
     if (endReady()) void startGame(o);
   };
   // "Retar a un amigo" (inicio y pantalla final): junto con el reto del día, o si llegó por un enlace de reto
-  const challengeOffer = challengeOfferVisible({ accounts: features.accounts, visits, runs: runsPlayed, arrivedByLink });
+  const challengeOffer = challengeOfferVisible({ ...unlock, arrivedByLink });
 
   const seconds = s ? s.timeLeft : START_TIME;
   const low = seconds <= LOW_TIME;
@@ -748,7 +764,7 @@ export function GameScreen() {
     else if (end.missionsViewer === viewer.key) setEndMissions(newlyCompleted(end.missionsBefore, missions));
   }, [end, missionsOn, missions, viewer.key]);
   // la partida que los desbloqueó: en su pantalla final ya se ven el reto y las misiones
-  const justUnlocked = !!end && lockedAtStart.current && missionsOn;
+  const justUnlocked = !!end?.unlockedByRun && missionsOn;
   const dailyBlock = (fromEnd: boolean) => (
     <>
       <DailyCard
@@ -850,7 +866,8 @@ export function GameScreen() {
                 {justUnlocked ? (
                   <>
                     <UnlockHint left={0} />
-                    {dailyBlock(true)}
+                    {/* después del reto del día ya están su resultado y "Otro intento": sin otra tarjeta */}
+                    {end.daily ? null : dailyBlock(true)}
                   </>
                 ) : runsLeft !== null ? (
                   <UnlockHint left={runsLeft} />
