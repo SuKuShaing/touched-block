@@ -54,10 +54,12 @@ async function shareText(text: string, url: string): Promise<ShareOutcome> {
 
 /** Comparte el PNG; null si no se pudo (para caer a solo texto). */
 async function shareImage(uri: string, text: string, url: string): Promise<ShareOutcome | null> {
+  let copied = false;
   try {
     if (Platform.OS === 'ios') return await rnShare({ message: withUrl(text, url), url: uri });
     if (!(await Sharing.isAvailableAsync())) return null;
     if (await copyText(withUrl(text, url))) {
+      copied = true;
       toast('Texto copiado: pégalo junto a la imagen');
       await wait(TOAST_READ_MS);
     }
@@ -65,7 +67,8 @@ async function shareImage(uri: string, text: string, url: string): Promise<Share
     await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: 'Compartir resultado' });
     return 'shared';
   } catch {
-    return null;
+    // si el texto ya quedó copiado (y se avisó), no abrir otra hoja de solo texto
+    return copied ? 'copied' : null;
   }
 }
 

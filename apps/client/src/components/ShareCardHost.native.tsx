@@ -1,4 +1,4 @@
-import { File, Paths } from 'expo-file-system';
+import { Directory, File, Paths } from 'expo-file-system';
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { type HostInstance, PixelRatio, StyleSheet, Text, View } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
@@ -11,7 +11,7 @@ import type { ResultCard } from '@/platform/share.types';
  * Tarjeta de resultado en nativo: la misma de `platform/share.web.ts` (1080×1080, mismos colores,
  * posiciones y textos), pero con `View`/`Text` en vez de `<canvas>`. Se dibuja fuera de la
  * pantalla solo mientras hay una pedida (`lib/shareCardStore.ts`), se captura con
- * react-native-view-shot y se deja en `cache/touched-block.png` para compartirla.
+ * react-native-view-shot y se deja en `cache/touched-block-<hash>.png` para compartirla.
  *
  * Las medidas se escriben en píxeles del canvas (0–1080) y se pasan a dp con `px()`, para que la
  * captura salga de 1080 píxeles reales en cualquier densidad de pantalla.
@@ -152,12 +152,41 @@ function Card({ card }: { card: ResultCard }) {
   );
 }
 
-/** Deja la captura con un nombre legible (`touched-block.png`) en la caché de la app. */
-function toNamedFile(uri: string): string {
+/** Hash corto y determinista (djb2, base 36) para distinguir el archivo de cada tarjeta. */
+function shortHash(s: string): string {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36);
+}
+
+/** Nombres de las últimas tarjetas guardadas: la anterior puede estar compartiéndose aún. */
+const recentNames: string[] = [];
+const KEEP = 2;
+
+/** Borra las tarjetas viejas de la caché (`touched-block*.png`), salvo las últimas `KEEP`. */
+function pruneOld() {
   try {
-    const dest = new File(Paths.cache, 'touched-block.png');
+    for (const f of new Directory(Paths.cache).list()) {
+      if (f instanceof File && /^touched-block.*\.png$/.test(f.name) && !recentNames.includes(f.name)) f.delete();
+    }
+  } catch {}
+}
+
+/**
+ * Deja la captura con un nombre legible y propio de la tarjeta (`touched-block-<hash>.png`) en la
+ * caché de la app: así una captura vieja nunca pisa el archivo de otra ya entregada o compartiéndose.
+ */
+function toNamedFile(uri: string, key: string): string {
+  try {
+    const name = `touched-block-${shortHash(key)}.png`;
+    const dest = new File(Paths.cache, name);
     if (dest.exists) dest.delete();
     new File(uri).copy(dest);
+    const i = recentNames.indexOf(name);
+    if (i >= 0) recentNames.splice(i, 1);
+    recentNames.push(name);
+    if (recentNames.length > KEEP) recentNames.shift();
+    pruneOld();
     return dest.uri;
   } catch {
     return uri;
@@ -181,8 +210,13 @@ export function ShareCardHost() {
         if (!alive) return;
         let uri: string | null = null;
         try {
-          uri = toNamedFile(await captureRef(ref, { format: 'png', quality: 1, result: 'tmpfile' }));
+          const tmp = await captureRef(ref, { format: 'png', quality: 1, result: 'tmpfile' });
+          // la tarjeta cambió (o se desmontó) durante la captura: no copiar ni avisar nada; la
+          // pedida vieja ya se descartó en shareCardStore (o la cierra su tiempo límite)
+          if (!alive) return;
+          uri = toNamedFile(tmp, job.key);
         } catch {
+          if (!alive) return;
           uri = null;
         }
         finishCardJob(job.key, uri);

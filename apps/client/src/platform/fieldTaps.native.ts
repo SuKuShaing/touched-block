@@ -18,7 +18,15 @@ export const useFieldTaps: UseFieldTaps = (ref, onTap, opts) => {
   const measure = useCallback(() => {
     try {
       ref.current?.measure((_x, _y, _w, _h, pageX, pageY) => {
-        origin.current = { x: pageX, y: pageY };
+        // sin layout (vista desmontada) llegan valores no numéricos: se conserva el origen anterior
+        if (!Number.isFinite(pageX) || !Number.isFinite(pageY)) return;
+        // measure incluye el transform: si se mide en plena sacudida, se quita ese desplazamiento
+        // (onTouchStart ya lo resta aparte)
+        let dx = 0;
+        try {
+          dx = offX.current?.() ?? 0;
+        } catch {}
+        origin.current = { x: pageX - dx, y: pageY };
       });
     } catch {}
   }, [ref]);

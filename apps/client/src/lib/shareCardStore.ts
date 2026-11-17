@@ -39,12 +39,13 @@ export function requestCardImage(card: ResultCard): Promise<string | null> {
       done = true;
       clearTimeout(timer);
       if (resolveJob === finish) resolveJob = null;
+      // un fallo no se guarda: el próximo intento vuelve a dibujarla (se limpia antes de avisar,
+      // por si un suscriptor la vuelve a pedir durante emit())
+      if (!u && cache?.key === key) cache = null;
       if (job?.key === key) {
         job = null;
         emit();
       }
-      // un fallo no se guarda: el próximo intento vuelve a dibujarla
-      if (!u && cache?.key === key) cache = null;
       resolve(u);
     };
     const timer = setTimeout(() => finish(null), TIMEOUT_MS);

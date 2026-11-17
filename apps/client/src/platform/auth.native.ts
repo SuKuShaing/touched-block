@@ -10,8 +10,9 @@ import type { Auth } from './auth.types';
 let configured = false;
 function ensureConfigured() {
   if (configured) return;
-  configured = true;
   GoogleSignin.configure({ webClientId: config.googleClientId, offlineAccess: false });
+  // después de configurar: si falla, el próximo intento vuelve a probar
+  configured = true;
 }
 
 function messageFor(e: unknown): string | null {

@@ -50,10 +50,22 @@ function GoogleButton({ onCredential, onError }: { onCredential: (t: string) => 
  * App: botón con el estilo del de Google en la web (píldora negra, logo G, "Iniciar sesión con
  * Google") que abre el selector de cuentas del sistema (auth.signInGoogle).
  */
-function NativeGoogleButton({ onCredential, onError }: { onCredential: (t: string) => void; onError: (m: string) => void }) {
+function NativeGoogleButton({
+  onCredential,
+  onError,
+  onStart,
+  disabled,
+}: {
+  onCredential: (t: string) => void;
+  onError: (m: string) => void;
+  onStart: () => void;
+  disabled: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const press = async () => {
-    if (open || !auth.signInGoogle) return;
+    // mientras se inicia sesión con un token no se abre otro selector
+    if (open || disabled || !auth.signInGoogle) return;
+    onStart();
     setOpen(true);
     try {
       const r = await auth.signInGoogle();
@@ -66,7 +78,7 @@ function NativeGoogleButton({ onCredential, onError }: { onCredential: (t: strin
   return (
     <Pressable
       onPress={press}
-      disabled={open}
+      disabled={open || disabled}
       accessibilityRole="button"
       accessibilityLabel="Iniciar sesión con Google"
       style={({ pressed }) => [styles.gNative, (pressed || open) && { opacity: 0.8 }]}
@@ -141,7 +153,7 @@ export function LoginOptions({ onLoggedIn }: { onLoggedIn?: (r: LoginResponse) =
     <View style={styles.box}>
       {auth.googleAvailable ? (
         auth.signInGoogle ? (
-          <NativeGoogleButton onCredential={login} onError={setErr} />
+          <NativeGoogleButton onCredential={login} onError={setErr} onStart={() => setErr(null)} disabled={busy} />
         ) : (
           <GoogleButton onCredential={login} onError={setErr} />
         )

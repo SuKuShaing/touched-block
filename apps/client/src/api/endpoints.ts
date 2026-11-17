@@ -49,6 +49,8 @@ export async function logout() {
 export async function deleteAccount() {
   await api('DELETE', '/me', { auth: 'required' });
   session.clear();
+  // como en logout(): en la app suelta la cuenta de Google elegida
+  void auth.signOut?.();
 }
 
 // ---- usuarios ----

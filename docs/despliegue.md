@@ -198,7 +198,7 @@ La API nueva es **compatible con la web anterior** (campos nuevos opcionales y e
 **Identificador**: `app.touchedblock` (fijo para siempre una vez en Google Play).
 
 **Clave de firma** (fuera del repo):
-- `~/.touched-block/release.keystore` (PKCS12, alias `touchedblock`, válida 10 000 días) y `~/.touched-block/keystore.properties` con `TB_UPLOAD_STORE_FILE`, `TB_UPLOAD_KEY_ALIAS`, `TB_UPLOAD_STORE_PASSWORD` y `TB_UPLOAD_KEY_PASSWORD`. En CI se pueden pasar como variables de entorno con esos mismos nombres (`plugins/withReleaseSigning.js`).
+- `~/.touched-block/release.keystore` (PKCS12, alias `touchedblock`, válida 10 000 días) y `~/.touched-block/keystore.properties` con `TB_UPLOAD_STORE_FILE`, `TB_UPLOAD_KEY_ALIAS`, `TB_UPLOAD_STORE_PASSWORD` y `TB_UPLOAD_KEY_PASSWORD`. En CI se pueden pasar como variables de entorno con esos mismos nombres (`plugins/withReleaseSigning.js`). Sin ninguna de las cuatro, el release sale firmado con la clave debug (solo para probar) y Gradle lo avisa con un `AVISO`; si faltan algunas o el keystore no existe, el build falla con el motivo. Una ruta relativa en `TB_UPLOAD_STORE_FILE` se toma desde `~/.touched-block`. Comprobar con `./gradlew :app:signingReport` (en `android/`): la variante `release` debe mostrar `release.keystore` y el alias `touchedblock`.
 - **Respaldarla** en un gestor de contraseñas o una nube privada. Si se pierde, un APK ya instalado no se puede actualizar: hay que desinstalarlo e instalar el nuevo. En Google Play, con *Play App Signing*, esta pasa a ser la clave de subida y se puede reemplazar.
 - SHA-1: `B5:7F:86:E8:13:A8:B6:BA:11:90:81:A9:17:3C:4B:1E:0C:CA:58:0A`.
 

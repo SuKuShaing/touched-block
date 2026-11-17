@@ -190,23 +190,44 @@ function draw(card: ResultCard): HTMLCanvasElement {
   return c;
 }
 
+/** Tope para esperar la fuente: si no llega, se dibuja con la de respaldo antes que colgar. */
+const FONT_WAIT_MS = 1500;
+
+/**
+ * Espera a que "Roboto Variable" esté cargada para los textos de la tarjeta (el canvas no espera
+ * fuentes: sin esto el PNG, que queda en caché, podría salir con la de respaldo). Un solo archivo
+ * variable cubre todos los pesos; pasar los textos carga además el latín extendido si hace falta.
+ */
+async function fontsReady(card: ResultCard): Promise<void> {
+  try {
+    if (typeof document === 'undefined' || !document.fonts?.load) return;
+    const sample = `Touched Block 0123456789 ${card.username ?? ''} ${card.stage ?? ''} ${card.countryName ?? ''}`;
+    await Promise.race([
+      Promise.all(['500', '600', '700', '800', '900'].map((w) => document.fonts.load(`${w} 64px "Roboto Variable"`, sample))),
+      new Promise((r) => setTimeout(r, FONT_WAIT_MS)),
+    ]);
+  } catch {}
+}
+
 let cache: { key: string; file: Promise<File | null> } | null = null;
 
 function cardFile(card: ResultCard): Promise<File | null> {
   const key = JSON.stringify(card);
   if (cache?.key === key) return cache.file;
   const file = new Promise<File | null>((resolve) => {
-    try {
-      draw(card).toBlob((blob) => {
-        try {
-          resolve(blob ? new File([blob], 'touched-block.png', { type: 'image/png' }) : null);
-        } catch {
-          resolve(null);
-        }
-      }, 'image/png');
-    } catch {
-      resolve(null);
-    }
+    void fontsReady(card).then(() => {
+      try {
+        draw(card).toBlob((blob) => {
+          try {
+            resolve(blob ? new File([blob], 'touched-block.png', { type: 'image/png' }) : null);
+          } catch {
+            resolve(null);
+          }
+        }, 'image/png');
+      } catch {
+        resolve(null);
+      }
+    });
   });
   cache = { key, file };
   return file;

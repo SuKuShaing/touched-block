@@ -6,4 +6,4 @@ import { Platform } from 'react-native';
  * pide la versión de texto, como en la web. (Aparte de theme.ts para que los tests en Node no
  * importen react-native.)
  */
-export const HEART = Platform.OS === 'web' ? '♥' : '♥︎';
+export const HEART = Platform.OS === 'web' ? '♥' : '\u2665\uFE0E';

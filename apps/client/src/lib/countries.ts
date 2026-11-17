@@ -31,9 +31,10 @@ export function countryName(code: string | null | undefined): string {
     }
   }
   try {
-    if (names) return names.of(code) ?? code;
+    const n = names?.of(code);
+    if (n) return n;
   } catch {
-    return code;
+    // Intl.DisplayNames parcial: sigue con la tabla de respaldo
   }
   try {
     return deviceLocale.countryNameFallback(code) ?? code;
@@ -76,7 +77,10 @@ export function browserCountry(): string | null {
       try {
         region = new Intl.Locale(l).region;
       } catch {
-        region = /[-_]([A-Za-z]{2})(?:$|[-_])/.exec(l)?.[1];
+        // sin Intl.Locale (Hermes): desde la primera subetiqueta de una letra empiezan las
+        // extensiones (-u-…, -t-…, -x-…), que no son la región ("en-u-ca-gregory" no es Canadá)
+        const base = l.split(/[-_][0-9A-Za-z](?=[-_]|$)/)[0];
+        region = /[-_]([A-Za-z]{2})(?:$|[-_])/.exec(base)?.[1];
       }
       if (region && isCountry(region)) return region.toUpperCase();
     }

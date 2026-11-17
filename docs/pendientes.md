@@ -75,6 +75,7 @@ Cómo se publicó (12 nov 2026), en orden:
 - Ya existía: los números 1, 2, 7 y 10 siempre son de color rojizo; si son trampa roja, el motor les cambia el color a uno de `SAFE`, así que un "2" que no es naranja delata la trampa además del texto rojo. Cambiarlo es una decisión de reglas.
 - Detalles menores del cliente: un invitado que vuelve a abrir un reto que ya jugó ve "Ya lo jugó 1 persona más" (se cuenta a sí mismo); si recarga en la 1.ª visita después de usar un enlace de reto, "Retar a un amigo" se oculta hasta la 2.ª visita o la 3.ª partida.
 - Sin probar en esta etapa: la fluidez con el procesador limitado (repetirla con el build de producción) y el camino de etapas con `startAt` en la app real (cubierto con tests). No hace falta por ahora (decisión del usuario): instalar la web en un Android real, porque eso será cuando sea app; ni repetir el login real de Google, que ya funcionaba y no cambió.
+- Correcciones de la revisión de código de la app (17 nov 2026): probadas en el emulador y en la web (toques, tarjeta, corazones, Roboto, firma con `signingReport`). Falta repetir el login real de Google en la app, porque cambió el orden de `configure` y ahora "Borrar cuenta" cierra la sesión de Google.
 - La base de desarrollo local (`touched_block`) quedó con cuentas y partidas de prueba (`seba.prueba`, `*.bot`…). No afecta producción.
 
 ## Lo que tiene que hacer el usuario

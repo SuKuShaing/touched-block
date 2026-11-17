@@ -10,10 +10,12 @@ const config = getDefaultConfig(__dirname);
 const engineEntry = path.resolve(__dirname, '../../packages/engine/src/index.ts');
 
 // En Android, el código de src/ recibe un 'react-native' cuyo Text y TextInput usan la Roboto
-// incluida en el APK (ver src/components/appFont.ts). Solo src/: las librerías y el propio
-// sustituto siguen usando el 'react-native' real.
+// incluida en el APK (ver src/components/appFont.ts). Solo src/: las librerías, el propio
+// sustituto y appFont.ts (que el sustituto importa: si recibiera el sustituto habría un ciclo y
+// `Platform` podría estar sin definir al cargar) siguen usando el 'react-native' real.
 const srcDir = path.resolve(__dirname, 'src') + path.sep;
 const rnTextShim = path.resolve(__dirname, 'src/platform/rnText.android.tsx');
+const realRnInSrc = new Set([rnTextShim, path.resolve(__dirname, 'src/components/appFont.ts')]);
 
 const defaultResolve = config.resolver.resolveRequest;
 config.resolver.resolveRequest = (context, moduleName, platform) => {
@@ -22,7 +24,7 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
     moduleName === 'react-native' &&
     platform === 'android' &&
     context.originModulePath.startsWith(srcDir) &&
-    path.resolve(context.originModulePath) !== rnTextShim
+    !realRnInSrc.has(path.resolve(context.originModulePath))
   ) {
     return { type: 'sourceFile', filePath: rnTextShim };
   }
