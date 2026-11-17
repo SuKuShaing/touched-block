@@ -62,6 +62,7 @@ adb shell am start -a android.intent.action.VIEW -d "exp+touched-block://expo-de
 
 - Los cambios de JS/TS se ven al instante en la web y en la app (*fast refresh*). Para comparar, usar la web con Playwright en 412×915 (el emulador es 1080×2400 a densidad 2,625).
 - `android/` se genera: no se edita a mano. Lo nativo va en `app.json` y en `plugins/`. Si algo nativo queda raro: `pnpm exec expo prebuild -p android --clean`.
+- Ícono de la app: se edita `assets/icono/icon-movil.svg` y se exportan los PNG de 1024 px con Chrome (Playwright: `page.setContent` con el SVG y `page.screenshot({ omitBackground: true })`). `android-background.png`: solo `#fondo`. `android-foreground.png`: todo menos `#fondo`. Los dos con el `viewBox` completo `0 0 108 108`. `icon-movil.png`: completo, con `viewBox="14 14 80 80"`. Después, `expo prebuild` y volver a compilar.
 - Si después de un `pnpm install` Metro responde 404 al pedir el bundle, reiniciarlo con `--clear`.
 - El C++ se compila en `~/.tbcxx/` (rutas cortas; ver `historia-y-decisiones.md` → "App Android"). Se puede borrar para forzar una recompilación limpia.
 

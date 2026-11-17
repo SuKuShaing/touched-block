@@ -93,7 +93,7 @@ docs/                           esta documentación
 **Archivos estáticos** (`public/`):
 - `index.html` con las etiquetas `og:`/`twitter:`, el enlace al manifest, las etiquetas `apple-mobile-web-app-*` y un script corto que guarda `beforeinstallprompt` apenas llega.
 - `manifest.webmanifest` (web instalable, `start_url` y `scope` en `/touched-block/`, sin service worker: un caché mal manejado dejaría a la gente con una web vieja).
-- Íconos (`icon-512.png`, `icon-maskable-512.png`, …), `og-image.png`.
+- Íconos de la web (`icon-512.png`, `icon-maskable-512.png`, …), `og-image.png`. El ícono de la app (Android e iOS) es otro y está en `assets/icono/` (fondo azul completo; ver `historia-y-decisiones.md`).
 - Páginas legales `politica-de-privacidad/index.html` y `condiciones-del-servicio/index.html`, en HTML puro para que se lean sin JS.
 
 ## 3. API (`apps/api`)

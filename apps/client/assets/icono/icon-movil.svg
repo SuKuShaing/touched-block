@@ -1,0 +1,21 @@
+<!-- Ícono de la app en celulares (Android e iOS). La web usa otro (public/favicon.svg, icon-512.png…).
+     Fondo azul con degradado suave (#0091ff al medio, más claro arriba y más oscuro abajo) para que
+     parezca un botón; la forma la pone el sistema (círculo, squircle…). Lienzo de 108 unidades, como el
+     ícono adaptable de Android: el "3" y la barra caben en el círculo seguro (radio 33 al centro).
+     Se exporta por partes con Chrome (ver docs/desarrollo.md): #fondo solo → android-background.png,
+     sin #fondo → android-foreground.png, completo y recortado → icon-movil.png (iOS).
+     El "3" usa la fuente del sistema. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2aa6ff"/>
+      <stop offset=".5" stop-color="#0091ff"/>
+      <stop offset="1" stop-color="#0074d6"/>
+    </linearGradient>
+  </defs>
+  <rect id="fondo" width="108" height="108" fill="url(#g)"/>
+  <!-- Centrado medido: el "3" ocupa x 43,4–64,4 y la barra x 41,5–66,5; medido en los PNG, la tinta va de y 33,8
+       a 74,2, así que el conjunto queda centrado en (54, 54). -->
+  <text x="54" y="63.72" font-family="system-ui,Segoe UI,Roboto,sans-serif" font-size="42" font-weight="800" fill="#fff" text-anchor="middle">3</text>
+  <rect x="41.5" y="69.72" width="25" height="4.5" rx="2.25" fill="#fff" opacity=".85"/>
+</svg>
