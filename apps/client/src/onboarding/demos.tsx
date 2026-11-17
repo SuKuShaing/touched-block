@@ -5,6 +5,7 @@ import { BASE_LIVES, BOMB_PENALTY, COLORS, COMBO_REWARDS, HEART_LIFE, MAX_LIVES_
 import { Block } from '@/components/Block';
 import { Flash, FxLayer, useFxList, useHurtFx } from '@/components/Fx';
 import { Clock, Hearts, Streak, TimeBar } from '@/components/Hud';
+import { HEART } from '@/components/heart';
 import { C } from '@/theme';
 import { TapFinger } from './TapFinger';
 import { passed, useCues, useLoopTime } from './timeline';
@@ -556,7 +557,7 @@ export function DemoInvite({ w, h, active, reduced }: DemoProps) {
   const max = t >= T6.plus ? BASE_LIVES + 1 : BASE_LIVES;
   const cx = w / 2;
   const cy = (h - FIELD_TOP) / 2 - 10;
-  useCues(t, CUES6, () => fxl.add({ kind: 'float', x: cx + 10, y: cy + 10, text: '+1 ♥' }), active && !reduced);
+  useCues(t, CUES6, () => fxl.add({ kind: 'float', x: cx + 10, y: cy + 10, text: `+1 ${HEART}` }), active && !reduced);
   const friend = useSharedValue(0);
   useEffect(() => {
     friend.value = withTiming(t >= T6.friend ? 1 : 0, { duration: t >= T6.friend ? 300 : 0 });
@@ -575,7 +576,7 @@ export function DemoInvite({ w, h, active, reduced }: DemoProps) {
       <Animated.View style={[styles.chip, chip]}>
         <Text style={styles.chipT}>@amiga se unió con tu invitación</Text>
       </Animated.View>
-      {reduced ? <StaticFloat x={cx + 10} y={cy + 30} text="+1 ♥" /> : null}
+      {reduced ? <StaticFloat x={cx + 10} y={cy + 30} text={`+1 ${HEART}`} /> : null}
       <FxLayer items={fxl.items} />
       <Text style={styles.capNote}>Máximo {MAX_LIVES_CAP} corazones</Text>
     </Stage>
@@ -600,7 +601,7 @@ export function DemoHeart({ w, h, active, reduced }: DemoProps) {
     CUES8,
     () => {
       fxl.add({ kind: 'burst', x: bx + BS / 2, y: by + BS / 2, color: HEART_PINK, count: 20 });
-      fxl.add({ kind: 'float', x: bx + BS / 2, y: by + BS / 2, text: '+1 ♥' });
+      fxl.add({ kind: 'float', x: bx + BS / 2, y: by + BS / 2, text: `+1 ${HEART}` });
     },
     active && !reduced,
   );
@@ -615,8 +616,8 @@ export function DemoHeart({ w, h, active, reduced }: DemoProps) {
         </View>
       }
     >
-      {shown ? <Block x={bx} y={by} w={BS} h={BS} label="♥" color={HEART_PINK} life={1 - (t - T8.spawn) / (HEART_LIFE * 1000)} /> : null}
-      {reduced && healed ? <StaticFloat x={bx + BS / 2} y={by + BS / 2} text="+1 ♥" /> : null}
+      {shown ? <Block x={bx} y={by} w={BS} h={BS} label={HEART} color={HEART_PINK} life={1 - (t - T8.spawn) / (HEART_LIFE * 1000)} /> : null}
+      {reduced && healed ? <StaticFloat x={bx + BS / 2} y={by + BS / 2} text={`+1 ${HEART}`} /> : null}
       <FxLayer items={fxl.items} />
       <TapFinger x={bx + BS / 2 + 24} y={by + BS / 2 + 28} tapKey={healed ? 1 : 0} visible={t >= 700 && t < 1500} />
     </Stage>

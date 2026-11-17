@@ -4,10 +4,12 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ApiError, warmSession } from '@/api/client';
+import { ShareCardHost } from '@/components/ShareCardHost';
 import { ToastHost } from '@/components/Toast';
 import { startVisitTracking } from '@/lib/onboarding';
 import { features } from '@/config';
 import { C } from '@/theme';
+import '@/platform/webFont';
 
 function makeQueryClient() {
   return new QueryClient({
@@ -43,6 +45,8 @@ export default function RootLayout() {
           <Stack.Screen name="como-jugar" options={{ title: 'Cómo se juega · Touched Block' }} />
           <Stack.Screen name="u/[username]" options={{ title: 'Perfil · Touched Block' }} />
         </Stack>
+        {/* solo en nativo: dibuja y captura la tarjeta de compartir (en la web no hace nada) */}
+        <ShareCardHost />
         <ToastHost bottom={features.accounts ? 64 : 0} />
       </GestureHandlerRootView>
     </QueryClientProvider>

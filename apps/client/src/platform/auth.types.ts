@@ -20,4 +20,11 @@ export interface Auth {
     onCredential: (idToken: string) => void,
     onError: (message: string) => void,
   ): () => void;
+  /**
+   * Solo nativo: abre el selector de cuentas de Google del sistema. idToken null sin error =
+   * el usuario lo canceló. En web no existe (se usa renderGoogleButton).
+   */
+  signInGoogle?(): Promise<{ idToken: string | null; error?: string }>;
+  /** Solo nativo: olvida la cuenta de Google elegida (para poder elegir otra al volver a entrar). */
+  signOut?(): Promise<void>;
 }

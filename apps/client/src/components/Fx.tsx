@@ -4,6 +4,7 @@ import { StyleSheet, Text } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import { useActiveEffect, useActivePalette } from '@/cosmetics/active';
 import { getPalette, paletteColor } from '@/cosmetics/palettes';
+import { HEART } from '@/components/heart';
 import { C } from '@/theme';
 import { Block, type BlockProps } from './Block';
 
@@ -88,7 +89,7 @@ function makeSpecs(effect: BurstEffect, count: number, color: string, palette: r
         return { a, d: 40 + r() * 80, rot: 300 + r() * 500, rot0: r() * 180, dur: 450 + r() * 250, fall: 60, end: 0.7, w: 6, h: 10, radius: 1, color: palette[Math.floor(r() * palette.length)] };
       case 'corazones':
         // corazones que suben un poco
-        return { a, d: 30 + r() * 70, rot: r() * 60 - 30, rot0: 0, dur: 450 + r() * 250, fall: -25, end: 0.5, w: 16, h: 13 + Math.round(r() * 5), radius: 0, color, glyph: '♥' };
+        return { a, d: 30 + r() * 70, rot: r() * 60 - 30, rot0: 0, dur: 450 + r() * 250, fall: -25, end: 0.5, w: 16, h: 13 + Math.round(r() * 5), radius: 0, color, glyph: HEART };
       default:
         // como burst() de legacy
         return { a, d: 40 + r() * 80, rot: r() * 400, rot0: 0, dur: 450 + r() * 250, fall: 30, end: 0.2, w: 10, h: 10, radius: 3, color };
@@ -268,7 +269,9 @@ export function useHurtFx() {
   }, [flash, shake]);
   const shakeStyle = useAnimatedStyle(() => ({ transform: [{ translateX: shake.value }] }));
   const flashStyle = useAnimatedStyle(() => ({ opacity: flash.value }));
-  return { trigger, shakeStyle, flashStyle };
+  /** Desplazamiento actual de la sacudida (px): los toques nativos lo descuentan, como hace la web. */
+  const shakeX = useCallback(() => shake.value, [shake]);
+  return { trigger, shakeStyle, flashStyle, shakeX };
 }
 
 /** Capa roja del destello; va como último hijo del campo. */

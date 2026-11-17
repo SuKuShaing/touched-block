@@ -1,5 +1,5 @@
 import { useState, useSyncExternalStore } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 import { registerVisit, visitCount } from '@/lib/onboarding';
 import { updateSettings, useSettings } from '@/lib/settings';
 import { install } from '@/platform/install';
@@ -71,6 +71,8 @@ export function InstallCard() {
 /** Fila fija del Perfil para instalar la web (o saber que ya está instalada). Nada en la app nativa. */
 export function InstallRow() {
   const st = useInstall();
+  // en la app nativa ya está "instalada": no se dice nada
+  if (Platform.OS !== 'web') return null;
   if (st.installed) return <Hint>Touched Block está instalada en este dispositivo.</Hint>;
   if (st.kind === 'prompt') {
     return (

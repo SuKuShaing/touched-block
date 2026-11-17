@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, type TextInputProps, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, TextInput, type TextInputProps, View } from 'react-native';
 import { C } from '@/theme';
 
 /** Campo de texto oscuro. `prefix` muestra p. ej. "@" a la izquierda. */
@@ -75,7 +75,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   prefix: { color: C.text, opacity: 0.5, fontSize: 16, marginRight: 2 },
-  input: { flex: 1, color: C.text, fontSize: 16, paddingVertical: 10, outlineStyle: 'none' } as object,
+  // outlineStyle 'none' solo existe en la web (quita el borde de foco del navegador); en nativo no es válido
+  input: { flex: 1, color: C.text, fontSize: 16, paddingVertical: 10, ...Platform.select({ web: { outlineStyle: 'none' }, default: {} }) } as object,
   btn: { borderRadius: 12, paddingVertical: 11, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', minHeight: 44 },
   primary: { backgroundColor: C.accent },
   ghost: { backgroundColor: C.barBg },

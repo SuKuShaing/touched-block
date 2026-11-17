@@ -14,6 +14,7 @@ import {
   isDateKey,
   weekdayOf,
 } from '@tb/engine';
+import { lifecycle } from '@/platform/lifecycle';
 import { storage } from '@/platform/storage';
 
 /**
@@ -617,16 +618,13 @@ export function useToday(): DateKey {
       }, Math.min(msToNextMidnight() + 500, 60 * 60 * 1000));
     };
     schedule();
-    const hasDoc = typeof document !== 'undefined';
-    const onVisible = () => {
-      try {
-        if (document.visibilityState !== 'hidden') check();
-      } catch {}
-    };
-    if (hasDoc) document.addEventListener('visibilitychange', onVisible);
+    // al volver a la pestaña (web) o a la app desde segundo plano (nativo)
+    const off = lifecycle.onVisibility((visible) => {
+      if (visible) check();
+    });
     return () => {
       if (timer) clearTimeout(timer);
-      if (hasDoc) document.removeEventListener('visibilitychange', onVisible);
+      off();
     };
   }, []);
   return today;

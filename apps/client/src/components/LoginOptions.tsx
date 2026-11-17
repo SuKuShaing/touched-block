@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, type HostInstance, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, type HostInstance, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { errorMessage } from '@/api/client';
 import { loginGoogle } from '@/api/endpoints';
 import type { LoginResponse } from '@/api/types';
@@ -43,6 +43,41 @@ function GoogleButton({ onCredential, onError }: { onCredential: (t: string) => 
       {!ready ? <ActivityIndicator style={StyleSheet.absoluteFill} color={C.text} /> : null}
       <View ref={host} style={styles.gHost} />
     </View>
+  );
+}
+
+/**
+ * App: botón con el estilo del de Google en la web (píldora negra, logo G, "Iniciar sesión con
+ * Google") que abre el selector de cuentas del sistema (auth.signInGoogle).
+ */
+function NativeGoogleButton({ onCredential, onError }: { onCredential: (t: string) => void; onError: (m: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const press = async () => {
+    if (open || !auth.signInGoogle) return;
+    setOpen(true);
+    try {
+      const r = await auth.signInGoogle();
+      if (r.idToken) onCredential(r.idToken);
+      else if (r.error) onError(r.error);
+    } finally {
+      setOpen(false);
+    }
+  };
+  return (
+    <Pressable
+      onPress={press}
+      disabled={open}
+      accessibilityRole="button"
+      accessibilityLabel="Iniciar sesión con Google"
+      style={({ pressed }) => [styles.gNative, (pressed || open) && { opacity: 0.8 }]}
+    >
+      <View style={styles.gLogoBox}>
+        <Image source={require('@/assets/google-g.png')} style={styles.gLogo} />
+      </View>
+      <Text style={styles.gText} numberOfLines={1}>
+        Iniciar sesión con Google
+      </Text>
+    </Pressable>
   );
 }
 
@@ -104,7 +139,13 @@ export function LoginOptions({ onLoggedIn }: { onLoggedIn?: (r: LoginResponse) =
 
   return (
     <View style={styles.box}>
-      {auth.googleAvailable ? <GoogleButton onCredential={login} onError={setErr} /> : null}
+      {auth.googleAvailable ? (
+        auth.signInGoogle ? (
+          <NativeGoogleButton onCredential={login} onError={setErr} />
+        ) : (
+          <GoogleButton onCredential={login} onError={setErr} />
+        )
+      ) : null}
       {config.authDevFake ? <DevLogin onToken={login} busy={busy} /> : null}
       {busy ? <Text style={styles.busy}>Iniciando sesión…</Text> : null}
       {err ? <Hint tone="bad">{err}</Hint> : null}
@@ -117,6 +158,22 @@ const styles = StyleSheet.create({
   box: { alignItems: 'center', gap: 10, width: '100%' },
   gWrap: { minHeight: 44, minWidth: 200, alignItems: 'center', justifyContent: 'center' },
   gHost: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+  // como el botón de GIS: theme filled_black, size large, shape pill, ancho 280
+  gNative: {
+    width: 280,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#131314',
+    borderWidth: 1,
+    borderColor: '#8e918f',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 3,
+    paddingRight: 12,
+  },
+  gLogoBox: { width: 34, height: 34, borderRadius: 17, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
+  gLogo: { width: 18, height: 18 },
+  gText: { flex: 1, textAlign: 'center', color: '#e3e3e3', fontSize: 14, fontWeight: '500', marginRight: 22 },
   dev: { width: '100%', maxWidth: 320 },
   devRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   busy: { color: C.text, opacity: 0.7, fontSize: 14 },

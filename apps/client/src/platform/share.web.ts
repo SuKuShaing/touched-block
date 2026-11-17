@@ -7,7 +7,8 @@ import type { ResultCard, Share, ShareOutcome } from './share.types';
 
 const W = 1080;
 const H = 1080;
-const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+// la misma fuente que la página y la app (ver webFont.web.ts)
+const FONT = '"Roboto Variable", Roboto, system-ui, sans-serif';
 
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath();

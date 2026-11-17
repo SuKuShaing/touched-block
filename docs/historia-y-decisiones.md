@@ -223,6 +223,36 @@ Correcciones de la revisión de las fases 2 a 5, pedidas por el coordinador:
 - **Una vez desbloqueados, quedan así en el dispositivo** (16 nov 2026, tras una revisión de código; decisión del usuario). Como las partidas de la cuenta solo cuentan con la sesión abierta, al cerrarla el reto, las misiones y "Retar a un amigo" volvían a bloquearse y reaparecía "Te faltan 2 partidas". Ahora el primer desbloqueo, por visita o por partidas, se guarda en la clave local `tb_unlock1` (`rememberUnlock` / `useUnlockRemembered` en `lib/daily.ts`), y `dailyVisible` lo respeta. Es una clave nueva y no reinicia ningún registro.
 - En la misma revisión, la celebración "¡Desbloqueaste…!" pasó a calcularse **al terminar la partida** (`end.unlockedByRun`). Solo se muestra si seguía bloqueado al empezar y es esa partida la que llega a las 3, contando las de la cuenta. Antes podía aparecer por una visita nueva o por una sesión que cargaba con la pantalla final abierta. Si la partida que desbloquea es un reto del día, no se repite la tarjeta del reto, porque ya están su resultado y "Otro intento".
 
+### App Android (16 nov 2026)
+
+El usuario y varios amigos ya habían probado la web y pidió pasarla a **app móvil**, manteniendo la web y aprovechando la **vibración** del teléfono. Se probó en el emulador de Android (no hay Mac, así que iOS queda para después). Criterio de terminado: la app y la web en un navegador de tamaño celular se ven y se juegan casi igual en todas las pantallas.
+
+Decisiones y su porqué:
+- **Identificador `app.touchedblock`** (Android y, más adelante, iOS): es el dominio `touchedblock.app` que compró el usuario, escrito al revés. Queda fijo para siempre al publicar en Google Play.
+- **Mismo código, Expo con CNG**: la carpeta `apps/client/android` se genera con `expo prebuild` y está en `.gitignore`. Todo lo nativo se configura en `app.json` y en los *config plugins* de `apps/client/plugins/`.
+- **Sonido con `react-native-audio-api`**: implementa la Web Audio API, así que los pitidos son el mismo grafo de osciladores que en la web (`fx.web.ts`) y suenan igual, sin archivos de audio.
+- **Vibración con `expo-haptics`**: los toques cortos usan los motores hápticos del teléfono (más nítidos que encender el motor N ms) y los largos (trampa, fin) siguen con `Vibration.vibrate(ms)`. El mapeo está comentado en `platform/fx.native.ts`.
+- **Almacenamiento síncrono con `expo-sqlite/kv-store`**: la interfaz `Storage` es síncrona y se usa al cargar los módulos. Mismas claves que en la web, así que la lógica de récords no cambia.
+- **Login con Google nativo** (`@react-native-google-signin/google-signin`) configurado con el **Client ID web** como `webClientId`. Así el idToken trae la misma audiencia que en la web y la API no cambia. Google exige además clientes OAuth de tipo Android en el mismo proyecto: se crearon dos, uno con la huella SHA-1 de la clave debug y otro con la de release.
+- **Clave de firma release fuera del repo** (`~/.touched-block/`, el repo es público). Ver `despliegue.md`.
+- **Compartir en Android**: la hoja del sistema no acepta imagen y texto juntos, así que se copia el texto con el enlace al portapapeles, se avisa con un toast y luego se comparte la imagen (la misma tarjeta de 1080×1080 que en la web, dibujada con `View` y capturada con `react-native-view-shot`).
+- **Hermes no trae `Intl.DisplayNames`**: los nombres de países en español van en una tabla para nativo (`platform/locale.native.ts`).
+- **Rutas largas de Windows**: con pnpm, las librerías nativas viven en rutas como `node_modules/.pnpm/<paquete>_<hash>/node_modules/<paquete>/android/...`, y el C++ de varias (screens, worklets, audio-api, gesture-handler) pasaba de 260 caracteres. El ninja del SDK no las abre ("build.ninja still dirty", "Filename longer than 260 characters"). No se activaron las rutas largas de Windows (es una configuración del sistema y el ninja 1.10 del SDK igual no las usa). Se resolvió en el proyecto:
+  - `virtualStoreDirMaxLength: 30` en `pnpm-workspace.yaml`, que acorta los nombres de `.pnpm`;
+  - `plugins/withShortCxxPath.js`, que compila el C++ en `~/.tbcxx/<hash>/<hash>` con `CMAKE_OBJECT_PATH_MAX=250`, y genera el codegen de google-signin en `android/build/gsi`;
+  - `react-native.config.js`, que le indica al autolinking dónde quedó ese codegen.
+- **APK instalable primero**: la Play Store queda para después (cuenta de desarrollador, EAS Submit).
+
+Diferencias que aparecieron al comparar pantalla por pantalla (web a 412×915 contra el emulador) y cómo se igualaron:
+- **Corazones**: en Android "♥" se dibuja como emoji a color, sin respetar el color del texto, y los corazones perdidos no se veían grises. En nativo se usa "♥" seguido del selector de texto U+FE0E (`components/heart.ts`).
+- **Número grande del panel final**: Android lo recortaba por arriba (tamaño 40 dentro de una línea de 24). Ahora tiene espacio arriba solo en nativo.
+- **Enlace del reto**: en Android un `Text` seleccionable ignora `numberOfLines`. En nativo ya no es seleccionable; para eso está "Copiar enlace".
+- **Fila "instalar la app" del Perfil**: en la app no se muestra.
+- **Toques durante la sacudida**: la web mide el campo en cada toque, sacudida incluida. En nativo el origen se mide al cambiar de tamaño, así que ahora se descuenta el desplazamiento actual de la sacudida (`offsetX` de `useFieldTaps`).
+- Se verificó que una partida jugada en la app la **valida el servidor** (`valid: true`), tanto normal como de reto, y que los toques caen al píxel.
+- **Misma tipografía en todos lados**: la web usaba la fuente de cada sistema (Segoe UI en Windows, San Francisco en iOS) y la app usa Roboto, así que los pesos y los saltos de línea se veían distintos. Ahora la web carga Roboto variable (`platform/webFont.web.ts`). Son dos woff2 en `src/assets/fonts`, con licencia SIL OFL: latín, de ~43 KB, y latín extendido, de ~29 KB, que solo se baja si hace falta. Se registran con `FontFace` porque Metro no empaqueta los `url()` de un CSS. La tarjeta para compartir de la web usa la misma fuente.
+- **Roboto incluida en el APK** (16 nov 2026): al instalar la app en un Motorola Edge 60 Pro se vio que la fuente del sistema **no** es Roboto en todas las marcas (Motorola trae otra, más redonda), así que el texto no se veía como en la web. La app ahora lleva su propia Roboto variable (`src/assets/fonts/roboto-variable.ttf`, la Roboto 3.015 de Android, SIL OFL, ~2,3 MB, pesos 100–900), registrada como familia "Roboto" con el plugin `expo-font` (un `<font>` por peso 400–900 con `fontVariationSettings`). Para no tocar los ~30 archivos que usan `Text`, `metro.config.js` hace que el código de `src/` en Android importe `platform/rnText.android.tsx` en vez de `react-native`: reexporta todo igual, pero su `Text` y `TextInput` llevan `fontFamily: Roboto` (un `fontFamily` explícito sigue mandando). Los `Animated.Text` de Reanimated (bloque, reloj, racha) no pasan por ahí y usan `APP_FONT` de `components/appFont.ts` en su estilo. La web no cambia.
+
 ### El antitrampas actual basta (12 nov 2026)
 
 - Se repasó el sistema: replay con semilla del servidor, límites de toques por segundo, plazo de 2 h, duración compatible con el reloj real y una sola entrega por partida.

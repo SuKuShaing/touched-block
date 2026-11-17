@@ -4,3 +4,6 @@
 
 expo-env.d.ts
 # @end expo-cli
+# Proyectos nativos generados por Expo (CNG): se regeneran con expo prebuild
+/android
+/ios

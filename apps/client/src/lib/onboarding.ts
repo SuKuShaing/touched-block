@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import { lifecycle } from '@/platform/lifecycle';
 import { storage } from '@/platform/storage';
 
 /**
@@ -86,11 +87,23 @@ export function onNewVisit(cb: () => void) {
 
 /**
  * En la web, una pestaña puede quedar abierta días: al volver a ella después de
- * NEW_VISIT_GAP_MS cuenta como visita nueva. Devuelve la función para dejar de escuchar.
+ * NEW_VISIT_GAP_MS cuenta como visita nueva. En la app pasa lo mismo al volver de segundo
+ * plano (AppState: 'background'/'inactive' ≈ pestaña oculta, 'active' ≈ visible); abrir la app
+ * desde cero cuenta como cargar la página. Devuelve la función para dejar de escuchar.
  */
 export function startVisitTracking(): () => void {
   registerVisit();
-  if (Platform.OS !== 'web' || typeof document === 'undefined') return () => {};
+  if (Platform.OS !== 'web') {
+    return lifecycle.onVisibility((visible) => {
+      try {
+        if (!visible) markActive();
+        else if (touchVisit()) for (const cb of listeners) cb();
+      } catch {
+        // sin almacenamiento: no se cuentan visitas
+      }
+    });
+  }
+  if (typeof document === 'undefined') return () => {};
   const onVisibility = () => {
     try {
       if (document.visibilityState === 'hidden') markActive();

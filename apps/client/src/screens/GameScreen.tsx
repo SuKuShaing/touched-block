@@ -1,6 +1,6 @@
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRootNavigationState, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { type HostInstance, type LayoutChangeEvent, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { type HostInstance, type LayoutChangeEvent, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -107,6 +107,7 @@ import {
 } from '@/lib/stagePath';
 import { useTabBarSpace } from '@/lib/tabBar';
 import { useFieldTaps } from '@/platform/fieldTaps';
+import { HEART } from '@/components/heart';
 import { C, LOW_TIME } from '@/theme';
 
 interface EndInfo {
@@ -351,7 +352,7 @@ export function GameScreen() {
         case 'heal': {
           const { cx, cy } = centerOf(ev.block, a);
           fxl.add({ kind: 'burst', x: cx, y: cy, color: ev.block.color, count: 20 });
-          fxl.add({ kind: 'float', x: cx, y: cy, text: '+1 ♥' });
+          fxl.add({ kind: 'float', x: cx, y: cy, text: `+1 ${HEART}` });
           sounds.play('heal');
           break;
         }
@@ -508,7 +509,7 @@ export function GameScreen() {
     // en los retos, un toque fuera del rectángulo de juego se ignora (no cuesta vida)
     const p = tapToField(area.current, px, py);
     if (p) runner.tapAt(p.x, p.y);
-  });
+  }, { offsetX: hurt.shakeX });
 
   const onLayout = (e: LayoutChangeEvent) => {
     const { width, height } = e.nativeEvent.layout;
@@ -811,7 +812,7 @@ export function GameScreen() {
                     w={r.w}
                     h={r.h}
                     // números: toques que faltan; operaciones: su operación (el jugador cuenta de memoria)
-                    label={b.heart ? '♥' : b.kind === 'num' ? String(b.left) : b.label}
+                    label={b.heart ? HEART : b.kind === 'num' ? String(b.left) : b.label}
                     color={b.color}
                     red={b.red}
                     life={b.life / b.max}
@@ -938,7 +939,16 @@ const styles = StyleSheet.create({
   tag: { color: C.text, fontSize: 17, fontWeight: '600', textAlign: 'center', marginTop: 8, lineHeight: 25, maxWidth: 300 },
   // con margen a los lados para no quedar bajo los botones de las esquinas (sonido, perfil)
   endTitle: { color: C.text, fontSize: 30, lineHeight: 36, fontWeight: '800', textAlign: 'center', paddingHorizontal: 30 },
-  endText: { color: C.text, opacity: 0.85, fontSize: 16, lineHeight: 24, textAlign: 'center' },
+  endText: {
+    color: C.text,
+    opacity: 0.85,
+    fontSize: 16,
+    lineHeight: 24,
+    textAlign: 'center',
+    // Android recorta el número grande (40) que sobresale de la línea de 24: se le da aire arriba
+    // sin mover nada (en la web sobresale sin recortarse)
+    ...Platform.select({ native: { paddingTop: 14, marginTop: -14 } }),
+  },
   endBig: { fontSize: 40, color: C.accent, fontWeight: '800' },
   endStreak: { color: C.gold, fontWeight: '800' },
   tierRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: -4 },

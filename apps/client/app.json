@@ -7,6 +7,26 @@
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#12121a",
+    "icon": "./public/icon-512.png",
+    "android": {
+      "package": "app.touchedblock",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./public/icon-maskable-512.png",
+        "backgroundColor": "#12121a"
+      },
+      "permissions": [
+        "android.permission.VIBRATE"
+      ],
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ]
+    },
+    "ios": {
+      "bundleIdentifier": "app.touchedblock",
+      "supportsTablet": false
+    },
     "web": {
       "bundler": "metro",
       "output": "single",
@@ -16,6 +36,57 @@
       "baseUrl": "/touched-block",
       "typedRoutes": true
     },
-    "plugins": ["expo-router", "expo-status-bar", "expo-font"]
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      [
+        "expo-font",
+        {
+          "android": {
+            "fonts": [
+              {
+                "fontFamily": "Roboto",
+                "path": "./src/assets/fonts/roboto-variable.ttf",
+                "fontDefinitions": [
+                  {
+                    "weight": 400
+                  },
+                  {
+                    "weight": 500
+                  },
+                  {
+                    "weight": 600
+                  },
+                  {
+                    "weight": 700
+                  },
+                  {
+                    "weight": 800
+                  },
+                  {
+                    "weight": 900
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "expo-sqlite",
+      "expo-localization",
+      "expo-sharing",
+      "expo-web-browser",
+      "@react-native-google-signin/google-signin",
+      "./plugins/withShortCxxPath",
+      "./plugins/withReleaseSigning",
+      [
+        "react-native-audio-api",
+        {
+          "iosBackgroundMode": false,
+          "androidForegroundService": false,
+          "androidPermissions": []
+        }
+      ]
+    ]
   }
 }

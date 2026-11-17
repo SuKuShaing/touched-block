@@ -1,5 +1,6 @@
 import type { TapInput } from '@tb/engine';
 import { browserCountry } from '@/lib/countries';
+import { auth } from '@/platform/auth';
 import { api } from './client';
 import { session } from './session';
 import type {
@@ -41,6 +42,7 @@ export async function loginGoogle(idToken: string): Promise<LoginResponse> {
 export async function logout() {
   const rt = session.refreshToken();
   session.clear();
+  void auth.signOut?.();
   if (rt) await api('POST', '/auth/logout', { auth: 'none', body: { refreshToken: rt }, timeoutMs: 5000 }).catch(() => {});
 }
 

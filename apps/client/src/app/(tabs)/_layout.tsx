@@ -3,6 +3,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PersonIcon, PlayIcon, PodiumIcon } from '@/components/TabIcons';
 import { features } from '@/config';
 import { usePlaying } from '@/lib/playing';
+import { APP_FONT } from '@/components/appFont';
 import { C } from '@/theme';
 
 /**
@@ -35,7 +36,7 @@ export default function TabsLayout() {
         ],
         tabBarActiveTintColor: C.accent,
         tabBarInactiveTintColor: 'rgba(255,255,255,0.55)',
-        tabBarLabelStyle: { fontSize: 12, lineHeight: 16, fontWeight: '700' },
+        tabBarLabelStyle: { ...APP_FONT, fontSize: 12, lineHeight: 16, fontWeight: '700' },
         tabBarLabelPosition: 'below-icon',
       }}
     >

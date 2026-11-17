@@ -1,0 +1,6 @@
+/* Roboto en toda la web (ver webFont.web.ts). Con !important porque react-native-web fija
+   la fuente del sistema en cada Text e input; el juego no usa otras fuentes ni íconos de fuente. */
+body,
+body * {
+  font-family: 'Roboto Variable', Roboto, system-ui, sans-serif !important;
+}

@@ -44,6 +44,27 @@ Resultado esperado al 12 nov 2026 (plan de jugabilidad): motor **160/160** (incl
 
 La API de desarrollo necesita `DAILY_SECRET` solo en producción (en local usa un valor de desarrollo). Para probar con el cliente: `AUTH_DEV_FAKE=1`, `CORS_ORIGINS=http://localhost:8081` y, si el puerto 3000 está ocupado, otro `PORT`; el cliente con `EXPO_PUBLIC_API_URL` apuntando a ese puerto y `EXPO_PUBLIC_AUTH_DEV_FAKE=1`. Expo con `CI=1` no recarga los cambios del código.
 
+## App Android (desarrollo)
+
+Requisitos ya instalados en la máquina: Android Studio con el SDK en `%LOCALAPPDATA%\Android\Sdk`, JDK 21 (Adoptium) y el emulador `Pixel_Mi_Device`.
+
+```bash
+cd apps/client
+# 1. Compilar e instalar la app de desarrollo. La primera vez tarda ~10 min; después solo hace
+#    falta si cambian dependencias nativas, app.json o plugins/. Genera android/ con expo prebuild.
+pnpm exec expo run:android --no-bundler --device emulator-5554
+# 2. API local (ver arriba) + Metro, que sirve a la vez la web y la app
+adb reverse tcp:3000 tcp:3000 && adb reverse tcp:8081 tcp:8081
+EXPO_PUBLIC_AUTH_DEV_FAKE=1 pnpm exec expo start --dev-client
+# 3. Abrir la app apuntando a Metro
+adb shell am start -a android.intent.action.VIEW -d "exp+touched-block://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081&__expo_disable_fab=1"
+```
+
+- Los cambios de JS/TS se ven al instante en la web y en la app (*fast refresh*). Para comparar, usar la web con Playwright en 412×915 (el emulador es 1080×2400 a densidad 2,625).
+- `android/` se genera: no se edita a mano. Lo nativo va en `app.json` y en `plugins/`. Si algo nativo queda raro: `pnpm exec expo prebuild -p android --clean`.
+- Si después de un `pnpm install` Metro responde 404 al pedir el bundle, reiniciarlo con `--clear`.
+- El C++ se compila en `~/.tbcxx/` (rutas cortas; ver `historia-y-decisiones.md` → "App Android"). Se puede borrar para forzar una recompilación limpia.
+
 ## Cómo probar el juego
 
 - **Playwright (MCP)** con viewport de celular (por ejemplo 390×844) y toques reales.

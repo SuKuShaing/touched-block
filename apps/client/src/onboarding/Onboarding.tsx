@@ -20,6 +20,7 @@ import {
 import { MainButton } from '@/components/ui';
 import { features } from '@/config';
 import { type OnbLevel, markViewSeen, parseView, requestStart } from '@/lib/onboarding';
+import { HEART } from '@/components/heart';
 import { C } from '@/theme';
 import {
   DemoCombo,
@@ -149,7 +150,7 @@ const ALL_SLIDES: Slide[] = [
     Demo: DemoHeart,
     text: (
       <>
-        Con una racha de <B>{HEART_COMBO}</B> (y {HEART_COMBO * 2}, {HEART_COMBO * 3}…), si perdiste un corazón aparece un <B>bloque con ♥</B>: tócalo y <B>recuperas una vida</B>.
+        Con una racha de <B>{HEART_COMBO}</B> (y {HEART_COMBO * 2}, {HEART_COMBO * 3}…), si perdiste un corazón aparece un <B>bloque con {HEART}</B>: tócalo y <B>recuperas una vida</B>.
       </>
     ),
     note: `Dura solo ${HEART_LIFE} s. Si se escapa no pasa nada: no resta tiempo ni corta la racha.`,

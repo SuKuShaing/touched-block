@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import { useActivePalette } from '@/cosmetics/active';
 import { getPalette, paletteColor } from '@/cosmetics/palettes';
+import { APP_FONT } from '@/components/appFont';
 import { C } from '@/theme';
 
 export interface BlockProps {
@@ -122,6 +123,7 @@ const styles = StyleSheet.create({
     boxShadow: '0 5px 0 rgba(0,0,0,0.35)',
   },
   num: {
+    ...APP_FONT,
     color: C.text,
     fontWeight: '800',
     textAlign: 'center',

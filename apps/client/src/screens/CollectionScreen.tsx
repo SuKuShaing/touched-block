@@ -42,6 +42,7 @@ import { sounds } from '@/game/sounds';
 import { useDailyLocal } from '@/lib/daily';
 import { levelFor, xpOf } from '@/lib/level';
 import { type Settings, updateSettings } from '@/lib/settings';
+import { HEART } from '@/components/heart';
 import { C } from '@/theme';
 
 /**
@@ -194,9 +195,9 @@ function EffectIcon({ id }: { id: string }) {
   if (id === 'corazones') {
     return (
       <>
-        <Text style={[styles.heart, at(-13, -14), { fontSize: 13 }]}>♥</Text>
-        <Text style={[styles.heart, at(1, -9), { fontSize: 16 }]}>♥</Text>
-        <Text style={[styles.heart, at(-10, 1), { fontSize: 11 }]}>♥</Text>
+        <Text style={[styles.heart, at(-13, -14), { fontSize: 13 }]}>{HEART}</Text>
+        <Text style={[styles.heart, at(1, -9), { fontSize: 16 }]}>{HEART}</Text>
+        <Text style={[styles.heart, at(-10, 1), { fontSize: 11 }]}>{HEART}</Text>
       </>
     );
   }

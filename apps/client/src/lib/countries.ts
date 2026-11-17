@@ -1,3 +1,5 @@
+import { deviceLocale } from '@/platform/locale';
+
 /** Códigos ISO 3166-1 alfa-2 (los mismos que acepta la API: apps/api/src/common/countries.ts). */
 const CODES =
   'AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ ' +
@@ -15,7 +17,10 @@ export const isCountry = (c: unknown): c is string => typeof c === 'string' && V
 
 let names: { of(code: string): string | undefined } | null | undefined;
 
-/** Nombre del país en español ("CL" → "Chile"); si Intl.DisplayNames no existe, el código. */
+/**
+ * Nombre del país en español ("CL" → "Chile"). Si Intl.DisplayNames no existe (Hermes, en la
+ * app), la tabla de respaldo de la plataforma; si tampoco, el código.
+ */
 export function countryName(code: string | null | undefined): string {
   if (!code) return '';
   if (names === undefined) {
@@ -26,7 +31,12 @@ export function countryName(code: string | null | undefined): string {
     }
   }
   try {
-    return names?.of(code) ?? code;
+    if (names) return names.of(code) ?? code;
+  } catch {
+    return code;
+  }
+  try {
+    return deviceLocale.countryNameFallback(code) ?? code;
   } catch {
     return code;
   }
@@ -44,8 +54,14 @@ export function sortedCountries(): { code: string; name: string }[] {
   return COUNTRY_CODES.map((code) => ({ code, name: countryName(code) })).sort((a, b) => a.name.localeCompare(b.name, 'es'));
 }
 
-/** Región del navegador ("es-CL" → "CL") si es un código ISO válido; si no, null. */
+/**
+ * Región del navegador ("es-CL" → "CL") si es un código ISO válido; si no, null. En la app,
+ * primero la región del dispositivo (expo-localization).
+ */
 export function browserCountry(): string | null {
+  try {
+    for (const r of deviceLocale.regions()) if (isCountry(r)) return r.toUpperCase();
+  } catch {}
   try {
     const langs: string[] = [];
     if (typeof navigator !== 'undefined') {

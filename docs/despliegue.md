@@ -3,6 +3,7 @@
 | Pieza | Dónde | Cuándo se publica |
 |---|---|---|
 | Web | GitHub Pages: `https://sukushaing.github.io/touched-block/` | Cada push a `main`, salvo que solo cambien `apps/api/**`, `deploy/**` o `docs/**`. También se puede lanzar a mano (*Run workflow*) |
+| App Android | APK firmado (`apps/client/android/app/build/outputs/apk/release/app-release.apk`); por ahora se reparte a mano; Google Play más adelante | A mano (ver sección 5) |
 | API + base de datos | VPS del usuario con **Dokploy** (servicio *Compose*) | Cada tag `vX.Y.Z` |
 
 **Regla de oro**: el repositorio es **público**. Ningún secreto entra al repo. Los valores reales viven en Dokploy (pestaña Environment) y en los *Secrets* de GitHub. `.env` y `.env.*` están en `.gitignore`, salvo los `.env.example`.
@@ -190,3 +191,32 @@ La API nueva es **compatible con la web anterior** (campos nuevos opcionales y e
 - `apps/api/.env` y `apps/client/.env` (ignorados) ya tienen el Client ID real y apuntan a `http://localhost:3000`.
 - Para probar sin Google: `AUTH_DEV_FAKE=1` en la API y `EXPO_PUBLIC_AUTH_DEV_FAKE=1` en el cliente. Aparece un login falso "Entrar (dev)", que la API ignora con `NODE_ENV=production`.
 - Comandos en [`desarrollo.md`](desarrollo.md).
+
+
+## 5. App Android (APK)
+
+**Identificador**: `app.touchedblock` (fijo para siempre una vez en Google Play).
+
+**Clave de firma** (fuera del repo):
+- `~/.touched-block/release.keystore` (PKCS12, alias `touchedblock`, válida 10 000 días) y `~/.touched-block/keystore.properties` con `TB_UPLOAD_STORE_FILE`, `TB_UPLOAD_KEY_ALIAS`, `TB_UPLOAD_STORE_PASSWORD` y `TB_UPLOAD_KEY_PASSWORD`. En CI se pueden pasar como variables de entorno con esos mismos nombres (`plugins/withReleaseSigning.js`).
+- **Respaldarla** en un gestor de contraseñas o una nube privada. Si se pierde, un APK ya instalado no se puede actualizar: hay que desinstalarlo e instalar el nuevo. En Google Play, con *Play App Signing*, esta pasa a ser la clave de subida y se puede reemplazar.
+- SHA-1: `B5:7F:86:E8:13:A8:B6:BA:11:90:81:A9:17:3C:4B:1E:0C:CA:58:0A`.
+
+**Google Cloud** (proyecto *Touched Block* → Clientes): además del cliente web hay dos clientes **Android** con el paquete `app.touchedblock`:
+- "Android debug (app.touchedblock)", con la SHA-1 de la clave debug de Expo (`5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25`);
+- "Android release APK (app.touchedblock)", con la SHA-1 de arriba.
+
+La app usa el Client ID **web** (`EXPO_PUBLIC_GOOGLE_CLIENT_ID`) como `webClientId`, así que la API no cambia. Al publicar en Google Play hay que agregar otro cliente Android con la SHA-1 de la clave de firma de Play (Play Console → Integridad de la app).
+
+**Generar el APK** (apunta a la API de producción y no lleva `EXPO_PUBLIC_AUTH_DEV_FAKE`):
+
+```bash
+cd apps/client
+pnpm exec expo prebuild -p android
+cd android
+EXPO_PUBLIC_API_URL=https://vps23906.cubepath.net NODE_ENV=production ./gradlew app:assembleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a,x86_64
+# → app/build/outputs/apk/release/app-release.apk
+```
+
+- Subir `android.versionCode` (y `version`) en `app.json` en cada APK que se reparta: Android no instala encima una versión con el mismo `versionCode`.
+- La API no necesita CORS para la app, porque las apps no envían `Origin`.

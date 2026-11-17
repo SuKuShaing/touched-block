@@ -1,9 +1,17 @@
 # Pendientes, riesgos e ideas
 
-Estado al **12 nov 2026**.
+Estado al **16 nov 2026**.
 
 ## Estado
 
+- **App Android** (16 nov 2026, sin publicar): APK firmado con la clave de release, que apunta a la API de producción (`apps/client/android/app/build/outputs/apk/release/app-release.apk`). Se probó en el emulador contra la web en tamaño celular: todas las pantallas, la partida validada por el servidor, sonido, vibración, botón atrás y enlaces `touchedblock://`. Detalle en `historia-y-decisiones.md` → "App Android" y en `despliegue.md` → sección 5. Falta:
+  - Probado en el emulador (16 nov 2026): **toque simultáneo con dos dedos** (dos bloques bajan a la vez, con un MotionEvent de dos punteros inyectado vía InputManager desde `app_process`, porque `sendevent` y la consola del emulador no llegan a la app) y **escritura con teclado** en el campo de texto del Perfil.
+  - **Confirmado por el usuario (17 nov 2026)**: en su Motorola Edge 60 Pro la app se ve y se juega igual que la web en tamaño celular (ahí se vio que la fuente del sistema de Motorola no es Roboto; ver historia-y-decisiones → "Roboto incluida en el APK").
+  - Queda por afinar en teléfonos reales: cómo se siente la vibración (el emulador no vibra; sí registra los eventos), latencia del sonido, el teclado en pantalla completo (el emulador tiene teclado físico y muestra solo la barra) y login real con Google (el cliente Android de release recién creado puede tardar unos minutos en activarse).
+  - Respaldar `~/.touched-block/` (clave de firma).
+  - Google Play: cuenta de desarrollador (USD 25), ficha de la tienda, `.aab` (EAS Build o `./gradlew bundleRelease`), cliente OAuth Android con la SHA-1 de Play App Signing. Con la app publicada se pueden agregar App Links (`touchedblock.app/.well-known/assetlinks.json`) para que los enlaces de reto abran la app.
+  - iOS: necesita Mac o EAS Build, cuenta de Apple (USD 99/año) y Sign in with Apple.
+  - Sin probar en la app: compartir la imagen hasta una red social real.
 - **Web**: GitHub Pages **con cuentas y rankings activos** desde el 10 nov 2026 (variables `EXPO_PUBLIC_API_URL` y `EXPO_PUBLIC_GOOGLE_CLIENT_ID` creadas). Incluye las reglas v5, las páginas legales y los dos tutoriales (básico y avanzado). Se verificó de punta a punta: partida de invitado validada por el servidor, rankings y login real con Google.
 - **Dokploy** (panel `http://vps23906.cubepath.net:3000`, IP 144.225.147.103, Dokploy v0.31.0; ahí también vive el proyecto UltimaType con `ultimatype.xyz`):
   - Proyecto **Touched Block** (`6eSA39oT4nPDO4U034YGw`), entorno `production`.
@@ -92,10 +100,7 @@ Cómo se publicó (12 nov 2026), en orden:
 
 - Pausa (silenciar sonido y vibración ya está, desde el plan de jugabilidad).
 - Que las restas aparezcan un poco después que las sumas.
-- App Android/iOS:
-  - Módulos `.native` (login nativo de Google y Apple, compartir con `react-native-view-shot` + `expo-sharing`, `expo-audio`, `expo-haptics`).
-  - EAS Build y Submit, cuentas de desarrollador.
-  - Clientes OAuth de Android/iOS en `GOOGLE_CLIENT_IDS`.
+- App iOS y Google Play (ver Estado).
 - Dominio propio: necesario para Sign in with Apple en la web y para cookies de sesión del mismo sitio.
 - Más tipos de bloque (tiempo extra, congelar, escudo).
 - Limpiar los íconos sobrantes de la raíz (`favicon-32.png`, `favicon-192.png`, `apple-touch-icon.png`, `favicon.svg`, `og-image.png`), porque los que se usan están en `apps/client/public/`. Confirmar antes de borrar.

@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, { interpolateColor, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import { fmtTime } from '@/lib/format';
+import { HEART } from '@/components/heart';
+import { APP_FONT } from '@/components/appFont';
 import { C, LOW_TIME } from '@/theme';
 
 export type PopKind = 'gain' | 'hurt';
@@ -89,7 +91,7 @@ export function Hearts({ lives, max, size = 20 }: { lives: number; max: number; 
     <Text style={[styles.hearts, { fontSize: size, lineHeight: size * 1.2 }]} selectable={false} accessibilityLabel={`${lives} de ${max} vidas`}>
       {Array.from({ length: max }, (_, i) => (
         <Text key={i} style={i < lives ? null : styles.off}>
-          ♥
+          {HEART}
         </Text>
       ))}
     </Text>
@@ -172,9 +174,11 @@ export function Header({
 }
 
 const styles = StyleSheet.create({
-  clock: { color: C.text, fontWeight: '700', fontVariant: ['tabular-nums'] },
+  clock: {
+    ...APP_FONT, color: C.text, fontWeight: '700', fontVariant: ['tabular-nums'] },
   hearts: { color: C.bad, letterSpacing: 1 },
-  streak: { color: C.gold, fontWeight: '800', fontVariant: ['tabular-nums'], transformOrigin: 'left' },
+  streak: {
+    ...APP_FONT, color: C.gold, fontWeight: '800', fontVariant: ['tabular-nums'], transformOrigin: 'left' },
   off: { color: C.heartOff },
   bar: { height: 6, backgroundColor: C.barBg, borderRadius: 3, overflow: 'hidden' },
   fill: { height: '100%' },

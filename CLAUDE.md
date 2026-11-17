@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Proyecto
 
-"Touched Block" (antes "Rompe el bloque"): juego táctil para celular, en español. Aparecen bloques con un número o una operación ("2+3", "8÷2"); hay que tocar cada uno tantas veces como su resultado antes de que desaparezca. Supervivencia contra el reloj, con vidas, combos y bloques trampa. Hoy es una web (GitHub Pages) con cuentas y rankings; más adelante, app Android/iOS con el mismo código.
+"Touched Block" (antes "Rompe el bloque"): juego táctil para celular, en español. Aparecen bloques con un número o una operación ("2+3", "8÷2"); hay que tocar cada uno tantas veces como su resultado antes de que desaparezca. Supervivencia contra el reloj, con vidas, combos y bloques trampa. Es una web (GitHub Pages) con cuentas y rankings y, desde el 16 nov 2026, también una app Android (`app.touchedblock`, APK) con el mismo código; iOS más adelante.
 
 La documentación completa está en `docs/` (índice en `docs/README.md`). Es la memoria del proyecto: qué se hizo y **por qué**.
 - `docs/historia-y-decisiones.md`: cronología y motivo de cada decisión técnica. Léelo al empezar.
@@ -15,7 +15,7 @@ La documentación completa está en `docs/` (índice en `docs/README.md`). Es la
 ## Estructura (monorepo pnpm)
 
 - `packages/engine` (`@tb/engine`): motor del juego en TypeScript puro y **determinista** (PRNG mulberry32 con semilla, paso fijo de 1/60 s). Lo usan el cliente y la API (que repite cada partida con `replay()` para validar el puntaje). **Todas las reglas y constantes de balance viven en `src/constants.ts`.**
-- `apps/client` (`@tb/client`): Expo Router (SDK 58), web primero. El juego se dibuja con `View` + Reanimated (sin Skia, para que la web cargue liviana). Módulos por plataforma en `src/platform/*.web.ts` / `*.native.ts` (audio, vibración, almacenamiento, toques, login, compartir); hoy solo la versión web está completa.
+- `apps/client` (`@tb/client`): Expo Router (SDK 58), web primero. El juego se dibuja con `View` + Reanimated (sin Skia, para que la web cargue liviana). Módulos por plataforma en `src/platform/*.web.ts` / `*.native.ts` (audio, vibración, almacenamiento, toques, login, compartir, ciclo de vida, país); las dos versiones están completas. La web y la app deben verse y jugarse igual: todo cambio visual se revisa en las dos.
 - `apps/api` (`@tb/api`): NestJS 12 + Prisma 7 + PostgreSQL. Contrato exacto de cada endpoint en `docs/api.md`.
 - `legacy/`: el juego original en HTML/CSS/JS (reglas v6). Solo referencia; ya no se publica.
 
@@ -28,6 +28,7 @@ No hay npm en esta máquina: usar `pnpm`, `pnpm exec` (en vez de npx) y `pnpm dl
 - API: `docker compose -f apps/api/docker-compose.yml up -d --wait` (Postgres en el puerto 5434) · `pnpm --filter @tb/api start:dev` · `test` · `test:e2e` · `prisma:deploy`.
 - Sin `EXPO_PUBLIC_API_URL` y `EXPO_PUBLIC_GOOGLE_CLIENT_ID` el cliente queda en modo solo invitado. Para probar cuentas en local: API con `AUTH_DEV_FAKE=1` y cliente con `EXPO_PUBLIC_AUTH_DEV_FAKE=1` (login falso "Entrar (dev)"; la API lo ignora con `NODE_ENV=production`).
 - Para probar el táctil: Playwright (MCP) con viewport de celular.
+- App Android: `pnpm exec expo run:android` (en `apps/client`; `android/` se genera con `expo prebuild`, no se edita) y el emulador `Pixel_Mi_Device`. Pasos, rutas largas de Windows y APK firmado en `docs/desarrollo.md` y `docs/despliegue.md`.
 
 ## Despliegue
 

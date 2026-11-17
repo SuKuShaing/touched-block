@@ -10,3 +10,6 @@ minimumReleaseAgeExclude:
   - '@nestjs/platform-express@12.4.2'
   - '@nestjs/testing@12.4.2'
   - jose@6.2.16
+# Nombres cortos en node_modules/.pnpm: la app Android compila C++ desde ahí y en Windows
+# las rutas no pueden pasar de 260 caracteres (ver apps/client/plugins/withShortCxxPath.js).
+virtualStoreDirMaxLength: 30

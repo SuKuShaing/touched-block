@@ -1,5 +1,5 @@
 import { type ReactNode, useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, StyleSheet, Text, View } from 'react-native';
 import { errorMessage, isApiError } from '@/api/client';
 import { fetchChallenge } from '@/api/endpoints';
 import type { ChallengeEntry, ChallengeView } from '@/api/types';
@@ -128,7 +128,9 @@ export function ChallengeResult({
       <View style={styles.box} accessibilityLabel="Tu reto">
         <Text style={styles.head}>Tu reto está listo</Text>
         <Text style={styles.note}>Tu amigo jugará exactamente la misma partida. Abre el enlace después para ver quién ganó.</Text>
-        <Text style={styles.link} selectable numberOfLines={1}>
+        {/* en Android un Text seleccionable ignora numberOfLines (se corta a media línea); ahí
+            se copia con "Copiar enlace" */}
+        <Text style={styles.link} selectable={Platform.OS === 'web'} numberOfLines={1}>
           {challengeLink(code).replace(/^https?:\/\//, '')}
         </Text>
         <View style={styles.actions}>
