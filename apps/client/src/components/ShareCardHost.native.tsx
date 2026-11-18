@@ -20,8 +20,9 @@ import type { ResultCard } from '@/platform/share.types';
 
 const W = 1080;
 const H = 1080;
-const K = 1 / PixelRatio.get();
-const px = (n: number) => n * K;
+// Se calcula al dibujar y no al cargar el módulo: en el APK release, PixelRatio todavía no está
+// disponible cuando expo-router carga _layout (la app se cerraba al abrir).
+const px = (n: number) => n / PixelRatio.get();
 
 type Weight = '500' | '600' | '700' | '800';
 

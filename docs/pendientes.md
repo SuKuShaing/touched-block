@@ -1,6 +1,6 @@
 # Pendientes, riesgos e ideas
 
-Estado al **17 nov 2026**.
+Estado al **18 nov 2026**.
 
 ## Estado
 
@@ -9,10 +9,10 @@ Estado al **17 nov 2026**.
   - Juego en https://web.touchedblock.app (Cloudflare Workers). Verificado en producción: carga, tutorial de 1.ª visita, partida creada contra la API nueva enviando `platform`, sin errores de consola.
   - API `v0.4.0` en https://api.touchedblock.app; sigue también en `vps23906.cubepath.net` para el APK repartido. `CORS_ORIGINS` = `https://web.touchedblock.app,https://sukushaing.github.io`. Respaldo previo `touched_block-20261118-001134.dump` (OK). Migración `add_run_platform` aplicada.
   - GitHub Pages publica solo la redirección con mudanza de datos (`deploy/gh-pages-redirect/`). Probado en producción: un enlace viejo llega a la misma ruta con el récord; un jugador antiguo que entra primero por un enlace nuevo (`/?reto=…`) hace una sola ida y vuelta y vuelve al reto con sus datos. Las URLs legales viejas llevan a la landing.
-  - Google Cloud: origen `https://web.touchedblock.app` autorizado; página principal y legales en `touchedblock.app`; dominio autorizado `touchedblock.app`. **Falta probar el login real con Google** en la web nueva (Google avisa que el cambio puede tardar hasta unas horas).
-  - Correo `contacto@touchedblock.app` (Email Routing de Cloudflare → Gmail del usuario). Falta mandarle un correo de prueba.
-  - **Falta (usuario)**: crear los secretos `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID` en GitHub (valores en `~/.touched-block/cloudflare.env`). Sin ellos `deploy-web` y `deploy-landing` fallan (fallaron en el push del 17 nov 2026); ese día la web y la landing se publicaron a mano con wrangler. Después se puede borrar la variable `EXPO_PUBLIC_API_URL` del repo.
-  - **APK nuevo pendiente**: `react-native-svg` (medallas) obliga a regenerarlo, con `EXPO_PUBLIC_API_URL=https://api.touchedblock.app` y `versionCode` más alto. Probar ahí las medallas, la tarjeta de compartir nativa y la celebración (animación, vibración, botón atrás).
+  - Google Cloud: origen `https://web.touchedblock.app` autorizado; página principal y legales en `touchedblock.app`; dominio autorizado `touchedblock.app`. Login real con Google en la web nueva **confirmado por el usuario** (18 nov 2026).
+  - Correo `contacto@touchedblock.app` (Email Routing de Cloudflare → Gmail del usuario). Correo de prueba **confirmado por el usuario** (18 nov 2026).
+  - Secretos `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID` creados en GitHub (18 nov 2026). `deploy-web` y `deploy-landing`, lanzados a mano, publicaron bien en Cloudflare. Se puede borrar la variable `EXPO_PUBLIC_API_URL` del repo.
+  - **APK 0.2.0** (`versionCode` 3, 18 nov 2026), firmado con la clave de release y apuntando a `https://api.touchedblock.app`. Probado en el emulador: abre (hubo que arreglar un cierre al abrir; ver historia-y-decisiones → "APK 0.2.0"), tutorial, partida, celebración con confeti (Madera I y Suave), tarjeta para compartir con la medalla, Rankings con datos de producción y Perfil. **Falta**: probarlo en el teléfono del usuario (actualiza encima del 0.1.1 sin perder datos) y repartirlo.
   - Medallas rediseñadas y celebración de premios: probadas en la web; las medallas también en el emulador. Que el usuario juegue las primeras partidas y diga si la celebración aparece demasiado seguido (Madera I, Suave, logros de madera…). Corazones (al invitar) ya no se celebra porque llega desde la cuenta.
   - Riesgos de la mudanza: quien ya usó el sitio nuevo no repite la ida y vuelta (`tb_mig1`); los acumulados (`runs`, `totalKilled`) quedan con el mayor de los dos lados, no con la suma; si se agrega una clave `tb_*`, sumarla en las dos listas. La landing pasa por un Worker en cada petición (`run_worker_first`, 100 000/día gratis); si crece, cambiarlo por una Redirect Rule de Cloudflare.
 
