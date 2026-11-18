@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import { tierRefForTicks } from '@tb/engine';
 import { features } from '@/config';
 import { ApiError } from './client';
-import { fetchChallenge, fetchFollowing, fetchLeaderboard, fetchMe, fetchMyRuns, fetchProfile } from './endpoints';
+import { fetchBlocks, fetchChallenge, fetchFollowing, fetchHealth, fetchLeaderboard, fetchMe, fetchMyRuns, fetchProfile } from './endpoints';
 import { session, useSession } from './session';
 import type { Leaderboard, Period, PlayerStats, Scope, TierRef } from './types';
 
@@ -78,6 +78,28 @@ export function useProfile(username: string) {
 export function useFollowing() {
   const v = useViewer();
   return useQuery({ queryKey: ['following', v.key], queryFn: fetchFollowing, enabled: features.accounts && v.loggedIn });
+}
+
+/**
+ * Funciones opcionales de la API (`features` de GET /health). La web se publica antes que la API:
+ * el menú de reportar/bloquear solo aparece si la API ya lo tiene (`moderation`). Mientras no se
+ * sepa, o si /health falla, se asume que no.
+ */
+export function useApiFeatures() {
+  const q = useQuery({
+    queryKey: ['health'],
+    queryFn: fetchHealth,
+    enabled: features.accounts,
+    staleTime: 10 * 60_000,
+    retry: 1,
+  });
+  return { moderation: !!q.data?.features?.includes('moderation') };
+}
+
+/** Jugadores que bloqueé (GET /me/blocks). */
+export function useBlocks(enabled = true) {
+  const v = useViewer();
+  return useQuery({ queryKey: ['blocks', v.key], queryFn: fetchBlocks, enabled: features.accounts && v.loggedIn && enabled });
 }
 
 /**

@@ -5,6 +5,7 @@ import { normalizeCountry } from '../common/countries';
 import { badRequest, conflict, notFound } from '../common/errors';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { blockBetween } from '../moderation/blocks';
 import { StatsService } from '../stats/stats.service';
 import type { MeDto, PublicUserDto, UpdateMeDto } from './dto';
 import { normalizeUsername, searchKey, usernameBase, usernameCandidates, usernameProblem } from './username';
@@ -188,6 +189,9 @@ export class UsersService {
       include: { _count: { select: { invitees: true, following: true, followers: true } } },
     });
     if (!u) throw notFound('Ese usuario no existe.', 'user_not_found');
+    // quien te bloqueó no ve tu perfil (para él es como si no existieras)
+    const blocks = viewerId && viewerId !== u.id ? await blockBetween(this.prisma, viewerId, u.id) : null;
+    if (blocks?.blockedMe) throw notFound('Ese usuario no existe.', 'user_not_found');
     const best = await this.prisma.bestScore.findUnique({
       where: {
         userId_rulesVersion_periodType_periodKey: {
@@ -215,7 +219,7 @@ export class UsersService {
       followersCount: u._count.followers,
       followingCount: u._count.following,
       createdAt: u.createdAt.toISOString(),
-      ...(viewerId ? { isMe: viewerId === u.id, isFollowing: isFollowing ?? false } : {}),
+      ...(viewerId ? { isMe: viewerId === u.id, isFollowing: isFollowing ?? false, isBlocked: blocks?.iBlocked ?? false } : {}),
     };
   }
 
@@ -228,6 +232,14 @@ export class UsersService {
       SELECT id, username, country
       FROM "User"
       WHERE strpos(translate(username, '._', ''), ${q}) > 0
+      ${
+        viewerId
+          ? Prisma.sql`AND NOT EXISTS (
+              SELECT 1 FROM "Block" b
+              WHERE (b."blockerId" = ${viewerId}::uuid AND b."blockedId" = "User".id)
+                 OR (b."blockedId" = ${viewerId}::uuid AND b."blockerId" = "User".id))`
+          : Prisma.empty
+      }
       ORDER BY strpos(translate(username, '._', ''), ${q}) = 1 DESC, username ASC
       LIMIT ${SEARCH_LIMIT}`;
     if (!viewerId) return users;

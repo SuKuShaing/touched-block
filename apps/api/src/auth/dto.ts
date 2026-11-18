@@ -1,4 +1,4 @@
-import { IsOptional, IsString, Length, MaxLength } from 'class-validator';
+import { IsOptional, IsString, IsUrl, Length, MaxLength } from 'class-validator';
 
 export class GoogleLoginDto {
   @IsString()
@@ -27,7 +27,19 @@ export class AppleLoginDto {
   @Length(1, 1024)
   authorizationCode?: string;
 
-  /** Nombre completo (Apple solo lo entrega la primera vez). */
+  /**
+   * Solo web (Sign in with Apple JS): el redirectURI de la autorización. Apple exige el mismo al canjear
+   * el authorizationCode. Si no coincide, Apple rechaza el canje (el login sigue igual).
+   */
+  @IsOptional()
+  @IsUrl({ protocols: ['https'], require_protocol: true, require_tld: true })
+  @MaxLength(512)
+  redirectUri?: string;
+
+  /**
+   * Nombre completo (Apple solo lo entrega la primera vez). Se usa al crear la cuenta; en una cuenta
+   * existente solo completa el nombre si estaba vacío (nunca lo reemplaza).
+   */
   @IsOptional()
   @IsString()
   @MaxLength(100)

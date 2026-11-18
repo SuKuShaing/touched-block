@@ -1,4 +1,5 @@
 import { randomInt } from 'node:crypto';
+import { NAME_FILTER_MESSAGES, nameFilterProblem } from './username-filter';
 
 /** Reglas del nombre de usuario: 3–20 caracteres de [a-z0-9_.], sin punto al inicio/fin ni dos puntos seguidos. */
 export const USERNAME_MIN = 3;
@@ -55,6 +56,9 @@ export function usernameProblem(u: string): string | null {
     return 'No puede empezar ni terminar con punto, ni tener dos puntos seguidos.';
   }
   if (RESERVED.has(u)) return 'Ese nombre de usuario no está permitido.';
+  // groserías, insultos, odio y suplantación (guía 1.2 de Apple); ver username-filter.ts
+  const filtered = nameFilterProblem(u);
+  if (filtered) return NAME_FILTER_MESSAGES[filtered];
   return null;
 }
 
@@ -103,4 +107,16 @@ export function usernameCandidates(base: string): string[] {
     }
   }
   return [...out];
+}
+
+/**
+ * Nombre automático tipo "jugador1234" (moderación: cambio forzado de un nombre que no cumple).
+ * `digits` entre 4 y 8; siempre pasa `usernameProblem`.
+ */
+export function randomPlayerName(digits = 4): string {
+  const d = Math.min(8, Math.max(4, Math.floor(digits)));
+  for (;;) {
+    const name = 'jugador' + String(randomInt(10 ** (d - 1), 10 ** d));
+    if (!usernameProblem(name)) return name;
+  }
 }

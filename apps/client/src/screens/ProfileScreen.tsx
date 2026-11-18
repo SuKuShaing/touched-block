@@ -5,8 +5,8 @@ import { ActivityIndicator, FlatList, Modal, Pressable, ScrollView, StyleSheet, 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BASE_LIVES, MAX_LIVES_CAP, tierRefForTicks } from '@tb/engine';
 import { errorMessage, isApiError } from '@/api/client';
-import { checkUsername, deleteAccount, fetchMe, follow, logout, searchUsers, setInviter, unfollow, updateMe } from '@/api/endpoints';
-import { useFollowing, useInvalidate, useMeRefresh, useViewer } from '@/api/hooks';
+import { checkUsername, deleteAccount, fetchMe, follow, logout, searchUsers, setInviter, unblockUser, unfollow, updateMe } from '@/api/endpoints';
+import { useApiFeatures, useBlocks, useFollowing, useInvalidate, useMeRefresh, useViewer } from '@/api/hooks';
 import type { CheckUsername, Me, SearchUser } from '@/api/types';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import { notifyShare } from '@/components/EndPanel';
@@ -24,6 +24,7 @@ import { useActiveCosmetics } from '@/cosmetics/active';
 import { tierStepOf } from '@/cosmetics/tiers';
 import { countryName, flag, sortedCountries } from '@/lib/countries';
 import { loadBest, loadHist } from '@/lib/history';
+import { MODERATION_SOON, REPORT_REVIEW_HOURS, moderationUnavailable } from '@/lib/moderation';
 import { levelFor, xpOf } from '@/lib/level';
 import { useLocalStats } from '@/lib/stats';
 import { replayView } from '@/lib/onboarding';
@@ -133,7 +134,7 @@ function UsernameEditor({ me }: { me: Me }) {
       </View>
       {status}
       {err ? <Hint tone="bad">{err}</Hint> : null}
-      <Hint>Entre 3 y 20 caracteres: minúsculas, números, punto y guion bajo. No puede empezar ni terminar con punto. Es lo que aparece en los rankings.</Hint>
+      <Hint>Entre 3 y 20 caracteres: minúsculas, números, punto y guion bajo. No puede empezar ni terminar con punto, ni tener groserías o imitar al equipo del juego. Es lo que aparece en los rankings.</Hint>
     </View>
   );
 }
@@ -527,6 +528,69 @@ function Follows({ me }: { me: Me }) {
   );
 }
 
+// ---------------------------------------------------------------- bloqueados
+
+/** Jugadores que bloqueé, con "Desbloquear", y cómo reportar o bloquear (guía 1.2 de Apple). */
+function Blocked() {
+  const router = useRouter();
+  const blocks = useBlocks();
+  const invalidate = useInvalidate();
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const unblock = async (u: { id: string; username: string }) => {
+    setBusyId(u.id);
+    try {
+      await unblockUser(u.username);
+      invalidate('blocks', 'profile', 'lb', 'search');
+      toast(`Desbloqueaste a @${u.username}`);
+    } catch (e) {
+      toast(moderationUnavailable(e) ? MODERATION_SOON : errorMessage(e));
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  return (
+    <View style={styles.stack}>
+      {blocks.isPending ? (
+        <ActivityIndicator color={C.text} />
+      ) : blocks.isError ? (
+        <Hint tone="bad">{moderationUnavailable(blocks.error) ? MODERATION_SOON : errorMessage(blocks.error)}</Hint>
+      ) : blocks.data.users.length === 0 ? (
+        <Hint>No has bloqueado a nadie.</Hint>
+      ) : (
+        <View style={styles.userList}>
+          {blocks.data.users.map((u) => (
+            <View key={u.id} style={styles.userRow}>
+              <Pressable
+                accessibilityRole="link"
+                accessibilityLabel={`Ver perfil de ${u.username}`}
+                style={styles.flex1}
+                onPress={() => router.push({ pathname: '/u/[username]', params: { username: u.username } })}
+              >
+                <Text style={styles.userT} numberOfLines={1}>
+                  {flag(u.country)} @{u.username}
+                </Text>
+              </Pressable>
+              <SmallButton
+                title="Desbloquear"
+                kind="ghost"
+                accessibilityLabel={`Desbloquear a ${u.username}`}
+                busy={busyId === u.id}
+                onPress={() => void unblock(u)}
+              />
+            </View>
+          ))}
+        </View>
+      )}
+      <Hint>
+        Para reportar o bloquear a un jugador, mantén presionado su nombre en un ranking o en su perfil (con el mouse, pasa por encima y
+        toca ⋯). Revisamos cada reporte dentro de {REPORT_REVIEW_HOURS} horas.
+      </Hint>
+    </View>
+  );
+}
+
 // ---------------------------------------------------------------- en este dispositivo
 
 function SettingSwitch({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
@@ -620,6 +684,7 @@ export function ProfileScreen() {
   const tabSpace = useTabBarSpace();
   const viewer = useViewer();
   const qc = useQueryClient();
+  const { moderation } = useApiFeatures();
   useMeRefresh();
   const best = loadBest();
   const games = loadHist().length;
@@ -712,6 +777,11 @@ export function ProfileScreen() {
             <ProfileSection title="Seguir">
               <Follows me={me} />
             </ProfileSection>
+            {moderation ? (
+              <ProfileSection title="Jugadores bloqueados">
+                <Blocked />
+              </ProfileSection>
+            ) : null}
           </>
         )}
 

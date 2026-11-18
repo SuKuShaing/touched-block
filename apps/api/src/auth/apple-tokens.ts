@@ -8,13 +8,18 @@ import { PrismaService } from '../prisma/prisma.service';
  * Sign in with Apple: canje del authorizationCode y revocación del token (guía 5.1.1(v) de Apple:
  * al eliminar la cuenta hay que revocar el token con la API REST de Apple).
  *
- * - Al iniciar sesión, el cliente iOS manda el `authorizationCode` (un solo uso, 5 min). Se canjea en
- *   /auth/token por un refresh token, que se guarda **cifrado** en AuthIdentity.providerRefreshToken.
+ * - Al iniciar sesión, el cliente (app iOS o web) manda el `authorizationCode` (un solo uso, 5 min). Se
+ *   canjea en /auth/token por un refresh token, que se guarda **cifrado** en
+ *   AuthIdentity.providerRefreshToken junto con el `client_id` con que se obtuvo.
+ * - El `client_id` es la audiencia del identityToken: el bundle ID (`app.touchedblock`) en la app iOS y
+ *   el Services ID (`app.touchedblock.web`) en la web. Apple exige canjear y revocar con el mismo
+ *   client_id que pidió la autorización, así que se guarda con el token (dentro del texto cifrado: no
+ *   hace falta otra columna). En la web se manda además el `redirect_uri` de la autorización.
  * - Al eliminar la cuenta se revoca en /auth/revoke antes de borrar. Si Apple falla, se registra y la
  *   cuenta se borra igual.
  * - El client_secret es un JWT ES256 firmado con la clave .p8 (APPLE_PRIVATE_KEY): iss = Team ID,
- *   sub = client_id (bundle ID), aud = https://appleid.apple.com, kid = Key ID, vence en 1 h (Apple
- *   acepta hasta 6 meses).
+ *   sub = client_id, aud = https://appleid.apple.com, kid = Key ID, vence en 1 h (Apple acepta hasta
+ *   6 meses). La misma clave sirve para el bundle ID y para el Services ID agrupado con él.
  * - Sin APPLE_TEAM_ID / APPLE_KEY_ID / APPLE_PRIVATE_KEY / client_id, el login con Apple sigue
  *   funcionando y esto se omite con un aviso.
  */
@@ -73,12 +78,48 @@ export class TokenCipher {
   }
 }
 
+/** Refresh token de Apple y el client_id con que se obtuvo (para revocarlo con el mismo). */
+export interface StoredAppleToken {
+  clientId: string;
+  token: string;
+}
+
+/**
+ * Texto que se cifra: JSON `{ c: client_id, t: token }`. Los guardados antes (18 nov 2026, solo iOS)
+ * son el token a secas: se leen con el client_id por defecto (APPLE_CLIENT_ID, el bundle ID).
+ */
+export function packAppleToken(t: StoredAppleToken): string {
+  return JSON.stringify({ c: t.clientId, t: t.token });
+}
+
+export function unpackAppleToken(plain: string, defaultClientId: string): StoredAppleToken {
+  if (plain.startsWith('{')) {
+    try {
+      const o = JSON.parse(plain) as { c?: unknown; t?: unknown };
+      if (typeof o.t === 'string' && o.t) {
+        return { clientId: typeof o.c === 'string' && o.c ? o.c : defaultClientId, token: o.t };
+      }
+    } catch {
+      // no era JSON: se trata como token a secas
+    }
+  }
+  return { clientId: defaultClientId, token: plain };
+}
+
+export interface ExchangeOptions {
+  /** client_id de la autorización (audiencia del identityToken). Por defecto, APPLE_CLIENT_ID. */
+  clientId?: string | null;
+  /** Solo web: el redirect_uri de la autorización (Apple exige el mismo al canjear). */
+  redirectUri?: string | null;
+}
+
 @Injectable()
 export class AppleTokensService {
   private readonly log = new Logger('AppleTokens');
   private readonly fetchFn: FetchFn;
   private readonly cipher: TokenCipher;
-  private secret: { value: string; until: number } | null = null;
+  /** client_secret vigente por client_id (bundle ID y Services ID firman con la misma clave). */
+  private readonly secrets = new Map<string, { value: string; until: number }>();
   private warned = false;
 
   constructor(
@@ -101,25 +142,26 @@ export class AppleTokensService {
   }
 
   /** client_secret para /auth/token y /auth/revoke (JWT ES256, se reutiliza mientras le quede tiempo). */
-  async clientSecret(nowSec = Math.floor(Date.now() / 1000)): Promise<string> {
-    if (this.secret && this.secret.until > nowSec + 60) return this.secret.value;
+  async clientSecret(nowSec = Math.floor(Date.now() / 1000), clientId = this.config.appleClientId): Promise<string> {
+    const cached = this.secrets.get(clientId);
+    if (cached && cached.until > nowSec + 60) return cached.value;
     const key = await importPKCS8(this.config.applePrivateKey, 'ES256');
     const value = await new SignJWT({})
       .setProtectedHeader({ alg: 'ES256', kid: this.config.appleKeyId })
       .setIssuer(this.config.appleTeamId)
-      .setSubject(this.config.appleClientId)
+      .setSubject(clientId)
       .setAudience(APPLE_ORIGIN)
       .setIssuedAt(nowSec)
       .setExpirationTime(nowSec + SECRET_TTL_SEC)
       .sign(key);
-    this.secret = { value, until: nowSec + SECRET_TTL_SEC };
+    this.secrets.set(clientId, { value, until: nowSec + SECRET_TTL_SEC });
     return value;
   }
 
-  private async post(path: string, params: Record<string, string>): Promise<Response> {
+  private async post(path: string, clientId: string, params: Record<string, string>): Promise<Response> {
     const body = new URLSearchParams({
-      client_id: this.config.appleClientId,
-      client_secret: await this.clientSecret(),
+      client_id: clientId,
+      client_secret: await this.clientSecret(undefined, clientId),
       ...params,
     });
     return this.fetchFn(`${APPLE_ORIGIN}${path}`, {
@@ -131,8 +173,15 @@ export class AppleTokensService {
   }
 
   /** Canjea el authorizationCode por el refresh token de Apple. Lanza si Apple responde con error. */
-  async exchangeCode(code: string): Promise<string> {
-    const res = await this.post('/auth/token', { grant_type: 'authorization_code', code });
+  async exchangeCode(code: string, opts: ExchangeOptions = {}): Promise<string> {
+    const clientId = opts.clientId || this.config.appleClientId;
+    const res = await this.post('/auth/token', clientId, {
+      grant_type: 'authorization_code',
+      code,
+      // Apple: "include the redirect_uri parameter only if the application provided a redirect_uri in
+      // the initial authorization request" (la web sí; la app iOS no)
+      ...(opts.redirectUri ? { redirect_uri: opts.redirectUri } : {}),
+    });
     const data = (await res.json().catch(() => ({}))) as { refresh_token?: unknown; error?: unknown };
     if (!res.ok) throw new Error(`Apple /auth/token respondió ${res.status} (${String(data.error ?? 'sin detalle')})`);
     if (typeof data.refresh_token !== 'string' || !data.refresh_token) throw new Error('Apple /auth/token no entregó refresh_token');
@@ -140,8 +189,8 @@ export class AppleTokensService {
   }
 
   /** Revoca un refresh token de Apple. Lanza si Apple responde con error. */
-  async revoke(refreshToken: string): Promise<void> {
-    const res = await this.post('/auth/revoke', { token: refreshToken, token_type_hint: 'refresh_token' });
+  async revoke(refreshToken: string, clientId = this.config.appleClientId): Promise<void> {
+    const res = await this.post('/auth/revoke', clientId, { token: refreshToken, token_type_hint: 'refresh_token' });
     if (!res.ok) {
       const data = (await res.json().catch(() => ({}))) as { error?: unknown };
       throw new Error(`Apple /auth/revoke respondió ${res.status} (${String(data.error ?? 'sin detalle')})`);
@@ -152,13 +201,14 @@ export class AppleTokensService {
    * Tras un login con Apple: canjea el código y guarda el refresh token cifrado en la identidad.
    * Nunca lanza (el login no depende de esto): los errores quedan en el log.
    */
-  async storeFromCode(subject: string, code: string): Promise<void> {
+  async storeFromCode(subject: string, code: string, opts: ExchangeOptions = {}): Promise<void> {
     if (!this.enabled) return;
     try {
-      const token = await this.exchangeCode(code);
+      const clientId = opts.clientId || this.config.appleClientId;
+      const token = await this.exchangeCode(code, { clientId, redirectUri: opts.redirectUri });
       await this.prisma.authIdentity.update({
         where: { provider_subject: { provider: 'apple', subject } },
-        data: { providerRefreshToken: this.cipher.encrypt(token) },
+        data: { providerRefreshToken: this.cipher.encrypt(packAppleToken({ clientId, token })) },
       });
     } catch (e) {
       this.log.warn(`No se pudo guardar el token de Apple para revocarlo después: ${errText(e)}`);
@@ -181,13 +231,14 @@ export class AppleTokensService {
         continue;
       }
       if (!this.enabled) continue;
-      const token = this.cipher.decrypt(ident.providerRefreshToken);
-      if (!token) {
+      const plain = this.cipher.decrypt(ident.providerRefreshToken);
+      if (!plain) {
         this.log.warn(`No se pudo descifrar el token de Apple (identidad ${ident.id}; ¿cambió JWT_SECRET?): no se revoca.`);
         continue;
       }
+      const { clientId, token } = unpackAppleToken(plain, this.config.appleClientId);
       try {
-        await this.revoke(token);
+        await this.revoke(token, clientId);
       } catch (e) {
         this.log.error(`Falló la revocación en Apple (identidad ${ident.id}); la cuenta se borra igual: ${errText(e)}`);
       }

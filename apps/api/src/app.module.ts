@@ -8,6 +8,7 @@ import { DailyModule } from './daily/daily.module';
 import { HealthController } from './health/health.controller';
 import { LeaderboardsModule } from './leaderboards/leaderboards.module';
 import { MissionsModule } from './missions/missions.module';
+import { ModerationModule } from './moderation/moderation.module';
 import { CoreModule } from './prisma/core.module';
 import { RunsModule } from './runs/runs.module';
 import { SocialModule } from './social/social.module';
@@ -34,6 +35,7 @@ import { UsersModule } from './users/users.module';
     ChallengesModule,
     DailyModule,
     MissionsModule,
+    ModerationModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

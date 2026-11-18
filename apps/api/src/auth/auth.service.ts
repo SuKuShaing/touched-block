@@ -22,17 +22,29 @@ export class AuthService {
     private readonly tokens: TokensService,
   ) {}
 
-  /** Busca o crea el usuario de una identidad ya verificada y emite la sesión. */
+  /**
+   * Busca o crea el usuario de una identidad ya verificada y emite la sesión.
+   * `opts.name`: nombre que manda el cliente (Sign in with Apple lo entrega solo en el primer inicio de
+   * sesión). Se usa al crear la cuenta. En una cuenta que ya existe nunca reemplaza ni borra el nombre:
+   * solo lo completa si estaba vacío (p. ej. el primer intento creó la cuenta pero la respuesta no llegó
+   * y el cliente reintentó con el nombre que tenía en memoria).
+   */
   async login(provider: Provider, identity: VerifiedIdentity, opts: { country?: string; name?: string | null } = {}) {
     let isNew = false;
+    const name = (identity.name ?? opts.name)?.trim().slice(0, 100) || null;
     let userId = await this.findUserId(provider, identity.subject);
+    // solo con el nombre que manda el cliente (Apple), no con el del token de Google, que llega siempre
+    const clientName = opts.name?.trim().slice(0, 100) || null;
+    if (userId && clientName) {
+      await this.prisma.user.updateMany({ where: { id: userId, displayName: null }, data: { displayName: clientName } });
+    }
     if (!userId) {
       try {
         const user = await this.users.createWithIdentity({
           provider,
           subject: identity.subject,
           email: identity.email,
-          name: identity.name ?? opts.name ?? null,
+          name,
           country: opts.country,
         });
         userId = user.id;

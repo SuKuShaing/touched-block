@@ -64,11 +64,14 @@ jobs:
 
       # Cuentas y rankings: EXPO_PUBLIC_API_URL es pública (queda dentro del JS), así que va
       # escrita aquí; el Client ID de Google sale de la variable del repositorio. Sin las dos, el
-      # sitio queda solo para invitados.
+      # sitio queda solo para invitados. EXPO_PUBLIC_APPLE_SERVICES_ID (variable del repositorio,
+      # p. ej. app.touchedblock.web) muestra el botón de Sign in with Apple; vacía o sin crear = sin
+      # botón. Créala solo cuando la API con Apple web (v0.5.0 o la que siga) esté publicada.
       - name: Exportar la web (Expo)
         env:
           EXPO_PUBLIC_API_URL: https://api.touchedblock.app
           EXPO_PUBLIC_GOOGLE_CLIENT_ID: ${{ vars.EXPO_PUBLIC_GOOGLE_CLIENT_ID }}
+          EXPO_PUBLIC_APPLE_SERVICES_ID: ${{ vars.EXPO_PUBLIC_APPLE_SERVICES_ID }}
         run: pnpm --filter @tb/client exec expo export -p web --output-dir dist
 
       # Wrangler se instala global con npm (con sus scripts de instalación) y la acción lo usa tal

@@ -8,6 +8,7 @@ import { useLeaderboard, useMyRuns, useViewer } from '@/api/hooks';
 import type { LeaderboardEntry, Period, Scope } from '@/api/types';
 import { SmallButton } from '@/components/form';
 import { LoginOptions } from '@/components/LoginOptions';
+import { type PlayerMenu, PlayerHoverArea, playerLongPress, usePlayerMenu } from '@/components/PlayerMenu';
 import { Segmented } from '@/components/Segmented';
 import { TierBadge } from '@/components/TierBadge';
 import { features } from '@/config';
@@ -132,11 +133,14 @@ function Board({
   emptyText,
   onUser,
   stale,
+  menu,
 }: {
   entries: LeaderboardEntry[];
   emptyText: string;
   onUser: (u: string) => void;
   stale?: boolean;
+  /** Reportar/bloquear: "⋯" al pasar el mouse o toque sostenido en la fila. */
+  menu: PlayerMenu;
 }) {
   if (!entries.length)
     return (
@@ -153,7 +157,12 @@ function Board({
         <Text style={[styles.m, styles.headT]}>Esc.</Text>
       </View>
       {entries.map((e, i) => (
-        <View key={e.userId} style={[styles.row, e.isMe && styles.rowMe, i === entries.length - 1 && styles.rowLast]}>
+        <PlayerHoverArea
+          key={e.userId}
+          menu={menu}
+          user={e.isMe ? null : e}
+          style={[styles.row, e.isMe && styles.rowMe, i === entries.length - 1 && styles.rowLast]}
+        >
           <Text style={[styles.rank, e.rank <= 3 && styles.gold]}>{e.rank}</Text>
           <Pressable
             accessibilityRole="link"
@@ -161,6 +170,7 @@ function Board({
             onPress={() => onUser(e.username)}
             style={styles.userBtn}
             hitSlop={4}
+            {...(e.isMe ? {} : playerLongPress(menu, e))}
           >
             <View style={styles.userRow}>
               <Text style={[styles.user, e.isMe && styles.me]} numberOfLines={1}>
@@ -171,7 +181,7 @@ function Board({
           </Pressable>
           <Text style={styles.k}>{e.killed}</Text>
           <Text style={styles.m}>{e.missed}</Text>
-        </View>
+        </PlayerHoverArea>
       ))}
     </View>
   );
@@ -227,6 +237,7 @@ export function RankingsScreen() {
   const insets = useSafeAreaInsets();
   const tabSpace = useTabBarSpace();
   const viewer = useViewer();
+  const menu = usePlayerMenu();
   const [tab, setTab] = useState<Tab>('world');
   const [period, setPeriod] = useState<Period>('week');
   const [kind, setKind] = useState<BoardKind>('general');
@@ -295,7 +306,7 @@ export function RankingsScreen() {
         {scope === 'friends' && lb.data.total <= 1 ? (
           <Text style={styles.note}>Sigue a tus amigos desde tu perfil para competir con ellos.</Text>
         ) : null}
-        <Board entries={lb.data.entries} emptyText={emptyText} onUser={openUser} stale={lb.isPlaceholderData} />
+        <Board entries={lb.data.entries} emptyText={emptyText} onUser={openUser} stale={lb.isPlaceholderData} menu={menu} />
       </>
     );
 
@@ -327,6 +338,7 @@ export function RankingsScreen() {
         {body}
       </ScrollView>
       {showMeRow ? <MeRow data={lb.data} loggedIn={viewer.loggedIn} onLogin={goProfile} noScoreText={noScoreText} /> : null}
+      {menu.node}
     </View>
   );
 }

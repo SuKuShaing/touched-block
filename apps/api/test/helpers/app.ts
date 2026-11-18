@@ -43,7 +43,7 @@ export async function createTestApp() {
   /** Vacía todas las tablas. */
   async function reset() {
     await prisma.$executeRawUnsafe(
-      'TRUNCATE "MissionReward", "DailyEntry", "DailyChallenge", "ChallengeEntry", "Challenge", "UserStats", ' +
+      'TRUNCATE "Report", "Block", "MissionReward", "DailyEntry", "DailyChallenge", "ChallengeEntry", "Challenge", "UserStats", ' +
         '"BestScore", "Follow", "Run", "RefreshToken", "AuthIdentity", "User" RESTART IDENTITY CASCADE',
     );
     app.get(CommonFieldService).invalidate();

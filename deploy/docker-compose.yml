@@ -27,6 +27,8 @@ services:
       APPLE_TEAM_ID: ${APPLE_TEAM_ID:-}
       APPLE_KEY_ID: ${APPLE_KEY_ID:-}
       APPLE_PRIVATE_KEY: ${APPLE_PRIVATE_KEY:-}
+      # moderación: secreto de /admin/* (cabecera X-Admin-Token); vacío = esos endpoints responden 404
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-}
       # orígenes de la web separados por coma: la nueva (Cloudflare) y la vieja (GitHub Pages, hoy
       # solo redirige, pero una pestaña abierta desde antes sigue llamando a la API)
       CORS_ORIGINS: ${CORS_ORIGINS:-https://web.touchedblock.app,https://sukushaing.github.io}

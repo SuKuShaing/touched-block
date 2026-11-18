@@ -54,12 +54,15 @@ No se aceptan propiedades extra en los cuerpos: devuelven `400 validation_error`
 | 400 | `inviter_self` | Ponerse a uno mismo como quien te invitó |
 | 400 | `follow_self` | Seguirse a uno mismo |
 | 400 | `invalid_user_id` | `:userId` no es un UUID |
+| 400 | `report_self` | Reportarse a uno mismo |
+| 400 | `block_self` | Bloquearse a uno mismo |
 | 401 | `unauthorized` | Falta la sesión |
 | 401 | `invalid_access_token` | JWT inválido o vencido, o la cuenta ya no existe |
 | 401 | `invalid_refresh_token` | Refresh token inválido, vencido, revocado o ya usado |
 | 401 | `invalid_provider_token` | No se pudo verificar el token de Google o de Apple |
 | 403 | `not_your_run` | Terminar la partida de otro usuario |
 | 403 | `invalid_claim_token` | Falta el `claimToken` o no corresponde |
+| 403 | `follow_blocked` | Seguir a alguien que te bloqueó |
 | 404 | `not_found` | Ruta inexistente |
 | 404 | `user_not_found` | Usuario inexistente |
 | 404 | `run_not_found` | Partida inexistente (o id que no es UUID) |
@@ -67,6 +70,8 @@ No se aceptan propiedades extra en los cuerpos: devuelven `400 validation_error`
 | 409 | `username_taken` | Nombre de usuario tomado |
 | 409 | `country_change_too_soon` | Cambio de país antes de 30 días (incluye `nextCountryChangeAt`) |
 | 409 | `inviter_already_set` | Ya se indicó quién te invitó |
+| 409 | `user_blocked` | Seguir a alguien que bloqueaste (primero hay que desbloquearlo) |
+| 409 | `already_reported` | Ya reportaste a ese jugador hoy (UTC) |
 | 409 | `run_already_finished` | La partida ya se había terminado |
 | 409 | `run_already_claimed` | La partida de invitado ya tiene dueño |
 | 409 | `run_not_finished` | Reclamar una partida que no se ha terminado |
@@ -92,6 +97,9 @@ General: 120 por minuto (`THROTTLE_LIMIT`). Límites por ruta:
 | `POST /runs`, `POST /runs/:id/finish` | 30 |
 | `POST /runs/:id/claim` | 20 |
 | `/users/check-username`, `/users/search` | 60 |
+| `POST /users/:username/report` | 10 |
+| `POST`/`DELETE /users/:username/block` | 30 |
+| `/admin/*` | 30 |
 
 `/health` no tiene límite. `GET /challenges/:code`, `GET /daily`, `GET /daily/leaderboard` y `GET /missions` usan el límite general.
 
@@ -192,6 +200,7 @@ Todos opcionales. Es el tipo `GameMods` del motor y se pasa tal cual a `createGa
 - Solo `a-z`, `0-9`, `.` y `_`.
 - No puede empezar ni terminar con `.`, ni tener `..`.
 - Hay algunos nombres reservados (`admin`, `soporte`, `invitado`…).
+- **Filtro** (guía 1.2 de Apple; `src/users/username-filter.ts`): no se aceptan groserías, insultos ni términos de odio (español con chilenismos, e inglés) ni nombres que se hagan pasar por el juego, su equipo o una marca (`touchedblock`, `admin`, `moderador`, `soporte`, `oficial`, `apple`, `google`…). Antes de comparar se quitan tildes y separadores y se deshacen sustituciones típicas (0→o, 1→i/l, 3→e, 4→a, 5→s, 7→t, @→a, $→s) y letras repetidas. Las palabras cortas o con otros significados solo cuentan como palabra completa (`computadora`, `vergara`, `badminton` y `pineapple` pasan). Rige al crear la cuenta (el nombre generado lo cumple), en `PATCH /me`, en `check-username` y en el cambio forzado de `/admin`. Los nombres que ya existían no se cambian solos: `scripts/check-usernames.mjs` los lista (docs/despliegue.md, "Moderación"). Error: `400 invalid_username` con un `message` que dice si es por groserías o por suplantación.
 - Al recibirlo se recortan los espacios, se quita una `@` inicial y se pasa a minúsculas, así que `@Pepa` equivale a `pepa`. Es único sin distinguir mayúsculas.
 - Al registrarse se genera a partir del nombre de Google: "Sebastián Sanhueza" → `sebastian.sanhueza`. Si ese nombre está tomado, se agregan dígitos: `sebastian.sanhueza42`.
 
@@ -204,8 +213,10 @@ Todos opcionales. Es el tipo `GameMods` del motor y se pasa tal cual a `createGa
 `200`:
 
 ```json
-{ "status": "ok", "db": "ok", "rulesVersion": 5, "version": "v0.1.0", "time": "2026-11-09T14:13:54.353Z" }
+{ "status": "ok", "db": "ok", "rulesVersion": 5, "version": "v0.5.0", "features": ["moderation"], "time": "2026-11-09T14:13:54.353Z" }
 ```
+
+`features` lista funciones opcionales de esta versión de la API (desde la versión con moderación; v0.4.0 no lo manda). La web se publica antes que la API, así que el cliente solo muestra lo que depende de ellas si aparecen aquí: con `moderation`, el menú para reportar y bloquear.
 
 `503 db_unavailable` si la base no responde. Lo usan el `HEALTHCHECK` de Docker y Dokploy.
 
@@ -226,15 +237,16 @@ Todos opcionales. Es el tipo `GameMods` del motor y se pasa tal cual a `createGa
 
 **Login de desarrollo**: con `AUTH_DEV_FAKE=1` y `NODE_ENV` distinto de `production`, también acepta `idToken` con la forma `dev:<sub>:<nombre>` (`<sub>`: `a-z0-9_.-`, hasta 64 caracteres; `<nombre>`: hasta 60), sin hablar con Google. La identidad queda como `google` / `dev:<sub>`, así que el mismo `<sub>` vuelve a la misma cuenta. Sirve para probar el login de punta a punta en local (el cliente muestra "Entrar (dev)" con `EXPO_PUBLIC_AUTH_DEV_FAKE=1`). En producción esa variable se ignora y el token se verifica con Google como siempre.
 
-### `POST /auth/apple` (pública; la usa la app iOS)
+### `POST /auth/apple` (pública; la usan la app iOS y la web)
 
 ```json
-{ "identityToken": "<JWT de Sign in with Apple>", "authorizationCode": "c1a2b3…", "fullName": "Ana Pérez", "country": "CL" }
+{ "identityToken": "<JWT de Sign in with Apple>", "authorizationCode": "c1a2b3…", "fullName": "Ana Pérez", "redirectUri": "https://web.touchedblock.app/", "country": "CL" }
 ```
 
-- `identityToken`: se verifica con las claves públicas de Apple (`iss` = `https://appleid.apple.com`, `aud` en `APPLE_AUDIENCES`). El correo puede ser de reenvío privado (`…@privaterelay.appleid.com`); se acepta igual.
-- `authorizationCode` (opcional, desde el 18 nov 2026; hasta 1024 caracteres): código de un solo uso (vence en 5 min). La API lo canjea en `https://appleid.apple.com/auth/token` por el refresh token de Apple y lo guarda **cifrado** en la identidad (nunca sale en una respuesta), para revocarlo al eliminar la cuenta (`DELETE /me`). Si faltan las variables de revocación o Apple rechaza el código, el login responde igual y queda un aviso en el log. **Una API anterior a este campo responde `400 validation_error`** si se manda.
-- `fullName` (opcional): Apple solo lo entrega en el primer inicio de sesión.
+- `identityToken`: se verifica con las claves públicas de Apple (`iss` = `https://appleid.apple.com`, `aud` en `APPLE_AUDIENCES`). En la app iOS `aud` es el bundle ID (`app.touchedblock`); en la web (Sign in with Apple JS), el Services ID (`app.touchedblock.web`). El correo puede ser de reenvío privado (`…@privaterelay.appleid.com`); se acepta igual.
+- `authorizationCode` (opcional, desde el 18 nov 2026; hasta 1024 caracteres): código de un solo uso (vence en 5 min). La API lo canjea en `https://appleid.apple.com/auth/token` por el refresh token de Apple y lo guarda **cifrado** en la identidad (nunca sale en una respuesta), para revocarlo al eliminar la cuenta (`DELETE /me`). El canje y la revocación usan como `client_id` el `aud` del `identityToken` (bundle ID o Services ID), que se guarda cifrado junto al token; los tokens guardados sin él (antes del 18 nov 2026, solo iOS) usan `APPLE_CLIENT_ID`. Si faltan las variables de revocación o Apple rechaza el código, el login responde igual y queda un aviso en el log. **Una API anterior a este campo responde `400 validation_error`** si se manda.
+- `redirectUri` (opcional, desde el 18 nov 2026; solo web): el `redirectURI` de la autorización (`https://…`, hasta 512 caracteres). Apple exige el mismo `redirect_uri` al canjear el código; la app iOS no lo manda. Otro esquema que no sea `https` → `400 validation_error`. **La API `v0.4.0` responde `400 validation_error`** si se manda.
+- `fullName` (opcional, hasta 100): Apple solo lo entrega en el primer inicio de sesión. Se usa al crear la cuenta. En una cuenta existente nunca reemplaza ni borra el nombre guardado: solo lo completa si estaba vacío (reintento del cliente tras un primer intento fallido).
 - Requiere `APPLE_AUDIENCES`. Sin esa variable responde `503 provider_unavailable`.
 
 `200` → `LoginResponse`.
@@ -248,7 +260,7 @@ Notificaciones servidor a servidor de Sign in with Apple (se configura la URL `h
 ```
 
 - El JWT se verifica como el `identityToken` (JWKS de Apple, `iss`, `aud` en `APPLE_AUDIENCES`). Su claim `events` trae `{ "type", "sub", … }`.
-- `consent-revoked` (la persona dejó de usar su Apple ID con la app) y `account-delete` (borró su Apple ID): se elimina la cuenta de esa identidad, igual que `DELETE /me` pero sin volver a revocar en Apple. `email-disabled` / `email-enabled` y otros tipos se ignoran.
+- `consent-revoked` (la persona dejó de usar su Apple ID con la app) y `account-delete` / `account-deleted` (borró su Apple ID; la documentación de Apple usa los dos nombres): se elimina la cuenta de esa identidad, igual que `DELETE /me` pero sin volver a revocar en Apple. `email-disabled` / `email-enabled` y otros tipos se ignoran.
 - `200 { "ok": true }`, también si la cuenta ya no existe. Errores: `401 invalid_provider_token` (firma o audiencia inválida), `503 provider_unavailable` (sin `APPLE_AUDIENCES`), `400 validation_error`.
 
 ### `POST /auth/refresh` (pública)
@@ -325,7 +337,7 @@ Busca el texto en **cualquier parte** del nombre de usuario. Antes de comparar, 
 { "users": [{ "id": "…", "username": "pepa", "country": "CL", "isFollowing": true }] }
 ```
 
-`isFollowing` solo viene con sesión. Si `q` queda vacío después de normalizarlo, o nadie calza, responde `{ "users": [] }`.
+`isFollowing` solo viene con sesión. Con sesión no aparecen los jugadores con un bloqueo contigo (en cualquier sentido). Si `q` queda vacío después de normalizarlo, o nadie calza, responde `{ "users": [] }`.
 
 ### `GET /users/:username` (sesión opcional; perfil público)
 
@@ -343,13 +355,15 @@ Busca el texto en **cualquier parte** del nombre de usuario. Antes de comparar, 
   "followingCount": 3,
   "createdAt": "2026-11-01T10:00:00.000Z",
   "isMe": false,
-  "isFollowing": true
+  "isFollowing": true,
+  "isBlocked": false
 }
 ```
 
 - `tier` es su insignia (`TierRef`), o `null` si no tiene partidas válidas. La insignia es pública.
 - `best` es el récord histórico con la versión de reglas actual, o `null`.
-- `isMe` e `isFollowing` solo vienen con sesión.
+- `isMe`, `isFollowing` e `isBlocked` (lo bloqueé) solo vienen con sesión.
+- Si ese usuario **te bloqueó**, responde `404 user_not_found` como si no existiera.
 
 Error: `404 user_not_found`.
 
@@ -366,6 +380,7 @@ Error: `404 user_not_found`.
 - Se puede indicar **una sola vez** y nunca a uno mismo.
 - Ambos usuarios quedan siguiéndose mutuamente.
 - Quien invitó gana un corazón, hasta un máximo de 8.
+- Si hay un bloqueo entre los dos, el corazón se da igual pero no se crean los seguimientos.
 
 `200`:
 
@@ -377,7 +392,7 @@ Errores: `404 user_not_found`, `400 inviter_self`, `409 inviter_already_set`.
 
 ### `POST /follows/:userId` (requiere sesión)
 
-`204`. Es idempotente: seguir de nuevo a alguien no da error. Errores: `400 follow_self`, `400 invalid_user_id`, `404 user_not_found`.
+`204`. Es idempotente: seguir de nuevo a alguien no da error. Errores: `400 follow_self`, `400 invalid_user_id`, `404 user_not_found`, `409 user_blocked` (lo bloqueaste), `403 follow_blocked` (te bloqueó).
 
 ### `DELETE /follows/:userId` (requiere sesión)
 
@@ -392,6 +407,49 @@ Errores: `404 user_not_found`, `400 inviter_self`, `409 inviter_already_set`.
 ```
 
 Ordenados del más reciente al más antiguo.
+
+---
+
+## Moderación (guía 1.2 de Apple)
+
+Reportar y bloquear jugadores. En el cliente no se ve por defecto: en las filas de los rankings y en el perfil público aparece un botón "⋯" al pasar el mouse, o el menú se abre con un toque sostenido (~500 ms; también en la web táctil). Solo se muestra si `GET /health` trae `features: ["moderation"]`. Plazo de revisión de los reportes: **24 horas** (docs/despliegue.md, "Moderación").
+
+### `POST /users/:username/report` (requiere sesión)
+
+```json
+{ "reason": "offensive_name", "details": "texto opcional" }
+```
+
+- `reason`: `offensive_name` (nombre ofensivo), `impersonation` (suplantación) u `other`.
+- `details`: opcional, hasta 200 caracteres.
+- Un reporte por reportante, reportado y día (UTC). Queda `pending` en la tabla `Report` (no hay aviso por correo).
+
+`201`: `{ "id": "…", "status": "pending", "reviewWithinHours": 24 }`
+
+Errores: `400 validation_error`, `400 report_self`, `404 user_not_found`, `409 already_reported`. Límite: 10 por minuto.
+
+### `POST /users/:username/block` y `DELETE /users/:username/block` (requieren sesión)
+
+`204`, idempotentes. Al bloquear se borran los seguimientos entre los dos (en ambos sentidos). Mientras dure el bloqueo:
+
+- ninguno puede seguir al otro (`409 user_blocked` / `403 follow_blocked`);
+- no se ven en `GET /users/search` ni en los rankings de amigos (general y reto diario) del otro;
+- quien fue bloqueado recibe `404 user_not_found` al pedir el perfil de quien lo bloqueó.
+
+Desbloquear no recrea los seguimientos. Los rankings mundial y de país no cambian. Errores: `400 block_self`, `404 user_not_found`.
+
+### `GET /me/blocks` (requiere sesión)
+
+`200`: `{ "users": [{ "id": "…", "username": "pepa", "country": "CL", "blockedAt": "…" }] }`, del más reciente al más antiguo.
+
+### Endpoints del dueño: `/admin/*`
+
+Protegidos con la cabecera `X-Admin-Token: <ADMIN_TOKEN>` (comparada en tiempo constante). Si `ADMIN_TOKEN` no está configurada **o el token no coincide**, responden `404 not_found`, como si no existieran. Un token de sesión de jugador no sirve. Límite: 30 por minuto. Lo mismo desde la línea de comandos: `scripts/moderation.mjs` (docs/despliegue.md).
+
+- `GET /admin/reports?status=pending|resolved|dismissed|all&limit=100`: `{ "pending": 3, "overdue": 0, "reports": [{ "id", "status", "reason", "details", "reportedUsername", "reported": { "id", "username" } | null, "reporter": { "id", "username" } | null, "createdAt", "ageHours", "resolvedAt", "resolution" }] }`. Los pendientes van del más antiguo al más nuevo; `overdue` = pendientes de más de 24 h. `reportedUsername` es el nombre al reportarlo; `reported` es null si la cuenta ya no existe.
+- `POST /admin/reports/:id/resolve` con `{ "status": "resolved" | "dismissed", "resolution": "texto" }` (ambos opcionales; por defecto `resolved`): `200 { id, status, resolution, resolvedAt }`. Errores: `400 invalid_id`, `404 report_not_found`.
+- `POST /admin/users/:username/rename` con `{ "username": "nuevo" }` o `{}` (nombre automático `jugadorNNNN`): `200 { "from", "to", "resolvedReports", "dryRun": false }`. El nombre nuevo debe cumplir las reglas y el filtro. Cierra los reportes pendientes contra ese usuario. Errores: `400 invalid_username`, `400 same_username`, `404 user_not_found`, `409 username_taken`.
+- `DELETE /admin/users/:username`: elimina la cuenta igual que `DELETE /me` (incluida la revocación de Apple) y cierra sus reportes pendientes: `200 { "deleted": "pepa", "resolvedReports": 1 }`. Los reportes quedan con `reported: null`.
 
 ---
 
@@ -1015,8 +1073,8 @@ Al arrancar, el contenedor aplica las migraciones pendientes (`prisma migrate de
 | `JWT_SECRET` | sí | Secreto HS256; en producción, al menos 32 caracteres |
 | `DAILY_SECRET` | en producción | Secreto de la semilla del reto diario (HMAC-SHA256 de la fecha); al menos 32 caracteres. Fuera de producción, si falta, se usa un valor fijo de desarrollo. No cambiarlo una vez publicado: cambiaría la partida del día en curso |
 | `GOOGLE_CLIENT_IDS` | para el login con Google | Client IDs de OAuth aceptados como audiencia, separados por coma (web hoy; Android/iOS después) |
-| `APPLE_AUDIENCES` | para el login con Apple | Bundle ID / Services ID de Apple, separados por coma (`app.touchedblock`) |
-| `APPLE_CLIENT_ID` | no | `client_id` para canjear y revocar tokens de Apple (bundle ID). Por defecto, la primera de `APPLE_AUDIENCES` |
+| `APPLE_AUDIENCES` | para el login con Apple | Bundle ID y Services ID de Apple, separados por coma, bundle ID primero (`app.touchedblock,app.touchedblock.web`) |
+| `APPLE_CLIENT_ID` | no | `client_id` de respaldo para revocar tokens de Apple guardados sin él (bundle ID). Por defecto, la primera de `APPLE_AUDIENCES`. Los tokens nuevos usan el `aud` de su login |
 | `APPLE_TEAM_ID` | para revocar | Team ID de Apple Developer (`iss` del `client_secret`) |
 | `APPLE_KEY_ID` | para revocar | Key ID de la clave con Sign in with Apple (`kid` del `client_secret`) |
 | `APPLE_PRIVATE_KEY` | para revocar | Contenido del `.p8` (PEM PKCS#8); los saltos de línea pueden ir como `\n`. Sin estas tres (o sin `client_id`) el login con Apple funciona y la revocación se omite con un aviso. **Secreto: nunca en el repo** |
@@ -1026,4 +1084,5 @@ Al arrancar, el contenedor aplica las migraciones pendientes (`prisma migrate de
 | `CLEANUP_INTERVAL_MS` | no | Cada cuánto se limpian partidas viejas y sesiones vencidas (1 h; `0` la desactiva) |
 | `TRUST_PROXY` | no | Valor de `trust proxy` de Express (por defecto `loopback, linklocal, uniquelocal`, que sirve detrás de Traefik/Dokploy) |
 | `APP_VERSION` | no | Lo pone la imagen Docker (tag de git) y aparece en `/health` |
+| `ADMIN_TOKEN` | no | Secreto de los endpoints `/admin/*` (cabecera `X-Admin-Token`); en producción, al menos 32 caracteres. Sin él, `/admin/*` responde 404. **Secreto: nunca en el repo** |
 | `AUTH_DEV_FAKE` | no | Solo desarrollo: `1` acepta el login `dev:<sub>:<nombre>` en `/auth/google`. Se ignora con `NODE_ENV=production` |

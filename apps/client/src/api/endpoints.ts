@@ -5,9 +5,11 @@ import { runPlatform } from '@/platform/runPlatform';
 import { ApiError, api } from './client';
 import { session } from './session';
 import type {
+  BlockedUser,
   ChallengeView,
   CheckUsername,
   FollowUser,
+  Health,
   InviterResult,
   Leaderboard,
   LoginResponse,
@@ -15,6 +17,8 @@ import type {
   MeRuns,
   Period,
   PublicProfile,
+  ReportReason,
+  ReportResult,
   RunResult,
   RunStart,
   Scope,
@@ -40,15 +44,22 @@ export async function loginGoogle(idToken: string): Promise<LoginResponse> {
 }
 
 /**
- * Sign in with Apple (app iOS). `authorizationCode` va para que la API guarde el refresh token de
- * Apple y pueda revocarlo al eliminar la cuenta; `fullName` solo llega la primera vez.
+ * Sign in with Apple (app iOS y web). `authorizationCode` va para que la API guarde el refresh token de
+ * Apple y pueda revocarlo al eliminar la cuenta; `fullName` solo llega la primera vez; `redirectUri`
+ * solo en la web (la API lo necesita para canjear el código).
  */
-export async function loginApple(p: { identityToken: string; authorizationCode?: string | null; fullName?: string | null }): Promise<LoginResponse> {
+export async function loginApple(p: {
+  identityToken: string;
+  authorizationCode?: string | null;
+  fullName?: string | null;
+  redirectUri?: string | null;
+}): Promise<LoginResponse> {
   const country = browserCountry();
   const body = {
     identityToken: p.identityToken,
     ...(p.authorizationCode ? { authorizationCode: p.authorizationCode } : {}),
     ...(p.fullName ? { fullName: p.fullName } : {}),
+    ...(p.redirectUri ? { redirectUri: p.redirectUri } : {}),
     ...(country ? { country } : {}),
   };
   const r = await api<LoginResponse>('POST', '/auth/apple', { auth: 'none', body });
@@ -99,6 +110,19 @@ export const setInviter = (username: string) => api<InviterResult>('POST', '/me/
 export const follow = (userId: string) => api<void>('POST', '/follows/' + userId, { auth: 'required' });
 export const unfollow = (userId: string) => api<void>('DELETE', '/follows/' + userId, { auth: 'required' });
 export const fetchFollowing = () => api<{ users: FollowUser[] }>('GET', '/me/following', { auth: 'required' });
+
+// ---- moderación: reportar y bloquear (la API v0.4.0 no la tiene: ver useApiFeatures) ----
+
+export const fetchHealth = () => api<Health>('GET', '/health', { auth: 'none', timeoutMs: 10_000 });
+const userPath = (username: string) => '/users/' + encodeURIComponent(username);
+export const reportUser = (username: string, reason: ReportReason, details?: string) =>
+  api<ReportResult>('POST', userPath(username) + '/report', {
+    auth: 'required',
+    body: { reason, ...(details?.trim() ? { details: details.trim() } : {}) },
+  });
+export const blockUser = (username: string) => api<void>('POST', userPath(username) + '/block', { auth: 'required' });
+export const unblockUser = (username: string) => api<void>('DELETE', userPath(username) + '/block', { auth: 'required' });
+export const fetchBlocks = () => api<{ users: BlockedUser[] }>('GET', '/me/blocks', { auth: 'required' });
 
 // ---- partidas ----
 

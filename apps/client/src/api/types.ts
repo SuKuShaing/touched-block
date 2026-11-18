@@ -258,6 +258,8 @@ export interface PublicProfile {
   createdAt: string;
   isMe?: boolean;
   isFollowing?: boolean;
+  /** Con sesión (API con moderación): lo bloqueé. */
+  isBlocked?: boolean;
   tier?: TierRef | null;
 }
 
@@ -286,4 +288,29 @@ export interface InviterResult {
   inviter: UserRef;
   inviterInvitedCount: number;
   inviterMaxLives: number;
+}
+
+/** Motivo de un reporte (POST /users/:username/report). */
+export type ReportReason = 'offensive_name' | 'impersonation' | 'other';
+
+export interface ReportResult {
+  id: string;
+  status: 'pending';
+  /** Plazo de revisión (24 h). */
+  reviewWithinHours: number;
+}
+
+/** Un jugador que bloqueé (GET /me/blocks). */
+export interface BlockedUser {
+  id: string;
+  username: string;
+  country: string | null;
+  blockedAt: string;
+}
+
+/** GET /health. `features` no viene en la API anterior a la moderación (v0.4.0). */
+export interface Health {
+  status: string;
+  version?: string;
+  features?: string[];
 }

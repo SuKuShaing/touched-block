@@ -1,5 +1,6 @@
 import { normalizeCountry } from '../common/countries';
 import { badRequest, unauthorized } from '../common/errors';
+import { blockedEitherWay } from '../moderation/blocks';
 import type { PrismaService } from '../prisma/prisma.service';
 
 export type Scope = 'world' | 'country' | 'friends';
@@ -14,7 +15,7 @@ export interface ResolvedScope {
 /**
  * Resuelve el alcance de un ranking (lo comparten el ranking general y el del reto diario).
  * - `country`: el indicado, o el del usuario; `400 country_required` si no hay ninguno.
- * - `friends`: a quienes sigo y yo; requiere sesión.
+ * - `friends`: a quienes sigo y yo (sin bloqueos en ningún sentido); requiere sesión.
  */
 export async function resolveScope(
   prisma: PrismaService,
@@ -36,8 +37,12 @@ export async function resolveScope(
   }
   if (scope === 'friends') {
     if (!userId) throw unauthorized('Inicia sesión para ver el ranking de amigos.');
-    const follows = await prisma.follow.findMany({ where: { followerId: userId }, select: { followeeId: true } });
-    return { userIds: [userId, ...follows.map((f) => f.followeeId)] };
+    const [follows, blocked] = await Promise.all([
+      prisma.follow.findMany({ where: { followerId: userId }, select: { followeeId: true } }),
+      // al bloquear se borran los seguimientos; esto es por si acaso (nunca un bloqueado en Amigos)
+      blockedEitherWay(prisma, userId),
+    ]);
+    return { userIds: [userId, ...follows.map((f) => f.followeeId).filter((id) => !blocked.has(id))] };
   }
   return {};
 }

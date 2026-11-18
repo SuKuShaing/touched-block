@@ -8,8 +8,12 @@ import { AuthService } from './auth.service';
 import { AppleLoginDto, AppleNotificationDto, GoogleLoginDto, RefreshDto } from './dto';
 import { AppleVerifier, GoogleVerifier } from './verifiers';
 
-/** Avisos de Apple que significan que el usuario dejó de usar Sign in with Apple con la app. */
-const APPLE_DELETE_EVENTS = new Set(['consent-revoked', 'account-delete']);
+/**
+ * Avisos de Apple que significan que el usuario dejó de usar Sign in with Apple con la app. La
+ * documentación de Apple usa `account-deleted` en los ejemplos y `account-delete` en otras partes:
+ * se aceptan los dos.
+ */
+const APPLE_DELETE_EVENTS = new Set(['consent-revoked', 'account-delete', 'account-deleted']);
 
 @Controller('auth')
 @Public()
@@ -39,13 +43,19 @@ export class AuthController {
     const identity = await this.apple.verify(dto.identityToken);
     const res = await this.auth.login('apple', identity, { country: dto.country, name: dto.fullName ?? null });
     // para poder revocar el token al eliminar la cuenta (guía 5.1.1(v)); nunca hace fallar el login
-    if (dto.authorizationCode) await this.appleTokens.storeFromCode(identity.subject, dto.authorizationCode);
+    // con el client_id de la autorización (bundle ID en iOS, Services ID en la web) y, en la web, su redirect_uri
+    if (dto.authorizationCode) {
+      await this.appleTokens.storeFromCode(identity.subject, dto.authorizationCode, {
+        clientId: identity.audience,
+        redirectUri: dto.redirectUri,
+      });
+    }
     return res;
   }
 
   /**
    * Notificaciones servidor a servidor de Sign in with Apple (se configuran en Apple Developer).
-   * `consent-revoked` (dejó de usar su Apple ID con la app) y `account-delete` (borró su Apple ID)
+   * `consent-revoked` (dejó de usar su Apple ID con la app) y `account-delete(d)` (borró su Apple ID)
    * eliminan la cuenta; los demás avisos se ignoran. Responde 200 aunque la cuenta no exista.
    */
   @Post('apple/notifications')

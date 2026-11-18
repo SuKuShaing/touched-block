@@ -5,7 +5,14 @@ import type { AppConfig } from '../config/app-config';
 import type { PrismaService } from '../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 import type { StatsService } from '../stats/stats.service';
-import { APPLE_ORIGIN, AppleTokensService, TokenCipher, missingAppleRevocationVars } from './apple-tokens';
+import {
+  APPLE_ORIGIN,
+  AppleTokensService,
+  TokenCipher,
+  missingAppleRevocationVars,
+  packAppleToken,
+  unpackAppleToken,
+} from './apple-tokens';
 import { parseAppleEvents } from './verifiers';
 
 const { privateKey, publicKey } = generateKeyPairSync('ec', { namedCurve: 'P-256' });
@@ -19,7 +26,7 @@ const baseConfig = {
   appleKeyId: 'KEY1234567',
   applePrivateKey: P8,
   appleClientId: 'app.touchedblock',
-  appleAudiences: ['app.touchedblock'],
+  appleAudiences: ['app.touchedblock', 'app.touchedblock.web'],
 };
 const cfg = (over: Partial<typeof baseConfig> = {}) => ({ ...baseConfig, ...over }) as unknown as AppConfig;
 
@@ -136,7 +143,40 @@ describe('AppleTokensService', () => {
     expect(f.calls[0].params.get('client_secret')?.split('.')).toHaveLength(3);
     const stored = idents[0].providerRefreshToken!;
     expect(stored).not.toContain('r.secreto');
-    expect(new TokenCipher(SECRET).decrypt(stored)).toBe('r.secreto');
+    expect(unpackAppleToken(new TokenCipher(SECRET).decrypt(stored)!, 'x')).toEqual({ clientId: 'app.touchedblock', token: 'r.secreto' });
+    // la app iOS no pide redirect_uri: no se manda
+    expect(f.calls[0].params.has('redirect_uri')).toBe(false);
+  });
+
+  it('web: canjea con el Services ID (audiencia del token) y el redirect_uri, y lo guarda con ese client_id', async () => {
+    const { prisma, idents } = fakePrisma([{ id: 'i1', userId: 'u1', provider: 'apple', subject: 'sub1', providerRefreshToken: null }]);
+    const f = fakeFetch(() => ({ status: 200, body: { refresh_token: 'r.web' } }));
+    const svc = new AppleTokensService(cfg(), prisma, f.fn);
+    await svc.storeFromCode('sub1', 'c.web', { clientId: 'app.touchedblock.web', redirectUri: 'https://web.touchedblock.app/' });
+    expect(f.calls[0].params.get('client_id')).toBe('app.touchedblock.web');
+    expect(f.calls[0].params.get('redirect_uri')).toBe('https://web.touchedblock.app/');
+    // el client_secret también lleva sub = Services ID
+    const { payload } = await jwtVerify(f.calls[0].params.get('client_secret')!, await importSPKI(SPKI, 'ES256'), {
+      issuer: 'TEAM123456',
+      audience: APPLE_ORIGIN,
+    });
+    expect(payload.sub).toBe('app.touchedblock.web');
+    // ...y al eliminar la cuenta se revoca con el mismo client_id
+    const r = fakeFetch(() => ({ status: 200 }));
+    await new AppleTokensService(cfg(), prisma, r.fn).revokeForUser('u1');
+    expect(idents[0].providerRefreshToken).not.toContain('r.web');
+    expect(r.calls).toHaveLength(1);
+    expect(r.calls[0].params.get('client_id')).toBe('app.touchedblock.web');
+    expect(r.calls[0].params.get('token')).toBe('r.web');
+  });
+
+  it('usa un client_secret distinto por client_id', async () => {
+    const svc = new AppleTokensService(cfg(), fakePrisma([]).prisma, fakeFetch(() => ({ status: 200 })).fn);
+    const now = Math.floor(Date.now() / 1000);
+    const a = await svc.clientSecret(now, 'app.touchedblock');
+    const b = await svc.clientSecret(now, 'app.touchedblock.web');
+    expect(a).not.toBe(b);
+    expect(await svc.clientSecret(now + 5, 'app.touchedblock.web')).toBe(b);
   });
 
   it('si Apple rechaza el código, no lanza ni guarda nada', async () => {
@@ -180,6 +220,17 @@ describe('AppleTokensService', () => {
     await svc.revokeForUser('u1');
     await svc.revokeForUser('u2');
     expect(f.calls).toHaveLength(0);
+  });
+});
+
+describe('formato del token guardado', () => {
+  it('empaqueta el client_id con el token y lee los guardados antes a secas (client_id por defecto)', () => {
+    expect(unpackAppleToken(packAppleToken({ clientId: 'app.touchedblock.web', token: 'r.1' }), 'app.touchedblock')).toEqual({
+      clientId: 'app.touchedblock.web',
+      token: 'r.1',
+    });
+    expect(unpackAppleToken('r.viejo', 'app.touchedblock')).toEqual({ clientId: 'app.touchedblock', token: 'r.viejo' });
+    expect(unpackAppleToken('{no json', 'app.touchedblock')).toEqual({ clientId: 'app.touchedblock', token: '{no json' });
   });
 });
 
@@ -241,6 +292,8 @@ describe('avisos servidor a servidor de Apple', () => {
       subject: 's1',
     });
     expect(parseAppleEvents({ type: 'account-delete', sub: 's2' })).toEqual({ type: 'account-delete', subject: 's2' });
+    // el nombre que usan los ejemplos de la documentación de Apple
+    expect(parseAppleEvents({ type: 'account-deleted', sub: 's3' })).toEqual({ type: 'account-deleted', subject: 's3' });
   });
 
   it('rechaza events sin type o sin sub', () => {

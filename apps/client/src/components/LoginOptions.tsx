@@ -4,6 +4,7 @@ import { errorMessage } from '@/api/client';
 import { loginApple, loginGoogle } from '@/api/endpoints';
 import type { LoginResponse } from '@/api/types';
 import { config } from '@/config';
+import { appleNameForLogin, forgetAppleName } from '@/lib/appleName';
 import { auth } from '@/platform/auth';
 import { C } from '@/theme';
 import { AppleSignInButton } from './AppleSignInButton';
@@ -128,7 +129,7 @@ function DevLogin({ onToken, busy }: { onToken: (t: string) => void; busy: boole
   );
 }
 
-/** true cuando el sistema confirma Sign in with Apple (solo iOS). */
+/** true cuando hay Sign in with Apple: iOS (lo confirma el sistema) o web con Services ID. */
 function useAppleAvailable() {
   const [ok, setOk] = useState(false);
   useEffect(() => {
@@ -147,8 +148,8 @@ function useAppleAvailable() {
 }
 
 /**
- * Opciones para iniciar sesión: Sign in with Apple (solo iOS, arriba, como pide Apple), el botón
- * de Google y, en desarrollo, "Entrar (dev)".
+ * Opciones para iniciar sesión: Sign in with Apple (iOS, y la web si hay Services ID; arriba, como
+ * pide Apple), el botón de Google y, en desarrollo, "Entrar (dev)". Android: solo Google.
  * Llama `onLoggedIn` cuando la sesión quedó guardada.
  */
 export function LoginOptions({ onLoggedIn }: { onLoggedIn?: (r: LoginResponse) => void | Promise<void> }) {
@@ -184,7 +185,16 @@ export function LoginOptions({ onLoggedIn }: { onLoggedIn?: (r: LoginResponse) =
         if (r?.error) setErr(r.error);
         return null;
       }
-      return loginApple({ identityToken: r.identityToken, authorizationCode: r.authorizationCode, fullName: r.fullName });
+      // Apple da el nombre solo la 1.ª vez: si este intento falla, el siguiente lo manda desde memoria
+      const fullName = appleNameForLogin(r.identityToken, r.fullName);
+      const res = await loginApple({
+        identityToken: r.identityToken,
+        authorizationCode: r.authorizationCode,
+        fullName,
+        redirectUri: r.redirectUri,
+      });
+      forgetAppleName(r.identityToken);
+      return res;
     });
 
   return (

@@ -9,7 +9,9 @@
     "dist",
     "prisma",
     "prisma.config.ts",
-    "scripts/backfill-streaks.mjs"
+    "scripts/backfill-streaks.mjs",
+    "scripts/moderation.mjs",
+    "scripts/check-usernames.mjs"
   ],
   "scripts": {
     "build": "prisma generate && tsc -p tsconfig.build.json",

@@ -9,6 +9,12 @@ export interface VerifiedIdentity {
   subject: string;
   email?: string | null;
   name?: string | null;
+  /**
+   * Solo Apple: la audiencia (`aud`) del identityToken, ya validada contra APPLE_AUDIENCES. Es el
+   * bundle ID en la app iOS y el Services ID en la web; es el `client_id` con el que hay que canjear
+   * el authorizationCode y revocar el token.
+   */
+  audience?: string | null;
 }
 
 /**
@@ -84,8 +90,11 @@ export class JoseAppleVerifier extends AppleVerifier {
       });
       if (typeof payload.sub !== 'string' || !payload.sub) throw new Error('sin sub');
       const email = typeof payload.email === 'string' ? payload.email : null;
+      const aud = (Array.isArray(payload.aud) ? payload.aud : [payload.aud]).find(
+        (a): a is string => typeof a === 'string' && this.config.appleAudiences.includes(a),
+      );
       // Apple solo entrega el nombre en el primer inicio de sesión, y fuera del token (fullName).
-      return { subject: payload.sub, email, name: null };
+      return { subject: payload.sub, email, name: null, audience: aud ?? null };
     } catch {
       throw invalidToken();
     }

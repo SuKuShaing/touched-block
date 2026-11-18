@@ -4,12 +4,18 @@
  */
 const apiUrl = (process.env.EXPO_PUBLIC_API_URL ?? '').trim().replace(/\/+$/, '');
 const googleClientId = (process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? '').trim();
+const appleServicesId = (process.env.EXPO_PUBLIC_APPLE_SERVICES_ID ?? '').trim();
 
 export const config = {
   /** URL base de la API (sin `/` final), p. ej. `https://api.ejemplo.cl`. */
   apiUrl,
   /** Client ID web de OAuth de Google (Google Identity Services). */
   googleClientId,
+  /**
+   * Solo web: Services ID de Sign in with Apple (p. ej. `app.touchedblock.web`). Vacío = la web no
+   * muestra el botón de Apple. La app iOS no lo usa (pide el login con el bundle ID).
+   */
+  appleServicesId,
   /** Solo desarrollo: muestra "Entrar (dev)" (la API debe correr con AUTH_DEV_FAKE=1). */
   authDevFake: process.env.EXPO_PUBLIC_AUTH_DEV_FAKE === '1',
   /** Dirección pública del juego (para compartir e invitar). Con `/` al final. */

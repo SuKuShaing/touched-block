@@ -141,9 +141,10 @@ El archivo `deploy/.env` (ignorado por git) ya tiene los valores reales generado
 | `JWT_SECRET` | 48 bytes aleatorios. Si cambia, todas las sesiones se cierran |
 | `DAILY_SECRET` | **Obligatoria desde la fase 4** (reto diario): sin ella el Compose no arranca (`falta DAILY_SECRET`) y la API tampoco. 48 bytes aleatorios (mínimo 32 caracteres): `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"`. Es la llave de la semilla del reto diario (`HMAC-SHA256(DAILY_SECRET, fecha)`): sin ella nadie puede adivinar la partida de mañana. **No cambiarla** una vez publicada: cambiaría la partida del día en curso a mitad del día |
 | `GOOGLE_CLIENT_IDS` | Client ID web. Los clientes Android/iOS no hacen falta: la app pide el `idToken` con el `webClientId` |
-| `APPLE_AUDIENCES` | `app.touchedblock` (bundle ID de la app iOS): audiencia aceptada del `identityToken` de Apple. Sin ella, `POST /auth/apple` responde 503 |
-| `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY`, `APPLE_CLIENT_ID` | Revocación del token de Apple al eliminar la cuenta (sección 6). Opcionales: si falta alguna, el login con Apple funciona y la API avisa en el log que omite la revocación. `APPLE_CLIENT_ID` = `app.touchedblock` (por defecto, la primera de `APPLE_AUDIENCES`). `APPLE_PRIVATE_KEY` = contenido del `.p8`, en una sola línea con `\n` en lugar de los saltos de línea. **Nunca en el repo** |
+| `APPLE_AUDIENCES` | `app.touchedblock,app.touchedblock.web` (bundle ID de la app iOS, primero, y Services ID de la web): audiencias aceptadas del `identityToken` de Apple. Sin ella, `POST /auth/apple` responde 503; sin el Services ID, el login con Apple de la web responde 401 (sección 6) |
+| `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY`, `APPLE_CLIENT_ID` | Revocación del token de Apple al eliminar la cuenta (sección 6). Opcionales: si falta alguna, el login con Apple funciona y la API avisa en el log que omite la revocación. `APPLE_CLIENT_ID` = `app.touchedblock` (por defecto, la primera de `APPLE_AUDIENCES`); es solo el de respaldo: cada token se canjea y revoca con el `client_id` de su login (bundle ID en iOS, Services ID en la web). `APPLE_PRIVATE_KEY` = contenido del `.p8`, en una sola línea con `\n` en lugar de los saltos de línea. **Nunca en el repo** |
 | `CORS_ORIGINS` | `https://web.touchedblock.app,https://sukushaing.github.io` (separados por coma). **Hay que cambiarlo en Dokploy**: el valor por defecto de `deploy/docker-compose.yml` solo se usa si la variable no existe, y hoy existe con el valor viejo |
+| `ADMIN_TOKEN` | Moderación (sección 7): secreto de los endpoints `/admin/*` (cabecera `X-Admin-Token`). 48 bytes aleatorios (mínimo 32 caracteres; con menos la API no arranca). Vacía = `/admin/*` responde 404; los scripts de moderación funcionan igual. **Nunca en el repo** |
 | `API_TAG` | `latest`. Para volver a una versión anterior: `v0.1.0`, etc. |
 
 ### Configuración inicial en Dokploy (una vez)
@@ -175,6 +176,7 @@ En GitHub: **repositorio → Settings → Secrets and variables → Actions**. L
 | Variable | Valor |
 |---|---|
 | `EXPO_PUBLIC_GOOGLE_CLIENT_ID` | El Client ID. Se puede crear ya |
+| `EXPO_PUBLIC_APPLE_SERVICES_ID` | `app.touchedblock.web`: muestra el botón de Sign in with Apple en la web. **Crearla solo después de publicar la API con Apple web** (sección 6.8); vacía o sin crear = sin botón |
 | `EXPO_PUBLIC_API_URL` | Ya no se usa: `deploy-web.yml` lleva escrita `https://api.touchedblock.app` |
 
 ### Publicar una versión de la API
@@ -297,28 +299,279 @@ EXPO_PUBLIC_API_URL=https://api.touchedblock.app NODE_ENV=production ./gradlew a
 - Los APK anteriores a noviembre de 2026 apuntan a `https://vps23906.cubepath.net`: ese dominio tiene que seguir en Dokploy (*Domains*) mientras haya gente con esos APK.
 - La app comparte enlaces con `https://web.touchedblock.app/` (`config.siteUrl`) y abre las páginas legales de `https://touchedblock.app/` (`config.landingUrl`).
 
-## 6. App iOS: Sign in with Apple
+## 6. Sign in with Apple (app iOS y web)
 
-Apple exige ofrecer Sign in with Apple si la app tiene otro login social (guía 4.8) y, si se puede crear cuenta con Apple, revocar su token al eliminar la cuenta (guía 5.1.1(v)). El código ya está (ver `api.md`, `POST /auth/apple`); falta configurarlo:
+Qué botón de login se ve en cada plataforma:
 
-1. **Apple Developer → Certificates, Identifiers & Profiles → Identifiers**: abrir (o crear) el App ID `app.touchedblock` y marcar la capacidad **Sign in with Apple** ("Enable as a primary App ID"). Guardar. Si ya había perfiles de aprovisionamiento, regenerarlos (EAS lo hace solo). En `app.json` ya están `ios.usesAppleSignIn: true` y el plugin `expo-apple-authentication`, que agregan el *entitlement*.
-2. **Keys → +**: crear una clave, marcar **Sign in with Apple** → *Configure* → App ID principal `app.touchedblock`. Descargar el `.p8` (**solo se puede descargar una vez**; guardarlo en el gestor de contraseñas, nunca en el repo) y anotar su **Key ID** (10 caracteres).
-3. Anotar el **Team ID** (arriba a la derecha en Apple Developer, o en *Membership details*).
-4. **Opcional, avisos de Apple**: en la configuración de Sign in with Apple del App ID, *Server-to-Server Notification Endpoint* = `https://api.touchedblock.app/auth/apple/notifications`. Con eso, si alguien deja de usar su Apple ID con la app (`consent-revoked`) o borra su Apple ID (`account-delete`), la API borra su cuenta.
-5. **Dokploy → Environment** del Compose (y la copia local `deploy/.env`):
-   ```
-   APPLE_AUDIENCES=app.touchedblock
-   APPLE_CLIENT_ID=app.touchedblock
-   APPLE_TEAM_ID=<Team ID>
-   APPLE_KEY_ID=<Key ID>
-   APPLE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\nMIGT...\n-----END PRIVATE KEY-----
-   ```
-   La clave en **una sola línea**, cambiando cada salto de línea por `\n` (la API los vuelve a convertir). Después, *Deploy* para que la API tome las variables.
-6. **Desplegar la API antes de repartir la app iOS**: la API vieja rechaza el campo nuevo `authorizationCode` (`400 validation_error`, porque no acepta campos desconocidos), así que la app solo funciona contra la API con la migración `20261118190000_add_identity_provider_refresh_token` (`v0.5.0` o la que siga).
+| Plataforma | Botones | Condición |
+|---|---|---|
+| Android (APK) | Solo Google | — |
+| App iOS | Apple (arriba) y Google | Apple: cuando iOS confirma que está disponible |
+| Web | Apple (arriba) y Google | Apple: solo si el build tiene `EXPO_PUBLIC_APPLE_SERVICES_ID` (variable del repositorio). Sin ella, la web se ve como antes |
 
-Comprobar: en el log de la API no debe aparecer `Revocación de Sign in with Apple desactivada: faltan …` tras el primer login con Apple. Al eliminar una cuenta de Apple, la app desaparece de *Ajustes → [tu nombre] → Iniciar sesión con Apple* en el iPhone.
+Por qué: Apple exige ofrecer Sign in with Apple en la app iOS si tiene otro login social (guía 4.8) y, si se puede crear cuenta con Apple, revocar su token al eliminar la cuenta (guía 5.1.1(v)). En la web no es obligatorio, pero así quien juega en el iPhone y en el computador entra con la misma cuenta. El código ya está (ver `api.md`, `POST /auth/apple`); lo que sigue es la configuración, que **solo puede hacer el dueño de la cuenta de Apple**.
+
+Documentación oficial usada (revisada el 18 nov 2026):
+- Configurar el entorno: https://developer.apple.com/documentation/signinwithapple/configuring-your-environment-for-sign-in-with-apple
+- Services ID para la web: https://developer.apple.com/help/account/capabilities/configure-sign-in-with-apple-for-the-web
+- Crear la clave privada: https://developer.apple.com/help/account/keys/create-a-private-key y su Key ID: https://developer.apple.com/help/account/keys/get-a-key-identifier
+- Avisos servidor a servidor: https://developer.apple.com/help/account/configure-app-capabilities/enabling-server-to-server-notifications y https://developer.apple.com/documentation/signinwithapple/processing-changes-for-sign-in-with-apple-accounts
+- Sign in with Apple JS (web): https://developer.apple.com/documentation/signinwithapple/configuring-your-webpage-for-sign-in-with-apple
+- Canje y revocación del token: https://developer.apple.com/documentation/signinwithapplerestapi/generate-and-validate-tokens
+
+Los nombres de menús y botones de Apple están en inglés (así aparecen en su sitio). Apple cambia su interfaz de vez en cuando: si algún botón no calza exacto, la idea es la misma.
+
+### 6.0 Antes de empezar
+
+- **Membresía del Apple Developer Program** (pago anual, USD 99; https://developer.apple.com/programs/). Sin ella no aparece *Certificates, Identifiers & Profiles*. Una cuenta de Apple gratis **no** sirve.
+- Entrar con el rol **Account Holder** o **Admin** (los otros roles no pueden crear claves).
+- Tener a mano: acceso a Dokploy (pestaña *Environment* del Compose de la API) y a GitHub (*Settings* del repositorio).
+- Los identificadores que usa el código (no cambiarlos sin cambiar también el código y las variables):
+  - **App ID / bundle ID** de la app iOS: `app.touchedblock` (en `apps/client/app.json`).
+  - **Services ID** de la web: `app.touchedblock.web` (puede ser otro, pero tiene que ser el mismo en Apple, en `APPLE_AUDIENCES` y en `EXPO_PUBLIC_APPLE_SERVICES_ID`).
+  - **Return URL** de la web: `https://web.touchedblock.app/` (con la `/` final: el cliente la arma como `origen + "/"` y Apple exige que sea idéntica).
+
+Orden recomendado (cada paso se comprueba antes de pasar al siguiente):
+1. Apple Developer: App ID (6.1), Services ID (6.2), clave `.p8` (6.3), Team ID (6.4).
+2. Convertir la clave a una línea (6.5) y pegar las variables en Dokploy (6.6).
+3. Publicar la API con un tag nuevo (6.7).
+4. Crear la variable de la web en GitHub y volver a publicar la web (6.8).
+5. Probar (6.9).
+
+**No crear la variable de la web (paso 4) antes de publicar la API nueva (paso 3)**: la API de producción `v0.4.0` no conoce el campo `redirectUri` y respondería `400 validation_error` al login con Apple. Mientras la variable no exista, la web publicada en cada push a `main` funciona igual que hoy con la API `v0.4.0`.
+
+### 6.1 App ID con Sign in with Apple (lo usan la app iOS y la web)
+
+1. Abre https://developer.apple.com/account/resources (o https://developer.apple.com/account → **Certificates, Identifiers & Profiles**).
+2. En la barra lateral, **Identifiers**. Arriba a la derecha, el filtro debe decir **App IDs**.
+3. Busca `app.touchedblock` y ábrelo.
+   - Si no existe: botón **+** (arriba a la izquierda) → **App IDs** → **Continue** → tipo **App** → **Continue** → *Description* "Touched Block", *Bundle ID* **Explicit** = `app.touchedblock` → sigue con el punto 4 en esa misma pantalla.
+4. En la pestaña **Capabilities**, marca **Sign in with Apple** y presiona **Edit** (o **Configure**) a su derecha:
+   - Elige **Enable as a primary App ID**.
+   - **Server-to-Server Notification Endpoint**: `https://api.touchedblock.app/auth/apple/notifications` (opcional, recomendado: si alguien deja de usar su Apple ID con el juego o lo borra, la API borra su cuenta). Apple acepta una sola URL por grupo de apps y la exige con esquema, dominio y ruta.
+   - **Save** en el cuadro.
+5. **Save** arriba a la derecha y confirma (**Confirm**) si Apple avisa que se invalidan los perfiles de aprovisionamiento. EAS los regenera solo en el próximo build; si los hiciste a mano, regénéralos.
+6. En `app.json` ya están `ios.usesAppleSignIn: true` y el plugin `expo-apple-authentication`, que agregan el *entitlement* a la app.
+
+Comprobar: en **Identifiers → app.touchedblock**, la casilla **Sign in with Apple** queda marcada.
+
+### 6.2 Services ID para la web
+
+1. **Certificates, Identifiers & Profiles → Identifiers** → botón **+**.
+2. Elige **Services IDs** → **Continue**.
+3. *Description*: `Touched Block web` (es lo que ve la persona en la ventana de Apple). *Identifier*: `app.touchedblock.web`. → **Continue** → **Register**.
+4. Vuelve a la lista. Arriba a la derecha cambia el filtro de **App IDs** a **Services IDs** y abre `app.touchedblock.web`.
+5. Marca **Sign in with Apple** → **Configure**. En el cuadro:
+   - **Primary App ID**: `app.touchedblock` (el del paso 6.1).
+   - **Domains and Subdomains**: `web.touchedblock.app` (solo el dominio, sin `https://` ni `/`).
+   - **Return URLs**: `https://web.touchedblock.app/` (exacta, con `https://` y la `/` final). Apple no acepta `localhost` ni IPs (ver 6.10).
+   - **Next** → **Done**.
+6. **Continue** → **Save**.
+
+Según la documentación actual de Apple, para dominios y subdominios **no hace falta subir un archivo de verificación**. Si aun así el cuadro muestra un botón **Download**/**Verify** junto al dominio, ver "Dominio no verificado" en 6.11.
+
+Comprobar: al reabrir el Services ID, **Sign in with Apple** está marcado y en **Configure** aparecen el dominio y la Return URL.
+
+### 6.3 Clave privada (`.p8`) para el canje y la revocación
+
+La API firma con esta clave el `client_secret` que Apple pide para canjear el `authorizationCode` y revocar el token al eliminar la cuenta. La misma clave sirve para la app (`app.touchedblock`) y para la web (`app.touchedblock.web`), porque el Services ID está agrupado con el App ID principal. Apple permite como máximo **dos** claves por App ID principal.
+
+1. **Certificates, Identifiers & Profiles → Keys** (barra lateral) → botón **+**.
+2. *Key Name*: `Touched Block Sign in with Apple`.
+3. Marca **Sign in with Apple** → **Configure** (a la derecha) → *Primary App ID*: `app.touchedblock` → **Save**.
+4. **Continue** → revisa → **Register** (o **Confirm**).
+5. **Download**. Baja un archivo `AuthKey_XXXXXXXXXX.p8`.
+   - **Solo se puede descargar una vez**: Apple no lo guarda. Guárdalo en el gestor de contraseñas. **Nunca** en el repo (es público).
+   - Si se pierde: crea otra clave, cambia las variables y revoca la vieja (**Keys** → la clave → **Revoke**).
+6. **Done**.
+7. **Key ID**: en **Keys**, haz clic en la clave; el identificador (10 caracteres) aparece debajo del nombre. También es la parte `XXXXXXXXXX` del nombre del archivo.
+
+### 6.4 Team ID
+
+En https://developer.apple.com/account, baja hasta **Membership details**: el **Team ID** son 10 caracteres (letras y números). También aparece arriba a la derecha, junto al nombre del equipo, en *Certificates, Identifiers & Profiles*.
+
+### 6.5 Pasar el `.p8` a una sola línea (Windows)
+
+La pestaña *Environment* de Dokploy guarda una variable por línea, así que la clave va en **una línea** con `\n` (barra invertida y n, dos caracteres) en lugar de cada salto de línea. La API los vuelve a convertir.
+
+En PowerShell (cambia la ruta por la de tu archivo); deja el resultado en el portapapeles:
+
+```powershell
+(Get-Content -Raw "$env:USERPROFILE\Downloads\AuthKey_XXXXXXXXXX.p8").Trim() -replace '\r?\n', '\n' | Set-Clipboard
+```
+
+Debe quedar así (todo en una línea, sin comillas):
+
+```
+-----BEGIN PRIVATE KEY-----\nMIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQg...\n-----END PRIVATE KEY-----
+```
+
+Para revisarlo antes de pegarlo, quita `| Set-Clipboard` y se imprime en la consola. No lo pegues en chats ni en issues.
+
+### 6.6 Variables en Dokploy
+
+Dokploy → proyecto **Touched Block** → Compose **API** → pestaña **Environment**. Agrega estas líneas al final (y lo mismo en la copia local `deploy/.env`, que está ignorada por git):
+
+```
+APPLE_AUDIENCES=app.touchedblock,app.touchedblock.web
+APPLE_CLIENT_ID=app.touchedblock
+APPLE_TEAM_ID=<Team ID, 10 caracteres>
+APPLE_KEY_ID=<Key ID, 10 caracteres>
+APPLE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\nMIGT...\n-----END PRIVATE KEY-----
+```
+
+- `APPLE_AUDIENCES`: audiencias aceptadas del `identityToken`. El de la app trae `aud = app.touchedblock`; el de la web, `aud = app.touchedblock.web`. **Las dos**, separadas por coma y sin espacios, con el bundle ID **primero** (sin la segunda, el login web responde `401 invalid_provider_token`).
+- `APPLE_CLIENT_ID`: el bundle ID. Es el `client_id` de respaldo para los tokens guardados sin él; cada token nuevo se canjea y revoca con el `client_id` de su propio login (el `aud` del token), que la API guarda cifrado junto al token.
+- `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY`: de 6.3–6.5. Sin alguna, el login con Apple funciona igual, pero no se guarda el token y no se podrá revocar (aviso en el log).
+- `CORS_ORIGINS` no cambia: ya incluye `https://web.touchedblock.app`.
+
+**Save**. No hace falta *Deploy* todavía: el tag del paso siguiente despliega con estas variables. (Si despliegas ahora, la `v0.4.0` las ignora sin problema.)
+
+### 6.7 Publicar la API nueva (tag)
+
+La API con Apple web, el canje con el Services ID y la migración `20261118190000_add_identity_provider_refresh_token` (y las que haya en `main` en ese momento) se publica con el siguiente tag, p. ej.:
+
+```bash
+git tag v0.5.0
+git push origin v0.5.0
+```
+
+`deploy-api.yml` corre los tests, sube la imagen y despliega en Dokploy (sección 3, "Publicar una versión de la API"). La API aplica las migraciones al arrancar.
+
+Comprobar:
+- `https://api.touchedblock.app/health` responde `{"status":"ok","db":"ok",…}`.
+- En Dokploy → Compose **API** → **Logs** del servicio `api`, al arrancar no hay errores. El aviso `Revocación de Sign in with Apple desactivada: faltan …` aparece solo después de un login con Apple y significa que falta o está vacía una variable de 6.6.
+
+### 6.8 Botón de Apple en la web (variable de GitHub)
+
+1. GitHub → repositorio → **Settings → Secrets and variables → Actions** → pestaña **Variables** → **New repository variable**.
+2. *Name*: `EXPO_PUBLIC_APPLE_SERVICES_ID`. *Value*: `app.touchedblock.web` → **Add variable**.
+3. Vuelve a publicar la web: pestaña **Actions** → workflow **Desplegar la web en Cloudflare** → **Run workflow** (rama `main`). También vale cualquier push a `main` que toque el cliente.
+
+`deploy-web.yml` pasa la variable a `expo export` (queda dentro del JS: no es secreta). Vacía o sin crear = sin botón de Apple. Para apagar el botón: borra la variable (o déjala vacía) y vuelve a publicar.
+
+### 6.9 Probar
+
+**Web** (en `https://web.touchedblock.app`, Safari o Chrome, de preferencia en una ventana privada):
+1. Perfil → aparece **Iniciar sesión con Apple** (blanco, arriba del de Google, del mismo tamaño).
+2. Al tocarlo se abre una ventana de Apple. La primera vez pide compartir nombre y correo (prueba también "Ocultar mi correo").
+3. Vuelve con la sesión iniciada. El nombre de usuario sale del nombre de Apple (p. ej. `ana.perez`).
+4. Cierra sesión y entra de nuevo: Apple ya **no** manda el nombre; la cuenta es la misma y el nombre guardado no cambia.
+5. En el log de la API no debe aparecer `No se pudo guardar el token de Apple…`.
+6. Eliminar la cuenta desde el Perfil: en https://account.apple.com → **Inicio de sesión y seguridad → Iniciar sesión con Apple**, "Touched Block web" debe desaparecer (puede tardar un poco).
+7. Para repetir el "primer login" (con nombre): en esa misma página de Apple, deja de usar Iniciar sesión con Apple con Touched Block y entra otra vez.
+
+**App iOS** (en un iPhone real; necesita Mac o EAS Build):
+- Botón de Apple (blanco, arriba del de Google), primer login con nombre y correo, segundo login sin nombre, eliminar cuenta y ver que la app desaparece de *Ajustes → [tu nombre] → Iniciar sesión con Apple*; login con Google en iOS.
+- **Publicar la API (6.7) antes de repartir la app iOS**: la API `v0.4.0` rechaza el campo `authorizationCode` (`400 validation_error`).
+
+**Nombre de Apple**: Apple lo entrega solo en el primer login (iOS: `credential.fullName`; web: el objeto `user`). El cliente lo manda como `fullName`; si ese primer `POST /auth/apple` falla (p. ej. sin conexión), el cliente lo guarda en memoria y lo vuelve a mandar en el reintento (`lib/appleName.ts`). La API lo usa al crear la cuenta y, en una cuenta existente, solo lo completa si quedó vacía: nunca lo reemplaza ni lo borra. Si se recarga la página entre el fallo y el reintento, el nombre se pierde y la cuenta usa el correo para el nombre de usuario (se puede cambiar en el Perfil).
+
+### 6.10 Probar en local (Apple no acepta `localhost`)
+
+Apple exige que la Return URL tenga un dominio real (ni `localhost` ni IPs), y en la ventana emergente devuelve el resultado solo a una página del **mismo origen** que esa URL. Por eso el botón de Apple **no funciona en `http://localhost:8081`** (si pones `EXPO_PUBLIC_APPLE_SERVICES_ID` en local, el botón aparece, pero Apple responde con error).
+
+- Lo que **sí** se prueba en local, sin Apple: la API con los tests (`pnpm --filter @tb/api test`: canje con el Services ID y el `redirect_uri`, revocación con el mismo `client_id`, nombre del primer login; y `test:e2e`, `test/apple.e2e-spec.ts`, con un verificador falso) y el cliente (`lib/appleName.test.ts`). El aspecto del botón se revisa con el dev server y esa variable.
+- De punta a punta, lo más simple es probar en `https://web.touchedblock.app` tras publicar (6.7 y 6.8).
+- Si hace falta probar antes desde el computador: un túnel HTTPS con dominio propio, p. ej. **Cloudflare Tunnel** con un subdominio fijo (`dev.touchedblock.app` → `http://localhost:8081`). Hay que agregar ese dominio y su Return URL (`https://dev.touchedblock.app/`) al Services ID (6.2), su origen a `CORS_ORIGINS` de la API que uses y apuntar el cliente a esa API. Los túneles con dominio aleatorio (`*.trycloudflare.com`) cambian en cada arranque y obligan a reconfigurar Apple cada vez.
+
+### 6.11 Errores típicos
+
+| Síntoma | Causa probable | Solución |
+|---|---|---|
+| La ventana de Apple muestra **invalid_client** | `EXPO_PUBLIC_APPLE_SERVICES_ID` no coincide con el Services ID, o el Services ID no tiene Sign in with Apple configurado y guardado (6.2), o se puso el bundle ID en la variable | Revisa el identificador exacto y que en 6.2 se haya hecho **Save** |
+| La ventana de Apple dice que la **redirect_uri** / Return URL no es válida o no coincide | La Return URL registrada no es exactamente `https://web.touchedblock.app/` (falta la `/`, `http`, `www`…), o se probó desde otro dominio (localhost) | Corrige la Return URL en 6.2; prueba desde `https://web.touchedblock.app` |
+| **Dominio no verificado** (*domain not verified*) junto a `web.touchedblock.app` | Cuentas antiguas de Apple pedían subir un archivo | Descarga el archivo que ofrece Apple, ponlo en `apps/client/public/.well-known/apple-developer-domain-association.txt`, publica la web y presiona **Verify** |
+| El login web responde **401 invalid_provider_token** | Falta `app.touchedblock.web` en `APPLE_AUDIENCES` | Corrige la variable en Dokploy y *Deploy* |
+| El login con Apple responde **400 validation_error** | La API de producción todavía es la `v0.4.0` (no conoce `redirectUri` ni `authorizationCode`) | Publica la API (6.7) |
+| El login responde **503 provider_unavailable** | `APPLE_AUDIENCES` vacía | Agrégala (6.6) |
+| Login OK, pero el log dice `Apple /auth/token respondió 400 (invalid_client)` | `client_secret` mal firmado: Team ID, Key ID o clave no coinciden, la clave no está asociada al App ID `app.touchedblock`, o la clave se pegó mal | Revisa 6.3–6.6 (la clave debe empezar con `-----BEGIN PRIVATE KEY-----\n`) |
+| El log dice `… (invalid_grant)` | El código venció (5 min) o ya se usó, o el `redirect_uri` no coincide con el de la autorización | Vuelve a entrar; si se repite, revisa la Return URL |
+| El log dice `Invalid key data` o similar al firmar | `APPLE_PRIVATE_KEY` incompleta o con saltos de línea reales | Repite 6.5 |
+| El navegador **bloquea la ventana** de Apple | Bloqueador de ventanas emergentes | Permitir ventanas emergentes para `web.touchedblock.app` (el juego avisa con un mensaje) |
+| La app no desaparece de la lista de Apple al eliminar la cuenta | La cuenta se creó antes de cargar las variables (no hay token guardado), o Apple falló al revocar (queda en el log) | Se guarda en el siguiente login de esa persona; la cuenta se borra igual |
 
 Notas:
-- El refresh token de Apple se guarda cifrado (AES-256-GCM con una clave derivada de `JWT_SECRET`). Si se cambia `JWT_SECRET`, los tokens ya guardados no se pueden descifrar y esas cuentas se borrarían sin revocar (queda un aviso en el log); se vuelven a guardar en el siguiente login de cada persona.
-- La web y Android no muestran el botón de Apple (no se exige ahí).
+- El refresh token de Apple se guarda cifrado (AES-256-GCM con una clave derivada de `JWT_SECRET`) junto con el `client_id` con que se obtuvo. Si se cambia `JWT_SECRET`, los tokens ya guardados no se pueden descifrar y esas cuentas se borrarían sin revocar (queda un aviso en el log); se vuelven a guardar en el siguiente login de cada persona.
+- Una misma persona entra a la **misma cuenta** desde la app iOS y desde la web: el `sub` de Apple es el mismo para todas las apps y webs agrupadas bajo el App ID principal.
+- Los avisos de Apple (`consent-revoked`, `account-delete`/`account-deleted`) llegan con `aud = app.touchedblock` (el App ID principal), que ya está en `APPLE_AUDIENCES`.
 
+---
+
+## 7. Moderación (guía 1.2 de Apple)
+
+Los nombres de usuario son el único contenido que un jugador escribe y otros ven. Apple exige (guía 1.2, contenido generado por usuarios): un filtro, una forma de **reportar** con respuesta a tiempo, una forma de **bloquear** y un contacto publicado. Lo que hay:
+
+- **Filtro de nombres** en la API (`apps/api/src/users/username-filter.ts`): groserías, insultos, odio y suplantación. Rige al crear la cuenta y al cambiar el nombre. Los nombres que ya existían no se cambian solos (ver "Nombres antiguos").
+- **Reportar y bloquear** en el juego: en las filas de los rankings y en el perfil público, con el mouse aparece un botón "⋯"; con el dedo, un toque sostenido (~500 ms). El menú tiene "Reportar nombre" y "Bloquear jugador". La lista de bloqueados (con "Desbloquear") está en el Perfil. Contrato en `docs/api.md`, sección "Moderación".
+- **Contacto**: `contacto@touchedblock.app`, publicado en `https://touchedblock.app/soporte/` y en los términos.
+- **Plazo**: **24 horas** para revisar cada reporte y actuar (cambiar el nombre o eliminar la cuenta). Lo dicen los términos, la página de soporte y el propio juego. La guía 1.2 solo pide "timely responses", pero el mensaje de rechazo de App Review por esta guía dice: *"The developer must act on objectionable content reports within 24 hours by removing the content and ejecting the user who provided the offending content."*
+
+Los reportes quedan en la tabla `Report` (no hay aviso por correo). **Revisarlos al menos una vez al día** mientras la app esté en la App Store (y siempre antes de 24 h si llega un correo a contacto@).
+
+### Herramientas
+
+Dos formas equivalentes:
+
+1. **Línea de comandos** (recomendada; no necesita `ADMIN_TOKEN`). En Dokploy: pestaña del Compose → contenedor `api` → *Terminal* (o en el VPS, en la carpeta del Compose, `docker compose exec api …`):
+
+   ```sh
+   # reportes pendientes (primero los más antiguos; dice cuántos tienen más de 24 h)
+   docker compose exec api node scripts/moderation.mjs reports
+   docker compose exec api node scripts/moderation.mjs reports --all          # también los cerrados
+
+   # el nombre infringe: ponerle uno automático (jugadorNNNN) o uno elegido; cierra sus reportes
+   docker compose exec api node scripts/moderation.mjs rename pepa.mala --dry-run
+   docker compose exec api node scripts/moderation.mjs rename pepa.mala
+   docker compose exec api node scripts/moderation.mjs rename pepa.mala pepa.nueva
+
+   # caso grave o reincidente: eliminar la cuenta (como "Eliminar cuenta"; revoca Apple) y cerrar sus reportes
+   docker compose exec api node scripts/moderation.mjs delete pepa.mala --yes
+
+   # el reporte no tenía razón: descartarlo (por id, o todos los de un usuario con @)
+   docker compose exec api node scripts/moderation.mjs resolve <idReporte> --dismiss --note="No infringe"
+   docker compose exec api node scripts/moderation.mjs resolve @pepa --dismiss
+   ```
+
+   Sin argumentos muestra la ayuda. En local (con `pnpm --filter @tb/engine build` y `pnpm --filter @tb/api build`): `node apps/api/scripts/moderation.mjs reports`.
+
+2. **HTTP** con `ADMIN_TOKEN` (variable del Compose; sin ella `/admin/*` responde 404). Por ejemplo, desde PowerShell:
+
+   ```powershell
+   $h = @{ 'X-Admin-Token' = '<ADMIN_TOKEN>' }
+   Invoke-RestMethod https://api.touchedblock.app/admin/reports -Headers $h
+   Invoke-RestMethod https://api.touchedblock.app/admin/users/pepa.mala/rename -Method Post -Headers $h -ContentType 'application/json' -Body '{}'
+   Invoke-RestMethod https://api.touchedblock.app/admin/reports/<id>/resolve -Method Post -Headers $h -ContentType 'application/json' -Body '{"status":"dismissed","resolution":"No infringe"}'
+   Invoke-RestMethod https://api.touchedblock.app/admin/users/pepa.mala -Method Delete -Headers $h
+   ```
+
+   Si el token no coincide, también responde 404 (a propósito: no revela que la ruta existe).
+
+### Rutina
+
+- **Cada día** (o al menos antes de que se cumplan 24 h desde el reporte más antiguo): `moderation.mjs reports`. Para cada reporte pendiente, mirar el nombre (`@usuario` y "reportado como"):
+  - infringe → `rename` (lo normal) o `delete` (grave o reincidente);
+  - no infringe → `resolve <id> --dismiss`.
+- **Cada semana**: `moderation.mjs reports --all --limit=50` para ver lo resuelto, y `check-usernames.mjs` por si un nombre se coló.
+- Si el mismo jugador vuelve a ponerse un nombre ofensivo (el filtro no lo atrapó), eliminar la cuenta.
+- Si una palabra se cuela o el filtro rechaza algo inocente, agregarla en `username-filter.ts` con su caso en `username-filter.spec.ts` (positivo y negativo).
+
+### Nombres antiguos
+
+El filtro no cambia nombres existentes. Después de publicar la API con el filtro:
+
+```sh
+docker compose exec api node scripts/check-usernames.mjs                    # solo lista los que no pasan
+docker compose exec api node scripts/check-usernames.mjs --rename --dry-run # qué nombre recibiría cada uno
+docker compose exec api node scripts/check-usernames.mjs --rename           # les pone jugadorNNNN
+```
+
+Revisar la lista antes de `--rename`: puede haber falsos positivos (mejor cambiar esos uno por uno con `moderation.mjs rename`, o ajustar el filtro).
+
+### Publicar
+
+La web se publica sola y puede llegar antes que la API: el menú "⋯" solo aparece cuando `GET /health` trae `features: ["moderation"]`, así que con la API v0.4.0 no se ve nada nuevo. Para activarlo:
+
+1. Agregar `ADMIN_TOKEN` en la pestaña Environment de Dokploy (opcional, solo para `/admin/*`).
+2. Crear el tag de la API (`vX.Y.Z`). La migración `20261118200000_add_moderation` solo agrega las tablas `Report` y `Block` (no toca datos).
+3. Correr `check-usernames.mjs` (arriba).

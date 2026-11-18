@@ -23,8 +23,10 @@ export class AppConfig {
   /**
    * Sign in with Apple, revocación (guía 5.1.1(v)): con estas cuatro la API canjea el authorizationCode
    * por el refresh token de Apple y lo revoca al eliminar la cuenta. Si falta alguna, el login sigue
-   * funcionando y la revocación se omite con un aviso en el log. APPLE_CLIENT_ID es el bundle ID de
-   * la app (por defecto, la primera de APPLE_AUDIENCES). APPLE_PRIVATE_KEY es el contenido del .p8
+   * funcionando y la revocación se omite con un aviso en el log. Cada token se canjea y revoca con el
+   * client_id de su autorización (la audiencia del identityToken: el bundle ID en iOS, el Services ID
+   * en la web); APPLE_CLIENT_ID es el de respaldo, para los tokens guardados sin él (por defecto, la
+   * primera de APPLE_AUDIENCES, que debe ser el bundle ID). APPLE_PRIVATE_KEY es el contenido del .p8
    * (se aceptan los saltos de línea escritos como `\n`).
    */
   readonly appleTeamId = (process.env.APPLE_TEAM_ID ?? '').trim();
@@ -47,6 +49,11 @@ export class AppConfig {
    */
   readonly dailySecret =
     process.env.DAILY_SECRET || (process.env.NODE_ENV === 'production' ? '' : 'desarrollo-secreto-del-reto-diario-no-usar-en-produccion');
+  /**
+   * Moderación: secreto de los endpoints /admin/* (cabecera `X-Admin-Token`). Vacío = esos
+   * endpoints responden 404, como si no existieran. Mínimo 32 caracteres en producción.
+   */
+  readonly adminToken = (process.env.ADMIN_TOKEN ?? '').trim();
 
   constructor() {
     if (!this.databaseUrl) throw new Error('Falta la variable de entorno DATABASE_URL');
@@ -57,6 +64,9 @@ export class AppConfig {
     if (!this.dailySecret) throw new Error('Falta la variable de entorno DAILY_SECRET');
     if (this.nodeEnv === 'production' && this.dailySecret.length < 32) {
       throw new Error('DAILY_SECRET debe tener al menos 32 caracteres en producción');
+    }
+    if (this.nodeEnv === 'production' && this.adminToken && this.adminToken.length < 32) {
+      throw new Error('ADMIN_TOKEN debe tener al menos 32 caracteres en producción (o déjalo vacío para desactivar /admin)');
     }
   }
 }

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { livesFor } from '@tb/engine';
-import { badRequest, conflict, notFound } from '../common/errors';
+import { badRequest, conflict, forbidden, notFound } from '../common/errors';
+import { blockBetween } from '../moderation/blocks';
 import { PrismaService } from '../prisma/prisma.service';
 import { normalizeUsername } from '../users/username';
 
@@ -25,6 +26,9 @@ export class SocialService {
         data: { invitedById: inviter.id, invitedAt: new Date() },
       });
       if (res.count !== 1) throw conflict('Ya indicaste quién te invitó.', 'inviter_already_set');
+      // con un bloqueo entre los dos, el corazón se da igual pero no se siguen
+      const blocked = await blockBetween(tx, userId, inviter.id);
+      if (blocked.iBlocked || blocked.blockedMe) return;
       await tx.follow.createMany({
         data: [
           { followerId: userId, followeeId: inviter.id },
@@ -42,6 +46,9 @@ export class SocialService {
     if (targetId === userId) throw badRequest('No puedes seguirte a ti mismo.', 'follow_self');
     const target = await this.prisma.user.findUnique({ where: { id: targetId }, select: { id: true } });
     if (!target) throw notFound('Ese usuario no existe.', 'user_not_found');
+    const blocked = await blockBetween(this.prisma, userId, targetId);
+    if (blocked.iBlocked) throw conflict('Bloqueaste a este jugador. Desbloquéalo en tu perfil para seguirlo.', 'user_blocked');
+    if (blocked.blockedMe) throw forbidden('No puedes seguir a este jugador.', 'follow_blocked');
     await this.prisma.follow.createMany({ data: [{ followerId: userId, followeeId: targetId }], skipDuplicates: true });
   }
 

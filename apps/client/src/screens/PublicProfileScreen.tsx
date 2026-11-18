@@ -3,14 +3,16 @@ import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { errorMessage, isApiError } from '@/api/client';
-import { follow, unfollow } from '@/api/endpoints';
+import { follow, unblockUser, unfollow } from '@/api/endpoints';
 import { useInvalidate, useProfile, useViewer } from '@/api/hooks';
 import { SmallButton } from '@/components/form';
+import { PlayerHoverArea, usePlayerMenu } from '@/components/PlayerMenu';
 import { ProfileIcon } from '@/components/ProfileIcon';
 import { TierBadge } from '@/components/TierBadge';
 import { toast } from '@/components/Toast';
 import { tierStepOf } from '@/cosmetics/tiers';
 import { countryName, flag } from '@/lib/countries';
+import { MODERATION_SOON, moderationUnavailable } from '@/lib/moderation';
 import { C } from '@/theme';
 
 function Stat({ value, label }: { value: string | number; label: string }) {
@@ -22,7 +24,10 @@ function Stat({ value, label }: { value: string | number; label: string }) {
   );
 }
 
-/** Perfil público `/u/[username]`: récord, invitados, seguidores y botón para seguir. */
+/**
+ * Perfil público `/u/[username]`: récord, invitados, seguidores y botón para seguir. Pasando el
+ * mouse por la cabecera (botón "⋯") o con un toque sostenido: reportar o bloquear (PlayerMenu).
+ */
 export function PublicProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -32,6 +37,7 @@ export function PublicProfileScreen() {
   const q = useProfile(username);
   const invalidate = useInvalidate();
   const [busy, setBusy] = useState(false);
+  const menu = usePlayerMenu();
 
   const back = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
@@ -44,6 +50,20 @@ export function PublicProfileScreen() {
       invalidate('profile', 'following', 'lb', 'me', 'search');
     } catch (e) {
       toast(errorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const doUnblock = async () => {
+    if (!q.data) return;
+    setBusy(true);
+    try {
+      await unblockUser(q.data.username);
+      invalidate('profile', 'blocks', 'lb', 'search');
+      toast(`Desbloqueaste a @${q.data.username}`);
+    } catch (e) {
+      toast(moderationUnavailable(e) ? MODERATION_SOON : errorMessage(e));
     } finally {
       setBusy(false);
     }
@@ -65,21 +85,23 @@ export function PublicProfileScreen() {
     const tier = tierStepOf(p.tier);
     body = (
       <>
-        <View style={styles.avatar}>
-          <ProfileIcon size={34} />
-        </View>
-        <View style={styles.titleRow}>
-          <Text style={[styles.title, styles.shrink]} accessibilityRole="header">
-            @{p.username}
-          </Text>
-          <TierBadge tier={p.tier} size="md" />
-        </View>
-        {tier ? <Text style={styles.tierT}>Insignia {tier.name}</Text> : null}
-        {p.country ? (
-          <Text style={styles.sub}>
-            {flag(p.country)} {countryName(p.country)}
-          </Text>
-        ) : null}
+        <PlayerHoverArea menu={menu} user={p.isMe ? null : p} style={styles.head} moreStyle={styles.more}>
+          <View style={styles.avatar}>
+            <ProfileIcon size={34} />
+          </View>
+          <View style={styles.titleRow}>
+            <Text style={[styles.title, styles.shrink]} accessibilityRole="header">
+              @{p.username}
+            </Text>
+            <TierBadge tier={p.tier} size="md" />
+          </View>
+          {tier ? <Text style={styles.tierT}>Insignia {tier.name}</Text> : null}
+          {p.country ? (
+            <Text style={styles.sub}>
+              {flag(p.country)} {countryName(p.country)}
+            </Text>
+          ) : null}
+        </PlayerHoverArea>
 
         <View style={styles.card}>
           <Text style={styles.cap}>Récord histórico</Text>
@@ -99,6 +121,11 @@ export function PublicProfileScreen() {
 
         {p.isMe ? (
           <SmallButton title="Este eres tú · Ir a tu perfil" kind="ghost" onPress={() => router.navigate('/perfil')} />
+        ) : viewer.loggedIn && p.isBlocked ? (
+          <>
+            <Text style={styles.muted}>Bloqueaste a @{p.username}: no puede seguirte ni ver tu perfil.</Text>
+            <SmallButton title="Desbloquear" kind="ghost" accessibilityLabel={`Desbloquear a ${p.username}`} busy={busy} onPress={doUnblock} />
+          </>
         ) : viewer.loggedIn ? (
           <SmallButton
             title={p.isFollowing ? 'Siguiendo ✓' : 'Seguir'}
@@ -122,6 +149,7 @@ export function PublicProfileScreen() {
         </Pressable>
       </View>
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: 24 + insets.bottom }]}>{body}</ScrollView>
+      {menu.node}
     </View>
   );
 }
@@ -133,6 +161,9 @@ const styles = StyleSheet.create({
   backT: { color: C.accent, fontSize: 17, fontWeight: '600' },
   content: { alignItems: 'center', gap: 14, paddingHorizontal: 20, paddingTop: 8 },
   pad: { marginTop: 40 },
+  // cabecera (zona del menú reportar/bloquear): ocupa el ancho para que el "⋯" quede a la derecha
+  head: { alignSelf: 'stretch', alignItems: 'center', gap: 14, paddingHorizontal: 44 },
+  more: { top: 0, marginTop: 0, right: 0 },
   center: { alignItems: 'center', gap: 12, marginTop: 40 },
   avatar: {
     width: 72,

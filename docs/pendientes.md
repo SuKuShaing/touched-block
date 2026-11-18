@@ -23,8 +23,9 @@ Estado al **18 nov 2026**.
   - Respaldar `~/.touched-block/` (clave de firma).
   - Google Play: cuenta de desarrollador (USD 25), ficha de la tienda, `.aab` (EAS Build o `./gradlew bundleRelease`), cliente OAuth Android con la SHA-1 de Play App Signing. Con la app publicada se pueden agregar App Links (`touchedblock.app/.well-known/assetlinks.json`) para que los enlaces de reto abran la app.
   - iOS: necesita Mac o EAS Build y cuenta de Apple (USD 99/año). **Sign in with Apple ya está en el código** (18 nov 2026; ver historia-y-decisiones → "Sign in with Apple para iOS…"), pero **sin probar en iOS real** (se hizo en Windows: solo `tsc`, tests y el *bundle* JS de iOS). Falta, del usuario (pasos en `despliegue.md` → sección 6):
-    - En Apple Developer: capacidad Sign in with Apple en el App ID `app.touchedblock`, Key con Sign in with Apple (`.p8`), anotar Team ID y Key ID; opcional, el endpoint de avisos `https://api.touchedblock.app/auth/apple/notifications`.
-    - En Dokploy: `APPLE_AUDIENCES=app.touchedblock`, `APPLE_CLIENT_ID`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY`.
+    - En Apple Developer: capacidad Sign in with Apple en el App ID `app.touchedblock`, **Services ID `app.touchedblock.web`** (dominio `web.touchedblock.app`, Return URL `https://web.touchedblock.app/`), Key con Sign in with Apple (`.p8`), anotar Team ID y Key ID; opcional, el endpoint de avisos `https://api.touchedblock.app/auth/apple/notifications`.
+    - En Dokploy: `APPLE_AUDIENCES=app.touchedblock,app.touchedblock.web`, `APPLE_CLIENT_ID`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY`.
+    - **Web** (18 nov 2026, código listo; ver historia-y-decisiones → "Sign in with Apple también en la web"): **después** del tag de la API, crear la variable del repositorio `EXPO_PUBLIC_APPLE_SERVICES_ID=app.touchedblock.web` y volver a publicar la web (`despliegue.md` → 6.8). Sin probar contra Apple real: en local solo se vio el botón y que la ventana de Apple abre con los parámetros correctos (Apple no acepta localhost). Probar en `https://web.touchedblock.app` según 6.9.
     - Publicar la API con la migración `add_identity_provider_refresh_token` (tag nuevo) **antes** de repartir la app iOS: la API vieja rechaza `authorizationCode` con 400.
     - Probar en un iPhone: botón de Apple (blanco, arriba del de Google), primer login con nombre y correo (también "Ocultar mi correo"), segundo login sin nombre, eliminar cuenta y ver que la app desaparece de Ajustes → Iniciar sesión con Apple; login con Google en iOS (cliente iOS + `iosUrlScheme` ya configurados).
     - Las cuentas creadas con Apple antes de cargar las variables quedan sin token guardado (no se pueden revocar) hasta su siguiente login.
@@ -94,6 +95,12 @@ Cómo se publicó (12 nov 2026), en orden:
 - Sin probar en esta etapa: la fluidez con el procesador limitado (repetirla con el build de producción) y el camino de etapas con `startAt` en la app real (cubierto con tests). No hace falta por ahora (decisión del usuario): instalar la web en un Android real, porque eso será cuando sea app; ni repetir el login real de Google, que ya funcionaba y no cambió.
 - Correcciones de la revisión de código de la app (17 nov 2026): probadas en el emulador y en la web (toques, tarjeta, corazones, Roboto, firma con `signingReport`). Falta repetir el login real de Google en la app, porque cambió el orden de `configure` y ahora "Borrar cuenta" cierra la sesión de Google.
 - La base de desarrollo local (`touched_block`) quedó con cuentas y partidas de prueba (`seba.prueba`, `*.bot`…). No afecta producción.
+
+- **Moderación (guía 1.2 de Apple, 18 nov 2026)**: filtro de nombres, reportar, bloquear y herramientas del dueño, en el código y sin publicar (ver historia-y-decisiones → "Moderación…" y `despliegue.md` → sección 7). Probado: tests de la API (unitarios y e2e), `tsc` y tests del cliente, y en la web local con Playwright (escritorio: "⋯" al pasar el mouse, reportar, reporte repetido; celular con toque emulado: toque sostenido en el perfil, bloquear, lista de bloqueados, desbloquear; y con `/health` sin `features`, que no aparece nada). **Sin probar en la app Android/iOS real** (el toque sostenido y los Modal). Falta, del usuario:
+  - Crear `ADMIN_TOKEN` en Dokploy (opcional) y publicar la API con un tag (migración `add_moderation`, solo agrega tablas).
+  - Después, `check-usernames.mjs` para ver los nombres antiguos que no pasan el filtro, y decidir uno por uno.
+  - Revisar los reportes **cada día** (plazo publicado: 24 h) con `moderation.mjs reports`.
+  - Para App Review: en las notas, explicar dónde están reportar/bloquear (toque sostenido sobre un nombre en Rankings o en un perfil) y dar dos cuentas de prueba.
 
 ## Lo que tiene que hacer el usuario
 
