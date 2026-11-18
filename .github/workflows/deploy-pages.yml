@@ -1,10 +1,15 @@
-name: Desplegar en GitHub Pages
+name: Publicar la redirección en GitHub Pages
 
+# La web vieja (https://sukushaing.github.io/touched-block/) ya no tiene el juego: solo una página
+# que lleva a https://web.touchedblock.app conservando ruta y parámetros, y le pasa al sitio nuevo
+# los datos locales del jugador (récord, historial, sesión…). Ver deploy/gh-pages-redirect/ y
+# docs/despliegue.md. El juego se publica en Cloudflare con deploy-web.yml.
 on:
   push:
     branches: [main]
-    # la API se despliega aparte (deploy-api.yml, por tag); los docs no cambian la web
-    paths-ignore: ['apps/api/**', 'deploy/**', 'docs/**']
+    paths:
+      - 'deploy/gh-pages-redirect/**'
+      - '.github/workflows/deploy-pages.yml'
   workflow_dispatch:
 
 permissions:
@@ -26,37 +31,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # La versión de pnpm sale de "packageManager" en el package.json raíz.
-      - name: Instalar pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Instalar Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: pnpm
-
-      - name: Instalar dependencias
-        run: pnpm install --frozen-lockfile
-
-      # El cliente importa el motor desde su código fuente (metro.config.js), así que no hace
-      # falta compilarlo para la web; los tests sí se corren antes de publicar.
-      - name: Tests del motor
-        run: pnpm --filter @tb/engine test
-
-      # Cuentas/rankings: se activan definiendo las variables del repositorio (Settings →
-      # Variables → Actions) EXPO_PUBLIC_API_URL y EXPO_PUBLIC_GOOGLE_CLIENT_ID. Sin ellas el
-      # sitio queda solo para invitados (historial local).
-      - name: Exportar la web (Expo)
-        env:
-          EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL }}
-          EXPO_PUBLIC_GOOGLE_CLIENT_ID: ${{ vars.EXPO_PUBLIC_GOOGLE_CLIENT_ID }}
-        run: pnpm --filter @tb/client exec expo export -p web --output-dir dist
-
+      # 404.html = index.html: así cualquier ruta vieja (/touched-block/como-jugar?nivel=basico…)
+      # cae en la misma página de redirección. Se copia aquí para que nunca queden distintas.
       - name: Preparar sitio
         run: |
-          cd apps/client/dist
-          # SPA en Pages: las rutas como /touched-block/como-jugar caen en 404.html, que es la misma app
+          cd deploy/gh-pages-redirect
           cp index.html 404.html
           touch .nojekyll
 
@@ -66,7 +45,7 @@ jobs:
       - name: Subir artefacto
         uses: actions/upload-pages-artifact@v3
         with:
-          path: apps/client/dist
+          path: deploy/gh-pages-redirect
 
       - name: Desplegar
         id: deployment

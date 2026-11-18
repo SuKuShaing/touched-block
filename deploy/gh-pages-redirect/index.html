@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Touched Block se mudó a web.touchedblock.app</title>
+    <!--
+      Web vieja de Touched Block (GitHub Pages, https://sukushaing.github.io/touched-block/).
+      El juego ahora vive en https://web.touchedblock.app. Este archivo es index.html y 404.html
+      (idénticos), así que atiende cualquier ruta bajo /touched-block/.
+
+      Lleva al jugador a la misma ruta y parámetros en el sitio nuevo y le pasa sus datos
+      locales (récord, historial, ajustes, sesión, tutoriales vistos…), que viven en el
+      localStorage de este origen y si no se perderían al cambiar de dominio. Van en el
+      fragmento (#tbmigrar=<base64url de JSON>), que el navegador nunca envía a ningún servidor;
+      el index.html del juego los importa antes de cargar la app (apps/client/public/index.html)
+      y borra el fragmento de la barra. Esta página solo LEE: no borra ni cambia nada aquí.
+
+      También atiende la ida y vuelta: quien entra primero al sitio nuevo llega aquí con
+      ?volver=<ruta y query del sitio nuevo> (una sola vez por navegador) y vuelve a esa misma
+      dirección con sus datos.
+
+      El origen sukushaing.github.io lo comparten todos los proyectos del autor: se leen solo
+      las claves del juego, por nombre exacto. Si el juego agrega una clave local nueva, no hace
+      falta sumarla aquí: después de la mudanza los datos nuevos ya nacen en el sitio nuevo.
+    -->
+    <meta name="robots" content="noindex" />
+    <!-- el sitio nuevo acepta la sesión solo si viene de este origen (document.referrer) -->
+    <meta name="referrer" content="origin" />
+    <link rel="canonical" href="https://web.touchedblock.app/" />
+    <meta name="theme-color" content="#12121a" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Touched Block" />
+    <meta property="og:locale" content="es_LA" />
+    <meta property="og:url" content="https://web.touchedblock.app/" />
+    <meta property="og:title" content="Touched Block" />
+    <meta property="og:description" content="Toca cada bloque tantas veces como diga su número antes de que desaparezca. Contra el reloj, con vidas y bloques trampa." />
+    <meta property="og:image" content="https://web.touchedblock.app/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://web.touchedblock.app/og-image.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="https://web.touchedblock.app/favicon-32.png" />
+    <script>
+      (function () {
+        var DESTINO = 'https://web.touchedblock.app';
+        var BASE = '/touched-block';
+        // Páginas legales: ahora viven en la landing.
+        var LEGAL = {
+          'politica-de-privacidad': 'https://touchedblock.app/privacidad/',
+          'condiciones-del-servicio': 'https://touchedblock.app/terminos/',
+        };
+        // Claves locales del juego, en orden de prioridad (si no caben todas, se cortan las últimas).
+        // Lista completa en apps/client/src: api/session.ts (tb_rt1, tb_me1), lib/historyKeys.ts,
+        // lib/stats.ts, lib/onboarding.ts, lib/daily.ts, lib/settings.ts, lib/missions.ts,
+        // lib/challenge.ts y game/celebrationQueue.ts. Debe coincidir con las reglas del script
+        // tb-mudanza de apps/client/public/index.html.
+        var CLAVES = [
+          'tb_rt1', 'tb_me1', // sesión (refresh token + copia del usuario)
+          'tb_best5', 'tb_stats1', 'tb_hist5', // récord, estadísticas (nivel/XP), historial
+          'tb_onb1', 'tb_onb_adv1', 'tb_visits1', 'tb_last1', // tutoriales vistos y visitas
+          'tb_unlock1', 'tb_set1', 'tb_miss1', 'tb_daily1', 'tb_reto1', // desbloqueo, ajustes, misiones, reto diario, reto pendiente
+          'tb_cele1', // logros ya celebrados (game/celebrationQueue.ts)
+        ];
+        var MAX = 200000; // tope del JSON (el real ronda unos pocos KB)
+
+        /**
+         * Ida y vuelta: el sitio nuevo manda aquí a quien entra por primera vez con
+         * ?volver=<ruta y query del sitio nuevo>, para devolverlo a esa misma dirección con sus datos.
+         * Solo se acepta una ruta relativa al sitio nuevo (empieza con una sola "/", sin esquema).
+         */
+        function volver() {
+          var m = /[?&]volver=([^&#]*)/.exec(location.search);
+          if (!m) return null;
+          var r;
+          try {
+            r = decodeURIComponent(m[1]);
+          } catch (e) {
+            return null;
+          }
+          if (r.length > 4000 || r.charAt(0) !== '/' || r.charCodeAt(1) === 47 || r.charCodeAt(1) === 92 || /[\u0000-\u001f\u007f]/.test(r)) return null;
+          return r;
+        }
+
+        function irA() {
+          if (/[?&]volver=/.test(location.search)) {
+            var r = volver();
+            return { url: DESTINO + (r || '/'), legal: false };
+          }
+          var p = location.pathname;
+          if (p.indexOf(BASE) === 0) p = p.slice(BASE.length);
+          var limpio = p.replace(/^\/+|\/+$/g, '').replace(/\/index\.html$/, '');
+          if (LEGAL[limpio]) return { url: LEGAL[limpio], legal: true };
+          if (!p || p === '/index.html' || p === '/404.html') p = '/';
+          if (p.charAt(0) !== '/') p = '/' + p;
+          return { url: DESTINO + p + location.search, legal: false };
+        }
+
+        function paquete() {
+          var d = {};
+          var n = 0;
+          var hay = false;
+          for (var i = 0; i < CLAVES.length; i++) {
+            var v = null;
+            try {
+              v = window.localStorage.getItem(CLAVES[i]);
+            } catch (e) {
+              return null; // sin acceso al almacenamiento: se va sin datos
+            }
+            if (v === null || v.length > 100000) continue;
+            if (n + CLAVES[i].length + v.length + 16 > MAX) continue;
+            d[CLAVES[i]] = v;
+            n += CLAVES[i].length + v.length + 16;
+            hay = true;
+          }
+          if (!hay) return null;
+          var bytes = new TextEncoder().encode(JSON.stringify({ v: 1, d: d }));
+          var bin = '';
+          for (var j = 0; j < bytes.length; j++) bin += String.fromCharCode(bytes[j]);
+          return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        }
+
+        var url = DESTINO + '/';
+        try {
+          var dest = irA();
+          url = dest.url;
+          if (!dest.legal) {
+            var datos = null;
+            try {
+              datos = paquete();
+            } catch (e) {}
+            if (datos) url += '#tbmigrar=' + datos;
+            else if (location.hash && !volver()) url += location.hash;
+          }
+        } catch (e) {}
+        // el enlace visible (por si el navegador no sigue la redirección) apunta al mismo lugar
+        document.addEventListener('DOMContentLoaded', function () {
+          try {
+            document.getElementById('ir').href = url;
+          } catch (e) {}
+        });
+        location.replace(url);
+      })();
+    </script>
+    <noscript><meta http-equiv="refresh" content="0; url=https://web.touchedblock.app/" /></noscript>
+    <style>
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: #12121a;
+        color: #fff;
+        font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      }
+      main {
+        max-width: 420px;
+        margin: 0 auto;
+        padding: 64px 16px;
+        text-align: center;
+      }
+      h1 {
+        font-size: 24px;
+        margin: 0 0 12px;
+      }
+      p {
+        opacity: 0.8;
+        line-height: 1.5;
+      }
+      a {
+        color: #4fb3ff;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Touched Block se mudó</h1>
+      <p>
+        Ahora está en <a id="ir" href="https://web.touchedblock.app/">web.touchedblock.app</a>. Te llevamos con tu
+        récord y tu historial; si no pasa nada, toca el enlace.
+      </p>
+    </main>
+  </body>
+</html>
