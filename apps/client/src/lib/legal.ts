@@ -2,20 +2,15 @@ import { Linking, Platform } from 'react-native';
 import { config } from '@/config';
 
 /**
- * Páginas legales: HTML estático en `public/<página>/index.html` (no son rutas de Expo Router,
- * para que se lean sin JavaScript). Se abren con navegación completa, fuera de la app.
+ * Páginas legales: viven en la landing (`config.landingUrl`, https://touchedblock.app/), en HTML
+ * estático. Se abren con navegación completa, fuera de la app. Las direcciones viejas de la web
+ * (`/politica-de-privacidad/`, `/condiciones-del-servicio/`) quedan en public/ como redirecciones.
  */
-export type LegalPage = 'politica-de-privacidad' | 'condiciones-del-servicio';
+export type LegalPage = 'privacidad' | 'terminos';
 
 export function legalUrl(page: LegalPage): string {
-  if (Platform.OS === 'web' && typeof window !== 'undefined') {
-    // EXPO_BASE_URL lo incrusta Expo con experiments.baseUrl ("/touched-block"), también en
-    // desarrollo; pero el servidor de desarrollo sirve public/ en la raíz, así que ahí se omite.
-    const base = __DEV__ ? '' : (process.env.EXPO_BASE_URL ?? '').replace(/\/+$/, '');
-    // Con barra final: Pages (y el servidor de desarrollo) redirigen `/x` a `/x/` con un 301.
-    return `${window.location.origin}${base}/${page}/`;
-  }
-  return `${config.siteUrl}${page}/`;
+  // Con barra final: así el servidor no responde primero con una redirección.
+  return `${config.landingUrl}${page}/`;
 }
 
 export function openLegal(page: LegalPage) {

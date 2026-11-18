@@ -4,13 +4,13 @@ import { config } from '@/config';
 
 /**
  * Versión de la app de src/lib/legal.ts (Metro elige este archivo en Android/iOS; la web usa
- * legal.ts). Las páginas legales son las publicadas en la web (`config.siteUrl`), abiertas en el
+ * legal.ts). Las páginas legales son las de la landing (`config.landingUrl`), abiertas en el
  * navegador integrado (Custom Tabs / SFSafariViewController) para no sacar al jugador de la app.
  */
-export type LegalPage = 'politica-de-privacidad' | 'condiciones-del-servicio';
+export type LegalPage = 'privacidad' | 'terminos';
 
 export function legalUrl(page: LegalPage): string {
-  return `${config.siteUrl}${page}/`;
+  return `${config.landingUrl}${page}/`;
 }
 
 export function openLegal(page: LegalPage) {

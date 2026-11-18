@@ -1,0 +1,15 @@
+// Web del juego en Cloudflare Workers (solo activos estáticos, sin código de servidor):
+// https://web.touchedblock.app. Lo publica .github/workflows/deploy-web.yml después de
+// `expo export -p web` (que deja el sitio en ./dist). Guía: docs/despliegue.md.
+{
+  "name": "touchedblock-web",
+  // fija: cambiarla puede cambiar el comportamiento del runtime; subirla a mano y probar
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./dist",
+    // SPA: una ruta que no es un archivo (/como-jugar, /rankings…) recibe index.html con 200.
+    // Los HTML estáticos de public/ (p. ej. /politica-de-privacidad/) se sirven tal cual.
+    "not_found_handling": "single-page-application"
+  },
+  "routes": [{ "pattern": "web.touchedblock.app", "custom_domain": true }]
+}

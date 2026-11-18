@@ -14,8 +14,8 @@ function LegalLink({ page, children, small }: { page: LegalPage; children: strin
 export function LegalConsent() {
   return (
     <Text style={styles.consent}>
-      Al entrar aceptas las <LegalLink page="condiciones-del-servicio">Condiciones</LegalLink> y la{' '}
-      <LegalLink page="politica-de-privacidad">{'Política de privacidad'}</LegalLink>.
+      Al entrar aceptas las <LegalLink page="terminos">Condiciones</LegalLink> y la{' '}
+      <LegalLink page="privacidad">{'Política de privacidad'}</LegalLink>.
     </Text>
   );
 }
@@ -24,9 +24,9 @@ export function LegalConsent() {
 export function LegalLinks() {
   return (
     <View style={styles.row}>
-      <LegalLink small page="condiciones-del-servicio">Condiciones del servicio</LegalLink>
+      <LegalLink small page="terminos">Condiciones del servicio</LegalLink>
       <Text style={styles.dot}>·</Text>
-      <LegalLink small page="politica-de-privacidad">Política de privacidad</LegalLink>
+      <LegalLink small page="privacidad">Política de privacidad</LegalLink>
     </View>
   );
 }

@@ -21,7 +21,7 @@ pnpm --filter @tb/engine test
 pnpm --filter @tb/engine build       # genera dist/, que usa la API (el cliente usa el código fuente)
 
 # Cliente
-pnpm --filter @tb/client web                      # http://localhost:8081 (en la raíz; el baseUrl /touched-block solo aplica al exportar)
+pnpm --filter @tb/client web                      # http://localhost:8081 (el sitio vive en la raíz, igual que en https://web.touchedblock.app)
 pnpm --filter @tb/client exec tsc --noEmit
 pnpm --filter @tb/client test                     # vitest, solo módulos puros (lib/, cosmetics/, game/*.ts)
 pnpm --filter @tb/client exec expo export -p web --output-dir dist

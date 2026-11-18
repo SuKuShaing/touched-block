@@ -1,0 +1,58 @@
+name: Desplegar la landing en Cloudflare
+
+# La landing estática (https://touchedblock.app: inicio, /privacidad/, /terminos/,
+# /eliminar-cuenta/, /soporte/) en Cloudflare Workers con activos estáticos. La configuración es
+# apps/landing/wrangler.jsonc. Guía: docs/despliegue.md.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/landing/**'
+      - '.github/workflows/deploy-landing.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: landing
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Revisar secretos
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          falta=""
+          [ -n "$CLOUDFLARE_API_TOKEN" ] || falta="$falta CLOUDFLARE_API_TOKEN"
+          [ -n "$CLOUDFLARE_ACCOUNT_ID" ] || falta="$falta CLOUDFLARE_ACCOUNT_ID"
+          if [ -n "$falta" ]; then
+            echo "::error::Faltan los secretos de GitHub:$falta. Créalos en Settings → Secrets and variables → Actions (ver docs/despliegue.md, sección Web)."
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Instalar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      # Wrangler global (la acción usa el que encuentra instalado, sin wranglerVersion): así no
+      # depende de si apps/landing tiene package.json ni toca el workspace de pnpm.
+      - name: Instalar Wrangler
+        run: npm install -g wrangler@4
+
+      - name: Publicar en Cloudflare
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/landing
+          packageManager: npm
+          command: deploy

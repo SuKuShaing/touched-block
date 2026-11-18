@@ -37,7 +37,6 @@
       "lang": "es"
     },
     "experiments": {
-      "baseUrl": "/touched-block",
       "typedRoutes": true
     },
     "plugins": [

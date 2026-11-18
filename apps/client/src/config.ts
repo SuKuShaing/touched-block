@@ -12,8 +12,10 @@ export const config = {
   googleClientId,
   /** Solo desarrollo: muestra "Entrar (dev)" (la API debe correr con AUTH_DEV_FAKE=1). */
   authDevFake: process.env.EXPO_PUBLIC_AUTH_DEV_FAKE === '1',
-  /** Dirección pública del juego (para compartir e invitar). */
-  siteUrl: 'https://sukushaing.github.io/touched-block/',
+  /** Dirección pública del juego (para compartir e invitar). Con `/` al final. */
+  siteUrl: 'https://web.touchedblock.app/',
+  /** Sitio principal (landing), donde viven las páginas legales. Con `/` al final. */
+  landingUrl: 'https://touchedblock.app/',
 } as const;
 
 /**

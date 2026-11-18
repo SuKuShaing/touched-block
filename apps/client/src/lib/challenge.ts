@@ -7,7 +7,7 @@ import { SITE_URL } from './shareText';
  * el tutorial. Funciones puras salvo las de `tb_reto1` (almacenamiento, con try/catch).
  */
 
-/** Parámetro del enlace: `https://sukushaing.github.io/touched-block/?reto=K7M2QXAB`. Va por parámetro y no por ruta: en GitHub Pages una ruta responde 404 y rompe la vista previa en WhatsApp. */
+/** Parámetro del enlace: `https://web.touchedblock.app/?reto=K7M2QXAB`. Va por parámetro y no por ruta: así nació en GitHub Pages, donde una ruta respondía 404 y rompía la vista previa en WhatsApp; se mantiene para no romper los enlaces ya compartidos. */
 export const CHALLENGE_PARAM = 'reto';
 
 /** Mismo alfabeto y largo que la API (`challenge-code.ts`): sin I, L, O, 0 ni 1. */

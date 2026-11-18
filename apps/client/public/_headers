@@ -1,0 +1,10 @@
+# Cabeceras de Cloudflare Workers (activos estáticos) para https://web.touchedblock.app.
+# expo export copia este archivo a dist/; Cloudflare lo lee y no lo publica como archivo.
+# El JS y los recursos de Expo llevan un hash en el nombre: se pueden guardar para siempre.
+# index.html y lo demás quedan con lo de Cloudflare por defecto (revalidar cada vez), para que
+# una versión nueva llegue al tiro.
+/_expo/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

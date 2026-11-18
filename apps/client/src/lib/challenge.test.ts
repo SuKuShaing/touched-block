@@ -69,8 +69,8 @@ describe('parámetro reto', () => {
   });
 
   it('el enlace usa el parámetro, no una ruta', () => {
-    expect(challengeLink('K7M2QXAB', 'https://sukushaing.github.io/touched-block/')).toBe(
-      'https://sukushaing.github.io/touched-block/?reto=K7M2QXAB',
+    expect(challengeLink('K7M2QXAB', 'https://web.touchedblock.app/')).toBe(
+      'https://web.touchedblock.app/?reto=K7M2QXAB',
     );
     expect(readChallengeParam(challengeLink('K7M2QXAB').split('?')[1])).toBe('K7M2QXAB');
   });

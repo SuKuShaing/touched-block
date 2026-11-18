@@ -1,0 +1,87 @@
+name: Desplegar la web en Cloudflare
+
+# El juego web (https://web.touchedblock.app) en Cloudflare Workers con activos estáticos
+# (apps/client/wrangler.jsonc). Guía: docs/despliegue.md.
+on:
+  push:
+    branches: [main]
+    # la API se despliega aparte (deploy-api.yml, por tag); la landing y la redirección de Pages
+    # tienen su propio workflow; los docs no cambian la web
+    paths-ignore:
+      - 'apps/api/**'
+      - 'apps/landing/**'
+      - 'deploy/**'
+      - 'docs/**'
+      - '.github/workflows/deploy-api.yml'
+      - '.github/workflows/deploy-landing.yml'
+      - '.github/workflows/deploy-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Revisar secretos
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          falta=""
+          [ -n "$CLOUDFLARE_API_TOKEN" ] || falta="$falta CLOUDFLARE_API_TOKEN"
+          [ -n "$CLOUDFLARE_ACCOUNT_ID" ] || falta="$falta CLOUDFLARE_ACCOUNT_ID"
+          if [ -n "$falta" ]; then
+            echo "::error::Faltan los secretos de GitHub:$falta. Créalos en Settings → Secrets and variables → Actions (ver docs/despliegue.md, sección Web)."
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # La versión de pnpm sale de "packageManager" en el package.json raíz.
+      - name: Instalar pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Instalar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      # El cliente importa el motor desde su código fuente (metro.config.js), así que no hace
+      # falta compilarlo para la web; los tests sí se corren antes de publicar.
+      - name: Tests del motor
+        run: pnpm --filter @tb/engine test
+
+      # Cuentas y rankings: EXPO_PUBLIC_API_URL es pública (queda dentro del JS), así que va
+      # escrita aquí; el Client ID de Google sale de la variable del repositorio. Sin las dos, el
+      # sitio queda solo para invitados.
+      - name: Exportar la web (Expo)
+        env:
+          EXPO_PUBLIC_API_URL: https://api.touchedblock.app
+          EXPO_PUBLIC_GOOGLE_CLIENT_ID: ${{ vars.EXPO_PUBLIC_GOOGLE_CLIENT_ID }}
+        run: pnpm --filter @tb/client exec expo export -p web --output-dir dist
+
+      # Wrangler se instala global con npm (con sus scripts de instalación) y la acción lo usa tal
+      # cual, sin wranglerVersion: si lo instalara ella dentro de apps/client, npm fallaría con las
+      # dependencias "workspace:*" del cliente y pnpm agregaría wrangler al package.json.
+      - name: Instalar Wrangler
+        run: npm install -g wrangler@4
+
+      - name: Publicar en Cloudflare
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/client
+          packageManager: pnpm
+          command: deploy

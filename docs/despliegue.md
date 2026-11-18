@@ -2,31 +2,100 @@
 
 | Pieza | Dónde | Cuándo se publica |
 |---|---|---|
-| Web | GitHub Pages: `https://sukushaing.github.io/touched-block/` | Cada push a `main`, salvo que solo cambien `apps/api/**`, `deploy/**` o `docs/**`. También se puede lanzar a mano (*Run workflow*) |
+| Web (el juego) | Cloudflare Workers: `https://web.touchedblock.app` | Cada push a `main` que toque el cliente o el motor (no `apps/api/**`, `apps/landing/**`, `deploy/**` ni `docs/**`). También a mano (*Run workflow*) |
+| Landing | Cloudflare Workers: `https://touchedblock.app` | Cada push a `main` que toque `apps/landing/**`, o a mano |
+| Web vieja (solo redirige) | GitHub Pages: `https://sukushaing.github.io/touched-block/` | Cuando cambia `deploy/gh-pages-redirect/**`, o a mano |
 | App Android | APK firmado (`apps/client/android/app/build/outputs/apk/release/app-release.apk`); por ahora se reparte a mano; Google Play más adelante | A mano (ver sección 5) |
-| API + base de datos | VPS del usuario con **Dokploy** (servicio *Compose*) | Cada tag `vX.Y.Z` |
+| API + base de datos | VPS del usuario con **Dokploy** (servicio *Compose*): `https://api.touchedblock.app` (y `https://vps23906.cubepath.net`, que usa el APK ya repartido) | Cada tag `vX.Y.Z` |
 
-**Regla de oro**: el repositorio es **público**. Ningún secreto entra al repo. Los valores reales viven en Dokploy (pestaña Environment) y en los *Secrets* de GitHub. `.env` y `.env.*` están en `.gitignore`, salvo los `.env.example`.
+**Regla de oro**: el repositorio es **público**. Ningún secreto entra al repo. Los valores reales viven en Dokploy (pestaña Environment) y en los *Secrets* de GitHub (Dokploy y Cloudflare). `.env` y `.env.*` están en `.gitignore`, salvo los `.env.example`.
 
 ---
 
-## 1. Web (GitHub Pages)
+## 1. Web (Cloudflare) y dominios
 
-`.github/workflows/deploy-pages.yml` hace lo siguiente:
-1. Instala pnpm (versión de `packageManager` en `package.json`) y Node 24.
-2. Ejecuta los tests del motor.
-3. Corre `expo export -p web`.
-4. Copia `index.html` a `404.html`, para que las rutas como `/rankings` funcionen al recargar.
-5. Agrega `.nojekyll` y publica `apps/client/dist`.
+Desde el 17 nov 2026 el proyecto usa el dominio **`touchedblock.app`** (comprado y con DNS en Cloudflare):
 
-La web lee dos **variables** del repositorio (no secretos; terminan dentro del JS público):
+| Dirección | Qué es | Dónde vive |
+|---|---|---|
+| `https://touchedblock.app` | Landing: inicio, `/privacidad/`, `/terminos/`, `/eliminar-cuenta/`, `/soporte/` | Cloudflare Workers, activos estáticos (`apps/landing`, `apps/landing/wrangler.jsonc`) |
+| `https://web.touchedblock.app` | El juego web (este cliente Expo, en la raíz) | Cloudflare Workers, activos estáticos (`apps/client/wrangler.jsonc`) |
+| `https://api.touchedblock.app` | La API | Dokploy (sección 3). `https://vps23906.cubepath.net` sigue funcionando: el APK ya repartido apunta ahí |
+| `https://sukushaing.github.io/touched-block/` | Web vieja: solo redirige al juego y le pasa los datos locales | GitHub Pages (`deploy/gh-pages-redirect/`) |
 
-| Variable | Valor |
+### El juego: `.github/workflows/deploy-web.yml`
+
+Corre en cada push a `main`, salvo que solo cambien `apps/api/**`, `apps/landing/**`, `deploy/**`, `docs/**` o los otros workflows. También se puede lanzar a mano (*Actions → Desplegar la web en Cloudflare → Run workflow*). Hace lo siguiente:
+1. Revisa que existan los secretos `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID`; si falta alguno, falla con un mensaje que dice cuál.
+2. Instala pnpm (versión de `packageManager` en `package.json`), Node 24 y las dependencias.
+3. Ejecuta los tests del motor.
+4. Corre `expo export -p web` con `EXPO_PUBLIC_API_URL=https://api.touchedblock.app` (escrita en el workflow: es pública y así no depende de la variable vieja del repositorio, que apunta al VPS) y `EXPO_PUBLIC_GOOGLE_CLIENT_ID` (variable del repositorio).
+5. Instala Wrangler 4 global con npm y publica `apps/client/dist` con `cloudflare/wrangler-action@v4` (`wrangler deploy` en `apps/client`). Wrangler va global para que la acción no intente instalarlo dentro del workspace de pnpm (npm falla con las dependencias `workspace:*` y pnpm lo agregaría al `package.json`).
+
+`apps/client/wrangler.jsonc`: Worker `touchedblock-web`, sin código de servidor, solo `assets` desde `./dist` con `not_found_handling: "single-page-application"`, y el dominio propio `web.touchedblock.app` (`routes` con `custom_domain: true`: Cloudflare crea el registro DNS y el certificado al publicar). Detalles:
+- **Rutas**: una ruta que no es un archivo (`/como-jugar`, `/rankings`, `/u/<usuario>`) recibe `index.html` con 200, así que ya no hace falta el `404.html` de Pages. Los HTML estáticos de `public/` (las redirecciones legales) se sirven tal cual.
+- **Enlaces de retos**: siguen siendo por parámetro (`/?reto=CÓDIGO`, `/?diario=1`), porque ya hay enlaces repartidos. Ahora una ruta también respondería 200 (la vista previa de WhatsApp ya no se rompería), así que pasar a `/reto/CÓDIGO` es una mejora posible, siempre aceptando también el formato viejo.
+- **Caché**: `public/_headers` (Expo lo copia a `dist/`; Cloudflare lo lee y no lo publica) marca `/_expo/static/*` y `/assets/*` (todos llevan un hash en el nombre) con un año e `immutable`. `index.html` y lo demás quedan con lo de Cloudflare por defecto (`max-age=0, must-revalidate`), para que una versión nueva llegue al tiro.
+- `compatibility_date` está fija; subirla a mano y probar.
+- Probar en local: `pnpm --filter @tb/client exec expo export -p web` y luego, en `apps/client`, `pnpm dlx wrangler@4 dev --port 5182` (crea `.wrangler/`, que está ignorado).
+
+### La landing: `.github/workflows/deploy-landing.yml`
+
+En cada push a `main` que toque `apps/landing/**` (o a mano): revisa los mismos dos secretos, instala Wrangler 4 global y corre `wrangler deploy` en `apps/landing` con `cloudflare/wrangler-action@v4`. La configuración es `apps/landing/wrangler.jsonc`.
+
+### Secretos de Cloudflare
+
+En GitHub: **Settings → Secrets and variables → Actions → *Secrets***.
+
+| Secreto | De dónde sale |
 |---|---|
-| `EXPO_PUBLIC_GOOGLE_CLIENT_ID` | `1065315828810-mr72tnt45h219lvr056efbojdjpvman0.apps.googleusercontent.com` |
-| `EXPO_PUBLIC_API_URL` | La URL HTTPS de la API en Dokploy, sin `/` al final (por ejemplo `https://api.tudominio.com`) |
+| `CLOUDFLARE_API_TOKEN` | Cloudflare → *My Profile* → **API Tokens** → *Create Token* → plantilla **Edit Cloudflare Workers**. En *Account Resources*, la cuenta; en *Zone Resources*, la zona `touchedblock.app` (hace falta para los dominios propios). Cópialo al tiro: no se vuelve a mostrar |
+| `CLOUDFLARE_ACCOUNT_ID` | Panel de Cloudflare → *Workers & Pages* (columna derecha, *Account ID*), o el tramo de la URL `dash.cloudflare.com/<account-id>/…` |
 
-Sin **las dos**, la web queda en modo solo invitado: funciona, pero sin pestañas ni rankings. Después de crearlas o cambiarlas hay que volver a publicar la web: haz un push a `main` o usa *Actions → Desplegar en GitHub Pages → Run workflow*.
+La variable del repositorio `EXPO_PUBLIC_GOOGLE_CLIENT_ID` (pestaña *Variables*) sigue igual: `1065315828810-mr72tnt45h219lvr056efbojdjpvman0.apps.googleusercontent.com`. La variable `EXPO_PUBLIC_API_URL` ya no la usa ningún workflow (se puede borrar).
+
+### La web vieja: redirección y mudanza de datos
+
+`.github/workflows/deploy-pages.yml` publica en GitHub Pages **solo** `deploy/gh-pages-redirect/` (cuando cambia esa carpeta o el workflow, o a mano). Ya no lleva el juego. Tiene `index.html` y `404.html` idénticos (el workflow vuelve a copiar uno en el otro), `.nojekyll` y dos páginas mínimas para las direcciones legales viejas (`politica-de-privacidad/`, `condiciones-del-servicio/`), que llevan a `https://touchedblock.app/privacidad/` y `/terminos/`.
+
+La página lleva a la misma ruta y parámetros del sitio nuevo: `/touched-block/como-jugar?nivel=basico` → `https://web.touchedblock.app/como-jugar?nivel=basico`, `/touched-block/?reto=K7M2QXAB` → `https://web.touchedblock.app/?reto=K7M2QXAB`. No es un 301 ciego porque **los datos locales del jugador** (récord, historial, sesión, tutoriales vistos…) viven en el `localStorage` del origen `https://sukushaing.github.io` y no pasan solos a otro dominio:
+1. Con JavaScript, la página lee **solo las claves del juego**, por nombre exacto (el origen `sukushaing.github.io` lo comparten todos los proyectos del autor): `tb_rt1`, `tb_me1`, `tb_best5`, `tb_stats1`, `tb_hist5`, `tb_onb1`, `tb_onb_adv1`, `tb_visits1`, `tb_last1`, `tb_unlock1`, `tb_set1`, `tb_miss1`, `tb_daily1`, `tb_reto1` y `tb_cele1`. No borra ni cambia nada en el origen viejo.
+2. Las empaqueta en el **fragmento** de la URL nueva: `#tbmigrar=<base64url de {"v":1,"d":{clave:valor}}>`. El fragmento nunca viaja a ningún servidor (tampoco a Cloudflare). Tope de unos 200 KB; los datos reales pesan pocos KB.
+3. Hace `location.replace` (la página vieja no queda en el historial). Sin JavaScript, un `<meta http-equiv="refresh">` lleva a `https://web.touchedblock.app/` y queda un enlace visible.
+
+En el sitio nuevo, el script `tb-mudanza` del `<head>` de `apps/client/public/index.html` (corre antes que la app; tests en `apps/client/src/lib/mudanza.test.ts`, que ejecutan los dos scripts reales) importa el fragmento:
+- **Solo si viene de la web vieja**: `document.referrer` tiene que ser `https://sukushaing.github.io` (la página vieja fija `referrer: origin`; en desarrollo, de `localhost` a `localhost`). Sin eso no se importa nada: un enlace fabricado con `#tbmigrar=` no puede subir el récord, las estadísticas ni dejar a alguien entrado en otra cuenta.
+- **Siempre borra el fragmento** (aunque sea inválido o enorme) con `history.replaceState(…, location.href.split('#')[0])`, para que no quede en la barra, al recargar ni en un enlace copiado.
+- Solo acepta esas claves, cada una con su formato, como máximo 100 000 caracteres por clave. Todo va en `try/catch`.
+- **Mezcla sin bajar nada ni contar doble** (repetir la mudanza da lo mismo):
+
+  | Clave | Regla |
+  |---|---|
+  | `tb_best5`, `tb_visits1`, `tb_last1` | El mayor |
+  | `tb_onb1`, `tb_onb_adv1`, `tb_unlock1` | `1` si alguno de los dos lados la tiene |
+  | `tb_stats1` | El mayor campo a campo (como `maxOf` de `lib/stats.ts`). `runs`, `totalKilled` y `bonusXp` son acumulados: si se jugó en los dos sitios, queda el mayor de los dos y no la suma (sumar contaría doble si la mudanza se repite) |
+  | `tb_hist5` | Unión sin repetir (misma fecha, destruidos y escapados), la más reciente primero, máx. 30 (`HIST_MAX`) |
+  | `tb_cele1` | Unión (logros ya celebrados: así no se repiten) |
+  | `tb_miss1` | Unión de ids por fecha (una misión premiada en cualquiera de los dos no se vuelve a premiar) |
+  | `tb_daily1` | Fechas jugadas unidas (racha), `rulesSeen` si alguno, `yesterdaySeen` y `bestPct` el mayor. Por día: intentos con el mayor (no regala intentos al invitado), partidas unidas, reclamo y "habrías quedado" del sitio nuevo si los hay |
+  | `tb_set1`, `tb_reto1` | Se conserva el del sitio nuevo; el viejo solo si aquí no hay |
+  | `tb_rt1` + `tb_me1` | Solo si aquí no hay sesión (nunca se cambia de cuenta). El token viaja de nuestro dominio viejo al nuevo, por fragmento y en el mismo navegador. Si ya se había usado (rota en cada uso), la app lo descarta sola y queda como invitado |
+- **Tutorial**: como `tb_onb1`, `tb_visits1` y `tb_last1` se importan antes de que la app cuente la visita, un jugador antiguo no vuelve a ver el tutorial de la 1.ª visita.
+- Al importar, marca `tb_mig1=1`.
+
+**Ida y vuelta (una vez por navegador).** Los enlaces que se comparten ya apuntan a `web.touchedblock.app`, así que un jugador antiguo puede llegar primero al sitio nuevo. Por eso, si no existe `tb_mig1` y no llegó `#tbmigrar`, el script:
+1. Guarda `tb_mig1=1` **antes de salir** (y comprueba que quedó guardado; si el almacenamiento no dura, no sale). Así nunca hay bucle y, si GitHub Pages falla, la próxima visita ya no vuelve a intentarlo.
+2. Marca `window.__tbMudanza` (la app no arranca mientras se va: `src/app/_layout.tsx`) y hace `location.replace` a `https://sukushaing.github.io/touched-block/?volver=<ruta y query codificadas>`.
+3. La página vieja valida `volver` (empieza con una sola `/`, no `//` ni `/\`, sin esquema ni caracteres de control; si no, va a `/`) y devuelve al jugador a esa misma dirección, con `#tbmigrar=…` si hay datos o sin fragmento si no. Un `/?reto=K7M2QXAB` termina en `/?reto=K7M2QXAB`.
+
+No se hace en `localhost`, si la dirección ya trae `?volver=`, ni para bots conocidos por su *user agent* (Googlebot, vistas previas de WhatsApp/Telegram/Discord, Lighthouse…); sin JavaScript no pasa nada. Le cuesta a cada navegador nuevo un salto extra a GitHub Pages, una sola vez.
+
+Límites:
+- Una web instalada desde Pages (PWA) abre la dirección vieja y la redirección la saca al navegador; conviene instalarla de nuevo desde `web.touchedblock.app`.
+- Safari (ITP) borra el almacenamiento de un sitio que no se visita en 7 días: a quien no abrió la web vieja en una semana ya no le quedan datos que traer. Las protecciones contra *bounce tracking* de los navegadores podrían tratar el salto a `sukushaing.github.io` como rastreo y borrar sus datos más adelante; por eso la mudanza va al primer ingreso.
+- Si se agrega o renombra una clave `tb_*`: sumarla a `CLAVES` de la página vieja y a `REGLAS` del script `tb-mudanza`.
+
+Para probarla en local: una copia de `deploy/gh-pages-redirect/` servida bajo `/touched-block/` con `DESTINO` cambiado a `http://localhost:5182`, y una copia del `dist/` del cliente en el 5182 (`wrangler dev`) con `VIEJA` apuntando a `http://localhost:5181` e `IDA_Y_VUELTA = true`.
 
 ## 2. Google Cloud (login con Google)
 
@@ -34,12 +103,13 @@ Ya hecho por el usuario el 9 nov 2026. El Client ID está arriba. Para rehacerlo
 
 1. **APIs y servicios → Pantalla de consentimiento de OAuth** (*Google Auth Platform*).
    - Nombre de la app: "Touched Block".
-   - Página principal: `https://sukushaing.github.io/touched-block/`.
-   - Política de privacidad: `https://sukushaing.github.io/touched-block/politica-de-privacidad/`.
-   - Condiciones del servicio: `https://sukushaing.github.io/touched-block/condiciones-del-servicio/`.
-   - Usa las URLs **con `/` al final**: sin ella, GitHub Pages responde primero con una redirección 301.
-   - Dominio autorizado: `sukushaing.github.io`.
-2. **Clientes → Crear cliente → Aplicación web**. Orígenes de JavaScript autorizados: `https://sukushaing.github.io` y `http://localhost:8081`. No hacen falta URI de redirección: Google Identity Services entrega el `idToken` en la misma página.
+   - Página principal: `https://touchedblock.app/`.
+   - Política de privacidad: `https://touchedblock.app/privacidad/`.
+   - Condiciones del servicio: `https://touchedblock.app/terminos/`.
+   - Usa las URLs **con `/` al final**, para que respondan 200 sin redirección.
+   - Dominio autorizado: `touchedblock.app` (cubre también `web.` y `api.`). Puede quedar también `sukushaing.github.io` mientras exista la redirección.
+   - Antes (hasta nov 2026) eran `https://sukushaing.github.io/touched-block/…` con el dominio `sukushaing.github.io`; esas direcciones siguen respondiendo (redirigen).
+2. **Clientes → Crear cliente → Aplicación web**. Orígenes de JavaScript autorizados: `https://web.touchedblock.app`, `https://sukushaing.github.io` (una pestaña vieja todavía abierta) y `http://localhost:8081`. **Sin `https://web.touchedblock.app` el botón de Google no funciona en la web nueva**: agrégalo antes de publicarla. No hacen falta URI de redirección: Google Identity Services entrega el `idToken` en la misma página.
 3. **Público → Publicar la app** (pasar de "Prueba" a "En producción").
    - **Importante:** en modo prueba solo pueden entrar los usuarios de prueba que agregues.
    - Como solo se piden los *scopes* básicos (email, perfil), no hace falta la revisión de Google.
@@ -71,12 +141,12 @@ El archivo `deploy/.env` (ignorado por git) ya tiene los valores reales generado
 | `JWT_SECRET` | 48 bytes aleatorios. Si cambia, todas las sesiones se cierran |
 | `DAILY_SECRET` | **Obligatoria desde la fase 4** (reto diario): sin ella el Compose no arranca (`falta DAILY_SECRET`) y la API tampoco. 48 bytes aleatorios (mínimo 32 caracteres): `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"`. Es la llave de la semilla del reto diario (`HMAC-SHA256(DAILY_SECRET, fecha)`): sin ella nadie puede adivinar la partida de mañana. **No cambiarla** una vez publicada: cambiaría la partida del día en curso a mitad del día |
 | `GOOGLE_CLIENT_IDS` | Client ID web; más adelante, también los de Android/iOS, separados por coma |
-| `CORS_ORIGINS` | `https://sukushaing.github.io` |
+| `CORS_ORIGINS` | `https://web.touchedblock.app,https://sukushaing.github.io` (separados por coma). **Hay que cambiarlo en Dokploy**: el valor por defecto de `deploy/docker-compose.yml` solo se usa si la variable no existe, y hoy existe con el valor viejo |
 | `API_TAG` | `latest`. Para volver a una versión anterior: `v0.1.0`, etc. |
 
 ### Configuración inicial en Dokploy (una vez)
 
-1. **DNS**: crea un registro A `api.<tu-dominio>` que apunte a la IP del VPS.
+1. **DNS**: crea un registro A `api.<tu-dominio>` que apunte a la IP del VPS (hoy `api.touchedblock.app`, en Cloudflare: **solo DNS**, nube gris, para que Let's Encrypt de Traefik pueda emitir el certificado; el dominio viejo `vps23906.cubepath.net` se deja también en *Domains*).
    - Hace falta un dominio real, porque la web está en HTTPS y el navegador bloquea llamadas a una API sin HTTPS.
    - Los dominios `traefik.me` que sugiere Dokploy no sirven: son HTTP.
 2. **Project → Create Service → Compose**.
@@ -103,7 +173,7 @@ En GitHub: **repositorio → Settings → Secrets and variables → Actions**. L
 | Variable | Valor |
 |---|---|
 | `EXPO_PUBLIC_GOOGLE_CLIENT_ID` | El Client ID. Se puede crear ya |
-| `EXPO_PUBLIC_API_URL` | `https://api.<tu-dominio>`. Créala cuando la API responda |
+| `EXPO_PUBLIC_API_URL` | Ya no se usa: `deploy-web.yml` lleva escrita `https://api.touchedblock.app` |
 
 ### Publicar una versión de la API
 
@@ -127,7 +197,7 @@ Si falta un secreto, el último paso falla con un mensaje claro.
    - O agrega el registro en Dokploy (*Settings → Registry*: `ghcr.io`, tu usuario y un token con `read:packages`).
 4. Si el despliegue había fallado por eso, presiona *Deploy* en Dokploy.
 5. Comprueba que `https://api.<tu-dominio>/health` responda `{"status":"ok","db":"ok","rulesVersion":3,…}`.
-6. Crea la variable `EXPO_PUBLIC_API_URL` en GitHub y vuelve a publicar la web (*Run workflow*). Desde ahí aparecen las cuentas y los rankings.
+6. Publica la web (*Run workflow* de `deploy-web.yml`); su `EXPO_PUBLIC_API_URL` está en el workflow. Desde ahí aparecen las cuentas y los rankings.
 
 ### Volver a una versión anterior
 
@@ -214,9 +284,11 @@ La app usa el Client ID **web** (`EXPO_PUBLIC_GOOGLE_CLIENT_ID`) como `webClient
 cd apps/client
 pnpm exec expo prebuild -p android
 cd android
-EXPO_PUBLIC_API_URL=https://vps23906.cubepath.net NODE_ENV=production ./gradlew app:assembleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a,x86_64
+EXPO_PUBLIC_API_URL=https://api.touchedblock.app NODE_ENV=production ./gradlew app:assembleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a,x86_64
 # → app/build/outputs/apk/release/app-release.apk
 ```
 
 - Subir `android.versionCode` (y `version`) en `app.json` en cada APK que se reparta: Android no instala encima una versión con el mismo `versionCode`.
 - La API no necesita CORS para la app, porque las apps no envían `Origin`.
+- Los APK anteriores a noviembre de 2026 apuntan a `https://vps23906.cubepath.net`: ese dominio tiene que seguir en Dokploy (*Domains*) mientras haya gente con esos APK.
+- La app comparte enlaces con `https://web.touchedblock.app/` (`config.siteUrl`) y abre las páginas legales de `https://touchedblock.app/` (`config.landingUrl`).

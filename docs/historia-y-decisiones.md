@@ -267,6 +267,32 @@ Diferencias que aparecieron al comparar pantalla por pantalla (web a 412×915 co
   - El país del navegador ya no toma por región un subtag de script o variante (p. ej. `es-419`, `zh-Hant`).
   - Lección de esa prueba: después de cambiar `metro.config.js` hay que reiniciar Metro con `--clear`. Un Metro viejo seguía sirviendo la resolución anterior y la app fallaba con "Cannot read property 'OS' of undefined".
 
+### Dominio propio touchedblock.app, landing, plataforma, medallas y celebraciones (17 nov 2026)
+
+El usuario compró `touchedblock.app` en Cloudflare y pidió: landing en la raíz, juego en `web.`, API en `api.`, que GitHub Pages redirija a los jugadores antiguos, una columna para separar móvil de PC, medallas rediseñadas y una celebración al ganar premios. Se hizo con subagentes en paralelo (landing, plataforma, medallas, dominio, celebración) y una revisión de código posterior.
+
+**Hosting**
+- Landing y juego en **Cloudflare Workers con activos estáticos** (`apps/landing/wrangler.jsonc`, `apps/client/wrangler.jsonc`): gratis, CDN, el dominio ya está en Cloudflare y los dominios propios (`custom_domain`) crean solos su DNS. El juego usa `not_found_handling: single-page-application`; la landing, `404-page`.
+- La landing tiene un Worker mínimo (`src/worker.js`) solo para redirigir `www.` a la raíz con 301; corre antes que los activos (`run_worker_first`).
+- La API sigue en Dokploy; `api.touchedblock.app` es un registro A **sin proxy** de Cloudflare (nube gris) para que Traefik obtenga el certificado de Let's Encrypt directo. El dominio viejo `vps23906.cubepath.net` **se mantiene**: el APK ya repartido apunta ahí.
+- Token de Cloudflare con permisos mínimos (Workers Scripts/Routes, DNS y Email Routing de la zona) creado el 17 nov 2026, guardado fuera del repo en `~/.touched-block/cloudflare.env`.
+- Correo público de contacto `contacto@touchedblock.app` con Email Routing de Cloudflare (reenvía al Gmail del usuario, que no se publica). Lo eligió el usuario.
+
+**Mudanza sin perder datos (GitHub Pages → web.touchedblock.app)**
+- Los datos locales viven en `localStorage` del origen `sukushaing.github.io` y otro dominio no puede leerlos. Por eso Pages no hace un 301 ciego: publica `deploy/gh-pages-redirect/` (index.html = 404.html), que lee **una lista exacta de claves del juego** (el origen lo comparten todos los proyectos del usuario), las empaqueta en el fragmento `#tbmigrar=` (el fragmento no llega a ningún servidor) y redirige conservando ruta y parámetros.
+- El destino las importa con un script inline al principio del `<head>` de `apps/client/public/index.html`, antes del bundle: nunca pisa datos del sitio nuevo, el récord y las visitas quedan con el mayor, las marcas de tutoriales vistos en `1`, y limpia el fragmento con `history.replaceState`.
+- La **sesión** solo se importa si el referrer es `https://sukushaing.github.io` y no hay otra abierta, para que un enlace fabricado no deje a alguien dentro de una cuenta ajena.
+- Si se agrega o renombra una clave `tb_*`, hay que actualizar las dos listas.
+- Los enlaces de retos siguen por parámetro (`?reto=`), aunque el modo SPA ya respondería 200 en cualquier ruta, para no romper los enlaces repartidos.
+
+**Páginas legales en la landing**: `/privacidad/`, `/terminos/`, `/eliminar-cuenta/` (Google Play exige una URL pública para pedir el borrado) y `/soporte/`, escritas a partir de lo que de verdad hace el código (datos de Google, retención, borrado en cascada de `DELETE /me`, permisos de Android, sin anuncios ni analítica). Las direcciones viejas redirigen ahí.
+
+**Plataforma de cada partida (`Run.platform`)**: `app_android | app_ios | web_mobile | web_desktop`, columna opcional `VarChar(16)` (no enum, para agregar valores sin migración; sin índice, solo se usa en consultas manuales). El cliente la envía; si no viene (APK viejo, web en caché), la API la deduce del `User-Agent`. Un valor desconocido se ignora y nunca hace fallar la partida. Las partidas antiguas quedan en `NULL`. Consulta de ejemplo en `docs/api.md`.
+
+**Medallas en SVG**: con `View` no se lograban degradados, laureles ni facetas. Se agregó `react-native-svg` (solo lo importa el archivo `.native`; en la web la medalla es un `<img>` con el SVG como data URI, sin peso extra ni choques de ids). Un mismo árbol (`cosmetics/medal.ts`) alimenta la web, la app y las tarjetas para compartir. Obliga a regenerar el APK.
+
+**Celebración de premios**: pedido explícito del usuario, aunque el plan decía "nada de ventanas que haya que cerrar" en la pantalla final. Se mitiga con 900 ms de espera tras el resultado, toques bloqueados los primeros 600 ms y una sola ventana con los premios en secuencia. Solo se celebra lo que gana una partida en este dispositivo; lo que llega de la cuenta o de otro dispositivo, y todo lo que un jugador ya tenía al publicar esto, se registra en silencio (`tb_cele1`; los pendientes por ver en `tb_cele1p`). La fanfarria se sintetiza con `fx.beep`, como los demás sonidos.
+
 ### El antitrampas actual basta (12 nov 2026)
 
 - Se repasó el sistema: replay con semilla del servidor, límites de toques por segundo, plazo de 2 h, duración compatible con el reloj real y una sola entrega por partida.

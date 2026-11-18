@@ -21,7 +21,9 @@ services:
       DAILY_SECRET: ${DAILY_SECRET:?falta DAILY_SECRET}
       GOOGLE_CLIENT_IDS: ${GOOGLE_CLIENT_IDS:?falta GOOGLE_CLIENT_IDS}
       APPLE_AUDIENCES: ${APPLE_AUDIENCES:-}
-      CORS_ORIGINS: ${CORS_ORIGINS:-https://sukushaing.github.io}
+      # orígenes de la web separados por coma: la nueva (Cloudflare) y la vieja (GitHub Pages, hoy
+      # solo redirige, pero una pestaña abierta desde antes sigue llamando a la API)
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://web.touchedblock.app,https://sukushaing.github.io}
     # sin puertos publicados en el host: el dominio (Traefik de Dokploy) llega al 3000 por la red interna
     expose:
       - 3000

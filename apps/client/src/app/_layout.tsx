@@ -25,7 +25,17 @@ function makeQueryClient() {
   });
 }
 
+/**
+ * Web: el script de mudanza de public/index.html está llevando al jugador a la web vieja para traer
+ * sus datos (ida y vuelta, una sola vez). La app no arranca para no escribir nada mientras tanto.
+ */
+const LEAVING = typeof window !== 'undefined' && (window as { __tbMudanza?: boolean }).__tbMudanza === true;
+
 export default function RootLayout() {
+  return LEAVING ? null : <App />;
+}
+
+function App() {
   const [qc] = useState(makeQueryClient);
 
   // Con sesión guardada, se renueva el access token al abrir (en segundo plano).

@@ -7,14 +7,256 @@
     <meta name="description" content="Juego táctil de reflejos: toca cada bloque tantas veces como diga su número antes de que desaparezca. Contra el reloj, con vidas y bloques trampa." />
     <meta name="theme-color" content="#12121a" />
     <meta name="color-scheme" content="dark" />
-    <link rel="canonical" href="https://sukushaing.github.io/touched-block/" />
+    <script id="tb-mudanza">
+      // Mudanza desde la web vieja (https://sukushaing.github.io/touched-block/, GitHub Pages). Los
+      // datos locales del jugador viven en el localStorage de ese origen; su página
+      // (deploy/gh-pages-redirect/index.html) los manda aquí en el fragmento
+      // #tbmigrar=<base64url de {"v":1,"d":{clave:valor}}>, que no viaja a ningún servidor. Corre antes
+      // que la app (que lee el almacenamiento al cargar) y tiene tests en src/lib/mudanza.test.ts.
+      // - Solo acepta datos que llegan desde la web vieja (document.referrer): un enlace fabricado no
+      //   cambia nada. Siempre borra el fragmento de la barra.
+      // - Mezcla sin bajar nada ni contar doble (repetir la mudanza da lo mismo): récord, visitas,
+      //   última actividad y estadísticas con el mayor; historial, logros celebrados, misiones
+      //   premiadas y fechas del reto diario unidos; tutoriales y desbloqueo vistos si alguno los vio.
+      //   Los ajustes, la sesión y el reto pendiente del sitio nuevo se conservan.
+      // - Ida y vuelta (una sola vez por navegador, tb_mig1): quien entra primero aquí (los enlaces
+      //   compartidos ya apuntan a este sitio) pasa por la web vieja, que lo devuelve a la misma
+      //   dirección con sus datos (?volver=). La marca se guarda ANTES de salir: nunca hay bucle.
+      (function () {
+        var VIEJA = 'https://sukushaing.github.io';
+        var VIEJA_URL = VIEJA + '/touched-block/';
+        var MIG = 'tb_mig1';
+        var local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+        var IDA_Y_VUELTA = !local;
+        var ls = null;
+        try {
+          ls = window.localStorage;
+        } catch (e) {}
+
+        /** Importa el paquete. Devuelve true si venía de la web vieja (aunque no trajera nada útil). */
+        function importar(b) {
+          if (!ls || b.length > 400000 || !/^[A-Za-z0-9_-]+$/.test(b)) return false;
+          var ref = '';
+          try {
+            ref = new URL(document.referrer).origin;
+          } catch (e) {}
+          var dev = local && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(ref);
+          if (ref !== VIEJA && !dev) return false;
+          var bin = atob(b.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((b.length + 3) % 4));
+          var bytes = new Uint8Array(bin.length);
+          for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+          var p = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+          if (!p || p.v !== 1 || !isObj(p.d)) return false;
+          var d = p.d;
+          for (var k in REGLAS) {
+            if (!Object.prototype.hasOwnProperty.call(d, k)) continue;
+            var v = d[k];
+            if (typeof v !== 'string' || v.length > 100000) continue;
+            var cur = ls.getItem(k);
+            var out = null;
+            try {
+              out = REGLAS[k](v, cur);
+            } catch (e) {}
+            if (out !== null && out !== cur) ls.setItem(k, out);
+          }
+          // sesión: solo si aquí no hay una (nunca se cambia de cuenta)
+          var rt = d.tb_rt1;
+          if (typeof rt === 'string' && /^[A-Za-z0-9_-]{20,200}$/.test(rt) && ls.getItem('tb_rt1') === null) {
+            ls.setItem('tb_rt1', rt);
+            var me = d.tb_me1;
+            if (typeof me === 'string' && me.length <= 100000 && isObj(js(me))) ls.setItem('tb_me1', me);
+            else ls.removeItem('tb_me1');
+          }
+          return true;
+        }
+
+        function isObj(o) {
+          return !!o && typeof o === 'object' && !Array.isArray(o);
+        }
+        function js(v) {
+          try {
+            return JSON.parse(v);
+          } catch (e) {
+            return undefined;
+          }
+        }
+        function nat(v) {
+          return typeof v === 'number' && isFinite(v) && v >= 0 ? Math.floor(v) : 0;
+        }
+        function isInt(v) {
+          return /^\d{1,15}$/.test(v);
+        }
+        function isDate(v) {
+          return typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
+        }
+        /** Unión sin repetir (por `clave`), conservando primero lo de `a`. */
+        function union(a, b, clave) {
+          var seen = {};
+          var out = [];
+          var all = a.concat(b);
+          for (var i = 0; i < all.length; i++) {
+            var key = clave(all[i]);
+            if (key === null || seen['$' + key]) continue;
+            seen['$' + key] = 1;
+            out.push(all[i]);
+          }
+          return out;
+        }
+        function arr(v) {
+          var o = typeof v === 'string' ? js(v) : v;
+          return Array.isArray(o) ? o : [];
+        }
+        function obj(v) {
+          var o = typeof v === 'string' ? js(v) : v;
+          return isObj(o) ? o : null;
+        }
+
+        // Cada regla recibe (valor viejo, valor actual o null) y devuelve el valor a guardar o null.
+        function mayor(v, cur) {
+          if (!isInt(v)) return null;
+          return cur === null || !isInt(cur) || Number(v) > Number(cur) ? v : null;
+        }
+        function marca(v, cur) {
+          return v === '1' && cur !== '1' ? '1' : null;
+        }
+        function siFalta(v, cur) {
+          return cur === null && obj(v) ? v : null;
+        }
+        // partida del historial (lib/history.ts): destruidos, escapados, fecha
+        function partida(g) {
+          return isObj(g) && typeof g.k === 'number' && typeof g.m === 'number' && typeof g.d === 'number' ? g.d + ':' + g.k + ':' + g.m : null;
+        }
+        var REGLAS = {
+          tb_best5: mayor,
+          tb_visits1: mayor,
+          tb_last1: mayor,
+          tb_onb1: marca,
+          tb_onb_adv1: marca,
+          tb_unlock1: marca,
+          tb_set1: siFalta,
+          tb_reto1: siFalta,
+          // estadísticas (lib/stats.ts): el mayor campo a campo, como su maxOf
+          tb_stats1: function (v, cur) {
+            var a = obj(v);
+            if (!a) return null;
+            var c = obj(cur) || {};
+            var f = ['bestTicks', 'bestStreak', 'totalKilled', 'runs', 'bonusXp'];
+            var out = {};
+            for (var i = 0; i < f.length; i++) out[f[i]] = Math.max(nat(a[f[i]]), nat(c[f[i]]));
+            return JSON.stringify(out);
+          },
+          // historial: unión sin repetir, la más reciente primero, máx. HIST_MAX (30)
+          tb_hist5: function (v, cur) {
+            var a = js(v);
+            if (!Array.isArray(a)) return null;
+            var h = union(arr(cur), a, partida).filter(function (g) {
+              return partida(g) !== null;
+            });
+            h.sort(function (x, y) {
+              return y.d - x.d;
+            });
+            return JSON.stringify(h.slice(0, 30));
+          },
+          // logros ya celebrados (game/celebrationQueue.ts): unión, máx. 500
+          tb_cele1: function (v, cur) {
+            var a = js(v);
+            if (!Array.isArray(a)) return null;
+            var s = function (x) {
+              return typeof x === 'string' ? x : null;
+            };
+            return JSON.stringify(union(arr(cur), a, s).slice(0, 500));
+          },
+          // misiones premiadas por fecha (lib/missions.ts): unión de ids por fecha (nunca se premia dos veces)
+          tb_miss1: function (v, cur) {
+            var a = obj(v);
+            if (!a) return null;
+            var out = obj(cur) || {};
+            for (var k in a) {
+              if (!isDate(k) || !Array.isArray(a[k])) continue;
+              out[k] = union(Array.isArray(out[k]) ? out[k] : [], a[k], function (x) {
+                return typeof x === 'string' ? x : null;
+              });
+            }
+            return JSON.stringify(out);
+          },
+          // reto diario (lib/daily.ts): fechas jugadas unidas; por día, intentos con el mayor (no
+          // regala intentos) y partidas unidas; reclamo y "habrías quedado" del sitio nuevo si hay
+          tb_daily1: function (v, cur) {
+            var a = obj(v);
+            if (!a) return null;
+            var c = obj(cur);
+            if (!c) return v;
+            var out = {};
+            for (var k in c) out[k] = c[k];
+            var played = union(arr(c.played), arr(a.played), function (x) {
+              return isDate(x) ? x : null;
+            }).sort();
+            out.played = played.slice(-400);
+            out.rulesSeen = c.rulesSeen === true || a.rulesSeen === true;
+            var ys = [c.yesterdaySeen, a.yesterdaySeen].filter(isDate).sort();
+            out.yesterdaySeen = ys.length ? ys[ys.length - 1] : null;
+            var pc = typeof c.bestPct === 'number' ? c.bestPct : null;
+            var pa = typeof a.bestPct === 'number' ? a.bestPct : null;
+            out.bestPct = pc === null ? pa : pa === null ? pc : Math.max(pc, pa);
+            var days = {};
+            var cd = obj(c.days) || {};
+            var ad = obj(a.days) || {};
+            for (var dk in cd) days[dk] = cd[dk];
+            for (var dk2 in ad) {
+              if (!isDate(dk2) || !isObj(ad[dk2])) continue;
+              var x = ad[dk2];
+              var y = isObj(days[dk2]) ? days[dk2] : null;
+              if (!y) {
+                days[dk2] = x;
+                continue;
+              }
+              var m = {};
+              for (var f in y) m[f] = y[f];
+              m.used = Math.max(nat(x.used), nat(y.used));
+              m.runs = union(arr(y.runs), arr(x.runs), function (r) {
+                return isObj(r) && typeof r.k === 'number' ? nat(r.d) + ':' + r.k : null;
+              });
+              if (!isObj(m.claim) && isObj(x.claim)) m.claim = x.claim;
+              if (!isObj(m.would) && isObj(x.would)) m.would = x.would;
+              days[dk2] = m;
+            }
+            out.days = days;
+            return JSON.stringify(out);
+          },
+        };
+
+        // ---- flujo (al final: REGLAS ya está definida) ----
+        var hash = location.hash;
+        if (hash.indexOf('#tbmigrar=') === 0) {
+          // se borra siempre, aunque sea inválido o enorme
+          try {
+            history.replaceState(history.state, '', location.href.split('#')[0]);
+          } catch (e) {}
+          try {
+            if (importar(hash.slice(10)) && ls) ls.setItem(MIG, '1');
+          } catch (e) {}
+          return;
+        }
+
+        try {
+          if (!IDA_Y_VUELTA || !ls || ls.getItem(MIG) !== null) return;
+          if (/(^|[?&])volver=/.test(location.search)) return;
+          if (/bot|crawl|spider|slurp|facebookexternalhit|whatsapp|telegram|discord|preview|lighthouse/i.test(navigator.userAgent || '')) return;
+          ls.setItem(MIG, '1');
+          if (ls.getItem(MIG) !== '1') return; // sin almacenamiento que dure: no se sale (evita el bucle)
+          window.__tbMudanza = true; // la app no arranca mientras se va (src/app/_layout.tsx)
+          location.replace(VIEJA_URL + '?volver=' + encodeURIComponent(location.pathname + location.search));
+        } catch (e) {}
+      })();
+    </script>
+    <link rel="canonical" href="https://web.touchedblock.app/" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Touched Block" />
     <meta property="og:locale" content="es_LA" />
-    <meta property="og:url" content="https://sukushaing.github.io/touched-block/" />
+    <meta property="og:url" content="https://web.touchedblock.app/" />
     <meta property="og:title" content="Touched Block" />
     <meta property="og:description" content="Toca cada bloque tantas veces como diga su número antes de que desaparezca. Contra el reloj, con vidas y bloques trampa." />
-    <meta property="og:image" content="https://sukushaing.github.io/touched-block/og-image.png" />
+    <meta property="og:image" content="https://web.touchedblock.app/og-image.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -22,15 +264,15 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Touched Block" />
     <meta name="twitter:description" content="Toca cada bloque tantas veces como diga su número antes de que desaparezca. Contra el reloj, con vidas y bloques trampa." />
-    <meta name="twitter:image" content="https://sukushaing.github.io/touched-block/og-image.png" />
+    <meta name="twitter:image" content="https://web.touchedblock.app/og-image.png" />
     <meta name="twitter:image:alt" content="Touched Block: bloques de colores con números sobre fondo oscuro" />
-    <!-- Los archivos de public/ se copian a la raíz del export; el sitio vive bajo experiments.baseUrl (/touched-block). -->
-    <link rel="icon" type="image/png" sizes="32x32" href="/touched-block/favicon-32.png" />
-    <link rel="icon" type="image/png" sizes="192x192" href="/touched-block/favicon-192.png" />
-    <link rel="icon" type="image/svg+xml" href="/touched-block/favicon.svg" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/touched-block/apple-touch-icon.png" />
+    <!-- Los archivos de public/ se copian a la raíz del export, que es la raíz del sitio (https://web.touchedblock.app/). -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <!-- Web instalable (sin service worker): manifest y etiquetas para "Agregar a inicio" en iOS. -->
-    <link rel="manifest" href="/touched-block/manifest.webmanifest" />
+    <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Touched Block" />

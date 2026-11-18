@@ -6,7 +6,7 @@
 //
 // Se registra con FontFace y require() (no con el CSS del paquete) porque Metro no empaqueta los
 // url() de un CSS; con require() el archivo sale como asset con la ruta base correcta
-// (/touched-block en GitHub Pages). La regla que aplica la fuente a todo está en webFont.css.
+// (experiments.baseUrl, hoy la raíz). La regla que aplica la fuente a todo está en webFont.css.
 import './webFont.css';
 
 type Src = string | { uri?: string; default?: string };

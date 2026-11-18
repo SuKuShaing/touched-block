@@ -10,7 +10,7 @@ import { PCT_MIN_PLAYERS, ordinal } from './daily';
  *   58 bloques · racha 31
  *   🟫🟫🟫🟧⬜⬛⬛
  *   Mejor que el 72 %
- *   https://sukushaing.github.io/touched-block/?diario=1
+ *   https://web.touchedblock.app/?diario=1
  */
 
 /** Enlace que abre el juego directo en el reto del día. */

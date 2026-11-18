@@ -4,7 +4,7 @@
 
 Juego táctil para celular, en español: aparecen bloques con un número o una operación y hay que tocar cada uno tantas veces como su resultado antes de que desaparezca. Es de supervivencia contra el reloj, con vidas, combos, bloques trampa y rankings por país y mundiales.
 
-**Jugar:** https://sukushaing.github.io/touched-block/
+**Jugar:** https://web.touchedblock.app · **Sitio:** https://touchedblock.app
 
 ## Cómo se juega
 
@@ -19,7 +19,7 @@ Juego táctil para celular, en español: aparecen bloques con un número o una o
 
 Las reglas detalladas, con sus valores exactos y el historial de decisiones, están en [`docs/reglas-y-balance.md`](docs/reglas-y-balance.md). Toda la documentación del proyecto (arquitectura, decisiones, despliegue, pendientes) está en [`docs/`](docs/README.md).
 
-[Política de privacidad](https://sukushaing.github.io/touched-block/politica-de-privacidad/) · [Condiciones del servicio](https://sukushaing.github.io/touched-block/condiciones-del-servicio/)
+[Política de privacidad](https://touchedblock.app/privacidad/) · [Condiciones del servicio](https://touchedblock.app/terminos/)
 
 ## Estructura
 

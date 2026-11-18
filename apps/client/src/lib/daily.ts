@@ -572,7 +572,7 @@ export function runsToUnlock(o: UnlockState): number | null {
 export const unlockHintText = (left: number) =>
   `Te ${left === 1 ? 'falta 1 partida' : `faltan ${left} partidas`} para desbloquear el reto del día y las misiones.`;
 
-/** Parámetro del enlace que comparte el reto: `…/touched-block/?diario=1`. */
+/** Parámetro del enlace que comparte el reto: `https://web.touchedblock.app/?diario=1`. */
 export const DAILY_PARAM = 'diario';
 
 /** ¿La URL trae `?diario=1`? (de los parámetros de la ruta). */

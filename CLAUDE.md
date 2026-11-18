@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Proyecto
 
-"Touched Block" (antes "Rompe el bloque"): juego táctil para celular, en español. Aparecen bloques con un número o una operación ("2+3", "8÷2"); hay que tocar cada uno tantas veces como su resultado antes de que desaparezca. Supervivencia contra el reloj, con vidas, combos y bloques trampa. Es una web (GitHub Pages) con cuentas y rankings y, desde el 16 nov 2026, también una app Android (`app.touchedblock`, APK) con el mismo código; iOS más adelante.
+"Touched Block" (antes "Rompe el bloque"): juego táctil para celular, en español. Aparecen bloques con un número o una operación ("2+3", "8÷2"); hay que tocar cada uno tantas veces como su resultado antes de que desaparezca. Supervivencia contra el reloj, con vidas, combos y bloques trampa. Es una web (`https://web.touchedblock.app`, en Cloudflare; landing en `https://touchedblock.app`) con cuentas y rankings y, desde el 16 nov 2026, también una app Android (`app.touchedblock`, APK) con el mismo código; iOS más adelante.
 
 La documentación completa está en `docs/` (índice en `docs/README.md`). Es la memoria del proyecto: qué se hizo y **por qué**.
 - `docs/historia-y-decisiones.md`: cronología y motivo de cada decisión técnica. Léelo al empezar.
@@ -24,7 +24,7 @@ La documentación completa está en `docs/` (índice en `docs/README.md`). Es la
 No hay npm en esta máquina: usar `pnpm`, `pnpm exec` (en vez de npx) y `pnpm dlx`. No hay Python.
 
 - Motor: `pnpm --filter @tb/engine test` · `build` (genera `dist/`, que usa la API; el cliente importa el código fuente vía `metro.config.js`).
-- Cliente: `pnpm --filter @tb/client web` (dev en http://localhost:8081/, en la raíz; el `baseUrl` `/touched-block` solo aplica al exportar) · `pnpm --filter @tb/client exec tsc --noEmit` · `pnpm --filter @tb/client exec expo export -p web`.
+- Cliente: `pnpm --filter @tb/client web` (dev en http://localhost:8081/; el sitio vive en la raíz, sin `baseUrl`, igual que en producción) · `pnpm --filter @tb/client exec tsc --noEmit` · `pnpm --filter @tb/client exec expo export -p web`.
 - API: `docker compose -f apps/api/docker-compose.yml up -d --wait` (Postgres en el puerto 5434) · `pnpm --filter @tb/api start:dev` · `test` · `test:e2e` · `prisma:deploy`.
 - Sin `EXPO_PUBLIC_API_URL` y `EXPO_PUBLIC_GOOGLE_CLIENT_ID` el cliente queda en modo solo invitado. Para probar cuentas en local: API con `AUTH_DEV_FAKE=1` y cliente con `EXPO_PUBLIC_AUTH_DEV_FAKE=1` (login falso "Entrar (dev)"; la API lo ignora con `NODE_ENV=production`).
 - Para probar el táctil: Playwright (MCP) con viewport de celular.
@@ -32,9 +32,11 @@ No hay npm en esta máquina: usar `pnpm`, `pnpm exec` (en vez de npx) y `pnpm dl
 
 ## Despliegue
 
-- **Web**: cada push a `main` (salvo cambios solo en `apps/api/**`) corre `.github/workflows/deploy-pages.yml`: tests del motor, `expo export -p web`, copia `index.html` a `404.html` (rutas SPA en Pages) y publica `apps/client/dist`. URL y Client ID de Google salen de las *variables* del repositorio `EXPO_PUBLIC_API_URL` y `EXPO_PUBLIC_GOOGLE_CLIENT_ID`.
+- **Dominios**: `touchedblock.app` (landing, `apps/landing`), `web.touchedblock.app` (el juego), `api.touchedblock.app` (la API; `vps23906.cubepath.net` sigue activo por los APK ya repartidos). DNS en Cloudflare.
+- **Web**: cada push a `main` que toque el cliente o el motor (no `apps/api/**`, `apps/landing/**`, `deploy/**`, `docs/**`) corre `.github/workflows/deploy-web.yml`: tests del motor, `expo export -p web` (con `EXPO_PUBLIC_API_URL=https://api.touchedblock.app` escrita en el workflow y la *variable* `EXPO_PUBLIC_GOOGLE_CLIENT_ID`) y `wrangler deploy` a Cloudflare Workers con activos estáticos (`apps/client/wrangler.jsonc`, modo SPA; caché en `public/_headers`). Secretos: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`. La landing se publica igual con `deploy-landing.yml` (`apps/landing/**`).
+- **Web vieja** (`https://sukushaing.github.io/touched-block/`): `deploy-pages.yml` publica en GitHub Pages solo `deploy/gh-pages-redirect/`, que lleva a la misma ruta en `web.touchedblock.app` y pasa los datos locales del jugador por el fragmento `#tbmigrar=…`; el script `tb-mudanza` del `<head>` de `apps/client/public/index.html` los importa (solo si vienen de la web vieja) mezclándolos sin bajar nada, y la 1.ª vez que alguien entra directo al sitio nuevo hace una ida y vuelta a la web vieja para traerlos (marca `tb_mig1`). **Si se agrega o renombra una clave local (`tb_*`), sumarla a `CLAVES` de la página vieja y a `REGLAS` del script** (tests en `src/lib/mudanza.test.ts`; detalle en `docs/despliegue.md`).
 - **API**: cada tag `v*.*.*` corre `.github/workflows/deploy-api.yml`: tests, imagen Docker a `ghcr.io/sukushaing/touched-block-api` (`:vX.Y.Z` y `:latest`) y llamada a Dokploy (`compose.deploy`, VPS del usuario). Dokploy corre `deploy/docker-compose.yml`, un *Compose* con la API y su Postgres (`tb-db`, sin puertos expuestos); la API aplica las migraciones al arrancar. Secretos de GitHub: `DOKPLOY_URL`, `DOKPLOY_API_KEY`, `DOKPLOY_COMPOSE_ID`. Las variables de producción viven en la pestaña Environment de Dokploy (copia local en `deploy/.env`, ignorado), nunca en el repo (el repo es público). Guía: `docs/despliegue.md`.
-- Íconos, `og-image.png` y el `index.html` de la web (etiquetas `og:`/`twitter:` con URLs absolutas a `https://sukushaing.github.io/touched-block/`) están en `apps/client/public/`. También las páginas legales que exige Google OAuth (`politica-de-privacidad/index.html` y `condiciones-del-servicio/index.html`), en HTML estático para que respondan 200 y se lean sin JS; no crear rutas de Expo con esos nombres.
+- Íconos, `og-image.png` y el `index.html` de la web (etiquetas `og:`/`twitter:` con URLs absolutas a `https://web.touchedblock.app/`) están en `apps/client/public/`. Las páginas legales que exige Google OAuth viven en la landing (`https://touchedblock.app/privacidad/`, `/terminos/`; el cliente las abre con `lib/legal.ts`); en `public/` solo quedan `politica-de-privacidad/` y `condiciones-del-servicio/` como redirecciones de las direcciones viejas: no crear rutas de Expo con esos nombres.
 
 ## Reglas importantes al tocar código
 
