@@ -1,0 +1,10 @@
+# Cloudflare Workers (activos estáticos): no se publica como archivo, se aplica a las respuestas.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  X-Frame-Options: DENY
+
+# Una semana y no "immutable": los nombres de las fuentes no llevan hash.
+/assets/fonts/*
+  Cache-Control: public, max-age=604800

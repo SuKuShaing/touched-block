@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Touched Block · Toca, calcula y sobrevive contra el reloj</title>
+    <meta
+      name="description"
+      content="Juego gratis de reflejos y cálculo mental: toca cada bloque tantas veces como su número antes de que desaparezca. Operaciones, trampas, combos, reto diario y rankings. Juega en la web; pronto en App Store y Google Play."
+    />
+    <meta name="robots" content="index,follow" />
+    <meta name="theme-color" content="#12121a" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="canonical" href="https://touchedblock.app/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Touched Block" />
+    <meta property="og:locale" content="es_LA" />
+    <meta property="og:url" content="https://touchedblock.app/" />
+    <meta property="og:title" content="Touched Block · Toca, calcula y sobrevive contra el reloj" />
+    <meta
+      property="og:description"
+      content="Toca cada bloque tantas veces como su número antes de que desaparezca. Gratis, sin anuncios. Juega en la web; pronto en App Store y Google Play."
+    />
+    <meta property="og:image" content="https://touchedblock.app/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Touched Block: bloques de colores con números, uno de ellos con el número en rojo." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Touched Block · Toca, calcula y sobrevive contra el reloj" />
+    <meta
+      name="twitter:description"
+      content="Toca cada bloque tantas veces como su número antes de que desaparezca. Gratis, sin anuncios."
+    />
+    <meta name="twitter:image" content="https://touchedblock.app/og-image.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="preload" href="/assets/fonts/roboto-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="/assets/site.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "VideoGame",
+        "name": "Touched Block",
+        "url": "https://touchedblock.app/",
+        "image": "https://touchedblock.app/og-image.png",
+        "description": "Juego de reflejos y cálculo mental: toca cada bloque tantas veces como su número antes de que desaparezca.",
+        "inLanguage": "es",
+        "genre": ["Arcade", "Puzzle"],
+        "gamePlatform": ["Web", "Android", "iOS"],
+        "applicationCategory": "Game",
+        "operatingSystem": "Web",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      }
+    </script>
+    <script src="/assets/blocks.js" defer></script>
+  </head>
+  <body>
+    <a class="skip" href="#contenido">Saltar al contenido</a>
+
+    <header class="site-header">
+      <div class="wrap">
+        <a class="brand" href="/" aria-label="Touched Block, inicio">
+          <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1c1c28"/><rect x="8" y="11" width="48" height="48" rx="11" fill="#000" opacity=".35"/><rect x="8" y="7" width="48" height="48" rx="11" fill="#0091ff"/><rect x="14" y="46" width="22" height="4" rx="2" fill="#fff" opacity=".85"/><text x="32" y="42" font-family="Roboto Variable,Roboto,system-ui,sans-serif" font-size="34" font-weight="800" fill="#fff" text-anchor="middle">3</text></svg>
+          <span>Touched Block</span>
+        </a>
+        <nav class="nav" aria-label="Secciones">
+          <a href="#como-se-juega">Cómo se juega</a>
+          <a href="#caracteristicas">Características</a>
+          <a href="#descargar">Descargar</a>
+          <a href="/soporte/">Soporte</a>
+        </nav>
+        <a class="btn btn-primary btn-sm" href="https://web.touchedblock.app/">Jugar</a>
+      </div>
+    </header>
+
+    <main id="contenido">
+      <section class="hero" aria-labelledby="titulo">
+        <div class="wrap">
+          <div>
+            <p class="eyebrow">Gratis · Sin anuncios · En español</p>
+            <h1 id="titulo">Touched <span class="b">Block</span></h1>
+            <p class="lead">
+              Toca cada bloque <strong>tantas veces como su número</strong> antes de que desaparezca. Suma, resta, multiplica y
+              divide a toda velocidad, esquiva las trampas y aguanta contra el reloj.
+            </p>
+            <div class="hero-cta">
+              <a class="btn btn-primary btn-lg" href="https://web.touchedblock.app/">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" fill="currentColor"/></svg>
+                Jugar ahora en la web
+              </a>
+              <div class="stores">
+                <div class="store">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg>
+                  <span><small>Próximamente en</small><b>App Store</b></span>
+                </div>
+                <div class="store">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M6.5 4.2v15.6a.8.8 0 0 0 1.2.7l13-7.8a.8.8 0 0 0 0-1.4l-13-7.8a.8.8 0 0 0-1.2.7z"/></svg>
+                  <span><small>Próximamente en</small><b>Google Play</b></span>
+                </div>
+              </div>
+              <p class="hero-note">Se juega en el navegador del celular o del computador, sin instalar nada.</p>
+            </div>
+          </div>
+
+          <div class="field" data-field>
+            <div class="field-hud">
+              <span class="chip">Rotos <b data-killed>0</b></span>
+              <span class="chip streak">Racha <b data-streak>0</b></span>
+              <button class="pause" type="button" data-pause aria-pressed="false" aria-label="Pausar los bloques" title="Pausar los bloques">
+                <svg class="i-pause" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12" rx="1" fill="currentColor"/><rect x="9.5" y="2" width="3.5" height="12" rx="1" fill="currentColor"/></svg>
+                <svg class="i-play" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.6v10.8a.8.8 0 0 0 1.2.7l8.6-5.4a.8.8 0 0 0 0-1.4L5.2 1.9A.8.8 0 0 0 4 2.6z" fill="currentColor"/></svg>
+              </button>
+            </div>
+            <div class="field-toast" data-toast aria-hidden="true"></div>
+            <p class="field-hint">
+              Pruébalo aquí: toca cada bloque hasta romperlo antes de que se acabe su barra.
+              No toques el <span class="red">texto rojo</span>.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="block" id="como-se-juega" aria-labelledby="t-como">
+        <div class="wrap">
+          <div class="head">
+            <p class="kicker">En 30 segundos</p>
+            <h2 class="section-title" id="t-como">Cómo se juega</h2>
+            <p class="section-lead">
+              Partidas cortas e intensas. La dificultad sube sin parar, así que toda partida termina: la pregunta es cuánto
+              aguantas.
+            </p>
+          </div>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="demo" aria-hidden="true">
+                <div class="blk static" style="width: 64px; height: 64px; background: #e5a50a"><span class="n" style="font-size: 32px">3</span><i class="life" style="transform: scaleX(0.7)"></i></div>
+                <span class="eq">=</span>
+                <span class="taps"><i></i><i></i><i></i></span>
+              </div>
+              <span class="step-num">Paso 1</span>
+              <h3>Toca cada bloque</h3>
+              <p>Un bloque con un 3 se rompe con 3 toques. Cada toque baja el número, y su barra blanca te dice cuánto le queda.</p>
+            </li>
+            <li class="step">
+              <div class="demo" aria-hidden="true">
+                <div class="blk static" style="width: 109px; height: 64px; background: #6e56cf"><span class="n" style="font-size: 30px">2+3</span><i class="life" style="transform: scaleX(0.45)"></i></div>
+                <span class="eq">= 5 toques</span>
+              </div>
+              <span class="step-num">Paso 2</span>
+              <h3>Resuelve la operación</h3>
+              <p>
+                Con el tiempo llegan sumas y restas, y después multiplicaciones y divisiones («8÷2» son 4 toques). La operación no
+                cambia al tocarla: tú llevas la cuenta.
+              </p>
+            </li>
+            <li class="step">
+              <div class="demo" aria-hidden="true">
+                <div class="blk static red" style="width: 64px; height: 64px; background: #30a46c"><span class="n" style="font-size: 32px">4</span><i class="life" style="transform: scaleX(0.8)"></i></div>
+                <div class="blk static" style="width: 109px; height: 64px; background: #0091ff"><span class="n" style="font-size: 30px">3−5</span><i class="life" style="transform: scaleX(0.55)"></i></div>
+              </div>
+              <span class="step-num">Paso 3</span>
+              <h3>Esquiva las trampas</h3>
+              <p>
+                Si el número está en rojo, es una trampa. Una resta que da 0 o menos, también: solo se tocan resultados positivos.
+                Tocar una trampa te quita 30 segundos.
+              </p>
+            </li>
+            <li class="step">
+              <div class="demo demo-time" aria-hidden="true">
+                <div class="row"><span class="plus">+6 s</span><span class="hearts">♥♥♥♥<span class="off">♥</span></span><span class="minus">−30 s</span></div>
+                <div class="timebar"><i></i></div>
+              </div>
+              <span class="step-num">Paso 4</span>
+              <h3>Que no se acabe el tiempo</h3>
+              <p>
+                Partes con 10 segundos. Romper un bloque suma su resultado en segundos; si se te escapa, resta su resultado ×5
+                (×6 y ×7 más adelante). Tocar donde no hay bloque cuesta una de tus 5 vidas.
+              </p>
+            </li>
+          </ol>
+
+          <div class="stages">
+            <h3>Una partida, cuatro etapas</h3>
+            <p>La dificultad depende del tiempo jugado y es la misma para todos.</p>
+            <ol class="track">
+              <li>
+                <span class="badge" style="background: #e5a50a" aria-hidden="true">1–3</span>
+                <div><span class="when">Desde el inicio</span><b>Números</b><span>Del 1 al 3 al comienzo; cada 20 s sube el máximo, hasta el 10.</span></div>
+              </li>
+              <li>
+                <span class="badge" style="background: #30a46c" aria-hidden="true">+ −</span>
+                <div><span class="when">A los 2:20</span><b>Sumas y restas</b><span>De «1+1» a «10+10». Un bloque escapado pasa a restar ×6.</span></div>
+              </li>
+              <li>
+                <span class="badge" style="background: #6e56cf" aria-hidden="true">× ÷</span>
+                <div><span class="when">A los 4:35</span><b>Multiplicaciones y divisiones</b><span>Hasta «5×5» y divisiones exactas. Escapar resta ×7.</span></div>
+              </li>
+              <li>
+                <span class="badge" style="background: #e5484d" aria-hidden="true">4 s</span>
+                <div><span class="when">A los 5:50</span><b>Etapa final</b><span>Los bloques duran 4 s, luego 3, 2 y 1. Nadie aguanta para siempre.</span></div>
+              </li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      <section class="block" id="caracteristicas" aria-labelledby="t-car">
+        <div class="wrap">
+          <div class="head">
+            <p class="kicker">Características</p>
+            <h2 class="section-title" id="t-car">Mucho más que tocar bloques</h2>
+            <p class="section-lead">Reflejos, cálculo mental y un poco de sangre fría. Y motivos para volver cada día.</p>
+          </div>
+
+          <div class="features">
+            <article class="card">
+              <div class="ico" style="background: #30a46c" aria-hidden="true">+−</div>
+              <h3>Cálculo mental bajo presión</h3>
+              <p>Sumas, restas, multiplicaciones y divisiones que llegan a medida que avanzas, mientras el reloj sigue corriendo.</p>
+            </article>
+            <article class="card">
+              <div class="ico" style="background: #12a594; color: #ff2a2a; text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4)" aria-hidden="true">7</div>
+              <h3>Trampas sutiles</h3>
+              <p>Una trampa se ve igual que cualquier bloque: solo cambia el color del número. Mira bien antes de tocar.</p>
+            </article>
+            <article class="card">
+              <div class="ico" style="background: #e5a50a" aria-hidden="true">×3</div>
+              <h3>Combos</h3>
+              <p>
+                Rompe bloques seguidos sin errores: con 3, 5, 10, 15 y 20 seguidos ganas de +1 a +5 segundos. Con una racha de 25
+                aparece un corazón para recuperar una vida.
+              </p>
+            </article>
+            <article class="card">
+              <div class="ico" style="background: #d6409f" aria-hidden="true">♥</div>
+              <h3>Vidas e invitaciones</h3>
+              <p>
+                Partes con 5 corazones. Cada amigo que te anote en «¿Quién te invitó?» te da un corazón más, hasta 8.
+              </p>
+            </article>
+            <article class="card">
+              <div class="ico" style="background: #0091ff" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>
+              </div>
+              <h3>Reto diario y misiones</h3>
+              <p>
+                La misma partida para todos, cada día, con su propio giro: directo a las sumas, solo 3 vidas, sin trampas rojas…
+                Tienes 3 intentos con cuenta y una racha de días que cuidar, más 3 misiones nuevas cada día.
+              </p>
+            </article>
+            <article class="card">
+              <div class="ico" style="background: #6e56cf" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></svg>
+              </div>
+              <h3>Reta a un amigo</h3>
+              <p>
+                Juega y comparte un enlace: tu amigo juega exactamente la misma partida, con los mismos bloques, y comparan quién
+                llegó más lejos.
+              </p>
+            </article>
+            <article class="card">
+              <div class="ico" style="background: #f76b15" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4.5a2.5 2.5 0 0 0 2.8 3.4M17 6h2.5a2.5 2.5 0 0 1-2.8 3.4M12 14v3.5M8.5 20.5h7M9.5 17.5h5"/></svg>
+              </div>
+              <h3>Rankings</h3>
+              <p>Mundial, de tu país y de tus amigos, por semana, mes, año o de todos los tiempos.</p>
+            </article>
+            <article class="card">
+              <div class="ico" style="background: #8e4ec6" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"><path d="M6.5 4h11l3.5 5-9 11L3 9z"/><path d="M3 9h18M9.5 4 8 9l4 11 4-11-1.5-5"/></svg>
+              </div>
+              <h3>Colección e insignias</h3>
+              <p>
+                Sube de insignia según cuánto aguantas, gana nivel con cada bloque roto y desbloquea paletas, sonidos, efectos y
+                fondos.
+              </p>
+              <div class="tiers" aria-label="Insignias">
+                <span style="color: #c98d57">Madera</span><span style="color: #e09a57">Bronce</span><span style="color: #cfd6e0">Plata</span><span style="color: #ffcf47">Oro</span><span style="color: #9be7ff">Diamante</span>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="block" aria-labelledby="t-limpio">
+        <div class="wrap">
+          <div class="split">
+            <div>
+              <p class="kicker">Juego limpio</p>
+              <h2 id="t-limpio">Cada puntaje del ranking se ganó jugando</h2>
+              <p>
+                Cada partida empieza con una semilla que entrega el servidor y se guarda toque por toque. Al terminar, el servidor
+                vuelve a jugarla entera con las mismas reglas: si el resultado no coincide, no entra al ranking.
+              </p>
+            </div>
+            <ul class="checks">
+              <li>Sin anuncios y sin compras dentro del juego.</li>
+              <li>Juegas de inmediato como invitado, sin crear una cuenta.</li>
+              <li>Cuenta opcional con Google para los rankings y los retos.</li>
+              <li>Sin analítica ni rastreadores de terceros.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="block" id="descargar" aria-labelledby="t-desc">
+        <div class="wrap">
+          <div class="download">
+            <p class="kicker">Descargar</p>
+            <h2 id="t-desc">Muy pronto en tu celular</h2>
+            <p>
+              Touched Block estará disponible para descargar en la App Store y en Google Play. Mientras tanto, juega gratis en la
+              web: funciona en el celular y en el computador, y tu cuenta será la misma en la app.
+            </p>
+            <div class="stores">
+              <div class="store">
+                <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg>
+                <span><small>Próximamente en</small><b>App Store</b></span>
+              </div>
+              <div class="store">
+                <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M6.5 4.2v15.6a.8.8 0 0 0 1.2.7l13-7.8a.8.8 0 0 0 0-1.4l-13-7.8a.8.8 0 0 0-1.2.7z"/></svg>
+                <span><small>Próximamente en</small><b>Google Play</b></span>
+              </div>
+            </div>
+            <a class="btn btn-primary btn-lg" href="https://web.touchedblock.app/">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" fill="currentColor"/></svg>
+              Jugar ahora en la web
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section class="block" id="preguntas" aria-labelledby="t-faq">
+        <div class="wrap">
+          <div class="head">
+            <p class="kicker">Preguntas frecuentes</p>
+            <h2 class="section-title" id="t-faq">Antes de jugar</h2>
+          </div>
+          <div class="faq">
+            <details>
+              <summary>¿Cuánto cuesta?</summary>
+              <div><p>Nada. Touched Block es gratis, sin anuncios y sin compras dentro del juego.</p></div>
+            </details>
+            <details>
+              <summary>¿Necesito una cuenta?</summary>
+              <div>
+                <p>
+                  No. Puedes jugar como invitado: tu récord y tu historial quedan en tu dispositivo. Si inicias sesión con Google,
+                  tus partidas entran a los rankings, puedes elegir tu nombre de usuario y seguir a tus amigos.
+                </p>
+                <p>¿Jugaste una buena partida como invitado? Si inicias sesión dentro de la hora siguiente, la guardas en tu cuenta.</p>
+              </div>
+            </details>
+            <details>
+              <summary>¿Cuándo sale la app?</summary>
+              <div>
+                <p>
+                  Pronto, en Google Play y en la App Store. Mientras tanto, la versión web tiene todo el juego y se puede jugar
+                  desde el navegador del celular.
+                </p>
+              </div>
+            </details>
+            <details>
+              <summary>¿Dónde pido ayuda o borro mi cuenta?</summary>
+              <div>
+                <p>
+                  En <a href="/soporte/">Soporte</a> está el contacto y más respuestas. Para borrar tu cuenta y tus datos, mira
+                  <a href="/eliminar-cuenta/">Eliminar cuenta</a>.
+                </p>
+              </div>
+            </details>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <div class="foot">
+          <div>
+            <a class="brand" href="/">
+              <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1c1c28"/><rect x="8" y="11" width="48" height="48" rx="11" fill="#000" opacity=".35"/><rect x="8" y="7" width="48" height="48" rx="11" fill="#0091ff"/><rect x="14" y="46" width="22" height="4" rx="2" fill="#fff" opacity=".85"/><text x="32" y="42" font-family="Roboto Variable,Roboto,system-ui,sans-serif" font-size="34" font-weight="800" fill="#fff" text-anchor="middle">3</text></svg>
+              <span>Touched Block</span>
+            </a>
+            <p>Juego de reflejos y cálculo mental. Gratis y sin anuncios. Hecho por un desarrollador independiente en Chile.</p>
+          </div>
+          <nav aria-label="Juego">
+            <h2>Juego</h2>
+            <ul>
+              <li><a href="https://web.touchedblock.app/">Jugar en la web</a></li>
+              <li><a href="/#como-se-juega">Cómo se juega</a></li>
+              <li><a href="/#caracteristicas">Características</a></li>
+              <li><a href="/soporte/">Soporte</a></li>
+            </ul>
+          </nav>
+          <nav aria-label="Legal">
+            <h2>Legal</h2>
+            <ul>
+              <li><a href="/privacidad/">Política de privacidad</a></li>
+              <li><a href="/terminos/">Términos y condiciones</a></li>
+              <li><a href="/eliminar-cuenta/">Eliminar cuenta y datos</a></li>
+              <li><a href="mailto:contacto@touchedblock.app">contacto@touchedblock.app</a></li>
+            </ul>
+          </nav>
+        </div>
+        <div class="copy">
+          <span>© 2026 Touched Block</span>
+          <span>App Store es una marca de Apple Inc. Google Play es una marca de Google LLC.</span>
+        </div>
+      </div>
+    </footer>
+
+    <div id="blocks" aria-hidden="true"></div>
+  </body>
+</html>

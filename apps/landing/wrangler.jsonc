@@ -1,0 +1,20 @@
+// Página pública de Touched Block (https://touchedblock.app): archivos estáticos de ./public.
+// El Worker (src/worker.js) solo redirige www.touchedblock.app a la raíz; corre antes que los
+// activos (run_worker_first) para que la redirección aplique también a las rutas que existen.
+// Desplegar desde esta carpeta: pnpm dlx wrangler@4 deploy
+{
+  "name": "touchedblock-landing",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "html_handling": "auto-trailing-slash",
+    "run_worker_first": true
+  },
+  "routes": [
+    { "pattern": "touchedblock.app", "custom_domain": true },
+    { "pattern": "www.touchedblock.app", "custom_domain": true }
+  ]
+}

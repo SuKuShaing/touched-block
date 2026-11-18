@@ -1,0 +1,10 @@
+# Cloudflare Workers (activos estáticos): no se publica como archivo, se aplica como reglas.
+# Los nombres de las páginas legales de la web antigua apuntan a las de aquí.
+/politica-de-privacidad /privacidad/ 301
+/politica-de-privacidad/ /privacidad/ 301
+/condiciones-del-servicio /terminos/ 301
+/condiciones-del-servicio/ /terminos/ 301
+/privacy /privacidad/ 301
+/terms /terminos/ 301
+/delete-account /eliminar-cuenta/ 301
+/support /soporte/ 301
