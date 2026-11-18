@@ -1,8 +1,20 @@
 # Pendientes, riesgos e ideas
 
-Estado al **16 nov 2026**.
+Estado al **17 nov 2026**.
 
 ## Estado
+
+- **Dominio propio (17 nov 2026)**: publicado. Motivos en `historia-y-decisiones.md` → "Dominio propio touchedblock.app…"; operación en `despliegue.md`.
+  - Landing en https://touchedblock.app (Cloudflare Workers, `apps/landing`), con `/privacidad/`, `/terminos/`, `/eliminar-cuenta/` y `/soporte/`. `www` redirige a la raíz.
+  - Juego en https://web.touchedblock.app (Cloudflare Workers). Verificado en producción: carga, tutorial de 1.ª visita, partida creada contra la API nueva enviando `platform`, sin errores de consola.
+  - API `v0.4.0` en https://api.touchedblock.app; sigue también en `vps23906.cubepath.net` para el APK repartido. `CORS_ORIGINS` = `https://web.touchedblock.app,https://sukushaing.github.io`. Respaldo previo `touched_block-20261118-001134.dump` (OK). Migración `add_run_platform` aplicada.
+  - GitHub Pages publica solo la redirección con mudanza de datos (`deploy/gh-pages-redirect/`). Probado en producción: un enlace viejo llega a la misma ruta con el récord; un jugador antiguo que entra primero por un enlace nuevo (`/?reto=…`) hace una sola ida y vuelta y vuelve al reto con sus datos. Las URLs legales viejas llevan a la landing.
+  - Google Cloud: origen `https://web.touchedblock.app` autorizado; página principal y legales en `touchedblock.app`; dominio autorizado `touchedblock.app`. **Falta probar el login real con Google** en la web nueva (Google avisa que el cambio puede tardar hasta unas horas).
+  - Correo `contacto@touchedblock.app` (Email Routing de Cloudflare → Gmail del usuario). Falta mandarle un correo de prueba.
+  - **Falta (usuario)**: crear los secretos `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID` en GitHub (valores en `~/.touched-block/cloudflare.env`). Sin ellos `deploy-web` y `deploy-landing` fallan (fallaron en el push del 17 nov 2026); ese día la web y la landing se publicaron a mano con wrangler. Después se puede borrar la variable `EXPO_PUBLIC_API_URL` del repo.
+  - **APK nuevo pendiente**: `react-native-svg` (medallas) obliga a regenerarlo, con `EXPO_PUBLIC_API_URL=https://api.touchedblock.app` y `versionCode` más alto. Probar ahí las medallas, la tarjeta de compartir nativa y la celebración (animación, vibración, botón atrás).
+  - Medallas rediseñadas y celebración de premios: probadas en la web; las medallas también en el emulador. Que el usuario juegue las primeras partidas y diga si la celebración aparece demasiado seguido (Madera I, Suave, logros de madera…). Corazones (al invitar) ya no se celebra porque llega desde la cuenta.
+  - Riesgos de la mudanza: quien ya usó el sitio nuevo no repite la ida y vuelta (`tb_mig1`); los acumulados (`runs`, `totalKilled`) quedan con el mayor de los dos lados, no con la suma; si se agrega una clave `tb_*`, sumarla en las dos listas. La landing pasa por un Worker en cada petición (`run_worker_first`, 100 000/día gratis); si crece, cambiarlo por una Redirect Rule de Cloudflare.
 
 - **App Android** (16 nov 2026, sin publicar): APK firmado con la clave de release, que apunta a la API de producción (`apps/client/android/app/build/outputs/apk/release/app-release.apk`). Se probó en el emulador contra la web en tamaño celular: todas las pantallas, la partida validada por el servidor, sonido, vibración, botón atrás y enlaces `touchedblock://`. Detalle en `historia-y-decisiones.md` → "App Android" y en `despliegue.md` → sección 5. Falta:
   - Probado en el emulador (16 nov 2026): **toque simultáneo con dos dedos** (dos bloques bajan a la vez, con un MotionEvent de dos punteros inyectado vía InputManager desde `app_process`, porque `sendevent` y la consola del emulador no llegan a la app) y **escritura con teclado** en el campo de texto del Perfil.
@@ -20,7 +32,7 @@ Estado al **16 nov 2026**.
   - **API en producción: `https://vps23906.cubepath.net`** (hostname del VPS que da el proveedor). Certificado Let's Encrypt vigente hasta el 8 feb 2027, con renovación automática por Traefik. `/health` responde `rulesVersion: 5`, versión `v0.3.0` (desde el 12 nov 2026). CORS solo acepta `https://sukushaing.github.io`.
   - Tarea programada `touched-block-respaldo` (respaldo diario de la base, ver `despliegue.md`).
   - Se despliega solo con cada tag: `v0.1.1` y `v0.1.2` (10 nov 2026, buscador de "¿Quién te invitó?") corrieron completos, tests → GHCR → Dokploy.
-  - Usar el hostname del VPS es provisorio. Si se cambia de VPS, o se le da HTTPS al panel de Dokploy en ese mismo host, hay que mover la API a un subdominio propio: cambiar el dominio en Dokploy y `EXPO_PUBLIC_API_URL`, y volver a publicar la web.
+  - Desde el 17 nov 2026 la API también responde en `https://api.touchedblock.app` (la que usan la web y los APK nuevos). El hostname del VPS se mantiene mientras haya APK viejos repartidos.
 - **GHCR**: la imagen `ghcr.io/sukushaing/touched-block-api` (`v0.1.0` y `latest`) es pública.
 - Los secretos `DOKPLOY_*` ya están en GitHub. El tag `v0.1.0` falló en el paso de Dokploy porque todavía no existían; `v0.1.1` funcionó completo.
 - Google Cloud: la app está "En producción". Los orígenes `https://sukushaing.github.io` y `http://localhost:8081` están autorizados. La verificación de marca sigue pendiente; es opcional con los scopes básicos.
@@ -82,7 +94,7 @@ Cómo se publicó (12 nov 2026), en orden:
 
 1. Seguridad: el panel de Dokploy va por HTTP, así que el token viaja sin cifrar. Conviene darle al panel un dominio con HTTPS.
 2. Opcional: pedir la verificación de marca en Google Cloud (Centro de verificación), para que el login muestre el nombre y el logo de la app.
-3. Opcional: mover la API a un subdominio propio (ver arriba).
+3. Crear los secretos de Cloudflare en GitHub (ver Estado).
 
 ## Riesgos conocidos
 
@@ -102,6 +114,5 @@ Cómo se publicó (12 nov 2026), en orden:
 - Pausa (silenciar sonido y vibración ya está, desde el plan de jugabilidad).
 - Que las restas aparezcan un poco después que las sumas.
 - App iOS y Google Play (ver Estado).
-- Dominio propio: necesario para Sign in with Apple en la web y para cookies de sesión del mismo sitio.
 - Más tipos de bloque (tiempo extra, congelar, escudo).
 - Limpiar los íconos sobrantes de la raíz (`favicon-32.png`, `favicon-192.png`, `apple-touch-icon.png`, `favicon.svg`, `og-image.png`), porque los que se usan están en `apps/client/public/`. Confirmar antes de borrar.
