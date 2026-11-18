@@ -35,6 +35,7 @@ import { InstallCard, useInstallOffer } from '@/components/InstallCard';
 import { MissionList } from '@/components/MissionList';
 import { NoticeStrip, useNotices } from '@/components/Notice';
 import { PrizeCard } from '@/components/PrizeCard';
+import { CELEBRATION_CTX, CelebrationHost } from '@/components/CelebrationHost';
 import { ProfileIcon } from '@/components/ProfileIcon';
 import { StageTrack } from '@/components/StageTrack';
 import { TierBadge } from '@/components/TierBadge';
@@ -45,6 +46,8 @@ import { type CatalogItem, SETTING_KEY } from '@/cosmetics/catalog';
 import { tierStepOf } from '@/cosmetics/tiers';
 import { endTapReady } from '@/game/endGuard';
 import { type EndPrize, endPrize, endStats } from '@/game/endPrize';
+import { offerRunCelebrations } from '@/game/celebrationQueue';
+import { runCelebrations } from '@/game/celebrations';
 import {
   type Notice,
   comboNotice,
@@ -166,6 +169,9 @@ const emptyTrack = (): RunTrack => ({ milestone: 0, bestAtStart: 0, recordDone: 
 
 /** Centro de un bloque en px del área de juego. */
 const centerOf = (b: EngineBlock, a: PlayArea) => ({ cx: (b.x + b.w / 2) * a.sx, cy: (b.y + b.h / 2) * a.sy });
+
+/** Espera antes de celebrar lo ganado: primero se ve el resultado de la partida. */
+const CELEBRATION_DELAY_MS = 900;
 
 function endTitle(isRecord: boolean, reason: EndReason) {
   if (isRecord) return '¡Nuevo récord!';
@@ -476,6 +482,8 @@ export function GameScreen() {
     const unlockedByRun =
       features.accounts && lockedAtStart.current && es.before.runs < DAILY_FROM_RUNS && es.after.runs >= DAILY_FROM_RUNS;
     if (unlockedByRun) rememberUnlock();
+    // ventana de celebración (confeti y fanfarria) de lo ganado: después de ver el resultado
+    offerRunCelebrations(runCelebrations({ prize, before: es.before, after: es.after, unlockedFeature: unlockedByRun, ctx: CELEBRATION_CTX }), CELEBRATION_DELAY_MS);
     endedAt.current = Date.now();
     setEnd({
       id,
@@ -920,6 +928,8 @@ export function GameScreen() {
           )}
         </View>
       ) : null}
+      {/* premios ganados: nunca durante la partida; en la pantalla final o al volver al inicio */}
+      <CelebrationHost blocked={runner.playing || starting} />
     </View>
   );
 }
