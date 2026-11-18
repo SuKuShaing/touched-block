@@ -20,6 +20,17 @@ export class AppConfig {
   readonly jwtSecret = process.env.JWT_SECRET ?? '';
   readonly googleClientIds = list(process.env.GOOGLE_CLIENT_IDS ?? process.env.GOOGLE_CLIENT_ID);
   readonly appleAudiences = list(process.env.APPLE_AUDIENCES);
+  /**
+   * Sign in with Apple, revocación (guía 5.1.1(v)): con estas cuatro la API canjea el authorizationCode
+   * por el refresh token de Apple y lo revoca al eliminar la cuenta. Si falta alguna, el login sigue
+   * funcionando y la revocación se omite con un aviso en el log. APPLE_CLIENT_ID es el bundle ID de
+   * la app (por defecto, la primera de APPLE_AUDIENCES). APPLE_PRIVATE_KEY es el contenido del .p8
+   * (se aceptan los saltos de línea escritos como `\n`).
+   */
+  readonly appleTeamId = (process.env.APPLE_TEAM_ID ?? '').trim();
+  readonly appleKeyId = (process.env.APPLE_KEY_ID ?? '').trim();
+  readonly applePrivateKey = (process.env.APPLE_PRIVATE_KEY ?? '').replace(/\\n/g, '\n').trim();
+  readonly appleClientId = (process.env.APPLE_CLIENT_ID ?? '').trim() || this.appleAudiences[0] || '';
   readonly corsOrigins = list(process.env.CORS_ORIGINS ?? 'http://localhost:8081');
   /** Solo desarrollo: acepta idTokens `dev:<sub>:<nombre>` en /auth/google. Se ignora en producción. */
   readonly authDevFake = process.env.AUTH_DEV_FAKE === '1';

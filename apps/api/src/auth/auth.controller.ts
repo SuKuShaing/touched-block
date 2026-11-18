@@ -1,18 +1,29 @@
-import { Body, Controller, HttpCode, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, Logger, Post } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
+import { PrismaService } from '../prisma/prisma.service';
+import { UsersService } from '../users/users.service';
+import { AppleTokensService } from './apple-tokens';
 import { Public } from './auth.guard';
 import { AuthService } from './auth.service';
-import { AppleLoginDto, GoogleLoginDto, RefreshDto } from './dto';
+import { AppleLoginDto, AppleNotificationDto, GoogleLoginDto, RefreshDto } from './dto';
 import { AppleVerifier, GoogleVerifier } from './verifiers';
+
+/** Avisos de Apple que significan que el usuario dejó de usar Sign in with Apple con la app. */
+const APPLE_DELETE_EVENTS = new Set(['consent-revoked', 'account-delete']);
 
 @Controller('auth')
 @Public()
 @Throttle({ default: { limit: 20, ttl: 60_000 } })
 export class AuthController {
+  private readonly log = new Logger('Auth');
+
   constructor(
     private readonly auth: AuthService,
     private readonly google: GoogleVerifier,
     private readonly apple: AppleVerifier,
+    private readonly appleTokens: AppleTokensService,
+    private readonly users: UsersService,
+    private readonly prisma: PrismaService,
   ) {}
 
   @Post('google')
@@ -26,7 +37,32 @@ export class AuthController {
   @HttpCode(200)
   async apple_(@Body() dto: AppleLoginDto) {
     const identity = await this.apple.verify(dto.identityToken);
-    return this.auth.login('apple', identity, { country: dto.country, name: dto.fullName ?? null });
+    const res = await this.auth.login('apple', identity, { country: dto.country, name: dto.fullName ?? null });
+    // para poder revocar el token al eliminar la cuenta (guía 5.1.1(v)); nunca hace fallar el login
+    if (dto.authorizationCode) await this.appleTokens.storeFromCode(identity.subject, dto.authorizationCode);
+    return res;
+  }
+
+  /**
+   * Notificaciones servidor a servidor de Sign in with Apple (se configuran en Apple Developer).
+   * `consent-revoked` (dejó de usar su Apple ID con la app) y `account-delete` (borró su Apple ID)
+   * eliminan la cuenta; los demás avisos se ignoran. Responde 200 aunque la cuenta no exista.
+   */
+  @Post('apple/notifications')
+  @HttpCode(200)
+  async appleNotifications(@Body() dto: AppleNotificationDto) {
+    const ev = await this.apple.verifyNotification(dto.payload);
+    if (!APPLE_DELETE_EVENTS.has(ev.type)) return { ok: true };
+    const ident = await this.prisma.authIdentity.findUnique({
+      where: { provider_subject: { provider: 'apple', subject: ev.subject } },
+      select: { userId: true },
+    });
+    if (ident) {
+      // Apple ya cortó el vínculo: no hace falta revocar el token
+      await this.users.deleteMe(ident.userId, { revokeApple: false });
+      this.log.log(`Cuenta eliminada por aviso de Apple (${ev.type}).`);
+    }
+    return { ok: true };
   }
 
   @Post('refresh')

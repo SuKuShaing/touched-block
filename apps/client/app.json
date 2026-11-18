@@ -29,7 +29,8 @@
     "ios": {
       "bundleIdentifier": "app.touchedblock",
       "supportsTablet": false,
-      "icon": "./assets/icono/icon-movil.png"
+      "icon": "./assets/icono/icon-movil.png",
+      "usesAppleSignIn": true
     },
     "web": {
       "bundler": "metro",
@@ -79,7 +80,13 @@
       "expo-localization",
       "expo-sharing",
       "expo-web-browser",
-      "@react-native-google-signin/google-signin",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.1065315828810-pgb0mm5hgvgpi6anuvkv3152q7j1qgka"
+        }
+      ],
+      "expo-apple-authentication",
       "./plugins/withShortCxxPath",
       "./plugins/withReleaseSigning",
       [

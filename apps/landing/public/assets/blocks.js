@@ -66,8 +66,92 @@
     } catch (e) {}
   }
 
+  // ---- Sonido: los mismos pitidos que el juego (apps/client/src/platform/fx.web.ts y el paquete
+  // "8 bits" de game/sounds.ts), con osciladores de Web Audio, sin archivos. Los navegadores solo
+  // dejan arrancar el audio dentro de un gesto que activa la página (touchend, pointerup,
+  // mousedown, click, keydown; un pointerdown de un dedo no cuenta en Chrome ni en iOS), y los
+  // bloques se tocan en pointerdown: por eso cada gesto real crea o reanuda el contexto y, en
+  // iOS, reproduce un búfer en silencio. Todo en try/catch: sin audio, la página sigue igual. ----
+  var ac = null;
+  var lastTap = 0;
+  function audioCtx() {
+    if (!ac) {
+      var Ctor = window.AudioContext || window.webkitAudioContext;
+      if (!Ctor) return null;
+      try {
+        ac = new Ctor({ latencyHint: 'interactive' });
+      } catch (e) {
+        ac = new Ctor(); // Safari antiguo: sin opciones
+      }
+    }
+    return ac;
+  }
+  function onGesture() {
+    try {
+      var c = audioCtx();
+      if (!c || c.state === 'running') return;
+      c.resume().catch(function () {});
+      var src = c.createBufferSource();
+      src.buffer = c.createBuffer(1, 1, 22050);
+      src.connect(c.destination);
+      src.start(0);
+    } catch (e) {}
+  }
+  try {
+    ['touchend', 'pointerup', 'mousedown', 'click', 'keydown'].forEach(function (t) {
+      window.addEventListener(t, onGesture, { capture: true, passive: true });
+    });
+    // iOS: categoría "ambient" (respeta el modo silencio y no corta la música), como en el juego
+    if (navigator.audioSession) navigator.audioSession.type = 'ambient';
+  } catch (e) {}
+  function beep(f, d, type, v) {
+    try {
+      var c = audioCtx();
+      if (!c) return;
+      if (c.state !== 'running') c.resume().catch(function () {});
+      var o = c.createOscillator();
+      var g = c.createGain();
+      o.type = type || 'square';
+      o.frequency.value = f;
+      // volumen agendado en el instante actual (en WebKit, sin esto, la rampa sale muda)
+      var t = c.currentTime;
+      g.gain.setValueAtTime(v == null ? 0.05 : v, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+      o.connect(g);
+      g.connect(c.destination);
+      o.start(t);
+      o.stop(t + d);
+    } catch (e) {}
+  }
+  var sfx = {
+    // tono que sube con cada toque dado al bloque (con tope)
+    hit: function (n) {
+      beep(300 + Math.min(n, 12) * 70, 0.07);
+    },
+    kill: function () {
+      beep(880, 0.15, 'triangle', 0.09);
+    },
+    trap: function () {
+      beep(90, 0.4, 'sawtooth', 0.12);
+    },
+    // solo si se está jugando (un toque en los últimos 8 s): en la página los bloques se escapan
+    // solos mientras se lee, y no debe sonar nada si nadie los toca
+    expire: function () {
+      if (!ac || ac.state !== 'running' || Date.now() - lastTap > 8000) return;
+      beep(150, 0.15, 'sawtooth', 0.05);
+    },
+    combo: function (bonus) {
+      var notes = [660, 830, 990, 1320, 1660].slice(0, Math.min(5, bonus + 2));
+      notes.forEach(function (f, i) {
+        setTimeout(function () {
+          beep(f, 0.09, 'triangle', 0.06);
+        }, i * 65);
+      });
+    },
+  };
+
   var blocks = [];
-  var killed = parseInt(load(KEY_KILLED) || '0', 10) || 0;
+  var killed =parseInt(load(KEY_KILLED) || '0', 10) || 0;
   var streak = 0;
   var spawned = 0;
   var paused = load(KEY_PAUSED) === '1';
@@ -299,6 +383,7 @@
 
   function tap(b) {
     if (b.dead || paused) return;
+    lastTap = Date.now();
     var cx = b.x + b.w / 2;
     var cy = b.y + b.h / 2;
     if (b.trap) {
@@ -310,6 +395,7 @@
       if (b.field && field && !reduced()) restart(field, 'shake');
       streak = 0;
       updateHud();
+      sfx.trap();
       notify(
         b.red
           ? '¡Trampa! El texto rojo no se toca'
@@ -320,6 +406,7 @@
       return;
     }
     b.left--;
+    sfx.hit(b.total - b.left); // como el juego: también en el toque que lo rompe
     if (b.left > 0) {
       if (b.kind === 'num') b.num.textContent = String(b.left); // las operaciones mantienen lo escrito
       if (!reduced()) restart(b.el, 'hit');
@@ -330,11 +417,13 @@
     b.el.remove();
     burst(cx, cy, b.color, 14);
     floatText(cx, cy, '+' + b.total + 's', false);
+    sfx.kill();
     killed++;
     streak++;
     save(KEY_KILLED, String(killed));
     updateHud();
     var bonus = comboBonusFor(streak);
+    if (bonus) sfx.combo(bonus);
     if (bonus) notify('+' + bonus + 's · ¡Combo ×' + streak + '!', 'gold', b);
   }
 
@@ -351,6 +440,7 @@
       el.remove();
     }, 320);
     if (!b.trap) {
+      sfx.expire();
       if (streak >= 3) notify('Se escapó un bloque · racha de ' + streak, 'bad', b);
       streak = 0;
       updateHud();

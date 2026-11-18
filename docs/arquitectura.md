@@ -101,7 +101,7 @@ docs/                           esta documentación
 
 | Módulo | Qué hace |
 |---|---|
-| `auth` | `POST /auth/google` y `/auth/apple` (verificadores en `verifiers.ts`), `/auth/refresh`, `/auth/logout`. JWT de acceso de 15 min y *refresh token* rotativo (hash sha256 en la base). Con `AUTH_DEV_FAKE=1` acepta `dev:<sub>:<nombre>`, solo fuera de producción |
+| `auth` | `POST /auth/google` y `/auth/apple` (verificadores en `verifiers.ts`), `/auth/apple/notifications` (avisos de Apple), `/auth/refresh`, `/auth/logout`. `apple-tokens.ts`: canje del `authorizationCode` de Apple, refresh token de Apple cifrado y su revocación al eliminar la cuenta. JWT de acceso de 15 min y *refresh token* rotativo (hash sha256 en la base). Con `AUTH_DEV_FAKE=1` acepta `dev:<sub>:<nombre>`, solo fuera de producción |
 | `users` | `/me` (ver, editar nombre y país, eliminar), disponibilidad del nombre de usuario, búsqueda, perfil público |
 | `social` | "¿Quién te invitó?" (`POST /me/inviter`), seguir y dejar de seguir |
 | `runs` | Crear partida (semilla) en modo `normal`, `duel` o `daily`, terminarla (`run-verification.ts` repite la partida con el motor, con la semilla, vidas, campo y `mods` guardados), reclamar partida de invitado, historial propio (solo modo normal). `common-field.service.ts`: campo común de los retos (percentil 5 de los campos reales de los últimos 30 días, con límites; en memoria 1 h). `runs-cleanup.service.ts` borra las partidas de invitado sin reclamar a las 24 h y los intentos diarios abandonados de las cuentas a las 72 h |
@@ -114,7 +114,7 @@ docs/                           esta documentación
 
 - **Esquema** en `prisma/schema.prisma`: `User`, `AuthIdentity`, `RefreshToken`, `Run` (con `mode`, `challengeCode`, `dailyDate`, `config`, `bestStreak`, `endReason`, `platform`: desde dónde se jugó, solo estadística, ver `docs/api.md`), `BestScore`, `Follow`, `UserStats`, `Challenge`, `ChallengeEntry`, `DailyChallenge`, `DailyEntry`, `MissionReward`. Las migraciones están en `prisma/migrations/` y **solo agregan** (regla 9 del plan de jugabilidad): ninguna borra ni reescribe datos de jugadores. Las tablas nuevas con datos de un usuario se borran con su cuenta (`onDelete: Cascade`).
 - **Contrato exacto** en [`api.md`](api.md).
-- **Configuración** en `src/config/app-config.ts`, leída de variables de entorno: `DATABASE_URL`, `JWT_SECRET`, `GOOGLE_CLIENT_IDS`, `APPLE_AUDIENCES`, `CORS_ORIGINS`, `PORT`, `TRUST_PROXY`, `THROTTLE_LIMIT`, `CLEANUP_INTERVAL_MS`, `AUTH_DEV_FAKE`, `DAILY_SECRET` (obligatoria en producción, mínimo 32 caracteres).
+- **Configuración** en `src/config/app-config.ts`, leída de variables de entorno: `DATABASE_URL`, `JWT_SECRET`, `GOOGLE_CLIENT_IDS`, `APPLE_AUDIENCES`, `APPLE_CLIENT_ID`/`APPLE_TEAM_ID`/`APPLE_KEY_ID`/`APPLE_PRIVATE_KEY` (revocación de Apple, opcionales), `CORS_ORIGINS`, `PORT`, `TRUST_PROXY`, `THROTTLE_LIMIT`, `CLEANUP_INTERVAL_MS`, `AUTH_DEV_FAKE`, `DAILY_SECRET` (obligatoria en producción, mínimo 32 caracteres).
 - Límite de peticiones por IP con `@nestjs/throttler`.
 - **Docker**: el `Dockerfile` es *multi-stage* sobre `node:24-alpine`, con el contexto de build en la raíz del monorepo para incluir el motor. Al arrancar ejecuta `prisma migrate deploy` y luego `node dist/main.js`. Tiene `HEALTHCHECK` contra `/health`.
 

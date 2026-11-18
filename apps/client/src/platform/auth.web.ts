@@ -57,7 +57,8 @@ function ensureInit(gis: GisId) {
 
 export const auth: Auth = {
   googleAvailable: !!config.googleClientId,
-  appleAvailable: false,
+  // Sign in with Apple no se ofrece en la web (no se exige ahí; necesitaría un Services ID).
+  appleAvailable: () => Promise.resolve(false),
   renderGoogleButton(host, opts, onCredential, onError) {
     let alive = true;
     const el = host as HTMLElement | null;

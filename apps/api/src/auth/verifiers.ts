@@ -19,9 +19,18 @@ export abstract class GoogleVerifier {
   abstract verify(idToken: string): Promise<VerifiedIdentity>;
 }
 
+/** Aviso servidor a servidor de Sign in with Apple, ya verificado. */
+export interface AppleNotification {
+  /** "consent-revoked" | "account-delete" | "email-disabled" | "email-enabled" | otro futuro. */
+  type: string;
+  subject: string;
+}
+
 /** Verificador del identityToken de Sign in with Apple (mismo patrón que Google). */
 export abstract class AppleVerifier {
   abstract verify(identityToken: string): Promise<VerifiedIdentity>;
+  /** Verifica el JWT `payload` que Apple manda a POST /auth/apple/notifications. */
+  abstract verifyNotification(payload: string): Promise<AppleNotification>;
 }
 
 const unavailable = (provider: string) =>
@@ -81,6 +90,26 @@ export class JoseAppleVerifier extends AppleVerifier {
       throw invalidToken();
     }
   }
+
+  async verifyNotification(token: string): Promise<AppleNotification> {
+    if (this.config.appleAudiences.length === 0) throw unavailable('Apple');
+    try {
+      const { payload } = await jwtVerify(token, this.jwks, {
+        issuer: APPLE_ISSUER,
+        audience: this.config.appleAudiences,
+      });
+      return parseAppleEvents(payload.events);
+    } catch {
+      throw invalidToken();
+    }
+  }
+}
+
+/** El claim `events` llega como texto JSON (a veces ya como objeto): { type, sub, ... }. */
+export function parseAppleEvents(raw: unknown): AppleNotification {
+  const ev = (typeof raw === 'string' ? JSON.parse(raw) : raw) as { type?: unknown; sub?: unknown } | null;
+  if (!ev || typeof ev.type !== 'string' || typeof ev.sub !== 'string' || !ev.sub) throw new Error('events inválido');
+  return { type: ev.type, subject: ev.sub };
 }
 
 /** true si se acepta el login de desarrollo (`dev:<sub>:<nombre>`): AUTH_DEV_FAKE=1 y nunca en producción. */

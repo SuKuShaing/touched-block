@@ -78,7 +78,7 @@ No se aceptan propiedades extra en los cuerpos: devuelven `400 validation_error`
 | 413 | `payload_too_large` | Cuerpo de más de 1 MB |
 | 429 | `too_many_requests` | Límite de peticiones (ver abajo) |
 | 500 | `internal_error` | Error inesperado |
-| 503 | `provider_unavailable` | Login con un proveedor sin configurar (por ejemplo, Apple hoy) |
+| 503 | `provider_unavailable` | Login con un proveedor sin configurar (por ejemplo, Apple sin `APPLE_AUDIENCES`) |
 | 503 | `db_unavailable` | `/health` sin base de datos |
 
 ### Límite de peticiones (por IP)
@@ -226,16 +226,30 @@ Todos opcionales. Es el tipo `GameMods` del motor y se pasa tal cual a `createGa
 
 **Login de desarrollo**: con `AUTH_DEV_FAKE=1` y `NODE_ENV` distinto de `production`, también acepta `idToken` con la forma `dev:<sub>:<nombre>` (`<sub>`: `a-z0-9_.-`, hasta 64 caracteres; `<nombre>`: hasta 60), sin hablar con Google. La identidad queda como `google` / `dev:<sub>`, así que el mismo `<sub>` vuelve a la misma cuenta. Sirve para probar el login de punta a punta en local (el cliente muestra "Entrar (dev)" con `EXPO_PUBLIC_AUTH_DEV_FAKE=1`). En producción esa variable se ignora y el token se verifica con Google como siempre.
 
-### `POST /auth/apple` (pública; queda lista para la app iOS)
+### `POST /auth/apple` (pública; la usa la app iOS)
 
 ```json
-{ "identityToken": "<JWT de Sign in with Apple>", "fullName": "Ana Pérez", "country": "CL" }
+{ "identityToken": "<JWT de Sign in with Apple>", "authorizationCode": "c1a2b3…", "fullName": "Ana Pérez", "country": "CL" }
 ```
 
+- `identityToken`: se verifica con las claves públicas de Apple (`iss` = `https://appleid.apple.com`, `aud` en `APPLE_AUDIENCES`). El correo puede ser de reenvío privado (`…@privaterelay.appleid.com`); se acepta igual.
+- `authorizationCode` (opcional, desde el 18 nov 2026; hasta 1024 caracteres): código de un solo uso (vence en 5 min). La API lo canjea en `https://appleid.apple.com/auth/token` por el refresh token de Apple y lo guarda **cifrado** en la identidad (nunca sale en una respuesta), para revocarlo al eliminar la cuenta (`DELETE /me`). Si faltan las variables de revocación o Apple rechaza el código, el login responde igual y queda un aviso en el log. **Una API anterior a este campo responde `400 validation_error`** si se manda.
 - `fullName` (opcional): Apple solo lo entrega en el primer inicio de sesión.
 - Requiere `APPLE_AUDIENCES`. Sin esa variable responde `503 provider_unavailable`.
 
 `200` → `LoginResponse`.
+
+### `POST /auth/apple/notifications` (pública; la llama Apple)
+
+Notificaciones servidor a servidor de Sign in with Apple (se configura la URL `https://api.touchedblock.app/auth/apple/notifications` en Apple Developer).
+
+```json
+{ "payload": "<JWT firmado por Apple>" }
+```
+
+- El JWT se verifica como el `identityToken` (JWKS de Apple, `iss`, `aud` en `APPLE_AUDIENCES`). Su claim `events` trae `{ "type", "sub", … }`.
+- `consent-revoked` (la persona dejó de usar su Apple ID con la app) y `account-delete` (borró su Apple ID): se elimina la cuenta de esa identidad, igual que `DELETE /me` pero sin volver a revocar en Apple. `email-disabled` / `email-enabled` y otros tipos se ignoran.
+- `200 { "ok": true }`, también si la cuenta ya no existe. Errores: `401 invalid_provider_token` (firma o audiencia inválida), `503 provider_unavailable` (sin `APPLE_AUDIENCES`), `400 validation_error`.
 
 ### `POST /auth/refresh` (pública)
 
@@ -285,6 +299,8 @@ Ambos campos son opcionales. Enviar el mismo valor que ya tiene no hace nada.
 ### `DELETE /me` (requiere sesión)
 
 `204`. Borra la cuenta con sus identidades, sesiones, partidas, récords, seguimientos, estadísticas, resultados de retos a un amigo y del reto diario, y premios de misiones. Quienes la tenían como "quién me invitó" quedan con `invitedBy: null`. Los retos que creó siguen existiendo (sin creador), con los resultados de los demás.
+
+Si la cuenta entró con **Apple** y hay un refresh token de Apple guardado, antes de borrar se revoca en `https://appleid.apple.com/auth/revoke` (`token_type_hint=refresh_token`; guía 5.1.1(v) de Apple). Si Apple falla o faltan las variables de revocación, se registra en el log y la cuenta se borra igual.
 
 ### `GET /users/check-username?u=Pepa` (sesión opcional)
 
@@ -999,7 +1015,11 @@ Al arrancar, el contenedor aplica las migraciones pendientes (`prisma migrate de
 | `JWT_SECRET` | sí | Secreto HS256; en producción, al menos 32 caracteres |
 | `DAILY_SECRET` | en producción | Secreto de la semilla del reto diario (HMAC-SHA256 de la fecha); al menos 32 caracteres. Fuera de producción, si falta, se usa un valor fijo de desarrollo. No cambiarlo una vez publicado: cambiaría la partida del día en curso |
 | `GOOGLE_CLIENT_IDS` | para el login con Google | Client IDs de OAuth aceptados como audiencia, separados por coma (web hoy; Android/iOS después) |
-| `APPLE_AUDIENCES` | no | Bundle ID / Services ID de Apple, separados por coma |
+| `APPLE_AUDIENCES` | para el login con Apple | Bundle ID / Services ID de Apple, separados por coma (`app.touchedblock`) |
+| `APPLE_CLIENT_ID` | no | `client_id` para canjear y revocar tokens de Apple (bundle ID). Por defecto, la primera de `APPLE_AUDIENCES` |
+| `APPLE_TEAM_ID` | para revocar | Team ID de Apple Developer (`iss` del `client_secret`) |
+| `APPLE_KEY_ID` | para revocar | Key ID de la clave con Sign in with Apple (`kid` del `client_secret`) |
+| `APPLE_PRIVATE_KEY` | para revocar | Contenido del `.p8` (PEM PKCS#8); los saltos de línea pueden ir como `\n`. Sin estas tres (o sin `client_id`) el login con Apple funciona y la revocación se omite con un aviso. **Secreto: nunca en el repo** |
 | `CORS_ORIGINS` | no | Orígenes permitidos, separados por coma (por defecto `http://localhost:8081`; `*` permite todos) |
 | `PORT` | no | 3000 |
 | `THROTTLE_LIMIT` | no | Peticiones por minuto por IP (120) |

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { RULES_VERSION, livesFor } from '@tb/engine';
+import { AppleTokensService } from '../auth/apple-tokens';
 import { normalizeCountry } from '../common/countries';
 import { badRequest, conflict, notFound } from '../common/errors';
 import { Prisma } from '../generated/prisma/client';
@@ -29,6 +30,7 @@ export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly stats: StatsService,
+    private readonly appleTokens: AppleTokensService,
   ) {}
 
   /** Vidas (corazones) del usuario: 5 + invitados, con tope 8. */
@@ -148,7 +150,18 @@ export class UsersService {
     return this.getMe(userId);
   }
 
-  async deleteMe(userId: string): Promise<void> {
+  /**
+   * Elimina la cuenta. Si entró con Apple, antes revoca su token en Apple (guía 5.1.1(v)); si eso
+   * falla se registra y se borra igual. `revokeApple: false` cuando Apple ya avisó que la revocó.
+   */
+  async deleteMe(userId: string, opts: { revokeApple?: boolean } = {}): Promise<void> {
+    if (opts.revokeApple !== false) {
+      try {
+        await this.appleTokens.revokeForUser(userId);
+      } catch {
+        // revokeForUser no lanza; esto cubre un fallo de la base al leer las identidades
+      }
+    }
     // borra en cascada identidades, sesiones, partidas, récords, seguimientos, estadísticas,
     // resultados de retos y del reto diario, y premios de misiones (los retos que creó quedan sin creador)
     await this.prisma.user.delete({ where: { id: userId } });

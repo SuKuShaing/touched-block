@@ -14,7 +14,11 @@ export function legalUrl(page: LegalPage): string {
 }
 
 export function openLegal(page: LegalPage) {
-  const url = legalUrl(page);
+  openExternal(legalUrl(page));
+}
+
+/** Enlace externo (p. ej. los créditos del Perfil), en el navegador integrado. */
+export function openExternal(url: string) {
   try {
     WebBrowser.openBrowserAsync(url).catch(() => {
       // sin navegador integrado: el navegador del sistema

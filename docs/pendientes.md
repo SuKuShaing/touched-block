@@ -22,7 +22,12 @@ Estado al **18 nov 2026**.
   - Queda por afinar en teléfonos reales: cómo se siente la vibración (el emulador no vibra; sí registra los eventos), latencia del sonido, el teclado en pantalla completo (el emulador tiene teclado físico y muestra solo la barra) y login real con Google (el cliente Android de release recién creado puede tardar unos minutos en activarse).
   - Respaldar `~/.touched-block/` (clave de firma).
   - Google Play: cuenta de desarrollador (USD 25), ficha de la tienda, `.aab` (EAS Build o `./gradlew bundleRelease`), cliente OAuth Android con la SHA-1 de Play App Signing. Con la app publicada se pueden agregar App Links (`touchedblock.app/.well-known/assetlinks.json`) para que los enlaces de reto abran la app.
-  - iOS: necesita Mac o EAS Build, cuenta de Apple (USD 99/año) y Sign in with Apple.
+  - iOS: necesita Mac o EAS Build y cuenta de Apple (USD 99/año). **Sign in with Apple ya está en el código** (18 nov 2026; ver historia-y-decisiones → "Sign in with Apple para iOS…"), pero **sin probar en iOS real** (se hizo en Windows: solo `tsc`, tests y el *bundle* JS de iOS). Falta, del usuario (pasos en `despliegue.md` → sección 6):
+    - En Apple Developer: capacidad Sign in with Apple en el App ID `app.touchedblock`, Key con Sign in with Apple (`.p8`), anotar Team ID y Key ID; opcional, el endpoint de avisos `https://api.touchedblock.app/auth/apple/notifications`.
+    - En Dokploy: `APPLE_AUDIENCES=app.touchedblock`, `APPLE_CLIENT_ID`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY`.
+    - Publicar la API con la migración `add_identity_provider_refresh_token` (tag nuevo) **antes** de repartir la app iOS: la API vieja rechaza `authorizationCode` con 400.
+    - Probar en un iPhone: botón de Apple (blanco, arriba del de Google), primer login con nombre y correo (también "Ocultar mi correo"), segundo login sin nombre, eliminar cuenta y ver que la app desaparece de Ajustes → Iniciar sesión con Apple; login con Google en iOS (cliente iOS + `iosUrlScheme` ya configurados).
+    - Las cuentas creadas con Apple antes de cargar las variables quedan sin token guardado (no se pueden revocar) hasta su siguiente login.
   - Sin probar en la app: compartir la imagen hasta una red social real.
 - **Web**: GitHub Pages **con cuentas y rankings activos** desde el 10 nov 2026 (variables `EXPO_PUBLIC_API_URL` y `EXPO_PUBLIC_GOOGLE_CLIENT_ID` creadas). Incluye las reglas v5, las páginas legales y los dos tutoriales (básico y avanzado). Se verificó de punta a punta: partida de invitado validada por el servidor, rankings y login real con Google.
 - **Dokploy** (panel `http://vps23906.cubepath.net:3000`, IP 144.225.147.103, Dokploy v0.31.0; ahí también vive el proyecto UltimaType con `ultimatype.xyz`):

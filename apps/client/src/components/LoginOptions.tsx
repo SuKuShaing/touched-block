@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, type HostInstance, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { errorMessage } from '@/api/client';
-import { loginGoogle } from '@/api/endpoints';
+import { loginApple, loginGoogle } from '@/api/endpoints';
 import type { LoginResponse } from '@/api/types';
 import { config } from '@/config';
 import { auth } from '@/platform/auth';
 import { C } from '@/theme';
+import { AppleSignInButton } from './AppleSignInButton';
 import { Hint, SmallButton, TextField } from './form';
 import { LegalConsent } from './LegalLinks';
 
@@ -127,30 +128,68 @@ function DevLogin({ onToken, busy }: { onToken: (t: string) => void; busy: boole
   );
 }
 
+/** true cuando el sistema confirma Sign in with Apple (solo iOS). */
+function useAppleAvailable() {
+  const [ok, setOk] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    auth
+      .appleAvailable()
+      .then((v) => {
+        if (alive) setOk(v);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+  return ok;
+}
+
 /**
- * Opciones para iniciar sesión: el botón de Google y, en desarrollo, "Entrar (dev)".
+ * Opciones para iniciar sesión: Sign in with Apple (solo iOS, arriba, como pide Apple), el botón
+ * de Google y, en desarrollo, "Entrar (dev)".
  * Llama `onLoggedIn` cuando la sesión quedó guardada.
  */
 export function LoginOptions({ onLoggedIn }: { onLoggedIn?: (r: LoginResponse) => void | Promise<void> }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const login = async (idToken: string) => {
-    if (busy) return;
+  const apple = useAppleAvailable();
+  // evita dos inicios de sesión a la vez aunque el estado aún no se haya actualizado
+  const running = useRef(false);
+
+  const run = async (go: () => Promise<LoginResponse | null>) => {
+    if (busy || running.current) return;
+    running.current = true;
     setBusy(true);
     setErr(null);
     try {
-      const r = await loginGoogle(idToken);
-      await onLoggedIn?.(r);
+      const r = await go();
+      if (r) await onLoggedIn?.(r);
     } catch (e) {
       setErr(errorMessage(e));
     } finally {
+      running.current = false;
       setBusy(false);
     }
   };
 
+  const login = (idToken: string) => run(() => loginGoogle(idToken));
+
+  const loginWithApple = () =>
+    run(async () => {
+      const r = await auth.signInApple?.();
+      if (!r?.identityToken) {
+        if (r?.error) setErr(r.error);
+        return null;
+      }
+      return loginApple({ identityToken: r.identityToken, authorizationCode: r.authorizationCode, fullName: r.fullName });
+    });
+
   return (
     <View style={styles.box}>
+      {apple && auth.signInApple ? <AppleSignInButton onPress={loginWithApple} disabled={busy} width={280} height={40} /> : null}
       {auth.googleAvailable ? (
         auth.signInGoogle ? (
           <NativeGoogleButton onCredential={login} onError={setErr} onStart={() => setErr(null)} disabled={busy} />
@@ -161,7 +200,7 @@ export function LoginOptions({ onLoggedIn }: { onLoggedIn?: (r: LoginResponse) =
       {config.authDevFake ? <DevLogin onToken={login} busy={busy} /> : null}
       {busy ? <Text style={styles.busy}>Iniciando sesión…</Text> : null}
       {err ? <Hint tone="bad">{err}</Hint> : null}
-      {auth.googleAvailable || config.authDevFake ? <LegalConsent /> : null}
+      {auth.googleAvailable || apple || config.authDevFake ? <LegalConsent /> : null}
     </View>
   );
 }

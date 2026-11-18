@@ -21,6 +21,12 @@ services:
       DAILY_SECRET: ${DAILY_SECRET:?falta DAILY_SECRET}
       GOOGLE_CLIENT_IDS: ${GOOGLE_CLIENT_IDS:?falta GOOGLE_CLIENT_IDS}
       APPLE_AUDIENCES: ${APPLE_AUDIENCES:-}
+      # Sign in with Apple, revocación del token al eliminar la cuenta (opcionales; sin ellas se omite).
+      # APPLE_PRIVATE_KEY es el contenido del .p8 (vale en una línea con \n). Nunca en el repo.
+      APPLE_CLIENT_ID: ${APPLE_CLIENT_ID:-}
+      APPLE_TEAM_ID: ${APPLE_TEAM_ID:-}
+      APPLE_KEY_ID: ${APPLE_KEY_ID:-}
+      APPLE_PRIVATE_KEY: ${APPLE_PRIVATE_KEY:-}
       # orígenes de la web separados por coma: la nueva (Cloudflare) y la vieja (GitHub Pages, hoy
       # solo redirige, pero una pestaña abierta desde antes sigue llamando a la API)
       CORS_ORIGINS: ${CORS_ORIGINS:-https://web.touchedblock.app,https://sukushaing.github.io}

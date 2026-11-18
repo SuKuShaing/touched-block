@@ -3,6 +3,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { AppConfig } from '../config/app-config';
 import { UsersModule } from '../users/users.module';
+import { AppleTokensModule } from './apple-tokens';
 import { AuthController } from './auth.controller';
 import { AuthGuard } from './auth.guard';
 import { AuthService } from './auth.service';
@@ -12,6 +13,7 @@ import { AppleVerifier, GoogleVerifier, JoseAppleVerifier, createGoogleVerifier 
 @Module({
   imports: [
     UsersModule,
+    AppleTokensModule,
     JwtModule.registerAsync({
       inject: [AppConfig],
       useFactory: (config: AppConfig) => ({

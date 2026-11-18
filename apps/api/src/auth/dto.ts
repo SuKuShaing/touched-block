@@ -17,6 +17,16 @@ export class AppleLoginDto {
   @Length(10, 8192)
   identityToken: string;
 
+  /**
+   * Código de autorización de un solo uso (vence en 5 min). La API lo canjea por el refresh token
+   * de Apple y lo guarda cifrado para revocarlo al eliminar la cuenta. Opcional: sin él, el login
+   * funciona igual pero no habrá token que revocar.
+   */
+  @IsOptional()
+  @IsString()
+  @Length(1, 1024)
+  authorizationCode?: string;
+
   /** Nombre completo (Apple solo lo entrega la primera vez). */
   @IsOptional()
   @IsString()
@@ -27,6 +37,13 @@ export class AppleLoginDto {
   @IsString()
   @MaxLength(8)
   country?: string;
+}
+
+/** Cuerpo de las notificaciones servidor a servidor de Sign in with Apple. */
+export class AppleNotificationDto {
+  @IsString()
+  @Length(10, 16384)
+  payload: string;
 }
 
 export class RefreshDto {

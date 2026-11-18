@@ -64,13 +64,16 @@ model User {
 }
 
 model AuthIdentity {
-  id        String   @id @default(uuid()) @db.Uuid
+  id                   String   @id @default(uuid()) @db.Uuid
   /// "google" | "apple"
-  provider  String   @db.VarChar(16)
-  subject   String   @db.VarChar(255)
-  userId    String   @db.Uuid
-  email     String?  @db.VarChar(320)
-  createdAt DateTime @default(now())
+  provider             String   @db.VarChar(16)
+  subject              String   @db.VarChar(255)
+  userId               String   @db.Uuid
+  email                String?  @db.VarChar(320)
+  /// Solo Apple: refresh token de Sign in with Apple, cifrado (AES-256-GCM, ver auth/apple-tokens.ts).
+  /// Se usa únicamente para revocarlo al eliminar la cuenta (guía 5.1.1(v)); nunca sale en una respuesta.
+  providerRefreshToken String?
+  createdAt            DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

@@ -117,7 +117,7 @@ Ya hecho por el usuario el 9 nov 2026. El Client ID está arriba. Para rehacerlo
 4. El mismo Client ID va en dos lugares:
    - En la API, `GOOGLE_CLIENT_IDS`: la audiencia aceptada del `idToken`.
    - En la web, `EXPO_PUBLIC_GOOGLE_CLIENT_ID`.
-   - Para la app móvil habrá que crear clientes Android/iOS y agregarlos a `GOOGLE_CLIENT_IDS`, separados por coma.
+   - La app (Android e iOS) pide el `idToken` con este mismo Client ID web como `webClientId`, así que su audiencia sigue siendo el cliente web y **no** hace falta agregar los clientes Android/iOS a `GOOGLE_CLIENT_IDS` (ver secciones 5 y 6).
 
 ## 3. API en Dokploy
 
@@ -140,7 +140,9 @@ El archivo `deploy/.env` (ignorado por git) ya tiene los valores reales generado
 | `POSTGRES_PASSWORD` | Solo letras y números (va dentro de la URL de conexión). Se fija al crear el volumen: cambiarla después **no** cambia la contraseña de la base existente |
 | `JWT_SECRET` | 48 bytes aleatorios. Si cambia, todas las sesiones se cierran |
 | `DAILY_SECRET` | **Obligatoria desde la fase 4** (reto diario): sin ella el Compose no arranca (`falta DAILY_SECRET`) y la API tampoco. 48 bytes aleatorios (mínimo 32 caracteres): `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"`. Es la llave de la semilla del reto diario (`HMAC-SHA256(DAILY_SECRET, fecha)`): sin ella nadie puede adivinar la partida de mañana. **No cambiarla** una vez publicada: cambiaría la partida del día en curso a mitad del día |
-| `GOOGLE_CLIENT_IDS` | Client ID web; más adelante, también los de Android/iOS, separados por coma |
+| `GOOGLE_CLIENT_IDS` | Client ID web. Los clientes Android/iOS no hacen falta: la app pide el `idToken` con el `webClientId` |
+| `APPLE_AUDIENCES` | `app.touchedblock` (bundle ID de la app iOS): audiencia aceptada del `identityToken` de Apple. Sin ella, `POST /auth/apple` responde 503 |
+| `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY`, `APPLE_CLIENT_ID` | Revocación del token de Apple al eliminar la cuenta (sección 6). Opcionales: si falta alguna, el login con Apple funciona y la API avisa en el log que omite la revocación. `APPLE_CLIENT_ID` = `app.touchedblock` (por defecto, la primera de `APPLE_AUDIENCES`). `APPLE_PRIVATE_KEY` = contenido del `.p8`, en una sola línea con `\n` en lugar de los saltos de línea. **Nunca en el repo** |
 | `CORS_ORIGINS` | `https://web.touchedblock.app,https://sukushaing.github.io` (separados por coma). **Hay que cambiarlo en Dokploy**: el valor por defecto de `deploy/docker-compose.yml` solo se usa si la variable no existe, y hoy existe con el valor viejo |
 | `API_TAG` | `latest`. Para volver a una versión anterior: `v0.1.0`, etc. |
 
@@ -276,7 +278,9 @@ La API nueva es **compatible con la web anterior** (campos nuevos opcionales y e
 - "Android debug (app.touchedblock)", con la SHA-1 de la clave debug de Expo (`5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25`);
 - "Android release APK (app.touchedblock)", con la SHA-1 de arriba.
 
-La app usa el Client ID **web** (`EXPO_PUBLIC_GOOGLE_CLIENT_ID`) como `webClientId`, así que la API no cambia. Al publicar en Google Play hay que agregar otro cliente Android con la SHA-1 de la clave de firma de Play (Play Console → Integridad de la app).
+y un cliente **iOS** (creado el 18 nov 2026) con el bundle ID `app.touchedblock`: Client ID `1065315828810-pgb0mm5hgvgpi6anuvkv3152q7j1qgka.apps.googleusercontent.com` (no es secreto). En la app va como `iosClientId` (`src/platform/auth.native.ts`, solo en iOS) y su ID invertido, `com.googleusercontent.apps.1065315828810-pgb0mm5hgvgpi6anuvkv3152q7j1qgka`, como `iosUrlScheme` del plugin `@react-native-google-signin/google-signin` en `app.json`.
+
+La app usa el Client ID **web** (`EXPO_PUBLIC_GOOGLE_CLIENT_ID`) como `webClientId` (también en iOS), así que el `idToken` trae la audiencia del cliente web y la API no cambia. Al publicar en Google Play hay que agregar otro cliente Android con la SHA-1 de la clave de firma de Play (Play Console → Integridad de la app).
 
 **Generar el APK** (apunta a la API de producción y no lleva `EXPO_PUBLIC_AUTH_DEV_FAKE`):
 
@@ -292,3 +296,29 @@ EXPO_PUBLIC_API_URL=https://api.touchedblock.app NODE_ENV=production ./gradlew a
 - La API no necesita CORS para la app, porque las apps no envían `Origin`.
 - Los APK anteriores a noviembre de 2026 apuntan a `https://vps23906.cubepath.net`: ese dominio tiene que seguir en Dokploy (*Domains*) mientras haya gente con esos APK.
 - La app comparte enlaces con `https://web.touchedblock.app/` (`config.siteUrl`) y abre las páginas legales de `https://touchedblock.app/` (`config.landingUrl`).
+
+## 6. App iOS: Sign in with Apple
+
+Apple exige ofrecer Sign in with Apple si la app tiene otro login social (guía 4.8) y, si se puede crear cuenta con Apple, revocar su token al eliminar la cuenta (guía 5.1.1(v)). El código ya está (ver `api.md`, `POST /auth/apple`); falta configurarlo:
+
+1. **Apple Developer → Certificates, Identifiers & Profiles → Identifiers**: abrir (o crear) el App ID `app.touchedblock` y marcar la capacidad **Sign in with Apple** ("Enable as a primary App ID"). Guardar. Si ya había perfiles de aprovisionamiento, regenerarlos (EAS lo hace solo). En `app.json` ya están `ios.usesAppleSignIn: true` y el plugin `expo-apple-authentication`, que agregan el *entitlement*.
+2. **Keys → +**: crear una clave, marcar **Sign in with Apple** → *Configure* → App ID principal `app.touchedblock`. Descargar el `.p8` (**solo se puede descargar una vez**; guardarlo en el gestor de contraseñas, nunca en el repo) y anotar su **Key ID** (10 caracteres).
+3. Anotar el **Team ID** (arriba a la derecha en Apple Developer, o en *Membership details*).
+4. **Opcional, avisos de Apple**: en la configuración de Sign in with Apple del App ID, *Server-to-Server Notification Endpoint* = `https://api.touchedblock.app/auth/apple/notifications`. Con eso, si alguien deja de usar su Apple ID con la app (`consent-revoked`) o borra su Apple ID (`account-delete`), la API borra su cuenta.
+5. **Dokploy → Environment** del Compose (y la copia local `deploy/.env`):
+   ```
+   APPLE_AUDIENCES=app.touchedblock
+   APPLE_CLIENT_ID=app.touchedblock
+   APPLE_TEAM_ID=<Team ID>
+   APPLE_KEY_ID=<Key ID>
+   APPLE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\nMIGT...\n-----END PRIVATE KEY-----
+   ```
+   La clave en **una sola línea**, cambiando cada salto de línea por `\n` (la API los vuelve a convertir). Después, *Deploy* para que la API tome las variables.
+6. **Desplegar la API antes de repartir la app iOS**: la API vieja rechaza el campo nuevo `authorizationCode` (`400 validation_error`, porque no acepta campos desconocidos), así que la app solo funciona contra la API con la migración `20261118190000_add_identity_provider_refresh_token` (`v0.5.0` o la que siga).
+
+Comprobar: en el log de la API no debe aparecer `Revocación de Sign in with Apple desactivada: faltan …` tras el primer login con Apple. Al eliminar una cuenta de Apple, la app desaparece de *Ajustes → [tu nombre] → Iniciar sesión con Apple* en el iPhone.
+
+Notas:
+- El refresh token de Apple se guarda cifrado (AES-256-GCM con una clave derivada de `JWT_SECRET`). Si se cambia `JWT_SECRET`, los tokens ya guardados no se pueden descifrar y esas cuentas se borrarían sin revocar (queda un aviso en el log); se vuelven a guardar en el siguiente login de cada persona.
+- La web y Android no muestran el botón de Apple (no se exige ahí).
+

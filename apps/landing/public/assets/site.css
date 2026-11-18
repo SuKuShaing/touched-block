@@ -1189,6 +1189,28 @@ details > div p + p {
 .foot p {
   max-width: 30em;
 }
+/* Créditos: una línea por persona (el " · " solo queda para lectores sin CSS) */
+.foot .credits {
+  margin-top: 12px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.foot .credits > span {
+  display: block;
+}
+.foot .credits > .sep {
+  display: none;
+}
+.foot .credits a {
+  display: inline;
+  padding: 0;
+  text-decoration: underline;
+  text-decoration-color: var(--border);
+  text-underline-offset: 3px;
+}
+.foot .credits a:hover {
+  text-decoration-color: currentColor;
+}
 .copy {
   margin-top: 24px;
   padding-top: 18px;

@@ -13,6 +13,14 @@ export function legalUrl(page: LegalPage): string {
   return `${config.landingUrl}${page}/`;
 }
 
+/** Enlace externo (p. ej. los créditos del Perfil): en la web, en otra pestaña. */
+export function openExternal(url: string) {
+  try {
+    if (Platform.OS === 'web') window.open(url, '_blank', 'noopener');
+    else void Linking.openURL(url).catch(() => {});
+  } catch {}
+}
+
 export function openLegal(page: LegalPage) {
   const url = legalUrl(page);
   try {

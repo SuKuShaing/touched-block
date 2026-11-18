@@ -39,6 +39,23 @@ export async function loginGoogle(idToken: string): Promise<LoginResponse> {
   return r;
 }
 
+/**
+ * Sign in with Apple (app iOS). `authorizationCode` va para que la API guarde el refresh token de
+ * Apple y pueda revocarlo al eliminar la cuenta; `fullName` solo llega la primera vez.
+ */
+export async function loginApple(p: { identityToken: string; authorizationCode?: string | null; fullName?: string | null }): Promise<LoginResponse> {
+  const country = browserCountry();
+  const body = {
+    identityToken: p.identityToken,
+    ...(p.authorizationCode ? { authorizationCode: p.authorizationCode } : {}),
+    ...(p.fullName ? { fullName: p.fullName } : {}),
+    ...(country ? { country } : {}),
+  };
+  const r = await api<LoginResponse>('POST', '/auth/apple', { auth: 'none', body });
+  session.apply(r);
+  return r;
+}
+
 /** Cierra la sesión: revoca el refresh token (si se puede) y la borra localmente. */
 export async function logout() {
   const rt = session.refreshToken();
