@@ -18,7 +18,7 @@ import {
 import { useMeRefresh, useViewer } from '@/api/hooks';
 import type { Me } from '@/api/types';
 import { FieldBackground } from '@/components/FieldBackground';
-import { TierBadge } from '@/components/TierBadge';
+import { BADGE_PX, TierBadge } from '@/components/TierBadge';
 import { features } from '@/config';
 import { useActiveCosmetics } from '@/cosmetics/active';
 import {
@@ -94,7 +94,7 @@ function TierCard({ stats, me }: { stats: CatalogStats; me: Me | null }) {
   return (
     <Section title="Insignia">
       <View style={styles.head}>
-        {cur ? <TierBadge tier={cur} size="lg" /> : <EmptyMedal size={64} />}
+        {cur ? <TierBadge tier={cur} size="lg" /> : <EmptyMedal size={BADGE_PX.lg} />}
         <View style={styles.flex1}>
           <Text style={styles.big}>{cur ? cur.name : 'Sin insignia'}</Text>
           <Text style={styles.muted}>{cur ? `Tu partida más larga: ${fmtSeconds(best)}` : 'Termina una partida para ganar Madera I.'}</Text>
@@ -340,10 +340,10 @@ function AchievementRow({ a, value, last }: { a: Achievement; value: number | nu
   return (
     <View style={[styles.item, last && styles.itemLast]}>
       {mat ? (
-        <TierBadge tier={{ tier: mat.toLowerCase() as TierId, step: 1 }} size="md" glyph={mat === 'Diamante' ? undefined : '★'} label={`Logro ${mat}`} />
+        <TierBadge tier={{ tier: mat.toLowerCase() as TierId, step: 1 }} size="md" emblem="star" label={`Logro ${mat}`} />
       ) : (
         <View style={styles.medalBox}>
-          <EmptyMedal size={32} />
+          <EmptyMedal size={BADGE_PX.md} />
         </View>
       )}
       <View style={styles.itemText}>
@@ -513,6 +513,6 @@ const styles = StyleSheet.create({
   spark: { position: 'absolute', width: 3, height: 10, borderRadius: 2 },
   confetti: { position: 'absolute', width: 5, height: 9, borderRadius: 1 },
   square: { position: 'absolute', width: 8, height: 8, borderRadius: 2.5 },
-  medalBox: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
+  medalBox: { width: BADGE_PX.md, height: BADGE_PX.md, alignItems: 'center', justifyContent: 'center' },
   foot: { color: C.text, opacity: 0.45, fontSize: 12, textAlign: 'center' },
 });

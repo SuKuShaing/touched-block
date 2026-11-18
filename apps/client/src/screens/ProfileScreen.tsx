@@ -16,7 +16,7 @@ import { InstallRow } from '@/components/InstallCard';
 import { LegalLinks } from '@/components/LegalLinks';
 import { LoginOptions } from '@/components/LoginOptions';
 import { ProfileIcon } from '@/components/ProfileIcon';
-import { TierBadge } from '@/components/TierBadge';
+import { BADGE_PX, TierBadge } from '@/components/TierBadge';
 import { toast } from '@/components/Toast';
 import { GhostButton, RecordPill } from '@/components/ui';
 import { features } from '@/config';
@@ -817,7 +817,8 @@ const styles = StyleSheet.create({
   setRow: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 40, borderTopWidth: 1, borderTopColor: C.rowBorder, paddingTop: 8 },
   linkRow: { paddingBottom: 2 },
   chevron: { color: C.text, opacity: 0.5, fontSize: 24, lineHeight: 26, paddingHorizontal: 4 },
-  noBadge: { width: 32, height: 32, borderRadius: 16, backgroundColor: C.barBg },
+  // mismo hueco que la insignia "md" (TierBadge), para que la fila no salte al ganar la primera
+  noBadge: { width: BADGE_PX.md, height: BADGE_PX.md, borderRadius: BADGE_PX.md / 2, backgroundColor: C.barBg },
   collSub: { color: C.text, opacity: 0.65, fontSize: 13, marginTop: 1 },
   lvBar: { height: 4, borderRadius: 2, backgroundColor: C.barBg, overflow: 'hidden', marginTop: 5, marginBottom: 2 },
   lvFill: { height: '100%', backgroundColor: C.accent },

@@ -1,5 +1,6 @@
 import type { TierRef } from '@tb/engine';
-import { TIER_LOOK, tierGlyph, tierStepOf } from '@/cosmetics/tiers';
+import { medalSvg, SHARE_BADGE } from '@/cosmetics/medal';
+import { tierStepOf } from '@/cosmetics/tiers';
 import type { ResultCard, Share, ShareOutcome } from './share.types';
 
 // Web Share API con la tarjeta dibujada en un <canvas>. Si el navegador no comparte archivos,
@@ -30,84 +31,40 @@ function fitFont(ctx: CanvasRenderingContext2D, text: string, weight: number, si
   }
 }
 
-/** Rombo (cuadrado girado 45°) centrado en (cx, cy), con "radio" r hasta las puntas. */
-function diamondPath(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number) {
-  ctx.beginPath();
-  ctx.moveTo(cx, cy - r);
-  ctx.lineTo(cx + r, cy);
-  ctx.lineTo(cx, cy + r);
-  ctx.lineTo(cx - r, cy);
-  ctx.closePath();
-}
-
-/** Insignia como en components/TierBadge.tsx: medalla (o rombo en Diamante) y su nombre debajo. */
-function drawBadge(ctx: CanvasRenderingContext2D, ref: TierRef, cx: number, cy: number, r: number) {
+/**
+ * Insignia como en components/TierBadge.tsx: el mismo SVG (`cosmetics/medal.ts`), ya cargado como
+ * imagen, centrado en (cx, cy) y con su nombre debajo. Sin imagen (no cargó) queda solo el nombre.
+ */
+function drawBadge(ctx: CanvasRenderingContext2D, ref: TierRef, medal: HTMLImageElement | null, cx: number, cy: number) {
   const t = tierStepOf(ref);
   if (!t) return;
-  const look = TIER_LOOK[t.tier];
-  const diamond = t.tier === 'diamante';
-  ctx.save();
-  if (look.frame) {
-    // marco con brillo (Oro y Diamante)
-    ctx.shadowColor = look.glow ?? look.frame;
-    ctx.shadowBlur = r * 0.6;
-    ctx.strokeStyle = look.frame;
-    ctx.lineWidth = r * 0.1;
-    if (diamond) diamondPath(ctx, cx, cy, r * 1.22);
-    else {
-      ctx.beginPath();
-      ctx.arc(cx, cy, r * 1.14, 0, Math.PI * 2);
-    }
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-  }
-  if (diamond) {
-    ctx.fillStyle = look.rim;
-    diamondPath(ctx, cx, cy, r);
-    ctx.fill();
-    ctx.fillStyle = look.face;
-    diamondPath(ctx, cx, cy, r * 0.8);
-    ctx.fill();
-    // faceta clara arriba a la izquierda
-    ctx.fillStyle = 'rgba(255,255,255,0.55)';
-    ctx.beginPath();
-    ctx.moveTo(cx, cy - r * 0.8);
-    ctx.lineTo(cx - r * 0.8, cy);
-    ctx.lineTo(cx - r * 0.2, cy);
-    ctx.lineTo(cx, cy - r * 0.2);
-    ctx.closePath();
-    ctx.fill();
-  } else {
-    ctx.fillStyle = look.rim;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = look.face;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r * 0.78, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,0.28)';
-    ctx.beginPath();
-    ctx.ellipse(cx - r * 0.25, cy - r * 0.48, r * 0.3, r * 0.11, -0.35, 0, Math.PI * 2);
-    ctx.fill();
-    const glyph = tierGlyph(t);
-    if (glyph) {
-      ctx.fillStyle = look.ink;
-      ctx.textBaseline = 'middle';
-      ctx.font = `900 ${Math.round(r * (glyph.length >= 3 ? 0.62 : glyph.length === 2 ? 0.78 : 0.9))}px ${FONT}`;
-      ctx.fillText(glyph, cx, cy + r * 0.05);
-      ctx.textBaseline = 'alphabetic';
-    }
-  }
+  const B = SHARE_BADGE.box;
+  if (medal) ctx.drawImage(medal, cx - B / 2, cy - B / 2, B, B);
   ctx.fillStyle = '#ffffff';
   ctx.globalAlpha = 0.9;
-  ctx.font = `700 ${Math.round(r * 0.46)}px ${FONT}`;
-  ctx.fillText(t.name, cx, cy + r * (diamond || look.frame ? 1.78 : 1.62));
+  ctx.font = `700 ${SHARE_BADGE.nameSize}px ${FONT}`;
+  ctx.fillText(t.name, cx, cy + SHARE_BADGE.nameDy);
   ctx.globalAlpha = 1;
-  ctx.restore();
 }
 
-function draw(card: ResultCard): HTMLCanvasElement {
+/** La medalla de la tarjeta como imagen (SVG en data URI), o null si no hay insignia o no cargó. */
+function loadMedal(ref: TierRef | null | undefined): Promise<HTMLImageElement | null> {
+  const t = tierStepOf(ref);
+  if (!t || typeof Image === 'undefined') return Promise.resolve(null);
+  return new Promise((resolve) => {
+    try {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      const svg = medalSvg({ tier: t.tier, step: t.step, emblem: 'tier', small: false }, SHARE_BADGE.box);
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
+function draw(card: ResultCard, medal: HTMLImageElement | null): HTMLCanvasElement {
   const c = document.createElement('canvas');
   c.width = W;
   c.height = H;
@@ -180,12 +137,12 @@ function draw(card: ResultCard): HTMLCanvasElement {
   }
 
   // insignia (opcional), arriba a la derecha del panel
-  if (card.tier) drawBadge(ctx, card.tier, W - 185, 182, 64);
+  if (card.tier) drawBadge(ctx, card.tier, medal, W - 185, 182);
 
   ctx.globalAlpha = 0.6;
   ctx.fillStyle = '#ffffff';
   ctx.font = `500 32px ${FONT}`;
-  ctx.fillText('sukushaing.github.io/touched-block', W / 2, 975);
+  ctx.fillText('touchedblock.app', W / 2, 975);
   ctx.globalAlpha = 1;
   return c;
 }
@@ -214,20 +171,27 @@ let cache: { key: string; file: Promise<File | null> } | null = null;
 function cardFile(card: ResultCard): Promise<File | null> {
   const key = JSON.stringify(card);
   if (cache?.key === key) return cache.file;
-  const file = new Promise<File | null>((resolve) => {
-    void fontsReady(card).then(() => {
-      try {
-        draw(card).toBlob((blob) => {
-          try {
-            resolve(blob ? new File([blob], 'touched-block.png', { type: 'image/png' }) : null);
-          } catch {
-            resolve(null);
-          }
-        }, 'image/png');
-      } catch {
-        resolve(null);
-      }
+  const toFile = (canvas: HTMLCanvasElement) =>
+    new Promise<File | null>((resolve) => {
+      canvas.toBlob((blob) => {
+        try {
+          resolve(blob ? new File([blob], 'touched-block.png', { type: 'image/png' }) : null);
+        } catch {
+          resolve(null);
+        }
+      }, 'image/png');
     });
+  const file = Promise.all([fontsReady(card), loadMedal(card.tier)]).then(async ([, medal]) => {
+    try {
+      return await toFile(draw(card, medal));
+    } catch {
+      // un navegador que no deja exportar un canvas con una imagen SVG: la tarjeta sin la medalla
+      try {
+        return medal ? await toFile(draw(card, null)) : null;
+      } catch {
+        return null;
+      }
+    }
   });
   cache = { key, file };
   return file;

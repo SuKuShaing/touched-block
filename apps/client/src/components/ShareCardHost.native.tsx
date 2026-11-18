@@ -3,6 +3,7 @@ import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { type HostInstance, PixelRatio, StyleSheet, Text, View } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 import { TierBadge } from '@/components/TierBadge';
+import { SHARE_BADGE } from '@/cosmetics/medal';
 import { tierStepOf } from '@/cosmetics/tiers';
 import { finishCardJob, getCardJob, subscribeCardJob } from '@/lib/shareCardStore';
 import type { ResultCard } from '@/platform/share.types';
@@ -77,30 +78,15 @@ function rect(x: number, y: number, w: number, h: number, r: number) {
   return { position: 'absolute' as const, left: px(x), top: px(y), width: px(w), height: px(h), borderRadius: px(r) };
 }
 
-/** Insignia arriba a la derecha: la de `TierBadge` (tamaño lg) agrandada a radio `r`, con su nombre. */
-function Badge({ card, cx, cy, r }: { card: ResultCard; cx: number; cy: number; r: number }) {
+/** Insignia arriba a la derecha: la de `TierBadge` (el mismo SVG que el canvas de la web), con su nombre. */
+function Badge({ card, cx, cy }: { card: ResultCard; cx: number; cy: number }) {
   const t = tierStepOf(card.tier);
   if (!t) return null;
-  const framed = t.tier === 'diamante' || t.tier === 'oro';
-  const box = 80; // mayor que la caja de TierBadge lg (64 + marco)
+  const B = SHARE_BADGE.box;
   return (
     <>
-      <View
-        style={{
-          position: 'absolute',
-          left: px(cx) - box / 2,
-          top: px(cy) - box / 2,
-          width: box,
-          height: box,
-          alignItems: 'center',
-          justifyContent: 'center',
-          // la medalla lg mide 64 dp de diámetro; en la tarjeta mide 2r píxeles
-          transform: [{ scale: px(2 * r) / 64 }],
-        }}
-      >
-        <TierBadge tier={card.tier} size="lg" />
-      </View>
-      <Line text={t.name} y={cy + r * (framed ? 1.78 : 1.62)} size={Math.round(r * 0.46)} weight="700" opacity={0.9} maxW={300} cx={cx} />
+      <TierBadge tier={card.tier} size={px(B)} style={{ position: 'absolute', left: px(cx - B / 2), top: px(cy - B / 2) }} />
+      <Line text={t.name} y={cy + SHARE_BADGE.nameDy} size={SHARE_BADGE.nameSize} weight="700" opacity={0.9} maxW={300} cx={cx} />
     </>
   );
 }
@@ -145,9 +131,9 @@ function Card({ card }: { card: ResultCard }) {
         />
       ) : null}
 
-      {card.tier ? <Badge card={card} cx={W - 185} cy={182} r={64} /> : null}
+      {card.tier ? <Badge card={card} cx={W - 185} cy={182} /> : null}
 
-      <Line text="sukushaing.github.io/touched-block" y={975} size={32} weight="500" opacity={0.6} maxW={W - 160} />
+      <Line text="touchedblock.app" y={975} size={32} weight="500" opacity={0.6} maxW={W - 160} />
     </View>
   );
 }
