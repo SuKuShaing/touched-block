@@ -54,7 +54,7 @@ docs/                           esta documentación
 | `/u/[username]` | `u/[username].tsx`: perfil público |
 | `/coleccion` | `coleccion.tsx`: insignia, nivel, premios y logros (se abre desde el Perfil) |
 
-- Los retos se abren por **parámetro**, no por ruta: `/?reto=CÓDIGO` (reto a un amigo) y `/?diario=1` (reto diario). En GitHub Pages una ruta como `/reto/CODIGO` responde 404 (aunque cargue la app) y rompe la vista previa del enlace en WhatsApp.
+- Los retos se abren por **parámetro**, no por ruta: `/?reto=CÓDIGO` (reto a un amigo) y `/?diario=1` (reto diario). En GitHub Pages una ruta como `/reto/CODIGO` respondía 404 (aunque cargara la app) y rompía la vista previa del enlace en WhatsApp. En Cloudflare (modo SPA) una ruta ya respondería 200, pero el formato se mantiene para no romper los enlaces ya compartidos.
 
 - Las pestañas solo aparecen con cuentas activadas.
 - `_layout.tsx` monta `GestureHandlerRootView`, `QueryClientProvider` (staleTime 30 s, sin refetch al enfocar) y los *toasts*.
@@ -68,7 +68,7 @@ docs/                           esta documentación
 | `components/` | `Block` (con la paleta elegida), `Fx` (partículas según el efecto elegido, texto flotante, destello), `FieldBackground`, `Hud` (reloj, corazones, barra, racha, línea de avance), `Notice` (franja de avisos), `StageTrack` (camino de etapas), `PrizeCard`, `TierBadge`, `InstallCard`, `ChallengePanel`, `DailyCard`, `DailyRulesSheet`, `DailyResult`, `WeekStrip`, `MissionList`, `EndPanel`, `LoginOptions`, `AccountPrompt`, `LegalLinks`, `Toast`, `ConfirmModal`, `Segmented`… |
 | `cosmetics/` | `catalog.ts` (premios y sus condiciones, funciones puras de las estadísticas), `palettes.ts` (paletas y la regla de no ventaja), `active.ts` (premios en uso, validados contra lo desbloqueado), `tiers.ts` (aspecto de cada insignia) |
 | `onboarding/` | `Onboarding.tsx` (carrusel y textos), `demos.tsx` (una animación por slide), `timeline.ts`, `TapFinger.tsx` |
-| `platform/` | Módulos por plataforma `*.web.ts` / `*.native.ts`. Web: `auth` (Google Identity Services), `share` (Web Share API con tarjeta PNG en `<canvas>`), `fx` (WebAudio + `navigator.vibrate`), `storage` (`localStorage`), `fieldTaps` (`pointerdown` nativo del DOM, por latencia y multitáctil), `install` (`beforeinstallprompt`), `lifecycle` (`visibilitychange`), `locale`. App (Android): `auth` (Google Sign-In nativo), `share` (tarjeta dibujada por `components/ShareCardHost.native.tsx`, capturada con `react-native-view-shot` y compartida con `expo-sharing`; texto al portapapeles), `fx` (`react-native-audio-api`, los mismos osciladores, + `expo-haptics`), `storage` (`expo-sqlite/kv-store`, síncrono), `fieldTaps` (`onTouchStart`), `lifecycle` (`AppState`), `locale` (`expo-localization` y tabla de países en español, porque Hermes no tiene `Intl.DisplayNames`). `lib/legal.native.ts` abre las páginas legales en el navegador integrado (Custom Tabs, con `expo-web-browser`; el del sistema solo si ese falla) |
+| `platform/` | Módulos por plataforma `*.web.ts` / `*.native.ts`. Web: `auth` (Google Identity Services), `share` (Web Share API con tarjeta PNG en `<canvas>`), `fx` (WebAudio + `navigator.vibrate`), `storage` (`localStorage`), `fieldTaps` (`pointerdown` nativo del DOM, por latencia y multitáctil), `install` (`beforeinstallprompt`), `lifecycle` (`visibilitychange`), `locale`, `runPlatform` (`web_mobile`/`web_desktop` para `POST /runs`, con `lib/webPlatform.ts`). App (Android): `auth` (Google Sign-In nativo), `share` (tarjeta dibujada por `components/ShareCardHost.native.tsx`, capturada con `react-native-view-shot` y compartida con `expo-sharing`; texto al portapapeles), `fx` (`react-native-audio-api`, los mismos osciladores, + `expo-haptics`), `storage` (`expo-sqlite/kv-store`, síncrono), `fieldTaps` (`onTouchStart`), `lifecycle` (`AppState`), `locale` (`expo-localization` y tabla de países en español, porque Hermes no tiene `Intl.DisplayNames`), `runPlatform` (`app_android`/`app_ios` según `Platform.OS`). `lib/legal.native.ts` abre las páginas legales en el navegador integrado (Custom Tabs, con `expo-web-browser`; el del sistema solo si ese falla) |
 | `api/` | `client.ts` (fetch con renovación de token), `session.ts`, `endpoints.ts`, `hooks.ts` (TanStack Query), `types.ts`, `daily.ts` + `dailyHooks.ts` (reto diario y misiones) |
 | `lib/` | `history.ts` (récord e historial local), `historyKeys.ts`, `stats.ts`, `settings.ts`, `level.ts`, `stagePath.ts`, `challenge.ts`, `daily.ts`, `missions.ts`, `dailyShare.ts`, `onboarding.ts`, `periods.ts`, `countries.ts`, `legal.ts`, `shareText.ts`… |
 
@@ -91,10 +91,11 @@ docs/                           esta documentación
 | `tb_me1` | Copia en caché del perfil propio |
 
 **Archivos estáticos** (`public/`):
-- `index.html` con las etiquetas `og:`/`twitter:`, el enlace al manifest, las etiquetas `apple-mobile-web-app-*` y un script corto que guarda `beforeinstallprompt` apenas llega.
-- `manifest.webmanifest` (web instalable, `start_url` y `scope` en `/touched-block/`, sin service worker: un caché mal manejado dejaría a la gente con una web vieja).
+- `index.html` con las etiquetas `og:`/`twitter:`, el enlace al manifest, las etiquetas `apple-mobile-web-app-*`, un script corto que guarda `beforeinstallprompt` apenas llega y otro que importa los datos locales que manda la web vieja de GitHub Pages (`#tbmigrar=…`, ver `despliegue.md`).
+- `manifest.webmanifest` (web instalable, `start_url` y `scope` en `/`, sin service worker: un caché mal manejado dejaría a la gente con una web vieja).
 - Íconos de la web (`icon-512.png`, `icon-maskable-512.png`, …), `og-image.png`. El ícono de la app (Android e iOS) es otro y está en `assets/icono/` (fondo azul completo; ver `historia-y-decisiones.md`).
-- Páginas legales `politica-de-privacidad/index.html` y `condiciones-del-servicio/index.html`, en HTML puro para que se lean sin JS.
+- `politica-de-privacidad/index.html` y `condiciones-del-servicio/index.html`: solo redirigen a las páginas legales, que ahora viven en la landing (`https://touchedblock.app/privacidad/` y `/terminos/`).
+- `_headers`: caché de Cloudflare (los archivos con hash, un año e `immutable`).
 
 ## 3. API (`apps/api`)
 
@@ -111,7 +112,7 @@ docs/                           esta documentación
 | `leaderboards` | `best-scores.service.ts` actualiza los 4 récords (semana, mes, año, histórico) de una partida válida de modo normal; `leaderboards.service.ts` arma el top y tu posición, con la insignia de cada fila |
 | `health` | `GET /health`: estado, base de datos, `rulesVersion`, versión |
 
-- **Esquema** en `prisma/schema.prisma`: `User`, `AuthIdentity`, `RefreshToken`, `Run` (con `mode`, `challengeCode`, `dailyDate`, `config`, `bestStreak`, `endReason`), `BestScore`, `Follow`, `UserStats`, `Challenge`, `ChallengeEntry`, `DailyChallenge`, `DailyEntry`, `MissionReward`. Las migraciones están en `prisma/migrations/` y **solo agregan** (regla 9 del plan de jugabilidad): ninguna borra ni reescribe datos de jugadores. Las tablas nuevas con datos de un usuario se borran con su cuenta (`onDelete: Cascade`).
+- **Esquema** en `prisma/schema.prisma`: `User`, `AuthIdentity`, `RefreshToken`, `Run` (con `mode`, `challengeCode`, `dailyDate`, `config`, `bestStreak`, `endReason`, `platform`: desde dónde se jugó, solo estadística, ver `docs/api.md`), `BestScore`, `Follow`, `UserStats`, `Challenge`, `ChallengeEntry`, `DailyChallenge`, `DailyEntry`, `MissionReward`. Las migraciones están en `prisma/migrations/` y **solo agregan** (regla 9 del plan de jugabilidad): ninguna borra ni reescribe datos de jugadores. Las tablas nuevas con datos de un usuario se borran con su cuenta (`onDelete: Cascade`).
 - **Contrato exacto** en [`api.md`](api.md).
 - **Configuración** en `src/config/app-config.ts`, leída de variables de entorno: `DATABASE_URL`, `JWT_SECRET`, `GOOGLE_CLIENT_IDS`, `APPLE_AUDIENCES`, `CORS_ORIGINS`, `PORT`, `TRUST_PROXY`, `THROTTLE_LIMIT`, `CLEANUP_INTERVAL_MS`, `AUTH_DEV_FAKE`, `DAILY_SECRET` (obligatoria en producción, mínimo 32 caracteres).
 - Límite de peticiones por IP con `@nestjs/throttler`.
@@ -131,7 +132,9 @@ docs/                           esta documentación
 
 | Qué | Cuándo | Cómo |
 |---|---|---|
-| Web | Cada push a `main` | `.github/workflows/deploy-pages.yml` a GitHub Pages |
+| Web | Cada push a `main` que toque el cliente o el motor | `.github/workflows/deploy-web.yml` a Cloudflare Workers (`https://web.touchedblock.app`) |
+| Landing | Cada push a `main` que toque `apps/landing/**` | `.github/workflows/deploy-landing.yml` a Cloudflare Workers (`https://touchedblock.app`) |
+| Redirección de la web vieja | Cuando cambia `deploy/gh-pages-redirect/**` | `.github/workflows/deploy-pages.yml` a GitHub Pages |
 | API | Cada tag `vX.Y.Z` | `.github/workflows/deploy-api.yml`: imagen en GHCR y despliegue del Compose en Dokploy |
 
 Detalle en [`despliegue.md`](despliegue.md).

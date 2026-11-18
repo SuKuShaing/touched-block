@@ -23,6 +23,7 @@ import { type RunModeName, StatsService } from '../stats/stats.service';
 import { UsersService } from '../users/users.service';
 import { challengeField, CommonFieldService } from './common-field.service';
 import type { ClaimRunDto, CreateRunDto, FinishRunDto } from './dto';
+import { type RunPlatform, resolvePlatform } from './platform';
 import { REJECT_MESSAGES, modsOf, verifyRun } from './run-verification';
 
 /** Plazo para reclamar una partida de invitado después de terminarla. */
@@ -55,6 +56,8 @@ interface NewRun {
   challengeCode?: string;
   dailyDate?: string;
   mods?: GameMods | null;
+  /** Desde dónde se juega (solo estadística); null si no se sabe. */
+  platform: RunPlatform | null;
 }
 
 /** Resultado de una partida válida, calculado por el servidor. */
@@ -80,15 +83,25 @@ export class RunsService {
     private readonly daily: DailyService,
   ) {}
 
-  async create(userId: string | undefined, dto: CreateRunDto) {
+  async create(userId: string | undefined, dto: CreateRunDto, userAgent?: string) {
     const mode = dto.mode ?? 'normal';
     if (dto.challenge !== undefined && mode !== 'duel') throw modeFieldError('challenge');
     if (dto.date !== undefined && mode !== 'daily') throw modeFieldError('date');
-    if (mode === 'duel') return dto.challenge === undefined ? this.createDuel(userId, dto) : this.joinDuel(userId, dto.challenge);
-    if (mode === 'daily') return this.createDaily(userId, dto.date);
+    const platform = resolvePlatform(dto.platform, userAgent);
+    if (mode === 'duel') {
+      return dto.challenge === undefined ? this.createDuel(userId, dto, platform) : this.joinDuel(userId, dto.challenge, platform);
+    }
+    if (mode === 'daily') return this.createDaily(userId, dto.date, platform);
 
     const maxLives = userId ? await this.users.maxLivesOf(userId) : BASE_LIVES;
-    return this.startRun(this.prisma, userId, { seed: newSeed(), maxLives, fieldW: dto.fieldW, fieldH: dto.fieldH, mode: 'normal' });
+    return this.startRun(this.prisma, userId, {
+      seed: newSeed(),
+      maxLives,
+      fieldW: dto.fieldW,
+      fieldH: dto.fieldH,
+      mode: 'normal',
+      platform,
+    });
   }
 
   /** Inserta la partida y arma la respuesta común de POST /runs. */
@@ -108,6 +121,7 @@ export class RunsService {
         challengeCode: d.challengeCode ?? null,
         dailyDate: d.dailyDate ?? null,
         config: d.mods ? (d.mods as Prisma.InputJsonValue) : Prisma.DbNull,
+        platform: d.platform,
       },
     });
     return {
@@ -125,7 +139,7 @@ export class RunsService {
   }
 
   /** Reto nuevo: semilla nueva y campo = el menor entre el del creador y el común (D4). */
-  private async createDuel(userId: string | undefined, dto: CreateRunDto) {
+  private async createDuel(userId: string | undefined, dto: CreateRunDto, platform: RunPlatform | null) {
     const field = challengeField({ fieldW: dto.fieldW, fieldH: dto.fieldH }, await this.field.get());
     const seed = newSeed();
     const runId = randomUUID();
@@ -138,13 +152,14 @@ export class RunsService {
         ...field,
         mode: 'duel',
         challengeCode: ch.code,
+        platform,
       });
       return { ...base, challengeCode: ch.code, challenge: { code: ch.code, expiresAt: ch.expiresAt.toISOString(), creator: null } };
     });
   }
 
   /** Unirse a un reto: misma semilla y mismo campo que el reto, cualquiera sea la pantalla. */
-  private async joinDuel(userId: string | undefined, rawCode: string) {
+  private async joinDuel(userId: string | undefined, rawCode: string, platform: RunPlatform | null) {
     const ch = await this.challenges.findPlayable(rawCode);
     const [creator, base] = await Promise.all([
       this.challenges.creatorOf(ch.code),
@@ -155,18 +170,19 @@ export class RunsService {
         fieldH: ch.fieldH,
         mode: 'duel',
         challengeCode: ch.code,
+        platform,
       }),
     ]);
     return { ...base, challengeCode: ch.code, challenge: { code: ch.code, expiresAt: ch.expiresAt.toISOString(), creator } };
   }
 
   /** Reto diario: el intento se gasta al empezar (3 con cuenta; los invitados los cuenta el cliente). */
-  private async createDaily(userId: string | undefined, rawDate: string | undefined) {
+  private async createDaily(userId: string | undefined, rawDate: string | undefined, platform: RunPlatform | null) {
     if (rawDate === undefined || !isWithinDateWindow(rawDate)) throw dailyDateInvalid();
     const date = rawDate;
     const field = await this.daily.fieldFor(date, true);
     const { mods, title, maxLives } = this.daily.rulesFor(date);
-    const data: NewRun = { seed: this.daily.seedFor(date), maxLives, ...field, mode: 'daily', dailyDate: date, mods };
+    const data: NewRun = { seed: this.daily.seedFor(date), maxLives, ...field, mode: 'daily', dailyDate: date, mods, platform };
     const info = { date, number: dailyNumber(date), title };
     if (!userId) {
       const base = await this.startRun(this.prisma, undefined, data);

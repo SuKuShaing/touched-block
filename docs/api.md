@@ -414,10 +414,47 @@ Las reglas actuales son la **versión 5** (`RULES_VERSION = 5` en `@tb/engine`):
 | `mode` | `"normal"` \| `"duel"` \| `"daily"` | no (por defecto `"normal"`) | Modo de la partida |
 | `challenge` | string (hasta 32) | no | Solo con `mode: "duel"`: código del reto al que se une. Se aceptan minúsculas y espacios alrededor. Sin él, se **crea** un reto nuevo |
 | `date` | string `"AAAA-MM-DD"` | con `mode: "daily"` | Solo con `mode: "daily"`: fecha **local** del jugador (D7) |
+| `platform` | `"app_android"` | `"app_ios"` | `"web_mobile"` | `"web_desktop"` | no | Desde dónde se juega, **solo para estadística** (no cambia reglas, rankings ni la respuesta). Ver "Plataforma de la partida" abajo |
 
 Ejemplos: `{ "fieldW": 390, "fieldH": 640, "mode": "duel" }` (crear reto), `{ "fieldW": 412, "fieldH": 915, "mode": "duel", "challenge": "K7M2QXAB" }` (unirse), `{ "fieldW": 390, "fieldH": 640, "mode": "daily", "date": "2026-11-12" }` (reto diario).
 
 Un cliente que manda solo `{ fieldW, fieldH }` recibe lo mismo que antes, más `mode: "normal"` y `mods: null`.
+
+#### Plataforma de la partida (`platform`)
+
+Se guarda en la columna `"Run"."platform"` (`VARCHAR(16)`, nullable; migración `20261117230131_add_run_platform`). Valores (las tablets cuentan como móvil):
+
+| Valor | Qué es | Cómo lo decide el cliente |
+|---|---|---|
+| `app_android` | La app Android | `Platform.OS` (`src/platform/runPlatform.native.ts`) |
+| `app_ios` | La app iOS | `Platform.OS` |
+| `web_mobile` | Navegador de celular o tablet | `navigator.userAgentData.mobile`, o UA con Android/iPhone/iPad/iPod/Mobi, o iPadOS (`MacIntel` con `maxTouchPoints > 1`) (`src/lib/webPlatform.ts`) |
+| `web_desktop` | Navegador de PC | Todo lo demás |
+
+- **Tolerante**: un valor que no está en la lista (o que no es texto) **no** hace fallar la partida: se ignora como si no viniera.
+- **Respaldo por `User-Agent`** cuando el cuerpo no trae un valor válido (el APK ya repartido y las webs en caché no lo mandan), en `apps/api/src/runs/platform.ts` (`platformFromUserAgent`): `okhttp/…` o `Dalvik/…` (fetch de React Native en Android) → `app_android`; `CFNetwork/…` o `Darwin/…` (NSURLSession en iOS) → `app_ios`; navegador (`Mozilla/…`) con Android/iPhone/iPad/iPod/Mobi → `web_mobile`; otro navegador → `web_desktop`; sin UA o algo que no es la app ni un navegador (curl, scripts) → `null`. Por UA, un iPad en modo escritorio queda como `web_desktop` (el cliente nuevo lo manda bien).
+- Si el cliente lo manda, gana el cuerpo aunque el UA diga otra cosa.
+- `null` = partida anterior a la columna (no se reescriben) o plataforma desconocida.
+- **Orden de despliegue**: la API anterior rechaza campos desconocidos (`400 validation_error` con `field: "platform"`); por eso el cliente, si recibe justo ese error, repite `POST /runs` sin `platform`. Aun así conviene desplegar la API antes que la web.
+
+Consultas de ejemplo (`status` es `started` | `valid` | `rejected`):
+
+```sql
+-- Partidas válidas por plataforma
+SELECT platform, count(*) FROM "Run" WHERE status = 'valid' GROUP BY 1 ORDER BY 2 DESC;
+
+-- Móvil (app + navegador de celular) vs PC
+SELECT CASE
+         WHEN platform IN ('app_android', 'app_ios', 'web_mobile') THEN 'movil'
+         WHEN platform = 'web_desktop' THEN 'pc'
+         ELSE 'desconocido'
+       END AS donde,
+       count(*) AS partidas,
+       count(DISTINCT "userId") AS jugadores_con_cuenta
+FROM "Run"
+WHERE status = 'valid' AND "startedAt" >= now() - interval '30 days'
+GROUP BY 1;
+```
 
 `201` (partida normal):
 

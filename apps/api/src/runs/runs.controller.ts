@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Headers, HttpCode, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { type AuthUser, CurrentUser, OptionalAuth } from '../auth/auth.guard';
 import { notFound } from '../common/errors';
@@ -14,8 +14,8 @@ export class RunsController {
   @Post('runs')
   @OptionalAuth()
   @Throttle({ default: { limit: 30, ttl: 60_000 } })
-  create(@Body() dto: CreateRunDto, @CurrentUser() user?: AuthUser) {
-    return this.runs.create(user?.id, dto);
+  create(@Body() dto: CreateRunDto, @Headers('user-agent') userAgent?: string, @CurrentUser() user?: AuthUser) {
+    return this.runs.create(user?.id, dto, userAgent);
   }
 
   @Post('runs/:id/finish')

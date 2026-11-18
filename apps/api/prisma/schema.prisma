@@ -124,6 +124,10 @@ model Run {
   dailyDate      String?   @db.VarChar(10)
   /// Modificadores de la partida (GameMods del motor); null en las partidas sin modificador.
   config         Json?
+  /// Desde dónde se jugó (solo estadística): "app_android" | "app_ios" | "web_mobile" | "web_desktop".
+  /// La manda el cliente en POST /runs o se deduce del User-Agent; null en las partidas anteriores a
+  /// la columna o si no se supo. Consultas de ejemplo (móvil vs PC) en docs/api.md.
+  platform       String?   @db.VarChar(16)
   startedAt      DateTime  @default(now())
   finishedAt     DateTime?
   claimedAt      DateTime?

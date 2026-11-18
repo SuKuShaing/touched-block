@@ -1,6 +1,6 @@
 import type { TapInput } from '@tb/engine';
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, IsArray, IsIn, IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { Allow, ArrayMaxSize, IsArray, IsIn, IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { PERIODS, type Period } from '../leaderboards/periods';
 import { RUN_MODES, type RunModeName } from '../stats/stats.service';
 import { MAX_INPUTS } from './run-verification';
@@ -33,6 +33,13 @@ export class CreateRunDto {
   @IsString()
   @MaxLength(10)
   date?: string;
+
+  /**
+   * Desde dónde se juega (`RUN_PLATFORMS`). Opcional y tolerante: un valor desconocido (o de otro
+   * tipo) no hace fallar la partida, se ignora y se deduce del User-Agent (ver runs/platform.ts).
+   */
+  @Allow()
+  platform?: unknown;
 }
 
 export class FinishRunDto {

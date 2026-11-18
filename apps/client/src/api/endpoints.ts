@@ -1,7 +1,8 @@
 import type { TapInput } from '@tb/engine';
 import { browserCountry } from '@/lib/countries';
 import { auth } from '@/platform/auth';
-import { api } from './client';
+import { runPlatform } from '@/platform/runPlatform';
+import { ApiError, api } from './client';
 import { session } from './session';
 import type {
   ChallengeView,
@@ -84,21 +85,46 @@ export const fetchFollowing = () => api<{ users: FollowUser[] }>('GET', '/me/fol
 
 // ---- partidas ----
 
-/** POST /runs. Sin `mode` (o con `normal`) se manda solo el tamaño, como antes de la fase 3. */
-export const startRun = (body: StartRunBody, timeoutMs: number) =>
-  api<RunStart>('POST', '/runs', {
-    body:
-      !body.mode || body.mode === 'normal'
-        ? { fieldW: body.fieldW, fieldH: body.fieldH }
-        : {
-            fieldW: body.fieldW,
-            fieldH: body.fieldH,
-            mode: body.mode,
-            ...(body.mode === 'duel' && body.challenge ? { challenge: body.challenge } : {}),
-            ...(body.mode === 'daily' && body.date ? { date: body.date } : {}),
-          },
-    timeoutMs,
-  });
+/** Cuerpo de POST /runs. Sin `mode` (o con `normal`) se manda solo el tamaño, como antes de la fase 3. */
+function startRunBody(body: StartRunBody) {
+  return !body.mode || body.mode === 'normal'
+    ? { fieldW: body.fieldW, fieldH: body.fieldH }
+    : {
+        fieldW: body.fieldW,
+        fieldH: body.fieldH,
+        mode: body.mode,
+        ...(body.mode === 'duel' && body.challenge ? { challenge: body.challenge } : {}),
+        ...(body.mode === 'daily' && body.date ? { date: body.date } : {}),
+      };
+}
+
+/** La API anterior a `platform` rechaza campos desconocidos (400 validation_error en `platform`). */
+const rejectsPlatform = (e: unknown) =>
+  e instanceof ApiError &&
+  e.status === 400 &&
+  e.code === 'validation_error' &&
+  Array.isArray(e.body.fields) &&
+  e.body.fields.some((f: unknown) => (f as { field?: unknown } | null)?.field === 'platform');
+
+/** La API ya rechazó `platform` una vez: no se vuelve a mandar hasta recargar (sin dos POST por partida). */
+let platformRejected = false;
+
+/**
+ * POST /runs con `platform` (desde dónde se juega, solo estadística). Si la API todavía no conoce
+ * el campo (se publicó la web antes que la API), se repite sin él y se recuerda en memoria.
+ */
+export async function startRun(body: StartRunBody, timeoutMs: number): Promise<RunStart> {
+  const base = startRunBody(body);
+  const platform = platformRejected ? null : runPlatform();
+  if (!platform) return api<RunStart>('POST', '/runs', { body: base, timeoutMs });
+  try {
+    return await api<RunStart>('POST', '/runs', { body: { ...base, platform }, timeoutMs });
+  } catch (e) {
+    if (!rejectsPlatform(e)) throw e;
+    platformRejected = true;
+    return api<RunStart>('POST', '/runs', { body: base, timeoutMs });
+  }
+}
 
 export const finishRun = (runId: string, body: { inputs: TapInput[]; killed: number; missed: number; claimToken?: string }) =>
   api<RunResult>('POST', `/runs/${runId}/finish`, { body, timeoutMs: 20_000 });

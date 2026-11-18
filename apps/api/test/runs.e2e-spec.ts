@@ -142,3 +142,44 @@ describe('partida de invitado', () => {
     expect(await t.prisma.run.findUnique({ where: { id: start.runId } })).toBeNull();
   });
 });
+
+describe('plataforma de la partida (Run.platform)', () => {
+  const CHROME_WIN = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+  const CHROME_ANDROID =
+    'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36';
+  const start = (body: Record<string, unknown>, ua?: string) => {
+    const req = t.http().post('/runs');
+    if (ua !== undefined) req.set('User-Agent', ua);
+    return req.send({ fieldW: 390, fieldH: 640, ...body });
+  };
+  const platformOf = async (runId: string) => (await t.prisma.run.findUniqueOrThrow({ where: { id: runId } })).platform;
+
+  it('guarda la que manda el cliente, aunque el User-Agent diga otra cosa', async () => {
+    const s = await start({ platform: 'web_mobile' }, CHROME_WIN).expect(201);
+    expect(s.body.platform).toBeUndefined();
+    expect(await platformOf(s.body.runId)).toBe('web_mobile');
+  });
+
+  it('sin platform (clientes viejos) la deduce del User-Agent', async () => {
+    expect(await platformOf((await start({}, 'okhttp/4.12.0').expect(201)).body.runId)).toBe('app_android');
+    expect(await platformOf((await start({}, CHROME_ANDROID).expect(201)).body.runId)).toBe('web_mobile');
+    expect(await platformOf((await start({}, CHROME_WIN).expect(201)).body.runId)).toBe('web_desktop');
+    expect(await platformOf((await start({}, 'curl/8.4.0').expect(201)).body.runId)).toBeNull();
+  });
+
+  it('un valor desconocido o de otro tipo no hace fallar la partida: se usa el User-Agent', async () => {
+    expect(await platformOf((await start({ platform: 'smart_tv' }, CHROME_WIN).expect(201)).body.runId)).toBe('web_desktop');
+    expect(await platformOf((await start({ platform: { x: 1 } }, 'curl/8.4.0').expect(201)).body.runId)).toBeNull();
+  });
+
+  it('se guarda también en los retos a un amigo y en el reto diario', async () => {
+    const u = await t.login('plat-1', 'Plat');
+    const created = await t.startRun(u, { mode: 'duel', platform: 'app_ios' }).expect(201);
+    expect(await platformOf(created.body.runId)).toBe('app_ios');
+    const joined = await start({ mode: 'duel', challenge: created.body.challengeCode, platform: 'web_desktop' }).expect(201);
+    expect(await platformOf(joined.body.runId)).toBe('web_desktop');
+    const date = new Date().toISOString().slice(0, 10);
+    const daily = await t.startRun(u, { mode: 'daily', date, platform: 'web_mobile' }).expect(201);
+    expect(await platformOf(daily.body.runId)).toBe('web_mobile');
+  });
+});
