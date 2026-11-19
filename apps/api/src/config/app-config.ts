@@ -54,6 +54,12 @@ export class AppConfig {
    * endpoints responden 404, como si no existieran. Mínimo 32 caracteres en producción.
    */
   readonly adminToken = (process.env.ADMIN_TOKEN ?? '').trim();
+  /**
+   * Moderación: aviso por Telegram al dueño con cada reporte nuevo (moderation/telegram.ts). Opcionales:
+   * si falta alguna no se envía nada (un aviso en el log al arrancar). El token es SECRETO.
+   */
+  readonly telegramBotToken = (process.env.TELEGRAM_BOT_TOKEN ?? '').trim();
+  readonly telegramChatId = (process.env.TELEGRAM_CHAT_ID ?? '').trim();
 
   constructor() {
     if (!this.databaseUrl) throw new Error('Falta la variable de entorno DATABASE_URL');

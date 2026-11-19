@@ -338,6 +338,15 @@ Pedido del usuario: Android → solo Google; iOS → Apple y Google; **web → A
 - **Avisos de Apple**: la documentación actual usa `account-deleted` en los ejemplos (antes `account-delete`); se aceptan los dos.
 - Apple no acepta `localhost` como Return URL: el login web con Apple solo se prueba de punta a punta en `https://web.touchedblock.app` (o con un túnel con dominio propio; ver `despliegue.md` → 6.10).
 
+### Aviso por Telegram con cada reporte (18 nov 2026)
+
+Para no depender de revisar la tabla a mano y cumplir el plazo de 24 h, cada reporte nuevo manda un mensaje de Telegram al dueño (`moderation/telegram.ts`).
+- **Telegram** y no correo: no necesita un servicio de envío ni dominio verificado, llega al celular al instante y un bot se crea en un minuto con @BotFather. Opcional: sin `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` no se envía nada (un log al arrancar dice si está activo).
+- **Nunca afecta al reporte**: se lanza sin esperarlo (`void`), con timeout de 5 s, y cualquier error queda en el log **sin el token** (se borra del texto por si la URL aparece en el error).
+- **Sin datos del reportante** (ni su @usuario): el aviso solo sirve para saber que hay algo que revisar; quién reportó se ve en `moderation.mjs reports`. Así un chat de Telegram (servicio externo) no guarda quién denunció a quién.
+- **Anti-spam en memoria**: como mucho un aviso por usuario reportado cada 10 min. Los reportes de esa ventana no avisan, pero se suman (línea "+N reportes…") al próximo aviso de ese usuario, y el conteo de pendientes siempre es el real. En memoria basta: hay una sola instancia de la API y un reinicio a lo más manda un aviso de más.
+- Escapa el texto del jugador (`parse_mode: HTML`) y no muestra vista previa de enlaces. Prueba: `scripts/telegram-test.mjs` (o `moderation.mjs telegram-test`), y `--chat-id` para descubrir el chat id con `getUpdates`.
+
 ### Moderación: filtro de nombres, reportar y bloquear (18 nov 2026)
 
 Para la guía 1.2 de Apple (contenido generado por usuarios). Lo único que un jugador escribe y otros ven es su nombre de usuario (rankings, perfiles, búsqueda).

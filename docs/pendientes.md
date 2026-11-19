@@ -100,6 +100,7 @@ Cómo se publicó (12 nov 2026), en orden:
   - Crear `ADMIN_TOKEN` en Dokploy (opcional) y publicar la API con un tag (migración `add_moderation`, solo agrega tablas).
   - Después, `check-usernames.mjs` para ver los nombres antiguos que no pasan el filtro, y decidir uno por uno.
   - Revisar los reportes **cada día** (plazo publicado: 24 h) con `moderation.mjs reports`.
+  - **Aviso por Telegram** de cada reporte nuevo (18 nov 2026, código listo y con tests; sin probar contra Telegram real con un bot de verdad): crear el bot con @BotFather, obtener el chat id y pegar `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` en Dokploy antes del tag; después, `node scripts/telegram-test.mjs` en el contenedor (`despliegue.md` → 7, "Avisos por Telegram"). Es opcional: sin las variables todo funciona igual, sin avisos.
   - Para App Review: en las notas, explicar dónde están reportar/bloquear (toque sostenido sobre un nombre en Rankings o en un perfil) y dar dos cuentas de prueba.
 
 ## Lo que tiene que hacer el usuario

@@ -12,6 +12,13 @@ import { normalizeUsername, randomPlayerName, usernameProblem } from '../users/u
 /** Horas que Apple espera como máximo para actuar sobre un reporte (guía 1.2). */
 export const REPORT_RESPONSE_HOURS = 24;
 
+/** Motivo del reporte en palabras (consola de moderación y avisos por Telegram). */
+export const REPORT_REASON_LABELS: Record<string, string> = {
+  offensive_name: 'nombre ofensivo',
+  impersonation: 'suplantación',
+  other: 'otro',
+};
+
 const isUniqueViolation = (e: unknown) => e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002';
 
 export interface AdminReport {

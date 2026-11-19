@@ -29,6 +29,10 @@ services:
       APPLE_PRIVATE_KEY: ${APPLE_PRIVATE_KEY:-}
       # moderación: secreto de /admin/* (cabecera X-Admin-Token); vacío = esos endpoints responden 404
       ADMIN_TOKEN: ${ADMIN_TOKEN:-}
+      # moderación: aviso por Telegram con cada reporte nuevo (opcionales; si falta alguna no se envía nada).
+      # TELEGRAM_BOT_TOKEN es SECRETO. Nunca en el repo.
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
       # orígenes de la web separados por coma: la nueva (Cloudflare) y la vieja (GitHub Pages, hoy
       # solo redirige, pero una pestaña abierta desde antes sigue llamando a la API)
       CORS_ORIGINS: ${CORS_ORIGINS:-https://web.touchedblock.app,https://sukushaing.github.io}

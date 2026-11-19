@@ -423,6 +423,7 @@ Reportar y bloquear jugadores. En el cliente no se ve por defecto: en las filas 
 - `reason`: `offensive_name` (nombre ofensivo), `impersonation` (suplantación) u `other`.
 - `details`: opcional, hasta 200 caracteres.
 - Un reporte por reportante, reportado y día (UTC). Queda `pending` en la tabla `Report` (no hay aviso por correo).
+- Efecto secundario: si la API tiene `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID`, manda un aviso por Telegram al dueño (usuario reportado, motivo, comentario escapado, pendientes de ese usuario y en total, hora). No se espera ni cambia la respuesta: si Telegram falla o tarda, el reporte se crea igual. Como mucho un aviso por usuario reportado cada 10 min (los demás se suman al siguiente). No incluye quién reportó. Detalle en `docs/despliegue.md`, sección 7, "Avisos por Telegram".
 
 `201`: `{ "id": "…", "status": "pending", "reviewWithinHours": 24 }`
 

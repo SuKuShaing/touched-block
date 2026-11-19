@@ -5,13 +5,17 @@ import { PrismaService } from '../prisma/prisma.service';
 import { normalizeUsername } from '../users/username';
 import { REPORT_RESPONSE_HOURS } from './admin';
 import type { ReportDto } from './dto';
+import { TelegramNotifier } from './telegram';
 
 const isUniqueViolation = (e: unknown) => e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002';
 
 /** Reportar y bloquear jugadores (guía 1.2 de Apple). */
 @Injectable()
 export class ModerationService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly telegram: TelegramNotifier,
+  ) {}
 
   private async target(rawUsername: string) {
     const username = normalizeUsername(rawUsername);
@@ -20,7 +24,10 @@ export class ModerationService {
     return u;
   }
 
-  /** Un reporte por reportante, reportado y día (UTC). Queda pendiente para el dueño. */
+  /**
+   * Un reporte por reportante, reportado y día (UTC). Queda pendiente para el dueño, que recibe un
+   * aviso por Telegram si está configurado (sin esperarlo: si Telegram falla, el reporte vale igual).
+   */
   async report(reporterId: string, rawUsername: string, dto: ReportDto) {
     const target = await this.target(rawUsername);
     if (target.id === reporterId) throw badRequest('No puedes reportarte a ti mismo.', 'report_self');
@@ -37,6 +44,7 @@ export class ModerationService {
         },
         select: { id: true },
       });
+      void this.telegram.reportCreated({ reportedId: target.id, reportedUsername: target.username, reason: dto.reason, details });
       return { id: r.id, status: 'pending' as const, reviewWithinHours: REPORT_RESPONSE_HOURS };
     } catch (e) {
       if (isUniqueViolation(e)) {

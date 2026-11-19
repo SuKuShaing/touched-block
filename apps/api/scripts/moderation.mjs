@@ -7,6 +7,7 @@
 //     docker compose exec api node scripts/moderation.mjs rename <usuario> [nombre-nuevo] [--dry-run]
 //     docker compose exec api node scripts/moderation.mjs delete <usuario> --yes
 //     docker compose exec api node scripts/moderation.mjs resolve <idReporte|@usuario> [--dismiss] [--note="..."]
+//     docker compose exec api node scripts/moderation.mjs telegram-test [--chat-id]   (igual que scripts/telegram-test.mjs)
 //   Local (después de `pnpm --filter @tb/engine build` y `pnpm --filter @tb/api build`):
 //     node apps/api/scripts/moderation.mjs reports
 //
@@ -18,14 +19,16 @@ import path from 'node:path';
 const require = createRequire(import.meta.url);
 const root = path.resolve(import.meta.dirname, '..');
 
-if (!process.env.DATABASE_URL) {
+const telegramOnly = process.argv[2] === 'telegram-test';
+
+if (!process.env.DATABASE_URL || (telegramOnly && !process.env.TELEGRAM_BOT_TOKEN)) {
   try {
     process.loadEnvFile(path.join(root, '.env'));
   } catch {
     // sin .env
   }
 }
-if (!process.env.DATABASE_URL) {
+if (!process.env.DATABASE_URL && !telegramOnly) {
   console.error('Falta la variable de entorno DATABASE_URL.');
   process.exit(1);
 }

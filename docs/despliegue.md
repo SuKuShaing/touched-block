@@ -145,6 +145,7 @@ El archivo `deploy/.env` (ignorado por git) ya tiene los valores reales generado
 | `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY`, `APPLE_CLIENT_ID` | Revocación del token de Apple al eliminar la cuenta (sección 6). Opcionales: si falta alguna, el login con Apple funciona y la API avisa en el log que omite la revocación. `APPLE_CLIENT_ID` = `app.touchedblock` (por defecto, la primera de `APPLE_AUDIENCES`); es solo el de respaldo: cada token se canjea y revoca con el `client_id` de su login (bundle ID en iOS, Services ID en la web). `APPLE_PRIVATE_KEY` = contenido del `.p8`, en una sola línea con `\n` en lugar de los saltos de línea. **Nunca en el repo** |
 | `CORS_ORIGINS` | `https://web.touchedblock.app,https://sukushaing.github.io` (separados por coma). **Hay que cambiarlo en Dokploy**: el valor por defecto de `deploy/docker-compose.yml` solo se usa si la variable no existe, y hoy existe con el valor viejo |
 | `ADMIN_TOKEN` | Moderación (sección 7): secreto de los endpoints `/admin/*` (cabecera `X-Admin-Token`). 48 bytes aleatorios (mínimo 32 caracteres; con menos la API no arranca). Vacía = `/admin/*` responde 404; los scripts de moderación funcionan igual. **Nunca en el repo** |
+| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | Moderación (sección 7, "Avisos por Telegram"): aviso por Telegram con cada reporte nuevo. Opcionales: si falta alguna, no se envía nada (el log de arranque dice "Avisos de reportes por Telegram desactivados"). El token es **secreto: nunca en el repo** |
 | `API_TAG` | `latest`. Para volver a una versión anterior: `v0.1.0`, etc. |
 
 ### Configuración inicial en Dokploy (una vez)
@@ -344,7 +345,7 @@ Lista de verificación completa (marcar a medida que se avanza):
 - [ ] **Apple Developer**: Services ID `app.touchedblock.web` con el dominio `web.touchedblock.app` y la Return URL `https://web.touchedblock.app/` (6.2).
 - [ ] **Apple Developer**: clave `.p8` descargada y guardada en el gestor de contraseñas; anotar su Key ID (6.3) y el Team ID (6.4).
 - [ ] **Opcional**: avisos servidor a servidor apuntando a `https://api.touchedblock.app/auth/apple/notifications` (6.1).
-- [ ] **Dokploy → Environment**: `APPLE_AUDIENCES=app.touchedblock,app.touchedblock.web`, `APPLE_CLIENT_ID=app.touchedblock`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY` (en una línea, 6.5–6.6). Si se quieren los endpoints `/admin/*`, también `ADMIN_TOKEN` (sección 7). Guardar (todavía sin *Deploy*: lo hace el tag).
+- [ ] **Dokploy → Environment**: `APPLE_AUDIENCES=app.touchedblock,app.touchedblock.web`, `APPLE_CLIENT_ID=app.touchedblock`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY` (en una línea, 6.5–6.6). Si se quieren los endpoints `/admin/*`, también `ADMIN_TOKEN` (sección 7). Para recibir cada reporte en el celular, también `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` (sección 7, "Avisos por Telegram"; opcionales). Guardar (todavía sin *Deploy*: lo hace el tag).
 - [ ] **Respaldo**: correr a mano la tarea `touched-block-respaldo` y revisar que diga `OK` (la versión trae migraciones nuevas).
 - [ ] **Tag de la API** (6.7): lo crea Claude cuando el usuario le avisa; o `git tag vX.Y.Z && git push origin vX.Y.Z`. Comprobar `https://api.touchedblock.app/health`: versión nueva y `features` con `moderation`.
 - [ ] **Nombres antiguos**: `check-usernames.mjs` (sección 7) y revisar la lista antes de renombrar.
@@ -521,7 +522,7 @@ Los nombres de usuario son el único contenido que un jugador escribe y otros ve
 - **Contacto**: `contacto@touchedblock.app`, publicado en `https://touchedblock.app/soporte/` y en los términos.
 - **Plazo**: **24 horas** para revisar cada reporte y actuar (cambiar el nombre o eliminar la cuenta). Lo dicen los términos, la página de soporte y el propio juego. La guía 1.2 solo pide "timely responses", pero el mensaje de rechazo de App Review por esta guía dice: *"The developer must act on objectionable content reports within 24 hours by removing the content and ejecting the user who provided the offending content."*
 
-Los reportes quedan en la tabla `Report` (no hay aviso por correo). **Revisarlos al menos una vez al día** mientras la app esté en la App Store (y siempre antes de 24 h si llega un correo a contacto@).
+Los reportes quedan en la tabla `Report` (no hay aviso por correo; sí por Telegram si se configura, ver "Avisos por Telegram"). **Revisarlos al menos una vez al día** mientras la app esté en la App Store (y siempre antes de 24 h si llega un correo a contacto@).
 
 ### Consola de moderación
 
@@ -561,8 +562,57 @@ La **consola de moderación** es el script `moderation.mjs` (y su equivalente HT
 
    Si el token no coincide, también responde 404 (a propósito: no revela que la ruta existe).
 
+### Avisos por Telegram
+
+Con dos variables, la API manda un mensaje de Telegram cada vez que alguien reporta a un jugador. Es opcional: sin ellas todo funciona igual, sin avisos. El mensaje se ve así:
+
+```
+🚩 Nuevo reporte en Touched Block
+Usuario: @pepa.mala
+Motivo: nombre ofensivo
+Comentario: «texto que escribió quien reportó»
+Pendientes: 2 de @pepa.mala · 3 en total
+Hora: 2026-11-18 21:05 UTC (18:05 en Chile)
+
+Revisar antes de 24 h: node scripts/moderation.mjs reports
+```
+
+- No dice quién reportó (eso se ve en `moderation.mjs reports`).
+- Como mucho **un aviso por jugador reportado cada 10 minutos**. Si llegan más reportes contra el mismo jugador en ese rato, no avisan; se suman al próximo aviso de ese jugador con una línea "(+N reportes contra @… sin aviso propio…)". Los "Pendientes" siempre son los reales.
+- Si Telegram falla o tarda (más de 5 s), el reporte se guarda igual y el error queda en los logs de la API (sin el token).
+
+**Configurarlo (una vez, ~5 minutos):**
+
+1. **Crear el bot.** Abre Telegram (celular o https://web.telegram.org) → en la búsqueda escribe `BotFather` y abre **@BotFather**, el que tiene la marca azul de verificado (hay copias falsas). Toca **Iniciar** (o escribe `/start`).
+2. Escríbele `/newbot`. Te pide:
+   - el **nombre** visible: `Touched Block Moderación`;
+   - el **usuario** del bot: tiene que terminar en `bot` y no estar tomado, p. ej. `touchedblock_mod_bot` (si está tomado, prueba otro).
+3. BotFather responde con el **token**, algo como `1234567890:AAH…` (después de "Use this token to access the HTTP API"). Cópialo y guárdalo en tu gestor de contraseñas. **Es secreto**: quien lo tenga puede escribir como el bot. No lo pegues en el repo, en issues ni en chats. (Si se filtra: en @BotFather, `/revoke` y elige el bot; da uno nuevo.)
+4. **Deja que el bot te pueda escribir.** Toca el enlace `t.me/<usuario_del_bot>` que te dio BotFather (o búscalo por su usuario) y toca **Iniciar** (`/start`). Un bot no puede escribirle a nadie que no lo haya iniciado antes.
+5. **Obtén tu chat id** (un número; el tuyo es el de tu cuenta de Telegram). Justo después del paso 4 (Telegram guarda esos mensajes 24 h):
+   - **Opción A (navegador):** abre `https://api.telegram.org/bot<TOKEN>/getUpdates` reemplazando `<TOKEN>` por el token completo (sin los `<>`; queda `…/bot1234567890:AAH…/getUpdates`). Busca `"chat":{"id":` y copia el número que sigue, p. ej. `"chat":{"id":123456789,"first_name":"…"` → `123456789`. Si sale `"result":[]`, escríbele "hola" al bot y recarga. Esa dirección lleva el token: no la compartas y cierra la pestaña al terminar.
+   - **Opción B (script, cuando la API ya tenga el token):** en la terminal del contenedor `api`, `node scripts/telegram-test.mjs --chat-id`. Muestra el `id` de cada chat que le escribió al bot (sin imprimir el token).
+6. **Pégalas en Dokploy** → proyecto **Touched Block** → Compose **API** → pestaña **Environment**, al final (y en la copia local `deploy/.env`):
+
+   ```
+   TELEGRAM_BOT_TOKEN=1234567890:AAH...
+   TELEGRAM_CHAT_ID=123456789
+   ```
+
+   **Save**. Las toma el siguiente despliegue (el tag de la API; o **Deploy** en Dokploy si la versión publicada ya trae los avisos).
+7. **Probar**, después del tag: en los logs del servicio `api`, al arrancar aparece `Avisos de reportes por Telegram activados.` (si dice `desactivados (falta …)`, revisa el nombre de la variable). Luego, en la terminal del contenedor `api`:
+
+   ```sh
+   node scripts/telegram-test.mjs              # o: node scripts/moderation.mjs telegram-test
+   ```
+
+   Debe llegarte "✅ Prueba de avisos de Touched Block". Si dice `400 (Bad Request: chat not found)`, el chat id está mal o no tocaste Iniciar en el bot (paso 4); si dice `401 (Unauthorized)`, el token está mal copiado.
+
+Para apagar los avisos: borra (o deja vacía) cualquiera de las dos variables y vuelve a desplegar.
+
 ### Rutina
 
+- **Cuando llega un aviso de Telegram**: revisar ese reporte antes de 24 h (lo de abajo). Sin Telegram configurado, el único aviso es revisar a mano.
 - **Cada día** (o al menos antes de que se cumplan 24 h desde el reporte más antiguo): `moderation.mjs reports`. Para cada reporte pendiente, mirar el nombre (`@usuario` y "reportado como"):
   - infringe → `rename` (lo normal) o `delete` (grave o reincidente);
   - no infringe → `resolve <id> --dismiss`.
@@ -586,6 +636,6 @@ Revisar la lista antes de `--rename`: puede haber falsos positivos (mejor cambia
 
 La web se publica sola y puede llegar antes que la API: el menú "⋯" solo aparece cuando `GET /health` trae `features: ["moderation"]`, así que con la API v0.4.0 no se ve nada nuevo. Para activarlo:
 
-1. Agregar `ADMIN_TOKEN` en la pestaña Environment de Dokploy (opcional, solo para `/admin/*`).
+1. Agregar `ADMIN_TOKEN` en la pestaña Environment de Dokploy (opcional, solo para `/admin/*`) y, si se quieren los avisos, `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` ("Avisos por Telegram", arriba).
 2. Crear el tag de la API (`vX.Y.Z`). La migración `20261118200000_add_moderation` solo agrega las tablas `Report` y `Block` (no toca datos).
 3. Correr `check-usernames.mjs` (arriba).

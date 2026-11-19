@@ -5,7 +5,8 @@ import { CoreModule } from '../prisma/core.module';
 import { PrismaService } from '../prisma/prisma.service';
 import { UsersModule } from '../users/users.module';
 import { UsersService } from '../users/users.service';
-import { REPORT_RESPONSE_HOURS, findUserByUsername, forceRename, listReports, namesFailingFilter, resolvePendingFor, resolveReport } from './admin';
+import { REPORT_REASON_LABELS, REPORT_RESPONSE_HOURS, findUserByUsername, forceRename, listReports, namesFailingFilter, resolvePendingFor, resolveReport } from './admin';
+import { runTelegramCli } from './telegram-cli';
 
 /**
  * Moderación desde la línea de comandos (lo mismo que /admin/*, sin ADMIN_TOKEN: quien entra al
@@ -15,12 +16,6 @@ import { REPORT_RESPONSE_HOURS, findUserByUsername, forceRename, listReports, na
 
 @Module({ imports: [CoreModule, UsersModule] })
 class ModerationCliModule {}
-
-const REASONS: Record<string, string> = {
-  offensive_name: 'nombre ofensivo',
-  impersonation: 'suplantación',
-  other: 'otro',
-};
 
 export const MODERATION_USAGE = `Uso: node scripts/moderation.mjs <comando> [opciones]
 
@@ -36,6 +31,8 @@ export const MODERATION_USAGE = `Uso: node scripts/moderation.mjs <comando> [opc
       Elimina la cuenta (igual que "Eliminar cuenta") y cierra sus reportes.
   check-names [--rename] [--dry-run]
       Lista los nombres actuales que no pasan el filtro; con --rename les pone uno automático.
+  telegram-test [--chat-id]
+      Manda un aviso de prueba por Telegram (o, con --chat-id, muestra los chat ids que le escribieron al bot).
 `;
 
 interface Parsed {
@@ -70,6 +67,7 @@ export async function runModerationCli(argv: string[], log: (m: string) => void 
     log(MODERATION_USAGE);
     return cmd ? 0 : 1;
   }
+  if (cmd === 'telegram-test') return runTelegramCli(argv, process.env, log);
   const dryRun = flags.has('dry-run');
   const app = await NestFactory.createApplicationContext(ModerationCliModule, { logger: ['error', 'warn'] });
   const prisma = app.get(PrismaService);
@@ -88,7 +86,7 @@ export async function runModerationCli(argv: string[], log: (m: string) => void 
           const was = x.reported && x.reported.username === x.reportedUsername ? '' : ` (reportado como @${x.reportedUsername})`;
           log(
             `- ${x.id}  ${x.createdAt.slice(0, 16).replace('T', ' ')} UTC  hace ${x.ageHours} h  [${x.status}]\n` +
-              `    ${now}${was} · ${REASONS[x.reason] ?? x.reason} · por ${x.reporter ? '@' + x.reporter.username : '(cuenta eliminada)'}` +
+              `    ${now}${was} · ${REPORT_REASON_LABELS[x.reason] ?? x.reason} · por ${x.reporter ? '@' + x.reporter.username : '(cuenta eliminada)'}` +
               (x.details ? `\n    "${x.details}"` : '') +
               (x.resolution ? `\n    → ${x.resolution}` : ''),
           );
