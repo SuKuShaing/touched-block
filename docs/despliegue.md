@@ -1,12 +1,14 @@
 # Despliegue
 
-| Pieza | Dónde | Cuándo se publica |
-|---|---|---|
-| Web (el juego) | Cloudflare Workers: `https://web.touchedblock.app` | Cada push a `main` que toque el cliente o el motor (no `apps/api/**`, `apps/landing/**`, `deploy/**` ni `docs/**`). También a mano (*Run workflow*) |
-| Landing | Cloudflare Workers: `https://touchedblock.app` | Cada push a `main` que toque `apps/landing/**`, o a mano |
-| Web vieja (solo redirige) | GitHub Pages: `https://sukushaing.github.io/touched-block/` | Cuando cambia `deploy/gh-pages-redirect/**`, o a mano |
-| App Android | APK firmado (`apps/client/android/app/build/outputs/apk/release/app-release.apk`); por ahora se reparte a mano; Google Play más adelante | A mano (ver sección 5) |
-| API + base de datos | VPS del usuario con **Dokploy** (servicio *Compose*): `https://api.touchedblock.app` (y `https://vps23906.cubepath.net`, que usa el APK ya repartido) | Cada tag `vX.Y.Z` |
+
+| Pieza                     | Dónde                                                                                                                                                 | Cuándo se publica                                                                                                                                   |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Web (el juego)            | Cloudflare Workers: `https://web.touchedblock.app`                                                                                                    | Cada push a `main` que toque el cliente o el motor (no `apps/api/**`, `apps/landing/**`, `deploy/**` ni `docs/**`). También a mano (*Run workflow*) |
+| Landing                   | Cloudflare Workers: `https://touchedblock.app`                                                                                                        | Cada push a `main` que toque `apps/landing/**`, o a mano                                                                                            |
+| Web vieja (solo redirige) | GitHub Pages: `https://sukushaing.github.io/touched-block/`                                                                                           | Cuando cambia `deploy/gh-pages-redirect/**`, o a mano                                                                                               |
+| App Android               | APK firmado (`apps/client/android/app/build/outputs/apk/release/app-release.apk`); por ahora se reparte a mano; Google Play más adelante              | A mano (ver sección 5)                                                                                                                              |
+| API + base de datos       | VPS del usuario con **Dokploy** (servicio *Compose*): `https://api.touchedblock.app` (y `https://vps23906.cubepath.net`, que usa el APK ya repartido) | Cada tag `vX.Y.Z`                                                                                                                                   |
+
 
 **Regla de oro**: el repositorio es **público**. Ningún secreto entra al repo. Los valores reales viven en Dokploy (pestaña Environment) y en los *Secrets* de GitHub (Dokploy y Cloudflare). `.env` y `.env.*` están en `.gitignore`, salvo los `.env.example`.
 
@@ -16,16 +18,19 @@
 
 Desde el 17 nov 2026 el proyecto usa el dominio **`touchedblock.app`** (comprado y con DNS en Cloudflare):
 
-| Dirección | Qué es | Dónde vive |
-|---|---|---|
-| `https://touchedblock.app` | Landing: inicio, `/privacidad/`, `/terminos/`, `/eliminar-cuenta/`, `/soporte/` | Cloudflare Workers, activos estáticos (`apps/landing`, `apps/landing/wrangler.jsonc`) |
-| `https://web.touchedblock.app` | El juego web (este cliente Expo, en la raíz) | Cloudflare Workers, activos estáticos (`apps/client/wrangler.jsonc`) |
-| `https://api.touchedblock.app` | La API | Dokploy (sección 3). `https://vps23906.cubepath.net` sigue funcionando: el APK ya repartido apunta ahí |
-| `https://sukushaing.github.io/touched-block/` | Web vieja: solo redirige al juego y le pasa los datos locales | GitHub Pages (`deploy/gh-pages-redirect/`) |
+
+| Dirección                                     | Qué es                                                                          | Dónde vive                                                                                             |
+| --------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `https://touchedblock.app`                    | Landing: inicio, `/privacidad/`, `/terminos/`, `/eliminar-cuenta/`, `/soporte/` | Cloudflare Workers, activos estáticos (`apps/landing`, `apps/landing/wrangler.jsonc`)                  |
+| `https://web.touchedblock.app`                | El juego web (este cliente Expo, en la raíz)                                    | Cloudflare Workers, activos estáticos (`apps/client/wrangler.jsonc`)                                   |
+| `https://api.touchedblock.app`                | La API                                                                          | Dokploy (sección 3). `https://vps23906.cubepath.net` sigue funcionando: el APK ya repartido apunta ahí |
+| `https://sukushaing.github.io/touched-block/` | Web vieja: solo redirige al juego y le pasa los datos locales                   | GitHub Pages (`deploy/gh-pages-redirect/`)                                                             |
+
 
 ### El juego: `.github/workflows/deploy-web.yml`
 
 Corre en cada push a `main`, salvo que solo cambien `apps/api/**`, `apps/landing/**`, `deploy/**`, `docs/**` o los otros workflows. También se puede lanzar a mano (*Actions → Desplegar la web en Cloudflare → Run workflow*). Hace lo siguiente:
+
 1. Revisa que existan los secretos `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID`; si falta alguno, falla con un mensaje que dice cuál.
 2. Instala pnpm (versión de `packageManager` en `package.json`), Node 24 y las dependencias.
 3. Ejecuta los tests del motor.
@@ -33,6 +38,7 @@ Corre en cada push a `main`, salvo que solo cambien `apps/api/**`, `apps/landing
 5. Instala Wrangler 4 global con npm y publica `apps/client/dist` con `cloudflare/wrangler-action@v4` (`wrangler deploy` en `apps/client`). Wrangler va global para que la acción no intente instalarlo dentro del workspace de pnpm (npm falla con las dependencias `workspace:*` y pnpm lo agregaría al `package.json`).
 
 `apps/client/wrangler.jsonc`: Worker `touchedblock-web`, sin código de servidor, solo `assets` desde `./dist` con `not_found_handling: "single-page-application"`, y el dominio propio `web.touchedblock.app` (`routes` con `custom_domain: true`: Cloudflare crea el registro DNS y el certificado al publicar). Detalles:
+
 - **Rutas**: una ruta que no es un archivo (`/como-jugar`, `/rankings`, `/u/<usuario>`) recibe `index.html` con 200, así que ya no hace falta el `404.html` de Pages. Los HTML estáticos de `public/` (las redirecciones legales) se sirven tal cual.
 - **Enlaces de retos**: siguen siendo por parámetro (`/?reto=CÓDIGO`, `/?diario=1`), porque ya hay enlaces repartidos. Ahora una ruta también respondería 200 (la vista previa de WhatsApp ya no se rompería), así que pasar a `/reto/CÓDIGO` es una mejora posible, siempre aceptando también el formato viejo.
 - **Caché**: `public/_headers` (Expo lo copia a `dist/`; Cloudflare lo lee y no lo publica) marca `/_expo/static/*` y `/assets/*` (todos llevan un hash en el nombre) con un año e `immutable`. `index.html` y lo demás quedan con lo de Cloudflare por defecto (`max-age=0, must-revalidate`), para que una versión nueva llegue al tiro.
@@ -47,10 +53,12 @@ En cada push a `main` que toque `apps/landing/**` (o a mano): revisa los mismos 
 
 En GitHub: **Settings → Secrets and variables → Actions → *Secrets***.
 
-| Secreto | De dónde sale |
-|---|---|
-| `CLOUDFLARE_API_TOKEN` | Cloudflare → *My Profile* → **API Tokens** → *Create Token* → plantilla **Edit Cloudflare Workers**. En *Account Resources*, la cuenta; en *Zone Resources*, la zona `touchedblock.app` (hace falta para los dominios propios). Cópialo al tiro: no se vuelve a mostrar |
-| `CLOUDFLARE_ACCOUNT_ID` | Panel de Cloudflare → *Workers & Pages* (columna derecha, *Account ID*), o el tramo de la URL `dash.cloudflare.com/<account-id>/…` |
+
+| Secreto                 | De dónde sale                                                                                                                                                                                                                                                           |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`  | Cloudflare → *My Profile* → **API Tokens** → *Create Token* → plantilla **Edit Cloudflare Workers**. En *Account Resources*, la cuenta; en *Zone Resources*, la zona `touchedblock.app` (hace falta para los dominios propios). Cópialo al tiro: no se vuelve a mostrar |
+| `CLOUDFLARE_ACCOUNT_ID` | Panel de Cloudflare → *Workers & Pages* (columna derecha, *Account ID*), o el tramo de la URL `dash.cloudflare.com/<account-id>/…`                                                                                                                                      |
+
 
 La variable del repositorio `EXPO_PUBLIC_GOOGLE_CLIENT_ID` (pestaña *Variables*) sigue igual: `1065315828810-mr72tnt45h219lvr056efbojdjpvman0.apps.googleusercontent.com`. La variable `EXPO_PUBLIC_API_URL` ya no la usa ningún workflow (se puede borrar).
 
@@ -59,31 +67,35 @@ La variable del repositorio `EXPO_PUBLIC_GOOGLE_CLIENT_ID` (pestaña *Variables*
 `.github/workflows/deploy-pages.yml` publica en GitHub Pages **solo** `deploy/gh-pages-redirect/` (cuando cambia esa carpeta o el workflow, o a mano). Ya no lleva el juego. Tiene `index.html` y `404.html` idénticos (el workflow vuelve a copiar uno en el otro), `.nojekyll` y dos páginas mínimas para las direcciones legales viejas (`politica-de-privacidad/`, `condiciones-del-servicio/`), que llevan a `https://touchedblock.app/privacidad/` y `/terminos/`.
 
 La página lleva a la misma ruta y parámetros del sitio nuevo: `/touched-block/como-jugar?nivel=basico` → `https://web.touchedblock.app/como-jugar?nivel=basico`, `/touched-block/?reto=K7M2QXAB` → `https://web.touchedblock.app/?reto=K7M2QXAB`. No es un 301 ciego porque **los datos locales del jugador** (récord, historial, sesión, tutoriales vistos…) viven en el `localStorage` del origen `https://sukushaing.github.io` y no pasan solos a otro dominio:
+
 1. Con JavaScript, la página lee **solo las claves del juego**, por nombre exacto (el origen `sukushaing.github.io` lo comparten todos los proyectos del autor): `tb_rt1`, `tb_me1`, `tb_best5`, `tb_stats1`, `tb_hist5`, `tb_onb1`, `tb_onb_adv1`, `tb_visits1`, `tb_last1`, `tb_unlock1`, `tb_set1`, `tb_miss1`, `tb_daily1`, `tb_reto1` y `tb_cele1`. No borra ni cambia nada en el origen viejo.
 2. Las empaqueta en el **fragmento** de la URL nueva: `#tbmigrar=<base64url de {"v":1,"d":{clave:valor}}>`. El fragmento nunca viaja a ningún servidor (tampoco a Cloudflare). Tope de unos 200 KB; los datos reales pesan pocos KB.
 3. Hace `location.replace` (la página vieja no queda en el historial). Sin JavaScript, un `<meta http-equiv="refresh">` lleva a `https://web.touchedblock.app/` y queda un enlace visible.
 
 En el sitio nuevo, el script `tb-mudanza` del `<head>` de `apps/client/public/index.html` (corre antes que la app; tests en `apps/client/src/lib/mudanza.test.ts`, que ejecutan los dos scripts reales) importa el fragmento:
+
 - **Solo si viene de la web vieja**: `document.referrer` tiene que ser `https://sukushaing.github.io` (la página vieja fija `referrer: origin`; en desarrollo, de `localhost` a `localhost`). Sin eso no se importa nada: un enlace fabricado con `#tbmigrar=` no puede subir el récord, las estadísticas ni dejar a alguien entrado en otra cuenta.
 - **Siempre borra el fragmento** (aunque sea inválido o enorme) con `history.replaceState(…, location.href.split('#')[0])`, para que no quede en la barra, al recargar ni en un enlace copiado.
 - Solo acepta esas claves, cada una con su formato, como máximo 100 000 caracteres por clave. Todo va en `try/catch`.
 - **Mezcla sin bajar nada ni contar doble** (repetir la mudanza da lo mismo):
-
-  | Clave | Regla |
-  |---|---|
-  | `tb_best5`, `tb_visits1`, `tb_last1` | El mayor |
-  | `tb_onb1`, `tb_onb_adv1`, `tb_unlock1` | `1` si alguno de los dos lados la tiene |
-  | `tb_stats1` | El mayor campo a campo (como `maxOf` de `lib/stats.ts`). `runs`, `totalKilled` y `bonusXp` son acumulados: si se jugó en los dos sitios, queda el mayor de los dos y no la suma (sumar contaría doble si la mudanza se repite) |
-  | `tb_hist5` | Unión sin repetir (misma fecha, destruidos y escapados), la más reciente primero, máx. 30 (`HIST_MAX`) |
-  | `tb_cele1` | Unión (logros ya celebrados: así no se repiten) |
-  | `tb_miss1` | Unión de ids por fecha (una misión premiada en cualquiera de los dos no se vuelve a premiar) |
-  | `tb_daily1` | Fechas jugadas unidas (racha), `rulesSeen` si alguno, `yesterdaySeen` y `bestPct` el mayor. Por día: intentos con el mayor (no regala intentos al invitado), partidas unidas, reclamo y "habrías quedado" del sitio nuevo si los hay |
-  | `tb_set1`, `tb_reto1` | Se conserva el del sitio nuevo; el viejo solo si aquí no hay |
-  | `tb_rt1` + `tb_me1` | Solo si aquí no hay sesión (nunca se cambia de cuenta). El token viaja de nuestro dominio viejo al nuevo, por fragmento y en el mismo navegador. Si ya se había usado (rota en cada uso), la app lo descarta sola y queda como invitado |
+  
+  | Clave                                  | Regla                                                                                                                                                                                                                                   |
+  | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+  | `tb_best5`, `tb_visits1`, `tb_last1`   | El mayor                                                                                                                                                                                                                                |
+  | `tb_onb1`, `tb_onb_adv1`, `tb_unlock1` | `1` si alguno de los dos lados la tiene                                                                                                                                                                                                 |
+  | `tb_stats1`                            | El mayor campo a campo (como `maxOf` de `lib/stats.ts`). `runs`, `totalKilled` y `bonusXp` son acumulados: si se jugó en los dos sitios, queda el mayor de los dos y no la suma (sumar contaría doble si la mudanza se repite)          |
+  | `tb_hist5`                             | Unión sin repetir (misma fecha, destruidos y escapados), la más reciente primero, máx. 30 (`HIST_MAX`)                                                                                                                                  |
+  | `tb_cele1`                             | Unión (logros ya celebrados: así no se repiten)                                                                                                                                                                                         |
+  | `tb_miss1`                             | Unión de ids por fecha (una misión premiada en cualquiera de los dos no se vuelve a premiar)                                                                                                                                            |
+  | `tb_daily1`                            | Fechas jugadas unidas (racha), `rulesSeen` si alguno, `yesterdaySeen` y `bestPct` el mayor. Por día: intentos con el mayor (no regala intentos al invitado), partidas unidas, reclamo y "habrías quedado" del sitio nuevo si los hay    |
+  | `tb_set1`, `tb_reto1`                  | Se conserva el del sitio nuevo; el viejo solo si aquí no hay                                                                                                                                                                            |
+  | `tb_rt1` + `tb_me1`                    | Solo si aquí no hay sesión (nunca se cambia de cuenta). El token viaja de nuestro dominio viejo al nuevo, por fragmento y en el mismo navegador. Si ya se había usado (rota en cada uso), la app lo descarta sola y queda como invitado |
+  
 - **Tutorial**: como `tb_onb1`, `tb_visits1` y `tb_last1` se importan antes de que la app cuente la visita, un jugador antiguo no vuelve a ver el tutorial de la 1.ª visita.
 - Al importar, marca `tb_mig1=1`.
 
 **Ida y vuelta (una vez por navegador).** Los enlaces que se comparten ya apuntan a `web.touchedblock.app`, así que un jugador antiguo puede llegar primero al sitio nuevo. Por eso, si no existe `tb_mig1` y no llegó `#tbmigrar`, el script:
+
 1. Guarda `tb_mig1=1` **antes de salir** (y comprueba que quedó guardado; si el almacenamiento no dura, no sale). Así nunca hay bucle y, si GitHub Pages falla, la próxima visita ya no vuelve a intentarlo.
 2. Marca `window.__tbMudanza` (la app no arranca mientras se va: `src/app/_layout.tsx`) y hace `location.replace` a `https://sukushaing.github.io/touched-block/?volver=<ruta y query codificadas>`.
 3. La página vieja valida `volver` (empieza con una sola `/`, no `//` ni `/\`, sin esquema ni caracteres de control; si no, va a `/`) y devuelve al jugador a esa misma dirección, con `#tbmigrar=…` si hay datos o sin fragmento si no. Un `/?reto=K7M2QXAB` termina en `/?reto=K7M2QXAB`.
@@ -91,6 +103,7 @@ En el sitio nuevo, el script `tb-mudanza` del `<head>` de `apps/client/public/in
 No se hace en `localhost`, si la dirección ya trae `?volver=`, ni para bots conocidos por su *user agent* (Googlebot, vistas previas de WhatsApp/Telegram/Discord, Lighthouse…); sin JavaScript no pasa nada. Le cuesta a cada navegador nuevo un salto extra a GitHub Pages, una sola vez.
 
 Límites:
+
 - Una web instalada desde Pages (PWA) abre la dirección vieja y la redirección la saca al navegador; conviene instalarla de nuevo desde `web.touchedblock.app`.
 - Safari (ITP) borra el almacenamiento de un sitio que no se visita en 7 días: a quien no abrió la web vieja en una semana ya no le quedan datos que traer. Las protecciones contra *bounce tracking* de los navegadores podrían tratar el salto a `sukushaing.github.io` como rastreo y borrar sus datos más adelante; por eso la mudanza va al primer ingreso.
 - Si se agrega o renombra una clave `tb_*`: sumarla a `CLAVES` de la página vieja y a `REGLAS` del script `tb-mudanza`.
@@ -99,7 +112,7 @@ Para probarla en local: una copia de `deploy/gh-pages-redirect/` servida bajo `/
 
 ## 2. Google Cloud (login con Google)
 
-Ya hecho por el usuario el 9 nov 2026. El Client ID está arriba. Para rehacerlo o revisarlo, en https://console.cloud.google.com:
+Ya hecho por el usuario el 9 nov 2026. El Client ID está arriba. Para rehacerlo o revisarlo, en [https://console.cloud.google.com](https://console.cloud.google.com):
 
 1. **APIs y servicios → Pantalla de consentimiento de OAuth** (*Google Auth Platform*).
    - Nombre de la app: "Touched Block".
@@ -135,18 +148,20 @@ Ya hecho por el usuario el 9 nov 2026. El Client ID está arriba. Para rehacerlo
 
 El archivo `deploy/.env` (ignorado por git) ya tiene los valores reales generados: contraseña de Postgres, `JWT_SECRET` aleatorio y Client ID. **Se copia su contenido completo y se pega en Dokploy.** La plantilla con explicaciones está en `deploy/.env.example`.
 
-| Variable | Nota |
-|---|---|
-| `POSTGRES_PASSWORD` | Solo letras y números (va dentro de la URL de conexión). Se fija al crear el volumen: cambiarla después **no** cambia la contraseña de la base existente |
-| `JWT_SECRET` | 48 bytes aleatorios. Si cambia, todas las sesiones se cierran |
-| `DAILY_SECRET` | **Obligatoria desde la fase 4** (reto diario): sin ella el Compose no arranca (`falta DAILY_SECRET`) y la API tampoco. 48 bytes aleatorios (mínimo 32 caracteres): `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"`. Es la llave de la semilla del reto diario (`HMAC-SHA256(DAILY_SECRET, fecha)`): sin ella nadie puede adivinar la partida de mañana. **No cambiarla** una vez publicada: cambiaría la partida del día en curso a mitad del día |
-| `GOOGLE_CLIENT_IDS` | Client ID web. Los clientes Android/iOS no hacen falta: la app pide el `idToken` con el `webClientId` |
-| `APPLE_AUDIENCES` | `app.touchedblock,app.touchedblock.web` (bundle ID de la app iOS, primero, y Services ID de la web): audiencias aceptadas del `identityToken` de Apple. Sin ella, `POST /auth/apple` responde 503; sin el Services ID, el login con Apple de la web responde 401 (sección 6) |
+
+| Variable                                                                | Nota                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `POSTGRES_PASSWORD`                                                     | Solo letras y números (va dentro de la URL de conexión). Se fija al crear el volumen: cambiarla después **no** cambia la contraseña de la base existente                                                                                                                                                                                                                                                                                                                                                                       |
+| `JWT_SECRET`                                                            | 48 bytes aleatorios. Si cambia, todas las sesiones se cierran                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `DAILY_SECRET`                                                          | **Obligatoria desde la fase 4** (reto diario): sin ella el Compose no arranca (`falta DAILY_SECRET`) y la API tampoco. 48 bytes aleatorios (mínimo 32 caracteres): `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"`. Es la llave de la semilla del reto diario (`HMAC-SHA256(DAILY_SECRET, fecha)`): sin ella nadie puede adivinar la partida de mañana. **No cambiarla** una vez publicada: cambiaría la partida del día en curso a mitad del día                                             |
+| `GOOGLE_CLIENT_IDS`                                                     | Client ID web. Los clientes Android/iOS no hacen falta: la app pide el `idToken` con el `webClientId`                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `APPLE_AUDIENCES`                                                       | `app.touchedblock,app.touchedblock.web` (bundle ID de la app iOS, primero, y Services ID de la web): audiencias aceptadas del `identityToken` de Apple. Sin ella, `POST /auth/apple` responde 503; sin el Services ID, el login con Apple de la web responde 401 (sección 6)                                                                                                                                                                                                                                                   |
 | `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY`, `APPLE_CLIENT_ID` | Revocación del token de Apple al eliminar la cuenta (sección 6). Opcionales: si falta alguna, el login con Apple funciona y la API avisa en el log que omite la revocación. `APPLE_CLIENT_ID` = `app.touchedblock` (por defecto, la primera de `APPLE_AUDIENCES`); es solo el de respaldo: cada token se canjea y revoca con el `client_id` de su login (bundle ID en iOS, Services ID en la web). `APPLE_PRIVATE_KEY` = contenido del `.p8`, en una sola línea con `\n` en lugar de los saltos de línea. **Nunca en el repo** |
-| `CORS_ORIGINS` | `https://web.touchedblock.app,https://sukushaing.github.io` (separados por coma). **Hay que cambiarlo en Dokploy**: el valor por defecto de `deploy/docker-compose.yml` solo se usa si la variable no existe, y hoy existe con el valor viejo |
-| `ADMIN_TOKEN` | Moderación (sección 7): secreto de los endpoints `/admin/*` (cabecera `X-Admin-Token`). 48 bytes aleatorios (mínimo 32 caracteres; con menos la API no arranca). Vacía = `/admin/*` responde 404; los scripts de moderación funcionan igual. **Nunca en el repo** |
-| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | Moderación (sección 7, "Avisos por Telegram"): aviso por Telegram con cada reporte nuevo. Opcionales: si falta alguna, no se envía nada (el log de arranque dice "Avisos de reportes por Telegram desactivados"). El token es **secreto: nunca en el repo** |
-| `API_TAG` | `latest`. Para volver a una versión anterior: `v0.1.0`, etc. |
+| `CORS_ORIGINS`                                                          | `https://web.touchedblock.app,https://sukushaing.github.io` (separados por coma). **Hay que cambiarlo en Dokploy**: el valor por defecto de `deploy/docker-compose.yml` solo se usa si la variable no existe, y hoy existe con el valor viejo                                                                                                                                                                                                                                                                                  |
+| `ADMIN_TOKEN`                                                           | Moderación (sección 7): secreto de los endpoints `/admin/*` (cabecera `X-Admin-Token`). 48 bytes aleatorios (mínimo 32 caracteres; con menos la API no arranca). Vacía = `/admin/*` responde 404; los scripts de moderación funcionan igual. **Nunca en el repo**                                                                                                                                                                                                                                                              |
+| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`                                | Moderación (sección 7, "Avisos por Telegram"): aviso por Telegram con cada reporte nuevo. Opcionales: si falta alguna, no se envía nada (el log de arranque dice "Avisos de reportes por Telegram desactivados"). El token es **secreto: nunca en el repo**                                                                                                                                                                                                                                                                    |
+| `API_TAG`                                                               | `latest`. Para volver a una versión anterior: `v0.1.0`, etc.                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+
 
 ### Configuración inicial en Dokploy (una vez)
 
@@ -168,17 +183,21 @@ El archivo `deploy/.env` (ignorado por git) ya tiene los valores reales generado
 
 En GitHub: **repositorio → Settings → Secrets and variables → Actions**. La pestaña **Secrets** tiene el botón *New repository secret*; la pestaña **Variables** tiene *New repository variable*.
 
-| Secreto | De dónde sale |
-|---|---|
-| `DOKPLOY_URL` | La dirección con la que abres el panel de Dokploy en el navegador, sin `/` al final (por ejemplo `https://dokploy.tudominio.com` o `http://IP-del-VPS:3000`). GitHub tiene que poder llegar a ella desde internet |
-| `DOKPLOY_API_KEY` | En Dokploy: avatar (arriba a la derecha) → **Profile** → sección **API/CLI** → *Generate Token*. Cópialo al tiro: no se vuelve a mostrar |
-| `DOKPLOY_COMPOSE_ID` | El id del Compose. Es el último tramo de la URL cuando abres el servicio en Dokploy. También se puede ver con `curl -H "x-api-key: <token>" https://<dokploy>/api/project.all` (campo `composeId`) |
 
-| Variable | Valor |
-|---|---|
-| `EXPO_PUBLIC_GOOGLE_CLIENT_ID` | El Client ID. Se puede crear ya |
+| Secreto              | De dónde sale                                                                                                                                                                                                     |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DOKPLOY_URL`        | La dirección con la que abres el panel de Dokploy en el navegador, sin `/` al final (por ejemplo `https://dokploy.tudominio.com` o `http://IP-del-VPS:3000`). GitHub tiene que poder llegar a ella desde internet |
+| `DOKPLOY_API_KEY`    | En Dokploy: avatar (arriba a la derecha) → **Profile** → sección **API/CLI** → *Generate Token*. Cópialo al tiro: no se vuelve a mostrar                                                                          |
+| `DOKPLOY_COMPOSE_ID` | El id del Compose. Es el último tramo de la URL cuando abres el servicio en Dokploy. También se puede ver con `curl -H "x-api-key: <token>" https://<dokploy>/api/project.all` (campo `composeId`)                |
+
+
+
+| Variable                        | Valor                                                                                                                                                                            |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `EXPO_PUBLIC_GOOGLE_CLIENT_ID`  | El Client ID. Se puede crear ya                                                                                                                                                  |
 | `EXPO_PUBLIC_APPLE_SERVICES_ID` | `app.touchedblock.web`: muestra el botón de Sign in with Apple en la web. **Crearla solo después de publicar la API con Apple web** (sección 6.8); vacía o sin crear = sin botón |
-| `EXPO_PUBLIC_API_URL` | Ya no se usa: `deploy-web.yml` lleva escrita `https://api.touchedblock.app` |
+| `EXPO_PUBLIC_API_URL`           | Ya no se usa: `deploy-web.yml` lleva escrita `https://api.touchedblock.app`                                                                                                      |
+
 
 ### Publicar una versión de la API
 
@@ -188,6 +207,7 @@ git push origin v0.1.0
 ```
 
 `.github/workflows/deploy-api.yml` hace lo siguiente:
+
 1. Corre los tests del motor y de la API, con un Postgres de servicio.
 2. Construye la imagen y la sube a GHCR con los tags `:v0.1.0` y `:latest`.
 3. Llama a `POST $DOKPLOY_URL/api/compose.deploy {composeId}` con la cabecera `x-api-key`.
@@ -195,6 +215,7 @@ git push origin v0.1.0
 Si falta un secreto, el último paso falla con un mensaje claro.
 
 **Primera vez:**
+
 1. Configura los 3 secretos y el Compose en Dokploy (sin desplegar).
 2. Crea el tag `v0.1.0` y súbelo.
 3. Cuando termine el workflow, revisa la visibilidad de la imagen: GitHub → tu perfil → **Packages** → `touched-block-api` → *Package settings*. Si es **privada**, Dokploy no puede bajarla. Tienes dos opciones:
@@ -239,26 +260,26 @@ La API nueva es **compatible con la web anterior** (campos nuevos opcionales y e
 1. **Respaldo** de la base (sección anterior): correr a mano la tarea `touched-block-respaldo` y revisar que diga `OK`.
 2. **`DAILY_SECRET`** en la pestaña *Environment* de Dokploy (y en tu copia local `deploy/.env`). Sin ella el despliegue falla, porque `deploy/docker-compose.yml` la exige.
 3. **Tag de la API** (`git tag vX.Y.Z && git push origin vX.Y.Z`). Al arrancar, el contenedor aplica las migraciones pendientes:
+   
+   | Migración                               | Qué agrega                                                                                                                                                                                                                     |
+   | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+   | `add_user_stats` (fase 2)               | Columnas `Run.bestStreak` y `Run.endReason` (opcionales) y la tabla `UserStats`, con un **relleno inicial**: cada cuenta recibe sus totales de partidas válidas (mejor duración, bloques, partidas). Solo inserta filas nuevas |
+   | `add_run_modes_and_challenges` (fase 3) | `Run.mode` (por defecto `normal`: las partidas existentes quedan así sin reescribirse), `Run.challengeCode`, `Run.dailyDate`, `Run.config` (opcionales) y las tablas `Challenge` y `ChallengeEntry`                            |
+   | `add_daily_challenge` (fase 4)          | Tablas `DailyChallenge` y `DailyEntry`                                                                                                                                                                                         |
+   | `add_mission_rewards` (fase 5)          | Tabla `MissionReward`                                                                                                                                                                                                          |
+   | `add_challenge_creator_run_index`       | Índice en `Challenge.creatorRunId` (solo un índice; no toca datos)                                                                                                                                                             |
+   
 
-   | Migración | Qué agrega |
-   |---|---|
-   | `add_user_stats` (fase 2) | Columnas `Run.bestStreak` y `Run.endReason` (opcionales) y la tabla `UserStats`, con un **relleno inicial**: cada cuenta recibe sus totales de partidas válidas (mejor duración, bloques, partidas). Solo inserta filas nuevas |
-   | `add_run_modes_and_challenges` (fase 3) | `Run.mode` (por defecto `normal`: las partidas existentes quedan así sin reescribirse), `Run.challengeCode`, `Run.dailyDate`, `Run.config` (opcionales) y las tablas `Challenge` y `ChallengeEntry` |
-   | `add_daily_challenge` (fase 4) | Tablas `DailyChallenge` y `DailyEntry` |
-   | `add_mission_rewards` (fase 5) | Tabla `MissionReward` |
-   | `add_challenge_creator_run_index` | Índice en `Challenge.creatorRunId` (solo un índice; no toca datos) |
-
-   Ninguna borra ni reescribe datos de jugadores.
+    Ninguna borra ni reescribe datos de jugadores.
 4. Verifica `https://api.<tu-dominio>/health` (`status: "ok"`, `rulesVersion: 5`, la versión nueva).
 5. **Relleno de rachas** (una vez, después del primer despliegue con la fase 2). La mejor racha no estaba guardada: este script la calcula repitiendo las partidas válidas guardadas de las reglas actuales (las de versiones anteriores no se pueden repetir y quedan sin racha) y sube `UserStats.bestStreak`. Es **idempotente**: si se corta o se corre dos veces, no pasa nada.
-
    ```bash
-   # en el VPS, en la carpeta del Compose (o en la terminal del contenedor "api" de Dokploy, sin "docker compose exec api")
-   docker compose exec api node scripts/backfill-streaks.mjs --dry-run   # prueba: muestra cuántas partidas actualizaría
-   docker compose exec api node scripts/backfill-streaks.mjs             # lo hace
+    # en el VPS, en la carpeta del Compose (o en la terminal del contenedor "api" de Dokploy, sin "docker compose exec api" y después de `cd /app`)
+    docker compose exec api node scripts/backfill-streaks.mjs --dry-run   # prueba: muestra cuántas partidas actualizaría
+    docker compose exec api node scripts/backfill-streaks.mjs             # lo hace
    ```
 
-   Muestra al final cuántas partidas repitió y actualizó, cuántas no coinciden con su repetición (no se tocan), y cuántos jugadores subieron su mejor racha. Usa la `DATABASE_URL` del contenedor.
+    Muestra al final cuántas partidas repitió y actualizó, cuántas no coinciden con su repetición (no se tocan), y cuántos jugadores subieron su mejor racha. Usa la `DATABASE_URL` del contenedor.
 6. **Push de la web** a `main`.
 
 ## 4. Desarrollo local con cuentas
@@ -267,17 +288,18 @@ La API nueva es **compatible con la web anterior** (campos nuevos opcionales y e
 - Para probar sin Google: `AUTH_DEV_FAKE=1` en la API y `EXPO_PUBLIC_AUTH_DEV_FAKE=1` en el cliente. Aparece un login falso "Entrar (dev)", que la API ignora con `NODE_ENV=production`.
 - Comandos en [`desarrollo.md`](desarrollo.md).
 
-
 ## 5. App Android (APK)
 
 **Identificador**: `app.touchedblock` (fijo para siempre una vez en Google Play).
 
 **Clave de firma** (fuera del repo):
+
 - `~/.touched-block/release.keystore` (PKCS12, alias `touchedblock`, válida 10 000 días) y `~/.touched-block/keystore.properties` con `TB_UPLOAD_STORE_FILE`, `TB_UPLOAD_KEY_ALIAS`, `TB_UPLOAD_STORE_PASSWORD` y `TB_UPLOAD_KEY_PASSWORD`. En CI se pueden pasar como variables de entorno con esos mismos nombres (`plugins/withReleaseSigning.js`). Sin ninguna de las cuatro, el release sale firmado con la clave debug (solo para probar) y Gradle lo avisa con un `AVISO`; si faltan algunas o el keystore no existe, el build falla con el motivo. Una ruta relativa en `TB_UPLOAD_STORE_FILE` se toma desde `~/.touched-block`. Comprobar con `./gradlew :app:signingReport` (en `android/`): la variante `release` debe mostrar `release.keystore` y el alias `touchedblock`.
 - **Respaldarla** en un gestor de contraseñas o una nube privada. Si se pierde, un APK ya instalado no se puede actualizar: hay que desinstalarlo e instalar el nuevo. En Google Play, con *Play App Signing*, esta pasa a ser la clave de subida y se puede reemplazar.
 - SHA-1: `B5:7F:86:E8:13:A8:B6:BA:11:90:81:A9:17:3C:4B:1E:0C:CA:58:0A`.
 
 **Google Cloud** (proyecto *Touched Block* → Clientes): además del cliente web hay dos clientes **Android** con el paquete `app.touchedblock`:
+
 - "Android debug (app.touchedblock)", con la SHA-1 de la clave debug de Expo (`5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25`);
 - "Android release APK (app.touchedblock)", con la SHA-1 de arriba.
 
@@ -304,27 +326,30 @@ EXPO_PUBLIC_API_URL=https://api.touchedblock.app NODE_ENV=production ./gradlew a
 
 Qué botón de login se ve en cada plataforma:
 
-| Plataforma | Botones | Condición |
-|---|---|---|
-| Android (APK) | Solo Google | — |
-| App iOS | Apple (arriba) y Google | Apple: cuando iOS confirma que está disponible |
-| Web | Apple (arriba) y Google | Apple: solo si el build tiene `EXPO_PUBLIC_APPLE_SERVICES_ID` (variable del repositorio). Sin ella, la web se ve como antes |
+
+| Plataforma    | Botones                 | Condición                                                                                                                   |
+| ------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Android (APK) | Solo Google             | —                                                                                                                           |
+| App iOS       | Apple (arriba) y Google | Apple: cuando iOS confirma que está disponible                                                                              |
+| Web           | Apple (arriba) y Google | Apple: solo si el build tiene `EXPO_PUBLIC_APPLE_SERVICES_ID` (variable del repositorio). Sin ella, la web se ve como antes |
+
 
 Por qué: Apple exige ofrecer Sign in with Apple en la app iOS si tiene otro login social (guía 4.8) y, si se puede crear cuenta con Apple, revocar su token al eliminar la cuenta (guía 5.1.1(v)). En la web no es obligatorio, pero así quien juega en el iPhone y en el computador entra con la misma cuenta. El código ya está (ver `api.md`, `POST /auth/apple`); lo que sigue es la configuración, que **solo puede hacer el dueño de la cuenta de Apple**.
 
 Documentación oficial usada (revisada el 18 nov 2026):
-- Configurar el entorno: https://developer.apple.com/documentation/signinwithapple/configuring-your-environment-for-sign-in-with-apple
-- Services ID para la web: https://developer.apple.com/help/account/capabilities/configure-sign-in-with-apple-for-the-web
-- Crear la clave privada: https://developer.apple.com/help/account/keys/create-a-private-key y su Key ID: https://developer.apple.com/help/account/keys/get-a-key-identifier
-- Avisos servidor a servidor: https://developer.apple.com/help/account/configure-app-capabilities/enabling-server-to-server-notifications y https://developer.apple.com/documentation/signinwithapple/processing-changes-for-sign-in-with-apple-accounts
-- Sign in with Apple JS (web): https://developer.apple.com/documentation/signinwithapple/configuring-your-webpage-for-sign-in-with-apple
-- Canje y revocación del token: https://developer.apple.com/documentation/signinwithapplerestapi/generate-and-validate-tokens
+
+- Configurar el entorno: [https://developer.apple.com/documentation/signinwithapple/configuring-your-environment-for-sign-in-with-apple](https://developer.apple.com/documentation/signinwithapple/configuring-your-environment-for-sign-in-with-apple)
+- Services ID para la web: [https://developer.apple.com/help/account/capabilities/configure-sign-in-with-apple-for-the-web](https://developer.apple.com/help/account/capabilities/configure-sign-in-with-apple-for-the-web)
+- Crear la clave privada: [https://developer.apple.com/help/account/keys/create-a-private-key](https://developer.apple.com/help/account/keys/create-a-private-key) y su Key ID: [https://developer.apple.com/help/account/keys/get-a-key-identifier](https://developer.apple.com/help/account/keys/get-a-key-identifier)
+- Avisos servidor a servidor: [https://developer.apple.com/help/account/configure-app-capabilities/enabling-server-to-server-notifications](https://developer.apple.com/help/account/configure-app-capabilities/enabling-server-to-server-notifications) y [https://developer.apple.com/documentation/signinwithapple/processing-changes-for-sign-in-with-apple-accounts](https://developer.apple.com/documentation/signinwithapple/processing-changes-for-sign-in-with-apple-accounts)
+- Sign in with Apple JS (web): [https://developer.apple.com/documentation/signinwithapple/configuring-your-webpage-for-sign-in-with-apple](https://developer.apple.com/documentation/signinwithapple/configuring-your-webpage-for-sign-in-with-apple)
+- Canje y revocación del token: [https://developer.apple.com/documentation/signinwithapplerestapi/generate-and-validate-tokens](https://developer.apple.com/documentation/signinwithapplerestapi/generate-and-validate-tokens)
 
 Los nombres de menús y botones de Apple están en inglés (así aparecen en su sitio). Apple cambia su interfaz de vez en cuando: si algún botón no calza exacto, la idea es la misma.
 
 ### 6.0 Antes de empezar
 
-- **Membresía del Apple Developer Program** (pago anual, USD 99; https://developer.apple.com/programs/). Sin ella no aparece *Certificates, Identifiers & Profiles*. Una cuenta de Apple gratis **no** sirve.
+- **Membresía del Apple Developer Program** (pago anual, USD 99; [https://developer.apple.com/programs/](https://developer.apple.com/programs/)). Sin ella no aparece *Certificates, Identifiers & Profiles*. Una cuenta de Apple gratis **no** sirve.
 - Entrar con el rol **Account Holder** o **Admin** (los otros roles no pueden crear claves).
 - Tener a mano: acceso a Dokploy (pestaña *Environment* del Compose de la API) y a GitHub (*Settings* del repositorio).
 - Los identificadores que usa el código (no cambiarlos sin cambiar también el código y las variables):
@@ -333,36 +358,37 @@ Los nombres de menús y botones de Apple están en inglés (así aparecen en su 
   - **Return URL** de la web: `https://web.touchedblock.app/` (con la `/` final: el cliente la arma como `origen + "/"` y Apple exige que sea idéntica).
 
 Orden recomendado (cada paso se comprueba antes de pasar al siguiente):
+
 1. Apple Developer: App ID (6.1), Services ID (6.2), clave `.p8` (6.3), Team ID (6.4).
 2. Convertir la clave a una línea (6.5) y pegar las variables en Dokploy (6.6).
 3. Publicar la API con un tag nuevo (6.7).
 4. Crear la variable de la web en GitHub y volver a publicar la web (6.8).
 5. Probar (6.9).
 
-Lista de verificación completa (marcar a medida que se avanza):
+Lista de verificación completa (marcar a medida que se avanza). **Hecha completa el 19 nov 2026**; se deja para repetirla si hay que rehacer algo (por ejemplo, una clave nueva). Si el botón de Apple no aparece en la web, revisar que el último despliegue de la web sea **posterior** a la creación de la variable: el valor queda fijo al compilar.
 
-- [ ] **Apple Developer**: Sign in with Apple activado en el App ID `app.touchedblock` (6.1).
-- [ ] **Apple Developer**: Services ID `app.touchedblock.web` con el dominio `web.touchedblock.app` y la Return URL `https://web.touchedblock.app/` (6.2).
-- [ ] **Apple Developer**: clave `.p8` descargada y guardada en el gestor de contraseñas; anotar su Key ID (6.3) y el Team ID (6.4).
-- [ ] **Opcional**: avisos servidor a servidor apuntando a `https://api.touchedblock.app/auth/apple/notifications` (6.1).
-- [ ] **Telegram** (avisos de reportes; pasos detallados en la sección 7, ["Avisos por Telegram"](#avisos-por-telegram)):
-  - [ ] Crear el bot con **@BotFather** (`/newbot`, nombre "Touched Block Moderación", usuario terminado en `bot`) y guardar el **token** en el gestor de contraseñas.
-  - [ ] Abrir el bot nuevo y tocar **Iniciar** (`/start`); sin esto el bot no puede escribirte.
-  - [ ] Obtener el **chat id**: `https://api.telegram.org/bot<TOKEN>/getUpdates` → número después de `"chat":{"id":` (o, después del tag, `node scripts/telegram-test.mjs --chat-id`).
-- [ ] **Dokploy → Environment**: `APPLE_AUDIENCES=app.touchedblock,app.touchedblock.web`, `APPLE_CLIENT_ID=app.touchedblock`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY` (en una línea, 6.5–6.6). Si se quieren los endpoints `/admin/*`, también `ADMIN_TOKEN` (sección 7). Para recibir cada reporte en el celular, también `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` (sección 7, "Avisos por Telegram"; opcionales). Guardar (todavía sin *Deploy*: lo hace el tag).
-- [ ] **Respaldo**: correr a mano la tarea `touched-block-respaldo` y revisar que diga `OK` (la versión trae migraciones nuevas).
-- [ ] **Tag de la API** (6.7): lo crea Claude cuando el usuario le avisa; o `git tag vX.Y.Z && git push origin vX.Y.Z`. Comprobar `https://api.touchedblock.app/health`: versión nueva y `features` con `moderation`.
-- [ ] **Probar Telegram**: en los logs de `api` debe decir `Avisos de reportes por Telegram activados.`; luego, en la terminal del contenedor `api`, `node scripts/telegram-test.mjs` y comprobar que llega el mensaje "✅ Prueba de avisos de Touched Block".
-- [ ] **Nombres antiguos**: `check-usernames.mjs` (sección 7) y revisar la lista antes de renombrar.
-- [ ] **Recién ahora, GitHub → Variables**: `EXPO_PUBLIC_APPLE_SERVICES_ID=app.touchedblock.web` y volver a correr *Desplegar la web en Cloudflare* (6.8).
-- [ ] **Probar** en `https://web.touchedblock.app` (6.9): entrar con Apple, cerrar sesión, volver a entrar (el nombre se mantiene), eliminar una cuenta de prueba y comprobar que desaparece de *Iniciar sesión con Apple* en account.apple.com.
-- [ ] **Avisarle a Claude** para actualizar la política de privacidad y `/eliminar-cuenta/` (hoy dicen que Apple estará disponible "cuando la app para iPhone esté disponible").
+- [x] **Apple Developer**: Sign in with Apple activado en el App ID `app.touchedblock` (6.1).
+- [x] **Apple Developer**: Services ID `app.touchedblock.web` con el dominio `web.touchedblock.app` y la Return URL `https://web.touchedblock.app/` (6.2).
+- [x] **Apple Developer**: clave `.p8` descargada y guardada en el gestor de contraseñas; anotar su Key ID (6.3) y el Team ID (6.4).
+- [x] **Opcional**: avisos servidor a servidor apuntando a `https://api.touchedblock.app/auth/apple/notifications` (6.1).
+- [x] **Telegram** (avisos de reportes; pasos detallados en la sección 7, ["Avisos por Telegram"](#avisos-por-telegram)):
+  - [x] Crear el bot con **@BotFather** (`/newbot`, nombre "Touched Block Moderación", usuario terminado en `bot`) y guardar el **token** en el gestor de contraseñas.
+  - [x] Abrir el bot nuevo y tocar **Iniciar** (`/start`); sin esto el bot no puede escribirte.
+  - [x] Obtener el **chat id**: `https://api.telegram.org/bot<TOKEN>/getUpdates` → número después de `"chat":{"id":` (o, después del tag, `node scripts/telegram-test.mjs --chat-id`).
+- [x] **Dokploy → Environment**: `APPLE_AUDIENCES=app.touchedblock,app.touchedblock.web`, `APPLE_CLIENT_ID=app.touchedblock`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY` (en una línea, 6.5–6.6). Si se quieren los endpoints `/admin/*`, también `ADMIN_TOKEN` (sección 7). Para recibir cada reporte en el celular, también `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` (sección 7, "Avisos por Telegram"; opcionales). Guardar (todavía sin *Deploy*: lo hace el tag).
+- [x] **Respaldo**: correr a mano la tarea `touched-block-respaldo` y revisar que diga `OK` (la versión trae migraciones nuevas).
+- [x] **Tag de la API** (6.7): lo crea Claude cuando el usuario le avisa; o `git tag vX.Y.Z && git push origin vX.Y.Z`. Comprobar `https://api.touchedblock.app/health`: versión nueva y `features` con `moderation`.
+- [x] **Probar Telegram**: en los logs de `api` debe decir `Avisos de reportes por Telegram activados.`; luego, en la terminal del contenedor `api`, `cd /app` y `node scripts/telegram-test.mjs` y comprobar que llega el mensaje "✅ Prueba de avisos de Touched Block".
+- [x] **Nombres antiguos**: `check-usernames.mjs` (sección 7) y revisar la lista antes de renombrar.
+- [x] **Recién ahora, GitHub → Variables**: `EXPO_PUBLIC_APPLE_SERVICES_ID=app.touchedblock.web` y volver a correr *Desplegar la web en Cloudflare* (6.8).
+- [x] **Probar** en `https://web.touchedblock.app` (6.9): entrar con Apple, cerrar sesión, volver a entrar (el nombre se mantiene), eliminar una cuenta de prueba y comprobar que desaparece de *Iniciar sesión con Apple* en account.apple.com.
+- [x] **Avisarle a Claude** para actualizar la política de privacidad, los términos y `/eliminar-cuenta/` (hecho el 19 nov 2026: dicen que con Apple se entra en la web y, cuando exista, en la app para iPhone).
 
 **No crear la variable de la web (paso 4) antes de publicar la API nueva (paso 3)**: la API de producción `v0.4.0` no conoce el campo `redirectUri` y respondería `400 validation_error` al login con Apple. Mientras la variable no exista, la web publicada en cada push a `main` funciona igual que hoy con la API `v0.4.0`.
 
 ### 6.1 App ID con Sign in with Apple (lo usan la app iOS y la web)
 
-1. Abre https://developer.apple.com/account/resources (o https://developer.apple.com/account → **Certificates, Identifiers & Profiles**).
+1. Abre [https://developer.apple.com/account/resources](https://developer.apple.com/account/resources) (o [https://developer.apple.com/account](https://developer.apple.com/account) → **Certificates, Identifiers & Profiles**).
 2. En la barra lateral, **Identifiers**. Arriba a la derecha, el filtro debe decir **App IDs**.
 3. Busca `app.touchedblock` y ábrelo.
    - Si no existe: botón **+** (arriba a la izquierda) → **App IDs** → **Continue** → tipo **App** → **Continue** → *Description* "Touched Block", *Bundle ID* **Explicit** = `app.touchedblock` → sigue con el punto 4 en esa misma pantalla.
@@ -408,7 +434,7 @@ La API firma con esta clave el `client_secret` que Apple pide para canjear el `a
 
 ### 6.4 Team ID
 
-En https://developer.apple.com/account, baja hasta **Membership details**: el **Team ID** son 10 caracteres (letras y números). También aparece arriba a la derecha, junto al nombre del equipo, en *Certificates, Identifiers & Profiles*.
+En [https://developer.apple.com/account](https://developer.apple.com/account), baja hasta **Membership details**: el **Team ID** son 10 caracteres (letras y números). También aparece arriba a la derecha, junto al nombre del equipo, en *Certificates, Identifiers & Profiles*.
 
 ### 6.5 Pasar el `.p8` a una sola línea (Windows)
 
@@ -459,6 +485,7 @@ git push origin v0.5.0
 `deploy-api.yml` corre los tests, sube la imagen y despliega en Dokploy (sección 3, "Publicar una versión de la API"). La API aplica las migraciones al arrancar.
 
 Comprobar:
+
 - `https://api.touchedblock.app/health` responde `{"status":"ok","db":"ok",…}`.
 - En Dokploy → Compose **API** → **Logs** del servicio `api`, al arrancar no hay errores. El aviso `Revocación de Sign in with Apple desactivada: faltan …` aparece solo después de un login con Apple y significa que falta o está vacía una variable de 6.6.
 
@@ -473,15 +500,17 @@ Comprobar:
 ### 6.9 Probar
 
 **Web** (en `https://web.touchedblock.app`, Safari o Chrome, de preferencia en una ventana privada):
+
 1. Perfil → aparece **Iniciar sesión con Apple** (blanco, arriba del de Google, del mismo tamaño).
 2. Al tocarlo se abre una ventana de Apple. La primera vez pide compartir nombre y correo (prueba también "Ocultar mi correo").
 3. Vuelve con la sesión iniciada. El nombre de usuario sale del nombre de Apple (p. ej. `ana.perez`).
 4. Cierra sesión y entra de nuevo: Apple ya **no** manda el nombre; la cuenta es la misma y el nombre guardado no cambia.
 5. En el log de la API no debe aparecer `No se pudo guardar el token de Apple…`.
-6. Eliminar la cuenta desde el Perfil: en https://account.apple.com → **Inicio de sesión y seguridad → Iniciar sesión con Apple**, "Touched Block web" debe desaparecer (puede tardar un poco).
+6. Eliminar la cuenta desde el Perfil: en [https://account.apple.com](https://account.apple.com) → **Inicio de sesión y seguridad → Iniciar sesión con Apple**, "Touched Block web" debe desaparecer (puede tardar un poco).
 7. Para repetir el "primer login" (con nombre): en esa misma página de Apple, deja de usar Iniciar sesión con Apple con Touched Block y entra otra vez.
 
 **App iOS** (en un iPhone real; necesita Mac o EAS Build):
+
 - Botón de Apple (blanco, arriba del de Google), primer login con nombre y correo, segundo login sin nombre, eliminar cuenta y ver que la app desaparece de *Ajustes → [tu nombre] → Iniciar sesión con Apple*; login con Google en iOS.
 - **Publicar la API (6.7) antes de repartir la app iOS**: la API `v0.4.0` rechaza el campo `authorizationCode` (`400 validation_error`).
 
@@ -497,21 +526,24 @@ Apple exige que la Return URL tenga un dominio real (ni `localhost` ni IPs), y e
 
 ### 6.11 Errores típicos
 
-| Síntoma | Causa probable | Solución |
-|---|---|---|
-| La ventana de Apple muestra **invalid_client** | `EXPO_PUBLIC_APPLE_SERVICES_ID` no coincide con el Services ID, o el Services ID no tiene Sign in with Apple configurado y guardado (6.2), o se puso el bundle ID en la variable | Revisa el identificador exacto y que en 6.2 se haya hecho **Save** |
-| La ventana de Apple dice que la **redirect_uri** / Return URL no es válida o no coincide | La Return URL registrada no es exactamente `https://web.touchedblock.app/` (falta la `/`, `http`, `www`…), o se probó desde otro dominio (localhost) | Corrige la Return URL en 6.2; prueba desde `https://web.touchedblock.app` |
-| **Dominio no verificado** (*domain not verified*) junto a `web.touchedblock.app` | Cuentas antiguas de Apple pedían subir un archivo | Descarga el archivo que ofrece Apple, ponlo en `apps/client/public/.well-known/apple-developer-domain-association.txt`, publica la web y presiona **Verify** |
-| El login web responde **401 invalid_provider_token** | Falta `app.touchedblock.web` en `APPLE_AUDIENCES` | Corrige la variable en Dokploy y *Deploy* |
-| El login con Apple responde **400 validation_error** | La API de producción todavía es la `v0.4.0` (no conoce `redirectUri` ni `authorizationCode`) | Publica la API (6.7) |
-| El login responde **503 provider_unavailable** | `APPLE_AUDIENCES` vacía | Agrégala (6.6) |
-| Login OK, pero el log dice `Apple /auth/token respondió 400 (invalid_client)` | `client_secret` mal firmado: Team ID, Key ID o clave no coinciden, la clave no está asociada al App ID `app.touchedblock`, o la clave se pegó mal | Revisa 6.3–6.6 (la clave debe empezar con `-----BEGIN PRIVATE KEY-----\n`) |
-| El log dice `… (invalid_grant)` | El código venció (5 min) o ya se usó, o el `redirect_uri` no coincide con el de la autorización | Vuelve a entrar; si se repite, revisa la Return URL |
-| El log dice `Invalid key data` o similar al firmar | `APPLE_PRIVATE_KEY` incompleta o con saltos de línea reales | Repite 6.5 |
-| El navegador **bloquea la ventana** de Apple | Bloqueador de ventanas emergentes | Permitir ventanas emergentes para `web.touchedblock.app` (el juego avisa con un mensaje) |
-| La app no desaparece de la lista de Apple al eliminar la cuenta | La cuenta se creó antes de cargar las variables (no hay token guardado), o Apple falló al revocar (queda en el log) | Se guarda en el siguiente login de esa persona; la cuenta se borra igual |
+
+| Síntoma                                                                                   | Causa probable                                                                                                                                                                   | Solución                                                                                                                                                     |
+| ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| La ventana de Apple muestra **invalid\_client**                                           | `EXPO_PUBLIC_APPLE_SERVICES_ID` no coincide con el Services ID, o el Services ID no tiene Sign in with Apple configurado y guardado (6.2), o se puso el bundle ID en la variable | Revisa el identificador exacto y que en 6.2 se haya hecho **Save**                                                                                           |
+| La ventana de Apple dice que la **redirect\_uri** / Return URL no es válida o no coincide | La Return URL registrada no es exactamente `https://web.touchedblock.app/` (falta la `/`, `http`, `www`…), o se probó desde otro dominio (localhost)                             | Corrige la Return URL en 6.2; prueba desde `https://web.touchedblock.app`                                                                                    |
+| **Dominio no verificado** (*domain not verified*) junto a `web.touchedblock.app`          | Cuentas antiguas de Apple pedían subir un archivo                                                                                                                                | Descarga el archivo que ofrece Apple, ponlo en `apps/client/public/.well-known/apple-developer-domain-association.txt`, publica la web y presiona **Verify** |
+| El login web responde **401 invalid\_provider\_token**                                    | Falta `app.touchedblock.web` en `APPLE_AUDIENCES`                                                                                                                                | Corrige la variable en Dokploy y *Deploy*                                                                                                                    |
+| El login con Apple responde **400 validation\_error**                                     | La API de producción todavía es la `v0.4.0` (no conoce `redirectUri` ni `authorizationCode`)                                                                                     | Publica la API (6.7)                                                                                                                                         |
+| El login responde **503 provider\_unavailable**                                           | `APPLE_AUDIENCES` vacía                                                                                                                                                          | Agrégala (6.6)                                                                                                                                               |
+| Login OK, pero el log dice `Apple /auth/token respondió 400 (invalid_client)`             | `client_secret` mal firmado: Team ID, Key ID o clave no coinciden, la clave no está asociada al App ID `app.touchedblock`, o la clave se pegó mal                                | Revisa 6.3–6.6 (la clave debe empezar con `-----BEGIN PRIVATE KEY-----\n`)                                                                                   |
+| El log dice `… (invalid_grant)`                                                           | El código venció (5 min) o ya se usó, o el `redirect_uri` no coincide con el de la autorización                                                                                  | Vuelve a entrar; si se repite, revisa la Return URL                                                                                                          |
+| El log dice `Invalid key data` o similar al firmar                                        | `APPLE_PRIVATE_KEY` incompleta o con saltos de línea reales                                                                                                                      | Repite 6.5                                                                                                                                                   |
+| El navegador **bloquea la ventana** de Apple                                              | Bloqueador de ventanas emergentes                                                                                                                                                | Permitir ventanas emergentes para `web.touchedblock.app` (el juego avisa con un mensaje)                                                                     |
+| La app no desaparece de la lista de Apple al eliminar la cuenta                           | La cuenta se creó antes de cargar las variables (no hay token guardado), o Apple falló al revocar (queda en el log)                                                              | Se guarda en el siguiente login de esa persona; la cuenta se borra igual                                                                                     |
+
 
 Notas:
+
 - El refresh token de Apple se guarda cifrado (AES-256-GCM con una clave derivada de `JWT_SECRET`) junto con el `client_id` con que se obtuvo. Si se cambia `JWT_SECRET`, los tokens ya guardados no se pueden descifrar y esas cuentas se borrarían sin revocar (queda un aviso en el log); se vuelven a guardar en el siguiente login de cada persona.
 - Una misma persona entra a la **misma cuenta** desde la app iOS y desde la web: el `sub` de Apple es el mismo para todas las apps y webs agrupadas bajo el App ID principal.
 - Los avisos de Apple (`consent-revoked`, `account-delete`/`account-deleted`) llegan con `aud = app.touchedblock` (el App ID principal), que ya está en `APPLE_AUDIENCES`.
@@ -533,39 +565,36 @@ Los reportes quedan en la tabla `Report` (no hay aviso por correo; sí por Teleg
 
 La **consola de moderación** es el script `moderation.mjs` (y su equivalente HTTP `/admin/*`). No tiene interfaz gráfica: se usa desde la terminal del contenedor. Dos formas equivalentes:
 
-1. **Línea de comandos** (recomendada; no necesita `ADMIN_TOKEN`). En Dokploy: pestaña del Compose → contenedor `api` → *Terminal* (o en el VPS, en la carpeta del Compose, `docker compose exec api …`):
-
+1. **Línea de comandos** (recomendada; no necesita `ADMIN_TOKEN`). En Dokploy: pestaña del Compose → contenedor `api` → *Terminal* (o en el VPS, en la carpeta del Compose, `docker compose exec api …`). **En la terminal de Dokploy, primero `cd /app`** (abre en `/`, y los scripts están en `/app/scripts`; si no, sale `Cannot find module '/scripts/…'`) y escribe los comandos sin `docker compose exec api`:
    ```sh
-   # reportes pendientes (primero los más antiguos; dice cuántos tienen más de 24 h)
-   docker compose exec api node scripts/moderation.mjs reports
-   docker compose exec api node scripts/moderation.mjs reports --all          # también los cerrados
-
-   # el nombre infringe: ponerle uno automático (jugadorNNNN) o uno elegido; cierra sus reportes
-   docker compose exec api node scripts/moderation.mjs rename pepa.mala --dry-run
-   docker compose exec api node scripts/moderation.mjs rename pepa.mala
-   docker compose exec api node scripts/moderation.mjs rename pepa.mala pepa.nueva
-
-   # caso grave o reincidente: eliminar la cuenta (como "Eliminar cuenta"; revoca Apple) y cerrar sus reportes
-   docker compose exec api node scripts/moderation.mjs delete pepa.mala --yes
-
-   # el reporte no tenía razón: descartarlo (por id, o todos los de un usuario con @)
-   docker compose exec api node scripts/moderation.mjs resolve <idReporte> --dismiss --note="No infringe"
-   docker compose exec api node scripts/moderation.mjs resolve @pepa --dismiss
+    # reportes pendientes (primero los más antiguos; dice cuántos tienen más de 24 h)
+    docker compose exec api node scripts/moderation.mjs reports
+    docker compose exec api node scripts/moderation.mjs reports --all          # también los cerrados
+   
+    # el nombre infringe: ponerle uno automático (jugadorNNNN) o uno elegido; cierra sus reportes
+    docker compose exec api node scripts/moderation.mjs rename pepa.mala --dry-run
+    docker compose exec api node scripts/moderation.mjs rename pepa.mala
+    docker compose exec api node scripts/moderation.mjs rename pepa.mala pepa.nueva
+   
+    # caso grave o reincidente: eliminar la cuenta (como "Eliminar cuenta"; revoca Apple) y cerrar sus reportes
+    docker compose exec api node scripts/moderation.mjs delete pepa.mala --yes
+   
+    # el reporte no tenía razón: descartarlo (por id, o todos los de un usuario con @)
+    docker compose exec api node scripts/moderation.mjs resolve <idReporte> --dismiss --note="No infringe"
+    docker compose exec api node scripts/moderation.mjs resolve @pepa --dismiss
    ```
 
-   Sin argumentos muestra la ayuda. En local (con `pnpm --filter @tb/engine build` y `pnpm --filter @tb/api build`): `node apps/api/scripts/moderation.mjs reports`.
-
+    Sin argumentos muestra la ayuda. En local (con `pnpm --filter @tb/engine build` y `pnpm --filter @tb/api build`): `node apps/api/scripts/moderation.mjs reports`.
 2. **HTTP** con `ADMIN_TOKEN` (variable del Compose; sin ella `/admin/*` responde 404). Por ejemplo, desde PowerShell:
-
    ```powershell
-   $h = @{ 'X-Admin-Token' = '<ADMIN_TOKEN>' }
-   Invoke-RestMethod https://api.touchedblock.app/admin/reports -Headers $h
-   Invoke-RestMethod https://api.touchedblock.app/admin/users/pepa.mala/rename -Method Post -Headers $h -ContentType 'application/json' -Body '{}'
-   Invoke-RestMethod https://api.touchedblock.app/admin/reports/<id>/resolve -Method Post -Headers $h -ContentType 'application/json' -Body '{"status":"dismissed","resolution":"No infringe"}'
-   Invoke-RestMethod https://api.touchedblock.app/admin/users/pepa.mala -Method Delete -Headers $h
+    $h = @{ 'X-Admin-Token' = '<ADMIN_TOKEN>' }
+    Invoke-RestMethod https://api.touchedblock.app/admin/reports -Headers $h
+    Invoke-RestMethod https://api.touchedblock.app/admin/users/pepa.mala/rename -Method Post -Headers $h -ContentType 'application/json' -Body '{}'
+    Invoke-RestMethod https://api.touchedblock.app/admin/reports/<id>/resolve -Method Post -Headers $h -ContentType 'application/json' -Body '{"status":"dismissed","resolution":"No infringe"}'
+    Invoke-RestMethod https://api.touchedblock.app/admin/users/pepa.mala -Method Delete -Headers $h
    ```
 
-   Si el token no coincide, también responde 404 (a propósito: no revela que la ruta existe).
+    Si el token no coincide, también responde 404 (a propósito: no revela que la ruta existe).
 
 ### Avisos por Telegram
 
@@ -588,7 +617,7 @@ Revisar antes de 24 h: node scripts/moderation.mjs reports
 
 **Configurarlo (una vez, ~5 minutos):**
 
-1. **Crear el bot.** Abre Telegram (celular o https://web.telegram.org) → en la búsqueda escribe `BotFather` y abre **@BotFather**, el que tiene la marca azul de verificado (hay copias falsas). Toca **Iniciar** (o escribe `/start`).
+1. **Crear el bot.** Abre Telegram (celular o [https://web.telegram.org](https://web.telegram.org)) → en la búsqueda escribe `BotFather` y abre **@BotFather**, el que tiene la marca azul de verificado (hay copias falsas). Toca **Iniciar** (o escribe `/start`).
 2. Escríbele `/newbot`. Te pide:
    - el **nombre** visible: `Touched Block Moderación`;
    - el **usuario** del bot: tiene que terminar en `bot` y no estar tomado, p. ej. `touchedblock_mod_bot` (si está tomado, prueba otro).
@@ -596,22 +625,21 @@ Revisar antes de 24 h: node scripts/moderation.mjs reports
 4. **Deja que el bot te pueda escribir.** Toca el enlace `t.me/<usuario_del_bot>` que te dio BotFather (o búscalo por su usuario) y toca **Iniciar** (`/start`). Un bot no puede escribirle a nadie que no lo haya iniciado antes.
 5. **Obtén tu chat id** (un número; el tuyo es el de tu cuenta de Telegram). Justo después del paso 4 (Telegram guarda esos mensajes 24 h):
    - **Opción A (navegador):** abre `https://api.telegram.org/bot<TOKEN>/getUpdates` reemplazando `<TOKEN>` por el token completo (sin los `<>`; queda `…/bot1234567890:AAH…/getUpdates`). Busca `"chat":{"id":` y copia el número que sigue, p. ej. `"chat":{"id":123456789,"first_name":"…"` → `123456789`. Si sale `"result":[]`, escríbele "hola" al bot y recarga. Esa dirección lleva el token: no la compartas y cierra la pestaña al terminar.
-   - **Opción B (script, cuando la API ya tenga el token):** en la terminal del contenedor `api`, `node scripts/telegram-test.mjs --chat-id`. Muestra el `id` de cada chat que le escribió al bot (sin imprimir el token).
+   - **Opción B (script, cuando la API ya tenga el token):** en la terminal del contenedor `api`, `cd /app` y `node scripts/telegram-test.mjs --chat-id`. Muestra el `id` de cada chat que le escribió al bot (sin imprimir el token).
 6. **Pégalas en Dokploy** → proyecto **Touched Block** → Compose **API** → pestaña **Environment**, al final (y en la copia local `deploy/.env`):
-
    ```
-   TELEGRAM_BOT_TOKEN=1234567890:AAH...
-   TELEGRAM_CHAT_ID=123456789
+    TELEGRAM_BOT_TOKEN=1234567890:AAH...
+    TELEGRAM_CHAT_ID=123456789
    ```
 
-   **Save**. Las toma el siguiente despliegue (el tag de la API; o **Deploy** en Dokploy si la versión publicada ya trae los avisos).
-7. **Probar**, después del tag: en los logs del servicio `api`, al arrancar aparece `Avisos de reportes por Telegram activados.` (si dice `desactivados (falta …)`, revisa el nombre de la variable). Luego, en la terminal del contenedor `api`:
-
+    **Save**. Las toma el siguiente despliegue (el tag de la API; o **Deploy** en Dokploy si la versión publicada ya trae los avisos).
+7. **Probar**, después del tag: en los logs del servicio `api`, al arrancar aparece `Avisos de reportes por Telegram activados.` (si dice `desactivados (falta …)`, revisa el nombre de la variable). Luego, en la terminal del contenedor `api` (Dokploy → Compose **API** → **Open Terminal** → contenedor `…-api-1`):
    ```sh
-   node scripts/telegram-test.mjs              # o: node scripts/moderation.mjs telegram-test
+    cd /app                                     # la terminal abre en "/"; la API vive en /app
+    node scripts/telegram-test.mjs              # o: node scripts/moderation.mjs telegram-test
    ```
 
-   Debe llegarte "✅ Prueba de avisos de Touched Block". Si dice `400 (Bad Request: chat not found)`, el chat id está mal o no tocaste Iniciar en el bot (paso 4); si dice `401 (Unauthorized)`, el token está mal copiado.
+    Debe llegarte "✅ Prueba de avisos de Touched Block". Si dice `400 (Bad Request: chat not found)`, el chat id está mal o no tocaste Iniciar en el bot (paso 4); si dice `401 (Unauthorized)`, el token está mal copiado.
 
 Para apagar los avisos: borra (o deja vacía) cualquiera de las dos variables y vuelve a desplegar.
 
@@ -627,7 +655,7 @@ Para apagar los avisos: borra (o deja vacía) cualquiera de las dos variables y 
 
 ### Nombres antiguos
 
-El filtro no cambia nombres existentes. Después de publicar la API con el filtro:
+El filtro no cambia nombres existentes. Después de publicar la API con el filtro (en la terminal de Dokploy del contenedor `api`: primero `cd /app` y los comandos sin `docker compose exec api`):
 
 ```sh
 docker compose exec api node scripts/check-usernames.mjs                    # solo lista los que no pasan
