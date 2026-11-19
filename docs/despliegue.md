@@ -345,9 +345,14 @@ Lista de verificación completa (marcar a medida que se avanza):
 - [ ] **Apple Developer**: Services ID `app.touchedblock.web` con el dominio `web.touchedblock.app` y la Return URL `https://web.touchedblock.app/` (6.2).
 - [ ] **Apple Developer**: clave `.p8` descargada y guardada en el gestor de contraseñas; anotar su Key ID (6.3) y el Team ID (6.4).
 - [ ] **Opcional**: avisos servidor a servidor apuntando a `https://api.touchedblock.app/auth/apple/notifications` (6.1).
+- [ ] **Telegram** (avisos de reportes; pasos detallados en la sección 7, ["Avisos por Telegram"](#avisos-por-telegram)):
+  - [ ] Crear el bot con **@BotFather** (`/newbot`, nombre "Touched Block Moderación", usuario terminado en `bot`) y guardar el **token** en el gestor de contraseñas.
+  - [ ] Abrir el bot nuevo y tocar **Iniciar** (`/start`); sin esto el bot no puede escribirte.
+  - [ ] Obtener el **chat id**: `https://api.telegram.org/bot<TOKEN>/getUpdates` → número después de `"chat":{"id":` (o, después del tag, `node scripts/telegram-test.mjs --chat-id`).
 - [ ] **Dokploy → Environment**: `APPLE_AUDIENCES=app.touchedblock,app.touchedblock.web`, `APPLE_CLIENT_ID=app.touchedblock`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY` (en una línea, 6.5–6.6). Si se quieren los endpoints `/admin/*`, también `ADMIN_TOKEN` (sección 7). Para recibir cada reporte en el celular, también `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` (sección 7, "Avisos por Telegram"; opcionales). Guardar (todavía sin *Deploy*: lo hace el tag).
 - [ ] **Respaldo**: correr a mano la tarea `touched-block-respaldo` y revisar que diga `OK` (la versión trae migraciones nuevas).
 - [ ] **Tag de la API** (6.7): lo crea Claude cuando el usuario le avisa; o `git tag vX.Y.Z && git push origin vX.Y.Z`. Comprobar `https://api.touchedblock.app/health`: versión nueva y `features` con `moderation`.
+- [ ] **Probar Telegram**: en los logs de `api` debe decir `Avisos de reportes por Telegram activados.`; luego, en la terminal del contenedor `api`, `node scripts/telegram-test.mjs` y comprobar que llega el mensaje "✅ Prueba de avisos de Touched Block".
 - [ ] **Nombres antiguos**: `check-usernames.mjs` (sección 7) y revisar la lista antes de renombrar.
 - [ ] **Recién ahora, GitHub → Variables**: `EXPO_PUBLIC_APPLE_SERVICES_ID=app.touchedblock.web` y volver a correr *Desplegar la web en Cloudflare* (6.8).
 - [ ] **Probar** en `https://web.touchedblock.app` (6.9): entrar con Apple, cerrar sesión, volver a entrar (el nombre se mantiene), eliminar una cuenta de prueba y comprobar que desaparece de *Iniciar sesión con Apple* en account.apple.com.
