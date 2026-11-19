@@ -338,6 +338,20 @@ Orden recomendado (cada paso se comprueba antes de pasar al siguiente):
 4. Crear la variable de la web en GitHub y volver a publicar la web (6.8).
 5. Probar (6.9).
 
+Lista de verificación completa (marcar a medida que se avanza):
+
+- [ ] **Apple Developer**: Sign in with Apple activado en el App ID `app.touchedblock` (6.1).
+- [ ] **Apple Developer**: Services ID `app.touchedblock.web` con el dominio `web.touchedblock.app` y la Return URL `https://web.touchedblock.app/` (6.2).
+- [ ] **Apple Developer**: clave `.p8` descargada y guardada en el gestor de contraseñas; anotar su Key ID (6.3) y el Team ID (6.4).
+- [ ] **Opcional**: avisos servidor a servidor apuntando a `https://api.touchedblock.app/auth/apple/notifications` (6.1).
+- [ ] **Dokploy → Environment**: `APPLE_AUDIENCES=app.touchedblock,app.touchedblock.web`, `APPLE_CLIENT_ID=app.touchedblock`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY` (en una línea, 6.5–6.6). Si se quieren los endpoints `/admin/*`, también `ADMIN_TOKEN` (sección 7). Guardar (todavía sin *Deploy*: lo hace el tag).
+- [ ] **Respaldo**: correr a mano la tarea `touched-block-respaldo` y revisar que diga `OK` (la versión trae migraciones nuevas).
+- [ ] **Tag de la API** (6.7): lo crea Claude cuando el usuario le avisa; o `git tag vX.Y.Z && git push origin vX.Y.Z`. Comprobar `https://api.touchedblock.app/health`: versión nueva y `features` con `moderation`.
+- [ ] **Nombres antiguos**: `check-usernames.mjs` (sección 7) y revisar la lista antes de renombrar.
+- [ ] **Recién ahora, GitHub → Variables**: `EXPO_PUBLIC_APPLE_SERVICES_ID=app.touchedblock.web` y volver a correr *Desplegar la web en Cloudflare* (6.8).
+- [ ] **Probar** en `https://web.touchedblock.app` (6.9): entrar con Apple, cerrar sesión, volver a entrar (el nombre se mantiene), eliminar una cuenta de prueba y comprobar que desaparece de *Iniciar sesión con Apple* en account.apple.com.
+- [ ] **Avisarle a Claude** para actualizar la política de privacidad y `/eliminar-cuenta/` (hoy dicen que Apple estará disponible "cuando la app para iPhone esté disponible").
+
 **No crear la variable de la web (paso 4) antes de publicar la API nueva (paso 3)**: la API de producción `v0.4.0` no conoce el campo `redirectUri` y respondería `400 validation_error` al login con Apple. Mientras la variable no exista, la web publicada en cada push a `main` funciona igual que hoy con la API `v0.4.0`.
 
 ### 6.1 App ID con Sign in with Apple (lo usan la app iOS y la web)
@@ -509,9 +523,9 @@ Los nombres de usuario son el único contenido que un jugador escribe y otros ve
 
 Los reportes quedan en la tabla `Report` (no hay aviso por correo). **Revisarlos al menos una vez al día** mientras la app esté en la App Store (y siempre antes de 24 h si llega un correo a contacto@).
 
-### Herramientas
+### Consola de moderación
 
-Dos formas equivalentes:
+La **consola de moderación** es el script `moderation.mjs` (y su equivalente HTTP `/admin/*`). No tiene interfaz gráfica: se usa desde la terminal del contenedor. Dos formas equivalentes:
 
 1. **Línea de comandos** (recomendada; no necesita `ADMIN_TOKEN`). En Dokploy: pestaña del Compose → contenedor `api` → *Terminal* (o en el VPS, en la carpeta del Compose, `docker compose exec api …`):
 
