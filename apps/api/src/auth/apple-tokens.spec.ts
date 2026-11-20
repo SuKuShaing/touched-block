@@ -63,9 +63,9 @@ function fakePrisma(idents: { id: string; userId: string; provider: string; subj
       ),
     },
     user: {
-      delete: vi.fn(async ({ where }: { where: { id: string } }) => {
+      deleteMany: vi.fn(async ({ where }: { where: { id: string } }) => {
         deleted.push(where.id);
-        return {};
+        return { count: 1 };
       }),
     },
   };
@@ -73,6 +73,24 @@ function fakePrisma(idents: { id: string; userId: string; provider: string; subj
 }
 
 describe('TokenCipher', () => {
+  it('rechaza un tag GCM recortado', () => {
+    const c = new TokenCipher(SECRET);
+    const [v, iv, tag, ct] = c.encrypt('refresh-token-real').split(':');
+    const short = Buffer.from(tag, 'base64url').subarray(0, 4).toString('base64url');
+    expect(c.decrypt([v, iv, short, ct].join(':'))).toBeNull();
+  });
+
+  it('con APPLE_TOKEN_KEY cifra con ella y sigue leyendo lo cifrado con JWT_SECRET', () => {
+    const old = new TokenCipher(SECRET).encrypt('token-viejo');
+    const c = new TokenCipher('clave-propia-de-apple-0123456789abcdef', SECRET);
+    expect(c.decrypt(old)).toBe('token-viejo');
+    const nuevo = c.encrypt('token-nuevo');
+    expect(new TokenCipher(SECRET).decrypt(nuevo)).toBeNull();
+    // se puede rotar JWT_SECRET: la clave propia sigue leyendo lo nuevo
+    expect(new TokenCipher('clave-propia-de-apple-0123456789abcdef', 'otro-jwt').decrypt(nuevo)).toBe('token-nuevo');
+  });
+
+
   it('cifra y descifra; el texto cifrado no contiene el token', () => {
     const c = new TokenCipher(SECRET);
     const enc = c.encrypt('r.apple-refresh-token');
@@ -254,7 +272,7 @@ describe('UsersService.deleteMe con Apple', () => {
       order.push('revoke');
       return { status: 200 };
     });
-    (db.prisma.user.delete as unknown as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+    (db.prisma.user.deleteMany as unknown as ReturnType<typeof vi.fn>).mockImplementation(async () => {
       order.push('delete');
       return {};
     });
@@ -287,10 +305,13 @@ describe('UsersService.deleteMe con Apple', () => {
 
 describe('avisos servidor a servidor de Apple', () => {
   it('lee events como texto JSON o como objeto', () => {
-    expect(parseAppleEvents(JSON.stringify({ type: 'consent-revoked', sub: 's1', event_time: 1 }))).toEqual({
+    expect(parseAppleEvents(JSON.stringify({ type: 'consent-revoked', sub: 's1', event_time: 1_700_000_000_123 }))).toEqual({
       type: 'consent-revoked',
       subject: 's1',
+      eventTime: new Date(1_700_000_000_123),
     });
+    // en segundos también
+    expect(parseAppleEvents({ type: 'consent-revoked', sub: 's1', event_time: 1_700_000_000 }).eventTime).toEqual(new Date(1_700_000_000_000));
     expect(parseAppleEvents({ type: 'account-delete', sub: 's2' })).toEqual({ type: 'account-delete', subject: 's2' });
     // el nombre que usan los ejemplos de la documentación de Apple
     expect(parseAppleEvents({ type: 'account-deleted', sub: 's3' })).toEqual({ type: 'account-deleted', subject: 's3' });

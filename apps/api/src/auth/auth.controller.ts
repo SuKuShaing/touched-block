@@ -45,7 +45,8 @@ export class AuthController {
     // para poder revocar el token al eliminar la cuenta (guía 5.1.1(v)); nunca hace fallar el login
     // con el client_id de la autorización (bundle ID en iOS, Services ID en la web) y, en la web, su redirect_uri
     if (dto.authorizationCode) {
-      await this.appleTokens.storeFromCode(identity.subject, dto.authorizationCode, {
+      // sin await: el canje habla con Apple (hasta 8 s) y el login no debe esperarlo; storeFromCode nunca lanza
+      void this.appleTokens.storeFromCode(identity.subject, dto.authorizationCode, {
         clientId: identity.audience,
         redirectUri: dto.redirectUri,
       });
@@ -65,12 +66,18 @@ export class AuthController {
     if (!APPLE_DELETE_EVENTS.has(ev.type)) return { ok: true };
     const ident = await this.prisma.authIdentity.findUnique({
       where: { provider_subject: { provider: 'apple', subject: ev.subject } },
-      select: { userId: true },
+      select: { userId: true, createdAt: true },
     });
+    // un aviso anterior a la identidad (p. ej. un reintento del que borró la cuenta anterior del mismo
+    // Apple ID) no puede borrar la cuenta creada después
+    if (ident && ev.eventTime && ev.eventTime.getTime() < ident.createdAt.getTime()) {
+      this.log.log(`Aviso de Apple (${ev.type}) anterior a la cuenta actual: se ignora.`);
+      return { ok: true };
+    }
     if (ident) {
       // Apple ya cortó el vínculo: no hace falta revocar el token
       await this.users.deleteMe(ident.userId, { revokeApple: false });
-      this.log.log(`Cuenta eliminada por aviso de Apple (${ev.type}).`);
+      this.log.log(`Cuenta ${ident.userId} eliminada por aviso de Apple (${ev.type}).`);
     }
     return { ok: true };
   }

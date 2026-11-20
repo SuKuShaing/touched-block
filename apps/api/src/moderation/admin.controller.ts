@@ -4,7 +4,7 @@ import { Public } from '../auth/auth.guard';
 import { badRequest } from '../common/errors';
 import { PrismaService } from '../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
-import { findUserByUsername, forceRename, listReports, resolvePendingFor, resolveReport } from './admin';
+import { deleteUserByModeration, findUserByUsername, forceRename, listReports, resolveReport } from './admin';
 import { AdminGuard } from './admin.guard';
 import { AdminRenameDto, AdminReportsQuery, AdminResolveDto } from './dto';
 
@@ -48,8 +48,7 @@ export class AdminController {
   @HttpCode(200)
   async remove(@Param('username') username: string) {
     const user = await findUserByUsername(this.prisma, username);
-    const resolvedReports = await resolvePendingFor(this.prisma, user.id, `Cuenta @${user.username} eliminada por moderación.`);
-    await this.users.deleteMe(user.id);
+    const resolvedReports = await deleteUserByModeration(this.prisma, user, (id) => this.users.deleteMe(id));
     return { deleted: user.username, resolvedReports };
   }
 }

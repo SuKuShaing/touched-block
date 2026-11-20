@@ -38,6 +38,8 @@ export class SocialService {
       });
     });
 
+    // mismo cierre de carrera que en follow(), sin error: el corazón ya se dio
+    await this.undoIfBlockedMeanwhile(userId, inviter.id).catch(() => {});
     const invitedCount = await this.prisma.user.count({ where: { invitedById: inviter.id } });
     return { inviter, inviterInvitedCount: invitedCount, inviterMaxLives: livesFor(invitedCount) };
   }
@@ -50,6 +52,28 @@ export class SocialService {
     if (blocked.iBlocked) throw conflict('Bloqueaste a este jugador. Desbloquéalo en tu perfil para seguirlo.', 'user_blocked');
     if (blocked.blockedMe) throw forbidden('No puedes seguir a este jugador.', 'follow_blocked');
     await this.prisma.follow.createMany({ data: [{ followerId: userId, followeeId: targetId }], skipDuplicates: true });
+    await this.undoIfBlockedMeanwhile(userId, targetId);
+  }
+
+  /**
+   * Un bloqueo que se confirmó mientras se creaba el seguimiento puede no haberlo visto: se vuelve a
+   * mirar después de crearlo y, si ya hay bloqueo, se deshace (block() también borra los seguimientos
+   * después de confirmar el suyo, así que entre los dos no queda ninguno vivo).
+   */
+  private async undoIfBlockedMeanwhile(a: string, b: string) {
+    const now = await blockBetween(this.prisma, a, b);
+    if (!now.iBlocked && !now.blockedMe) return;
+    await this.prisma.follow.deleteMany({
+      where: {
+        OR: [
+          { followerId: a, followeeId: b },
+          { followerId: b, followeeId: a },
+        ],
+      },
+    });
+    throw now.iBlocked
+      ? conflict('Bloqueaste a este jugador. Desbloquéalo en tu perfil para seguirlo.', 'user_blocked')
+      : forbidden('No puedes seguir a este jugador.', 'follow_blocked');
   }
 
   async unfollow(userId: string, targetId: string) {

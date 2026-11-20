@@ -27,6 +27,8 @@ services:
       APPLE_TEAM_ID: ${APPLE_TEAM_ID:-}
       APPLE_KEY_ID: ${APPLE_KEY_ID:-}
       APPLE_PRIVATE_KEY: ${APPLE_PRIVATE_KEY:-}
+      # clave para cifrar ese token (opcional; sin ella se deriva de JWT_SECRET). SECRETO; no cambiarla una vez definida.
+      APPLE_TOKEN_KEY: ${APPLE_TOKEN_KEY:-}
       # moderación: secreto de /admin/* (cabecera X-Admin-Token); vacío = esos endpoints responden 404
       ADMIN_TOKEN: ${ADMIN_TOKEN:-}
       # moderación: aviso por Telegram con cada reporte nuevo (opcionales; si falta alguna no se envía nada).

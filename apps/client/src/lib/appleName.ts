@@ -10,7 +10,9 @@
 const MAX = 100;
 const pending = new Map<string, string>();
 
-const clean = (s: string | null | undefined) => (s ?? '').replace(/\s+/g, ' ').trim().slice(0, MAX) || null;
+// recorta por caracteres (no parte emojis) y vuelve a quitar el espacio que pudo quedar al final
+const clean = (s: string | null | undefined) =>
+  Array.from((s ?? '').replace(/\s+/g, ' ').trim()).slice(0, MAX).join('').trim() || null;
 
 /** Nombre completo a partir del objeto `user` de Sign in with Apple JS (solo viene la 1.ª vez). */
 export function appleWebName(user: { name?: { firstName?: string; lastName?: string } } | null | undefined): string | null {

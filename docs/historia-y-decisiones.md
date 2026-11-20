@@ -358,6 +358,22 @@ Para la guía 1.2 de Apple (contenido generado por usuarios). Lo único que un j
 - **Bloquear** borra los seguimientos en ambos sentidos y, mientras dure, nadie sigue al otro, no se ven en la búsqueda ni en los rankings de amigos (también se filtran en `resolveScope`, por si acaso) y el bloqueado recibe 404 en el perfil de quien lo bloqueó. Los rankings mundial y de país no cambian. "¿Quién te invitó?" con bloqueo da el corazón pero no crea seguimientos.
 - **Reportes** en la tabla `Report` (uno por par y día UTC, con el nombre del reportado en ese momento; `SetNull` si alguna cuenta se borra, para no perder el historial). No hay correo: el dueño los revisa con `scripts/moderation.mjs` (no necesita token: quien entra al contenedor ya tiene la base) o con `/admin/*` y `ADMIN_TOKEN`. Sin la variable, o con un token incorrecto, `/admin/*` responde 404 para no revelar que existe. Eliminar desde moderación usa `UsersService.deleteMe` (revoca Apple). Migración `20261118200000_add_moderation`: solo agrega.
 
+### Revisión adversarial de moderación y Apple (19 nov 2026)
+
+Revisión adversarial del código de moderación, Telegram y Sign in with Apple, con cambios en la API, la app iOS, la política de privacidad, `/eliminar-cuenta/`, los términos y el soporte.
+- **Los reportes se borran 1 año después de creados** (`REPORT_RETENTION_DAYS = 365`), en la limpieza periódica que ya borra partidas y sesiones vencidas. El usuario fijó ese máximo; ninguna norma aplicable exige menos, y un año es lo necesario para moderar reincidencias (ver si un nombre ya había sido reportado antes). Antes se guardaban sin plazo.
+- **Lo que queda de un reporte tras eliminar una cuenta, declarado tal cual en la política**: el reporte se desvincula de la cuenta (`SetNull`) y se conservan el nombre de usuario del reportado en ese momento, el motivo, el comentario opcional, el estado, la resolución (lo que hizo el moderador) y las fechas. La política decía solo "nombre, motivo y fecha", que no coincidía con lo que se guarda. Los bloqueos se borran con la cuenta.
+- **Telegram declarado como servicio externo** en la política de privacidad: recibe los datos del aviso de reporte (usuario reportado, motivo, comentario escapado, cuántos pendientes hay), nunca quién reportó.
+- **Texto del bloqueo**: decía que quien te bloqueó "no puede ver tu perfil", pero los perfiles son públicos y sin sesión cualquiera los ve. Ahora dice que **con su cuenta** no puede seguirte ni ver tu perfil, y que los perfiles son públicos.
+- **Nonce de Sign in with Apple, pospuesto**: el `identityToken` viaja solo por TLS directo a nuestra API y vence en minutos, así que por ahora no hace falta. Queda en pendientes.
+- **El filtro de nombres mantiene "polla" y "retard"** (decisión del usuario).
+- **La app iOS declara español** (`CFBundleDevelopmentRegion` "es" y `CFBundleLocalizations` ["es","en"]), para que el botón oficial de Apple, que traduce el sistema, salga en español a quien tenga el iPhone en español. Falta probarlo en un iPhone real.
+- **Un solo refresh token de Apple por cuenta**: más adelante solo existirán las apps; la web es para probar e iterar rápido, así que no vale la pena guardar uno por plataforma.
+- **`APPLE_TOKEN_KEY`** (opcional): clave propia para cifrar (AES-256-GCM) el refresh token de Apple, para desacoplarlo del `JWT_SECRET`. Sin ella se usa la derivada de `JWT_SECRET`, como antes; los tokens cifrados con la clave anterior se siguen leyendo, así que se puede rotar `JWT_SECRET` sin perder la revocación. Una vez definida no se cambia.
+- **Aviso de Apple viejo ignorado por `event_time`**: `POST /auth/apple/notifications` ignora un aviso cuyo `event_time` sea anterior a la creación de la identidad, para que un reintento atrasado de Apple no borre una cuenta nueva creada después con el mismo Apple ID. Además queda con el límite de 20 por minuto del controlador de auth.
+- **`DELETE /users/:username/block` no devuelve `block_self`** (solo `POST`): desbloquear es idempotente y responde 204.
+- **Recorte de textos por caracteres (code points)**, no por unidades UTF-16, para no partir un emoji a la mitad.
+
 ### El antitrampas actual basta (12 nov 2026)
 
 - Se repasó el sistema: replay con semilla del servidor, límites de toques por segundo, plazo de 2 h, duración compatible con el reloj real y una sola entrega por partida.

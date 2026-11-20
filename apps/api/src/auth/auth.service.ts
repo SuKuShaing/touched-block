@@ -5,6 +5,7 @@ import type { MeDto } from '../users/dto';
 import { UsersService } from '../users/users.service';
 import { type TokenPair, TokensService } from './tokens.service';
 import type { VerifiedIdentity } from './verifiers';
+import { truncateChars } from '../common/text';
 
 export type Provider = 'google' | 'apple';
 
@@ -31,10 +32,10 @@ export class AuthService {
    */
   async login(provider: Provider, identity: VerifiedIdentity, opts: { country?: string; name?: string | null } = {}) {
     let isNew = false;
-    const name = (identity.name ?? opts.name)?.trim().slice(0, 100) || null;
+    const name = truncateChars((identity.name ?? opts.name)?.trim() ?? '', 100).trim() || null;
     let userId = await this.findUserId(provider, identity.subject);
     // solo con el nombre que manda el cliente (Apple), no con el del token de Google, que llega siempre
-    const clientName = opts.name?.trim().slice(0, 100) || null;
+    const clientName = truncateChars(opts.name?.trim() ?? '', 100).trim() || null;
     if (userId && clientName) {
       await this.prisma.user.updateMany({ where: { id: userId, displayName: null }, data: { displayName: clientName } });
     }

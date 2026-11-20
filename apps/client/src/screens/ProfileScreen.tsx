@@ -535,18 +535,24 @@ function Blocked() {
   const router = useRouter();
   const blocks = useBlocks();
   const invalidate = useInvalidate();
-  const [busyId, setBusyId] = useState<string | null>(null);
+  // varias filas pueden estar desbloqueándose a la vez: cada una lleva su propio "ocupado"
+  const [busyIds, setBusyIds] = useState<ReadonlySet<string>>(new Set());
 
   const unblock = async (u: { id: string; username: string }) => {
-    setBusyId(u.id);
+    if (busyIds.has(u.id)) return;
+    setBusyIds((prev) => new Set(prev).add(u.id));
     try {
       await unblockUser(u.username);
-      invalidate('blocks', 'profile', 'lb', 'search');
+      invalidate('blocks', 'lb', 'dailyLb', 'following', 'profile', 'search', 'me');
       toast(`Desbloqueaste a @${u.username}`);
     } catch (e) {
       toast(moderationUnavailable(e) ? MODERATION_SOON : errorMessage(e));
     } finally {
-      setBusyId(null);
+      setBusyIds((prev) => {
+        const next = new Set(prev);
+        next.delete(u.id);
+        return next;
+      });
     }
   };
 
@@ -576,7 +582,7 @@ function Blocked() {
                 title="Desbloquear"
                 kind="ghost"
                 accessibilityLabel={`Desbloquear a ${u.username}`}
-                busy={busyId === u.id}
+                busy={busyIds.has(u.id)}
                 onPress={() => void unblock(u)}
               />
             </View>

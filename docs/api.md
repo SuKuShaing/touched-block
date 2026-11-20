@@ -55,7 +55,9 @@ No se aceptan propiedades extra en los cuerpos: devuelven `400 validation_error`
 | 400 | `follow_self` | Seguirse a uno mismo |
 | 400 | `invalid_user_id` | `:userId` no es un UUID |
 | 400 | `report_self` | Reportarse a uno mismo |
-| 400 | `block_self` | Bloquearse a uno mismo |
+| 400 | `block_self` | Bloquearse a uno mismo (solo `POST /users/:username/block`) |
+| 400 | `invalid_id` | `/admin/reports/:id/resolve` con un id que no es UUID |
+| 400 | `same_username` | `/admin/users/:username/rename` con el mismo nombre que ya tiene |
 | 401 | `unauthorized` | Falta la sesión |
 | 401 | `invalid_access_token` | JWT inválido o vencido, o la cuenta ya no existe |
 | 401 | `invalid_refresh_token` | Refresh token inválido, vencido, revocado o ya usado |
@@ -67,6 +69,7 @@ No se aceptan propiedades extra en los cuerpos: devuelven `400 validation_error`
 | 404 | `user_not_found` | Usuario inexistente |
 | 404 | `run_not_found` | Partida inexistente (o id que no es UUID) |
 | 404 | `challenge_not_found` | Reto inexistente (o código sin la forma de un código) |
+| 404 | `report_not_found` | Reporte inexistente (`/admin/reports/:id/resolve`) |
 | 409 | `username_taken` | Nombre de usuario tomado |
 | 409 | `country_change_too_soon` | Cambio de país antes de 30 días (incluye `nextCountryChangeAt`) |
 | 409 | `inviter_already_set` | Ya se indicó quién te invitó |
@@ -92,7 +95,7 @@ General: 120 por minuto (`THROTTLE_LIMIT`). Límites por ruta:
 
 | Ruta | Límite por minuto |
 |---|---|
-| `/auth/google`, `/auth/apple`, `/auth/logout` | 20 |
+| `/auth/google`, `/auth/apple`, `POST /auth/apple/notifications`, `/auth/logout` | 20 |
 | `/auth/refresh` | 30 |
 | `POST /runs`, `POST /runs/:id/finish` | 30 |
 | `POST /runs/:id/claim` | 20 |
@@ -261,7 +264,8 @@ Notificaciones servidor a servidor de Sign in with Apple (se configura la URL `h
 
 - El JWT se verifica como el `identityToken` (JWKS de Apple, `iss`, `aud` en `APPLE_AUDIENCES`). Su claim `events` trae `{ "type", "sub", … }`.
 - `consent-revoked` (la persona dejó de usar su Apple ID con la app) y `account-delete` / `account-deleted` (borró su Apple ID; la documentación de Apple usa los dos nombres): se elimina la cuenta de esa identidad, igual que `DELETE /me` pero sin volver a revocar en Apple. `email-disabled` / `email-enabled` y otros tipos se ignoran.
-- `200 { "ok": true }`, también si la cuenta ya no existe. Errores: `401 invalid_provider_token` (firma o audiencia inválida), `503 provider_unavailable` (sin `APPLE_AUDIENCES`), `400 validation_error`.
+- Se ignora un aviso cuyo `event_time` sea anterior a la fecha de creación de la identidad (desde el 19 nov 2026): así un reintento viejo de Apple no borra una cuenta nueva creada después con el mismo Apple ID.
+- `200 { "ok": true }`, también si la cuenta ya no existe o el aviso se ignora. Límite: 20 por minuto (el del controlador de auth). Errores: `401 invalid_provider_token` (firma o audiencia inválida), `503 provider_unavailable` (sin `APPLE_AUDIENCES`), `400 validation_error`.
 
 ### `POST /auth/refresh` (pública)
 
@@ -423,6 +427,7 @@ Reportar y bloquear jugadores. En el cliente no se ve por defecto: en las filas 
 - `reason`: `offensive_name` (nombre ofensivo), `impersonation` (suplantación) u `other`.
 - `details`: opcional, hasta 200 caracteres.
 - Un reporte por reportante, reportado y día (UTC). Queda `pending` en la tabla `Report` (no hay aviso por correo).
+- Retención: la limpieza periódica de la API (la misma que borra partidas y sesiones vencidas, `CLEANUP_INTERVAL_MS`) borra los reportes 1 año después de creados (`REPORT_RETENTION_DAYS = 365`). Si se elimina la cuenta del reportante o del reportado, el reporte queda desvinculado de ella (`reporter`/`reported` null) y se conserva hasta cumplir el año, con el nombre de usuario de ese momento, el motivo, el comentario, el estado, la resolución y las fechas. Los bloqueos se borran junto con la cuenta.
 - Efecto secundario: si la API tiene `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID`, manda un aviso por Telegram al dueño (usuario reportado, motivo, comentario escapado, pendientes de ese usuario y en total, hora). No se espera ni cambia la respuesta: si Telegram falla o tarda, el reporte se crea igual. Como mucho un aviso por usuario reportado cada 10 min (los demás se suman al siguiente). No incluye quién reportó. Detalle en `docs/despliegue.md`, sección 7, "Avisos por Telegram".
 
 `201`: `{ "id": "…", "status": "pending", "reviewWithinHours": 24 }`
@@ -437,7 +442,7 @@ Errores: `400 validation_error`, `400 report_self`, `404 user_not_found`, `409 a
 - no se ven en `GET /users/search` ni en los rankings de amigos (general y reto diario) del otro;
 - quien fue bloqueado recibe `404 user_not_found` al pedir el perfil de quien lo bloqueó.
 
-Desbloquear no recrea los seguimientos. Los rankings mundial y de país no cambian. Errores: `400 block_self`, `404 user_not_found`.
+Desbloquear no recrea los seguimientos. Los rankings mundial y de país no cambian. Los perfiles son públicos: sin sesión cualquiera puede ver el perfil de quien te bloqueó (y el tuyo). Errores: `POST`: `400 block_self`, `404 user_not_found`; `DELETE`: `404 user_not_found` (desbloquearse a uno mismo no da error: responde `204` sin hacer nada).
 
 ### `GET /me/blocks` (requiere sesión)
 
@@ -1085,5 +1090,8 @@ Al arrancar, el contenedor aplica las migraciones pendientes (`prisma migrate de
 | `CLEANUP_INTERVAL_MS` | no | Cada cuánto se limpian partidas viejas y sesiones vencidas (1 h; `0` la desactiva) |
 | `TRUST_PROXY` | no | Valor de `trust proxy` de Express (por defecto `loopback, linklocal, uniquelocal`, que sirve detrás de Traefik/Dokploy) |
 | `APP_VERSION` | no | Lo pone la imagen Docker (tag de git) y aparece en `/health` |
+| `APPLE_TOKEN_KEY` | no | Clave para cifrar (AES-256-GCM) el refresh token de Apple guardado; en producción, al menos 32 caracteres si se define. Sin ella se usa la derivada de `JWT_SECRET` (como antes). Los tokens cifrados con la clave anterior se siguen pudiendo leer, así que con `APPLE_TOKEN_KEY` definida se puede rotar `JWT_SECRET` sin perder la revocación. Una vez definida, no cambiarla. **Secreto: nunca en el repo** |
+| `TELEGRAM_BOT_TOKEN` | no | Token del bot de Telegram que avisa de cada reporte nuevo. Sin esta o sin `TELEGRAM_CHAT_ID` no se manda ningún aviso (queda un aviso en el log al arrancar). **Secreto: nunca en el repo** |
+| `TELEGRAM_CHAT_ID` | no | Chat privado del dueño al que el bot manda los avisos de reportes |
 | `ADMIN_TOKEN` | no | Secreto de los endpoints `/admin/*` (cabecera `X-Admin-Token`); en producción, al menos 32 caracteres. Sin él, `/admin/*` responde 404. **Secreto: nunca en el repo** |
 | `AUTH_DEV_FAKE` | no | Solo desarrollo: `1` acepta el login `dev:<sub>:<nombre>` en `/auth/google`. Se ignora con `NODE_ENV=production` |

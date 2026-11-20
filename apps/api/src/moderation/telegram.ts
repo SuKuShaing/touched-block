@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger, OnModuleInit, Optional } from '@nestjs/comm
 import { AppConfig } from '../config/app-config';
 import { PrismaService } from '../prisma/prisma.service';
 import { REPORT_REASON_LABELS, REPORT_RESPONSE_HOURS } from './admin';
+import { charLength, truncateChars } from '../common/text';
 
 /**
  * Avisos por Telegram al dueño cuando llega un reporte nuevo (para cumplir el plazo de 24 h de la
@@ -67,7 +68,7 @@ export interface ReportNotice {
 export function formatReportMessage(n: ReportNotice): string {
   const user = `@${escapeHtml(n.reportedUsername)}`;
   let details = (n.details ?? '').trim();
-  if (details.length > TELEGRAM_DETAILS_MAX) details = details.slice(0, TELEGRAM_DETAILS_MAX - 1) + '…';
+  if (charLength(details) > TELEGRAM_DETAILS_MAX) details = truncateChars(details, TELEGRAM_DETAILS_MAX - 1) + '…';
   const lines = [
     '🚩 <b>Nuevo reporte en Touched Block</b>',
     `Usuario: <b>${user}</b>`,
@@ -177,6 +178,11 @@ export class TelegramNotifier implements OnModuleInit {
       return true;
     } catch (e) {
       this.log.error(redactToken(`No se pudo enviar el aviso del reporte por Telegram: ${errText(e)}`, this.config.telegramBotToken));
+      // no se avisó: se libera la ventana y este reporte (más lo agrupado en ella) se cuenta en el próximo aviso
+      const open = this.recent.get(r.reportedId);
+      this.recent.delete(r.reportedId);
+      const lost = 1 + grouped + (open?.grouped ?? 0);
+      this.carried.set(r.reportedId, (this.carried.get(r.reportedId) ?? 0) + lost);
       return false;
     }
   }

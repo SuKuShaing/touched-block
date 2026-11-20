@@ -60,7 +60,7 @@ export function PublicProfileScreen() {
     setBusy(true);
     try {
       await unblockUser(q.data.username);
-      invalidate('profile', 'blocks', 'lb', 'search');
+      invalidate('blocks', 'lb', 'dailyLb', 'following', 'profile', 'search', 'me');
       toast(`Desbloqueaste a @${q.data.username}`);
     } catch (e) {
       toast(moderationUnavailable(e) ? MODERATION_SOON : errorMessage(e));
@@ -85,7 +85,7 @@ export function PublicProfileScreen() {
     const tier = tierStepOf(p.tier);
     body = (
       <>
-        <PlayerHoverArea menu={menu} user={p.isMe ? null : p} style={styles.head} moreStyle={styles.more}>
+        <PlayerHoverArea menu={menu} user={p.isMe ? null : p} style={styles.head} moreStyle={styles.more} a11yLabel={`Perfil de @${p.username}`}>
           <View style={styles.avatar}>
             <ProfileIcon size={34} />
           </View>

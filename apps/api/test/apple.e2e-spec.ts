@@ -17,8 +17,11 @@ class FakeAppleVerifier extends AppleVerifier {
     if (!m) throw unauthorized('Token inválido', 'invalid_provider_token');
     return { subject: m[1], email: `${m[1]}@privaterelay.appleid.com`, name: null, audience: m[2] };
   }
-  async verifyNotification(): Promise<AppleNotification> {
-    throw unauthorized('no', 'invalid_provider_token');
+  /** Aviso falso: `notif:<type>:<sub>[:<event_time ms>]`. */
+  async verifyNotification(payload: string): Promise<AppleNotification> {
+    const m = /^notif:([^:]+):([^:]+)(?::([0-9]+))?$/.exec(payload);
+    if (!m) throw unauthorized('no', 'invalid_provider_token');
+    return { type: m[1], subject: m[2], eventTime: m[3] ? new Date(Number(m[3])) : null };
   }
 }
 
@@ -120,5 +123,40 @@ describe('POST /auth/apple: canje del código', () => {
       .send({ identityToken: `apple:${SUB}5:app.touchedblock.web`, redirectUri: 'http://localhost:8081/' })
       .expect(400);
     expect(res.body.code).toBe('validation_error');
+  });
+});
+
+describe('POST /auth/apple/notifications', () => {
+  const login = async (n: string) =>
+    (await http().post('/auth/apple').send({ identityToken: `apple:${SUB}${n}:app.touchedblock` }).expect(200)).body.user.id as string;
+  const notify = (payload: string) => http().post('/auth/apple/notifications').send({ payload });
+  const exists = async (id: string) => !!(await prisma.user.findUnique({ where: { id } }));
+
+  it('consent-revoked y account-delete eliminan la cuenta', async () => {
+    const a = await login('n1');
+    await notify(`notif:consent-revoked:${SUB}n1:${Date.now() + 1000}`).expect(200);
+    expect(await exists(a)).toBe(false);
+    const b = await login('n2');
+    await notify(`notif:account-delete:${SUB}n2`).expect(200);
+    expect(await exists(b)).toBe(false);
+  });
+
+  it('los demás avisos no borran nada, y una cuenta inexistente responde 200', async () => {
+    const a = await login('n3');
+    await notify(`notif:email-disabled:${SUB}n3`).expect(200);
+    expect(await exists(a)).toBe(true);
+    await notify(`notif:consent-revoked:${SUB}no-existe`).expect(200);
+  });
+
+  it('un aviso anterior a la cuenta actual (reintento del de la cuenta borrada) se ignora', async () => {
+    const old = Date.now() - 60_000;
+    const a = await login('n4');
+    await notify(`notif:consent-revoked:${SUB}n4:${old}`).expect(200);
+    expect(await exists(a)).toBe(true);
+  });
+
+  it('un aviso inválido responde 401', async () => {
+    const res = await notify('basura-que-no-es-un-aviso').expect(401);
+    expect(res.body.code).toBe('invalid_provider_token');
   });
 });

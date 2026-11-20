@@ -9,6 +9,7 @@ import { blockBetween } from '../moderation/blocks';
 import { StatsService } from '../stats/stats.service';
 import type { MeDto, PublicUserDto, UpdateMeDto } from './dto';
 import { normalizeUsername, searchKey, usernameBase, usernameCandidates, usernameProblem } from './username';
+import { truncateChars } from '../common/text';
 
 /** Días mínimos entre dos cambios de país. */
 export const COUNTRY_CHANGE_DAYS = 30;
@@ -55,7 +56,7 @@ export class UsersService {
         return await this.prisma.user.create({
           data: {
             username,
-            displayName: input.name?.slice(0, 100) ?? null,
+            displayName: input.name != null ? truncateChars(input.name, 100) : null,
             email: input.email?.slice(0, 320) ?? null,
             country: normalizeCountry(input.country),
             identities: {
@@ -165,7 +166,8 @@ export class UsersService {
     }
     // borra en cascada identidades, sesiones, partidas, récords, seguimientos, estadísticas,
     // resultados de retos y del reto diario, y premios de misiones (los retos que creó quedan sin creador)
-    await this.prisma.user.delete({ where: { id: userId } });
+    // deleteMany: si otra petición ya la borró (dos avisos o dos DELETE /me a la vez), no es un error
+    await this.prisma.user.deleteMany({ where: { id: userId } });
   }
 
   async checkUsername(raw: string, userId?: string) {

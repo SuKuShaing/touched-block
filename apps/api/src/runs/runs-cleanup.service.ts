@@ -27,7 +27,9 @@ export class RunsCleanupService implements OnApplicationBootstrap, OnApplication
   async run() {
     try {
       const r = await this.runs.cleanup();
-      if (r.runs || r.refreshTokens) this.log.log(`Borradas ${r.runs} partidas y ${r.refreshTokens} sesiones vencidas`);
+      if (r.runs || r.refreshTokens || r.reports) {
+        this.log.log(`Borradas ${r.runs} partidas, ${r.refreshTokens} sesiones vencidas y ${r.reports} reportes de más de un año`);
+      }
     } catch (e) {
       this.log.error(`Falló la limpieza: ${e instanceof Error ? e.message : String(e)}`);
     }

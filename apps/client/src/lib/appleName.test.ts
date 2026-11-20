@@ -44,3 +44,15 @@ describe('nombre de Sign in with Apple', () => {
     expect(appleNameForLogin(t, 'x'.repeat(150))).toHaveLength(100);
   });
 });
+
+describe('appleWebName: recorte', () => {
+  const wellFormed = (s: string) => !/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/.test(s);
+  it('no termina en espacio al recortar a 100', () => {
+    expect(appleWebName({ name: { firstName: 'x'.repeat(99), lastName: 'y' } })).toBe('x'.repeat(99));
+  });
+  it('no parte emojis al recortar', () => {
+    const n = appleWebName({ name: { firstName: 'x'.repeat(99) + '😀😀' } })!;
+    expect(wellFormed(n)).toBe(true);
+    expect(n).toBe('x'.repeat(99) + '😀');
+  });
+});

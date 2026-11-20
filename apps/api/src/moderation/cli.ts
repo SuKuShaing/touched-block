@@ -5,8 +5,10 @@ import { CoreModule } from '../prisma/core.module';
 import { PrismaService } from '../prisma/prisma.service';
 import { UsersModule } from '../users/users.module';
 import { UsersService } from '../users/users.service';
-import { REPORT_REASON_LABELS, REPORT_RESPONSE_HOURS, findUserByUsername, forceRename, listReports, namesFailingFilter, resolvePendingFor, resolveReport } from './admin';
+import { REPORT_REASON_LABELS, REPORT_RESPONSE_HOURS, deleteUserByModeration, findUserByUsername, forceRename, listReports, namesFailingFilter, resolvePendingFor, resolveReport } from './admin';
 import { runTelegramCli } from './telegram-cli';
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * Moderación desde la línea de comandos (lo mismo que /admin/*, sin ADMIN_TOKEN: quien entra al
@@ -77,7 +79,7 @@ export async function runModerationCli(argv: string[], log: (m: string) => void 
         const statusFlag = flags.get('status');
         const status = flags.has('all') ? 'all' : typeof statusFlag === 'string' ? statusFlag : 'pending';
         if (!['pending', 'resolved', 'dismissed', 'all'].includes(status)) throw new Error(`Estado desconocido: ${status}`);
-        const limit = Number(flags.get('limit')) || 100;
+        const limit = Math.min(500, Math.max(1, Math.floor(Number(flags.get('limit')) || 100)));
         const r = await listReports(prisma, { status: status as 'pending', limit });
         log(`Pendientes: ${r.pending} (${r.overdue} con más de ${REPORT_RESPONSE_HOURS} h).`);
         if (!r.reports.length) log('No hay reportes que mostrar.');
@@ -103,6 +105,7 @@ export async function runModerationCli(argv: string[], log: (m: string) => void 
           const n = await resolvePendingFor(prisma, user.id, note ?? (status === 'dismissed' ? 'Revisado: sin infracción.' : 'Resuelto.'), status);
           log(`${n} reporte(s) pendiente(s) de @${user.username} marcado(s) como ${status === 'dismissed' ? 'descartados' : 'resueltos'}.`);
         } else {
+          if (!UUID_RE.test(target)) throw new Error(`Id de reporte inválido: ${target} (usa el id que muestra "reports" o @usuario).`);
           const r = await resolveReport(prisma, target, { status, resolution: note });
           log(`Reporte ${r.id} marcado como ${r.status}.`);
         }
@@ -127,8 +130,8 @@ export async function runModerationCli(argv: string[], log: (m: string) => void 
           log(`(prueba) Se eliminaría la cuenta @${user.username} (${user.id}). Agrega --yes para eliminarla de verdad.`);
           return dryRun ? 0 : 1;
         }
-        const n = await resolvePendingFor(prisma, user.id, `Cuenta @${user.username} eliminada por moderación.`);
-        await app.get(UsersService).deleteMe(user.id);
+        const users = app.get(UsersService);
+        const n = await deleteUserByModeration(prisma, user, (id) => users.deleteMe(id));
         log(`Cuenta @${user.username} eliminada. Reportes cerrados: ${n}.`);
         return 0;
       }
@@ -144,11 +147,17 @@ export async function runModerationCli(argv: string[], log: (m: string) => void 
           log('\nNo se cambió nada. Para ponerles un nombre automático: --rename (prueba primero con --rename --dry-run).');
           return 0;
         }
+        let failed = 0;
         for (const b of bad) {
-          const r = await forceRename(prisma, b.username, null, { dryRun });
-          log(r.dryRun ? `(prueba) @${r.from} → @${r.to}` : `@${r.from} → @${r.to}`);
+          try {
+            const r = await forceRename(prisma, b.username, null, { dryRun });
+            log(r.dryRun ? `(prueba) @${r.from} → @${r.to}` : `@${r.from} → @${r.to}`);
+          } catch (e) {
+            failed++;
+            log(`Error con @${b.username}: ${errText(e)}`);
+          }
         }
-        return 0;
+        return failed ? 1 : 0;
       }
       default:
         log(`Comando desconocido: ${cmd}\n\n${MODERATION_USAGE}`);

@@ -1,5 +1,6 @@
 import { type ReactNode, useRef, useState } from 'react';
 import {
+  type AccessibilityActionEvent,
   type GestureResponderEvent,
   type PointerEvent,
   Modal,
@@ -19,7 +20,7 @@ import { blockUser, reportUser, unblockUser } from '@/api/endpoints';
 import { useApiFeatures, useBlocks, useInvalidate, useViewer } from '@/api/hooks';
 import type { ReportReason } from '@/api/types';
 import { features } from '@/config';
-import { LONG_PRESS_MS, MODERATION_SOON, REPORT_DETAILS_MAX, REPORT_REASONS, REPORT_REVIEW_HOURS, moderationUnavailable } from '@/lib/moderation';
+import { LONG_PRESS_MS, MODERATION_SOON, REPORT_DETAILS_MAX, REPORT_REASONS, REPORT_REVIEW_HOURS, moderationUnavailable, truncateChars } from '@/lib/moderation';
 import { fx } from '@/platform/fx';
 import { C } from '@/theme';
 import { LoginOptions } from './LoginOptions';
@@ -34,6 +35,8 @@ import { toast } from './Toast';
 
 export interface PlayerRef {
   username: string;
+  /** Si ya se sabe que lo bloqueaste (perfil público): se usa mientras carga la lista de bloqueados. */
+  isBlocked?: boolean;
 }
 
 export interface PlayerMenu {
@@ -67,6 +70,8 @@ export function usePlayerMenu(): PlayerMenu {
   const [err, setErr] = useState<string | null>(null);
   const [reason, setReason] = useState<ReportReason | null>(null);
   const [details, setDetails] = useState('');
+  // lo que eligió antes de tener que iniciar sesión (reportar o bloquear), para seguir con eso después
+  const afterLogin = useRef<Mode | null>(null);
 
   const myName = viewer.user?.username?.toLowerCase();
   const canOpen = (u: PlayerRef | null | undefined) => enabled && !!u && u.username.toLowerCase() !== myName;
@@ -98,6 +103,7 @@ export function usePlayerMenu(): PlayerMenu {
   const settled = () => Date.now() - openedAt.current > OPEN_GUARD_MS;
   const close = () => {
     if (busy || !settled()) return;
+    afterLogin.current = null;
     setMode(null);
     setErr(null);
     setReason(null);
@@ -105,8 +111,27 @@ export function usePlayerMenu(): PlayerMenu {
   };
 
   const name = target?.username ?? '';
-  const isBlocked = !!blocks.data?.users.some((b) => b.username === name);
-  const needLogin = (next: Mode) => setMode(viewer.loggedIn ? next : 'login');
+  const lname = name.toLowerCase();
+  const isBlocked = blocks.data ? blocks.data.users.some((b) => b.username.toLowerCase() === lname) : !!target?.isBlocked;
+  // con sesión, mientras carga la lista no se sabe si ofrecer bloquear o desbloquear (salvo la pista del perfil)
+  const blocksLoading = viewer.loggedIn && !blocks.data && !blocks.isError && target?.isBlocked === undefined;
+  const needLogin = (next: Mode) => {
+    if (viewer.loggedIn) return setMode(next);
+    afterLogin.current = next;
+    setMode('login');
+  };
+  /** Tras iniciar sesión dentro del menú: sigue con lo que eligió, salvo que haya entrado con la cuenta de ese jugador. */
+  const onLoggedIn = (r: { user: { username: string } }) => {
+    const next = afterLogin.current ?? 'menu';
+    afterLogin.current = null;
+    if (r.user.username.toLowerCase() === lname) {
+      setMode(null);
+      setErr(null);
+      return;
+    }
+    // si cerró el menú mientras iniciaba sesión, no se vuelve a abrir solo
+    setMode((m) => (m === 'login' ? next : m));
+  };
   const refresh = () => invalidate('blocks', 'lb', 'dailyLb', 'following', 'profile', 'search', 'me');
 
   const fail = (e: unknown) => setErr(moderationUnavailable(e) ? MODERATION_SOON : errorMessage(e));
@@ -116,7 +141,7 @@ export function usePlayerMenu(): PlayerMenu {
     setBusy(true);
     setErr(null);
     try {
-      await reportUser(target.username, reason, details.slice(0, REPORT_DETAILS_MAX));
+      await reportUser(target.username, reason, truncateChars(details, REPORT_DETAILS_MAX));
       setBusy(false);
       close();
       toast(`Gracias. Revisaremos el reporte dentro de ${REPORT_REVIEW_HOURS} horas.`);
@@ -172,20 +197,22 @@ export function usePlayerMenu(): PlayerMenu {
                 <Text style={styles.title} numberOfLines={1}>
                   @{name}
                 </Text>
-                <MenuItem label="Reportar nombre" onPress={() => settled() && needLogin('report')} />
-                {isBlocked ? (
+                <MenuItem label="Reportar nombre" disabled={busy} onPress={() => settled() && needLogin('report')} />
+                {blocksLoading ? (
+                  <MenuItem label="Bloquear jugador" busy onPress={() => {}} />
+                ) : isBlocked ? (
                   <MenuItem label="Desbloquear jugador" onPress={() => settled() && void doUnblock()} busy={busy} />
                 ) : (
                   <MenuItem label="Bloquear jugador" danger onPress={() => settled() && needLogin('block')} />
                 )}
                 {err ? <Text style={styles.err}>{err}</Text> : null}
-                <MenuItem label="Cancelar" muted onPress={close} />
+                <MenuItem label="Cancelar" muted disabled={busy} onPress={close} />
               </>
             ) : mode === 'login' ? (
               <>
                 <Text style={styles.title}>Inicia sesión</Text>
                 <Text style={styles.msg}>Para reportar o bloquear a @{name} necesitas una cuenta.</Text>
-                <LoginOptions onLoggedIn={() => setMode('menu')} />
+                <LoginOptions onLoggedIn={onLoggedIn} />
                 <MenuItem label="Cancelar" muted onPress={close} />
               </>
             ) : mode === 'report' ? (
@@ -213,7 +240,7 @@ export function usePlayerMenu(): PlayerMenu {
                 </View>
                 <TextInput
                   value={details}
-                  onChangeText={(t) => setDetails(t.slice(0, REPORT_DETAILS_MAX))}
+                  onChangeText={(t) => setDetails(truncateChars(t, REPORT_DETAILS_MAX))}
                   placeholder="Cuéntanos más (opcional)"
                   placeholderTextColor="rgba(255,255,255,0.35)"
                   multiline
@@ -288,12 +315,28 @@ export function usePlayerMenu(): PlayerMenu {
 /** Tras abrir el menú, ignora toques durante este tiempo (el dedo que lo abrió). */
 const OPEN_GUARD_MS = 350;
 
-function MenuItem({ label, onPress, danger, muted, busy }: { label: string; onPress: () => void; danger?: boolean; muted?: boolean; busy?: boolean }) {
+function MenuItem({
+  label,
+  onPress,
+  danger,
+  muted,
+  busy,
+  disabled,
+}: {
+  label: string;
+  onPress: () => void;
+  danger?: boolean;
+  muted?: boolean;
+  busy?: boolean;
+  /** Otra acción del menú está en curso. */
+  disabled?: boolean;
+}) {
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityState={{ disabled: !!(busy || disabled), busy: !!busy }}
       onPress={onPress}
-      disabled={busy}
+      disabled={busy || disabled}
       style={({ pressed }) => [styles.item, pressed && styles.pressed]}
     >
       <Text style={[styles.itemT, danger && styles.itemDanger, muted && styles.itemMuted]}>{busy ? 'Un momento…' : label}</Text>
@@ -332,6 +375,7 @@ export function PlayerHoverArea({
   user,
   style,
   moreStyle,
+  a11yLabel,
   children,
 }: {
   menu: PlayerMenu;
@@ -339,6 +383,12 @@ export function PlayerHoverArea({
   style?: StyleProp<ViewStyle>;
   /** Posición del botón "⋯" (por defecto, a la derecha y centrado en la fila). */
   moreStyle?: StyleProp<ViewStyle>;
+  /**
+   * Cuando dentro no hay un enlace con `playerLongPress` (p. ej. la cabecera del perfil): la zona
+   * misma lleva la acción "Reportar o bloquear" para lectores de pantalla y, en la web, al llegar
+   * con el teclado (Tab) muestra el "⋯".
+   */
+  a11yLabel?: string;
   children: ReactNode;
 }) {
   const [hover, setHover] = useState(false);
@@ -360,10 +410,20 @@ export function PlayerHoverArea({
   return (
     <View style={styles.wrap} {...hoverProps}>
       <Pressable
-        accessible={false}
-        focusable={false}
+        accessible={!!a11yLabel}
+        focusable={!!a11yLabel}
         style={[style, noSelect, styles.area]}
         {...menu.longPress(user)}
+        {...(a11yLabel
+          ? {
+              accessibilityLabel: a11yLabel,
+              accessibilityActions: [{ name: 'longpress', label: 'Reportar o bloquear' }],
+              onAccessibilityAction: (e: AccessibilityActionEvent) => {
+                if (e.nativeEvent.actionName === 'longpress') menu.open(user);
+              },
+              onFocus: () => Platform.OS === 'web' && setHover(true),
+            }
+          : {})}
       >
         {children}
       </Pressable>

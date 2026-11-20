@@ -32,6 +32,7 @@ type FetchFn = typeof fetch;
 const TIMEOUT_MS = 8000;
 const SECRET_TTL_SEC = 60 * 60;
 const ENC_PREFIX = 'v1';
+const TAG_BYTES = 16;
 
 type RevocationConfig = Pick<AppConfig, 'appleTeamId' | 'appleKeyId' | 'applePrivateKey' | 'appleClientId' | 'jwtSecret'>;
 
@@ -46,20 +47,25 @@ export function missingAppleRevocationVars(c: RevocationConfig): string[] {
 }
 
 /**
- * Cifrado del refresh token de Apple: AES-256-GCM con una clave derivada (HKDF-SHA256) de JWT_SECRET.
- * Si JWT_SECRET cambia, los tokens guardados ya no se pueden descifrar: la revocación de esas cuentas
- * se omite con un aviso (también se cierran todas las sesiones, así que es un cambio poco frecuente).
+ * Cifrado del refresh token de Apple: AES-256-GCM con una clave derivada (HKDF-SHA256) de APPLE_TOKEN_KEY
+ * o, si no está, de JWT_SECRET (como al principio). Descifra con cualquiera de las claves, así los tokens
+ * guardados antes de definir APPLE_TOKEN_KEY se siguen leyendo; con APPLE_TOKEN_KEY definida se puede
+ * rotar JWT_SECRET sin perder la revocación. Si se pierde la clave con que se cifró un token, su
+ * revocación se omite con un aviso.
  */
 export class TokenCipher {
-  private readonly key: Buffer;
+  private readonly keys: Buffer[];
 
-  constructor(secret: string) {
-    this.key = Buffer.from(hkdfSync('sha256', secret, 'touched-block', 'apple-refresh-token-v1', 32));
+  /** El primer secreto cifra; todos (los no vacíos y distintos) sirven para descifrar. */
+  constructor(...secrets: string[]) {
+    const uniq = [...new Set(secrets.filter(Boolean))];
+    if (!uniq.length) throw new Error('TokenCipher sin secreto');
+    this.keys = uniq.map((x) => Buffer.from(hkdfSync('sha256', x, 'touched-block', 'apple-refresh-token-v1', 32)));
   }
 
   encrypt(plain: string): string {
     const iv = randomBytes(12);
-    const c = createCipheriv('aes-256-gcm', this.key, iv);
+    const c = createCipheriv('aes-256-gcm', this.keys[0], iv);
     const ct = Buffer.concat([c.update(plain, 'utf8'), c.final()]);
     return [ENC_PREFIX, iv.toString('base64url'), c.getAuthTag().toString('base64url'), ct.toString('base64url')].join(':');
   }
@@ -68,13 +74,18 @@ export class TokenCipher {
   decrypt(enc: string): string | null {
     const [v, iv, tag, ct] = enc.split(':');
     if (v !== ENC_PREFIX || !iv || !tag || ct === undefined) return null;
-    try {
-      const d = createDecipheriv('aes-256-gcm', this.key, Buffer.from(iv, 'base64url'));
-      d.setAuthTag(Buffer.from(tag, 'base64url'));
-      return Buffer.concat([d.update(Buffer.from(ct, 'base64url')), d.final()]).toString('utf8');
-    } catch {
-      return null;
+    const tagBuf = Buffer.from(tag, 'base64url');
+    if (tagBuf.length !== TAG_BYTES) return null; // un tag recortado debilita la autenticación
+    for (const key of this.keys) {
+      try {
+        const d = createDecipheriv('aes-256-gcm', key, Buffer.from(iv, 'base64url'), { authTagLength: TAG_BYTES });
+        d.setAuthTag(tagBuf);
+        return Buffer.concat([d.update(Buffer.from(ct, 'base64url')), d.final()]).toString('utf8');
+      } catch {
+        // otra clave o datos alterados: se prueba la siguiente
+      }
     }
+    return null;
   }
 }
 
@@ -128,7 +139,7 @@ export class AppleTokensService {
     @Optional() @Inject(APPLE_FETCH) fetchFn?: FetchFn,
   ) {
     this.fetchFn = fetchFn ?? ((...a) => fetch(...a));
-    this.cipher = new TokenCipher(config.jwtSecret);
+    this.cipher = new TokenCipher(config.appleTokenKey, config.jwtSecret);
   }
 
   /** true si están las variables para canjear y revocar. */

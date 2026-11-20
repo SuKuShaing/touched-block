@@ -30,7 +30,12 @@
       "bundleIdentifier": "app.touchedblock",
       "supportsTablet": false,
       "icon": "./assets/icono/icon-movil.png",
-      "usesAppleSignIn": true
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "CFBundleDevelopmentRegion": "es",
+        "CFBundleLocalizations": ["es", "en"],
+        "CFBundleAllowMixedLocalizations": true
+      }
     },
     "web": {
       "bundler": "metro",

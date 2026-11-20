@@ -25,6 +25,7 @@ import { challengeField, CommonFieldService } from './common-field.service';
 import type { ClaimRunDto, CreateRunDto, FinishRunDto } from './dto';
 import { type RunPlatform, resolvePlatform } from './platform';
 import { REJECT_MESSAGES, modsOf, verifyRun } from './run-verification';
+import { deleteExpiredReports } from '../moderation/admin';
 
 /** Plazo para reclamar una partida de invitado después de terminarla. */
 export const CLAIM_WINDOW_MS = 60 * 60 * 1000;
@@ -399,6 +400,7 @@ export class RunsService {
     const tokens = await this.prisma.refreshToken.deleteMany({
       where: { OR: [{ expiresAt: { lt: now } }, { revokedAt: { lt: cutoff } }] },
     });
-    return { runs: runs.count, refreshTokens: tokens.count };
+    const reports = await deleteExpiredReports(this.prisma, now);
+    return { runs: runs.count, refreshTokens: tokens.count, reports };
   }
 }

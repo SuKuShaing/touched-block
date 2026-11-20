@@ -30,6 +30,8 @@ export interface AppleNotification {
   /** "consent-revoked" | "account-delete" | "email-disabled" | "email-enabled" | otro futuro. */
   type: string;
   subject: string;
+  /** Cuándo ocurrió el evento (event_time de Apple o, si falta, iat del aviso); null si no viene. */
+  eventTime?: Date | null;
 }
 
 /** Verificador del identityToken de Sign in with Apple (mismo patrón que Google). */
@@ -107,7 +109,9 @@ export class JoseAppleVerifier extends AppleVerifier {
         issuer: APPLE_ISSUER,
         audience: this.config.appleAudiences,
       });
-      return parseAppleEvents(payload.events);
+      const ev = parseAppleEvents(payload.events);
+      if (!ev.eventTime && typeof payload.iat === 'number') ev.eventTime = new Date(payload.iat * 1000);
+      return ev;
     } catch {
       throw invalidToken();
     }
@@ -116,9 +120,13 @@ export class JoseAppleVerifier extends AppleVerifier {
 
 /** El claim `events` llega como texto JSON (a veces ya como objeto): { type, sub, ... }. */
 export function parseAppleEvents(raw: unknown): AppleNotification {
-  const ev = (typeof raw === 'string' ? JSON.parse(raw) : raw) as { type?: unknown; sub?: unknown } | null;
+  const ev = (typeof raw === 'string' ? JSON.parse(raw) : raw) as { type?: unknown; sub?: unknown; event_time?: unknown } | null;
   if (!ev || typeof ev.type !== 'string' || typeof ev.sub !== 'string' || !ev.sub) throw new Error('events inválido');
-  return { type: ev.type, subject: ev.sub };
+  const out: AppleNotification = { type: ev.type, subject: ev.sub };
+  // Apple lo manda en milisegundos; se aceptan también segundos
+  const t = typeof ev.event_time === 'number' && Number.isFinite(ev.event_time) && ev.event_time > 0 ? ev.event_time : null;
+  if (t !== null) out.eventTime = new Date(t < 1e12 ? t * 1000 : t);
+  return out;
 }
 
 /** true si se acepta el login de desarrollo (`dev:<sub>:<nombre>`): AUTH_DEV_FAKE=1 y nunca en producción. */

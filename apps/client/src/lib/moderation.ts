@@ -27,7 +27,15 @@ export const REPORT_REASONS: { value: ReportReason; label: string }[] = [
 export function moderationUnavailable(e: unknown): boolean {
   if (!e || typeof e !== 'object') return false;
   const { status, code } = e as { status?: unknown; code?: unknown };
-  return status === 404 && code !== 'user_not_found';
+  // solo el 404 genérico de ruta desconocida (Nest: "not_found"; sin cuerpo: "http_404"); un 404 con
+  // un código propio (user_not_found, report_not_found…) es un error real y se muestra tal cual
+  return status === 404 && (code === 'not_found' || code === 'http_404');
 }
 
 export const MODERATION_SOON = 'Disponible pronto.';
+
+/** Recorta a `max` caracteres reales (como @MaxLength de la API) sin partir emojis. */
+export function truncateChars(s: string, max: number): string {
+  if (s.length <= max) return s;
+  return Array.from(s).slice(0, Math.max(0, max)).join('');
+}

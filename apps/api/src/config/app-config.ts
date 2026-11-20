@@ -33,6 +33,12 @@ export class AppConfig {
   readonly appleKeyId = (process.env.APPLE_KEY_ID ?? '').trim();
   readonly applePrivateKey = (process.env.APPLE_PRIVATE_KEY ?? '').replace(/\\n/g, '\n').trim();
   readonly appleClientId = (process.env.APPLE_CLIENT_ID ?? '').trim() || this.appleAudiences[0] || '';
+  /**
+   * Clave para cifrar ese refresh token de Apple (opcional; mínimo 32 caracteres en producción). Sin
+   * ella se usa una derivada de JWT_SECRET; con ella, JWT_SECRET se puede rotar sin perder la
+   * revocación. Una vez definida no se cambia: los tokens cifrados con ella dejarían de leerse.
+   */
+  readonly appleTokenKey = (process.env.APPLE_TOKEN_KEY ?? '').trim();
   readonly corsOrigins = list(process.env.CORS_ORIGINS ?? 'http://localhost:8081');
   /** Solo desarrollo: acepta idTokens `dev:<sub>:<nombre>` en /auth/google. Se ignora en producción. */
   readonly authDevFake = process.env.AUTH_DEV_FAKE === '1';
@@ -66,6 +72,9 @@ export class AppConfig {
     if (!this.jwtSecret) throw new Error('Falta la variable de entorno JWT_SECRET');
     if (this.nodeEnv === 'production' && this.jwtSecret.length < 32) {
       throw new Error('JWT_SECRET debe tener al menos 32 caracteres en producción');
+    }
+    if (this.nodeEnv === 'production' && this.appleTokenKey && this.appleTokenKey.length < 32) {
+      throw new Error('APPLE_TOKEN_KEY debe tener al menos 32 caracteres en producción');
     }
     if (!this.dailySecret) throw new Error('Falta la variable de entorno DAILY_SECRET');
     if (this.nodeEnv === 'production' && this.dailySecret.length < 32) {

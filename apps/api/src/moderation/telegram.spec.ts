@@ -150,6 +150,34 @@ describe('TelegramNotifier', () => {
   });
 });
 
+describe('TelegramNotifier: fallos y emojis', () => {
+  it('si el envío falla, no bloquea la ventana: el próximo reporte avisa y cuenta el perdido', async () => {
+    let fail = true;
+    const { n, f, advance } = make({ reply: () => (fail ? { status: 500, body: { ok: false } } : { status: 200, body: { ok: true } }) });
+    vi.spyOn((n as unknown as { log: { error: (m: string) => void } }).log, 'error').mockImplementation(() => {});
+    expect(await n.reportCreated(report())).toBe(false);
+    fail = false;
+    advance(60_000);
+    expect(await n.reportCreated(report())).toBe(true);
+    expect(f.calls).toHaveLength(2);
+    expect(f.calls[1].body.text).toContain('+1 reporte contra @pepa sin aviso propio');
+  });
+
+  it('recortar el comentario no parte emojis', () => {
+    const text = formatReportMessage({
+      reportedUsername: 'pepa',
+      reason: 'other',
+      details: '😀'.repeat(100) + 'x'.repeat(150),
+      pendingForUser: 1,
+      pendingTotal: 1,
+      grouped: 0,
+      at: new Date(0),
+    });
+    expect(/[�-�](?![�-�])|(?<![�-�])[�-�]/.test(text)).toBe(false);
+    expect(text).toContain('😀'.repeat(100) + 'x'.repeat(99) + '…»');
+  });
+});
+
 describe('formato', () => {
   it('escapeHtml', () => {
     expect(escapeHtml('a & b < c > "d"')).toBe('a &amp; b &lt; c &gt; &quot;d&quot;');

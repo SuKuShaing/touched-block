@@ -1,6 +1,6 @@
 # Pendientes, riesgos e ideas
 
-Estado al **18 nov 2026**.
+Estado al **19 nov 2026**.
 
 ## Estado
 
@@ -93,11 +93,14 @@ Cómo se publicó (12 nov 2026), en orden:
 - Correcciones de la revisión de código de la app (17 nov 2026): probadas en el emulador y en la web (toques, tarjeta, corazones, Roboto, firma con `signingReport`). Falta repetir el login real de Google en la app, porque cambió el orden de `configure` y ahora "Borrar cuenta" cierra la sesión de Google.
 - La base de desarrollo local (`touched_block`) quedó con cuentas y partidas de prueba (`seba.prueba`, `*.bot`…). No afecta producción.
 
-- **Moderación (guía 1.2 de Apple, 18 nov 2026)**: filtro de nombres, reportar, bloquear y herramientas del dueño, en el código y sin publicar (ver historia-y-decisiones → "Moderación…" y `despliegue.md` → sección 7). Probado: tests de la API (unitarios y e2e), `tsc` y tests del cliente, y en la web local con Playwright (escritorio: "⋯" al pasar el mouse, reportar, reporte repetido; celular con toque emulado: toque sostenido en el perfil, bloquear, lista de bloqueados, desbloquear; y con `/health` sin `features`, que no aparece nada). **Sin probar en la app Android/iOS real** (el toque sostenido y los Modal). Falta, del usuario:
-  - Crear `ADMIN_TOKEN` en Dokploy (opcional) y publicar la API con un tag (migración `add_moderation`, solo agrega tablas).
+- **Moderación (guía 1.2 de Apple, 18 nov 2026)**: filtro de nombres, reportar, bloquear y herramientas del dueño, **publicado el 19 nov 2026** con la API `v0.5.0` (ver historia-y-decisiones → "Moderación…" y `despliegue.md` → sección 7). Probado: tests de la API (unitarios y e2e), `tsc` y tests del cliente, y en la web local con Playwright (escritorio: "⋯" al pasar el mouse, reportar, reporte repetido; celular con toque emulado: toque sostenido en el perfil, bloquear, lista de bloqueados, desbloquear; y con `/health` sin `features`, que no aparece nada). **Sin probar en la app Android/iOS real** (el toque sostenido y los Modal). Falta, del usuario:
+  - ~~Crear `ADMIN_TOKEN` en Dokploy (opcional) y publicar la API con un tag~~: publicada el 19 nov 2026 (API `v0.5.0`, migración `add_moderation`, solo agrega tablas; `/health` trae `features: ["moderation"]`). `ADMIN_TOKEN` sigue siendo opcional: sin ella `/admin/*` responde 404 y `moderation.mjs` funciona igual.
   - ~~Después, `check-usernames.mjs` para ver los nombres antiguos que no pasan el filtro~~: hecho el 19 nov 2026, todos los nombres actuales pasan el filtro (no hubo que renombrar a nadie).
   - Revisar los reportes **cada día** (plazo publicado: 24 h) con `moderation.mjs reports`.
   - **Aviso por Telegram** de cada reporte nuevo: **funcionando en producción (19 nov 2026)**. Bot creado, variables en Dokploy, log "Avisos de reportes por Telegram activados." y `node scripts/telegram-test.mjs` (después de `cd /app`) entregó el mensaje de prueba. Falta ver llegar un aviso de un reporte real.
+  - **Revisión adversarial de moderación y Apple (19 nov 2026, en el código y sin publicar)**: los reportes se borran al año, avisos de Apple viejos ignorados por `event_time`, `APPLE_TOKEN_KEY`, `DELETE …/block` sin `block_self`, entre otros (ver historia-y-decisiones → "Revisión adversarial de moderación y Apple"). Falta, del usuario: definir `APPLE_TOKEN_KEY` en Dokploy (`openssl rand -base64 48`; una vez definida no se cambia; ver `despliegue.md`, sección 6.6) y publicar la API con un tag nuevo para que se apliquen estos cambios (limpieza de reportes, avisos de Apple, etc.).
+  - Nonce en Sign in with Apple (web e iOS): pospuesto (el token viaja solo por TLS directo a nuestra API y vence en minutos); agregarlo cuando convenga.
+  - Probar en un iPhone real que el botón oficial de Apple salga en español (la app declara `CFBundleDevelopmentRegion` "es" y `CFBundleLocalizations` ["es","en"]).
   - Para App Review: en las notas, explicar dónde están reportar/bloquear (toque sostenido sobre un nombre en Rankings o en un perfil) y dar dos cuentas de prueba.
 
 ## Lo que tiene que hacer el usuario

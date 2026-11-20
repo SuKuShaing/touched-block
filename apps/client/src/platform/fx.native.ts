@@ -79,7 +79,7 @@ export const fx: Fx = {
       const g = c.createGain();
       o.type = type;
       o.frequency.value = f;
-      // En la web `g.gain.value = v` fija el punto de partida de la rampa; aquí se agenda
+      // En la web `g.gain.setValueAtTime(v, t)` fija el punto de partida de la rampa; aquí se agenda
       // explícitamente en el instante actual para que la curva sea idéntica.
       const t = c.currentTime;
       g.gain.setValueAtTime(v, t);

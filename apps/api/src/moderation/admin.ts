@@ -2,6 +2,7 @@ import { badRequest, conflict, notFound } from '../common/errors';
 import { Prisma } from '../generated/prisma/client';
 import type { PrismaService } from '../prisma/prisma.service';
 import { normalizeUsername, randomPlayerName, usernameProblem } from '../users/username';
+import { truncateChars } from '../common/text';
 
 /**
  * Operaciones de moderación del dueño. Las usan los endpoints /admin/* (AdminController) y los
@@ -11,6 +12,15 @@ import { normalizeUsername, randomPlayerName, usernameProblem } from '../users/u
 
 /** Horas que Apple espera como máximo para actuar sobre un reporte (guía 1.2). */
 export const REPORT_RESPONSE_HOURS = 24;
+/** Los reportes (en cualquier estado) se borran este tiempo después de creados (política de privacidad). */
+export const REPORT_RETENTION_DAYS = 365;
+
+/** Borra los reportes con más de REPORT_RETENTION_DAYS (lo llama la limpieza periódica). */
+export async function deleteExpiredReports(prisma: PrismaService, now = new Date()): Promise<number> {
+  const cutoff = new Date(now.getTime() - REPORT_RETENTION_DAYS * 24 * 3600_000);
+  const res = await prisma.report.deleteMany({ where: { createdAt: { lt: cutoff } } });
+  return res.count;
+}
 
 /** Motivo del reporte en palabras (consola de moderación y avisos por Telegram). */
 export const REPORT_REASON_LABELS: Record<string, string> = {
@@ -90,7 +100,7 @@ export async function resolveReport(
   if (!r) throw notFound('Ese reporte no existe.', 'report_not_found');
   return prisma.report.update({
     where: { id },
-    data: { status: opts.status ?? 'resolved', resolution: opts.resolution?.slice(0, 200) ?? null, resolvedAt: new Date() },
+    data: { status: opts.status ?? 'resolved', resolution: opts.resolution != null ? truncateChars(opts.resolution, 200) : null, resolvedAt: new Date() },
   });
 }
 
@@ -103,7 +113,27 @@ export async function resolvePendingFor(
 ): Promise<number> {
   const res = await prisma.report.updateMany({
     where: { reportedId: userId, status: 'pending' },
-    data: { status, resolution: resolution.slice(0, 200), resolvedAt: new Date() },
+    data: { status, resolution: truncateChars(resolution, 200), resolvedAt: new Date() },
+  });
+  return res.count;
+}
+
+/**
+ * Elimina una cuenta por moderación y cierra sus reportes pendientes. Los reportes se cierran después
+ * del borrado (si falla, siguen pendientes); como el borrado desvincula los reportes (reportedId pasa a
+ * null), primero se anotan sus ids.
+ */
+export async function deleteUserByModeration(
+  prisma: PrismaService,
+  user: { id: string; username: string },
+  deleteMe: (userId: string) => Promise<void>,
+): Promise<number> {
+  const pending = await prisma.report.findMany({ where: { reportedId: user.id, status: 'pending' }, select: { id: true } });
+  await deleteMe(user.id);
+  if (!pending.length) return 0;
+  const res = await prisma.report.updateMany({
+    where: { id: { in: pending.map((r) => r.id) }, status: 'pending' },
+    data: { status: 'resolved', resolution: truncateChars(`Cuenta @${user.username} eliminada por moderación.`, 200), resolvedAt: new Date() },
   });
   return res.count;
 }

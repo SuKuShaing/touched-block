@@ -6,6 +6,7 @@ import { normalizeUsername } from '../users/username';
 import { REPORT_RESPONSE_HOURS } from './admin';
 import type { ReportDto } from './dto';
 import { TelegramNotifier } from './telegram';
+import { truncateChars } from '../common/text';
 
 const isUniqueViolation = (e: unknown) => e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002';
 
@@ -31,7 +32,7 @@ export class ModerationService {
   async report(reporterId: string, rawUsername: string, dto: ReportDto) {
     const target = await this.target(rawUsername);
     if (target.id === reporterId) throw badRequest('No puedes reportarte a ti mismo.', 'report_self');
-    const details = dto.details?.trim().slice(0, 200) || null;
+    const details = truncateChars(dto.details?.trim() ?? '', 200).trim() || null;
     try {
       const r = await this.prisma.report.create({
         data: {
@@ -64,8 +65,7 @@ export class ModerationService {
   async block(userId: string, rawUsername: string) {
     const target = await this.target(rawUsername);
     if (target.id === userId) throw badRequest('No puedes bloquearte a ti mismo.', 'block_self');
-    await this.prisma.$transaction([
-      this.prisma.block.createMany({ data: [{ blockerId: userId, blockedId: target.id }], skipDuplicates: true }),
+    const follows = () =>
       this.prisma.follow.deleteMany({
         where: {
           OR: [
@@ -73,8 +73,13 @@ export class ModerationService {
             { followerId: target.id, followeeId: userId },
           ],
         },
-      }),
+      });
+    await this.prisma.$transaction([
+      this.prisma.block.createMany({ data: [{ blockerId: userId, blockedId: target.id }], skipDuplicates: true }),
+      follows(),
     ]);
+    // otra vez tras confirmar: un seguimiento creado mientras corría la transacción no lo vio el primer borrado
+    await follows();
   }
 
   /** Desbloquea (idempotente). No vuelve a crear los seguimientos que se borraron. */

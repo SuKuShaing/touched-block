@@ -152,9 +152,11 @@
             <strong>Reportes y bloqueos</strong>: si reportas a un jugador, guardamos quién reportó, a quién, el nombre de usuario
             que tenía en ese momento, el motivo, el comentario opcional y la fecha; si bloqueas a alguien, guardamos quién bloqueó a
             quién y desde cuándo. El jugador reportado no sabe quién lo reportó, y nadie más ve a quién bloqueaste. Los reportes se
-            usan solo para moderar. Si se elimina una de las dos cuentas, el reporte deja de estar vinculado a ella y queda solo el
-            nombre de usuario de ese momento, el motivo y la fecha, como registro de moderación. Los bloqueos se borran junto con la
-            cuenta.
+            usan solo para moderar; con cada uno guardamos también su estado (pendiente o revisado), lo que hicimos al revisarlo y
+            cuándo. Si se elimina una de las dos cuentas, el reporte deja de estar vinculado a ella y queda como registro de
+            moderación: el nombre de usuario que tenía el reportado en ese momento, el motivo, el comentario, el estado, lo que
+            hicimos y las fechas. <strong>Los reportes se borran 1 año después de creados.</strong> Los bloqueos se borran junto con
+            la cuenta.
           </li>
           <li>
             <strong>Tus partidas</strong>: semilla, tamaño del área de juego, modo, tipo de plataforma, resultado (bloques destruidos
@@ -171,8 +173,13 @@
             misiones que ya recibiste.
           </li>
           <li>
-            <strong>Sesiones</strong>: guardamos solo una huella irreversible (un <em>hash</em>) de tu token de sesión, nunca el
-            token en sí. Las sesiones vencen a los 60 días o cuando cierras sesión.
+            <strong>Sesiones</strong>: de nuestros tokens de sesión guardamos solo una huella irreversible (un <em>hash</em>), nunca
+            el token en sí. Las sesiones vencen a los 60 días o cuando cierras sesión.
+          </li>
+          <li>
+            <strong>Token de Apple</strong> (solo si entras con Apple): Apple nos entrega un token de acceso a tu inicio de sesión
+            con Apple. Lo guardamos cifrado, uno por cuenta, con una clave que solo tiene nuestro servidor, y lo usamos únicamente
+            para pedirle a Apple que quite el acceso de Touched Block cuando eliminas tu cuenta. Se borra junto con la cuenta.
           </li>
         </ul>
         <p>
@@ -243,11 +250,11 @@
               <tr><th scope="col">Uso</th><th scope="col">Datos</th><th scope="col">Base</th></tr>
             </thead>
             <tbody>
-              <tr><td>Crear tu cuenta y reconocerte al volver</td><td>Identificador, correo y nombre del proveedor; sesiones</td><td>Tu solicitud (iniciar sesión es opcional)</td></tr>
+              <tr><td>Crear tu cuenta y reconocerte al volver</td><td>Identificador, correo y nombre del proveedor; sesiones; token de Apple (solo para revocar el acceso al eliminar la cuenta)</td><td>Tu solicitud (iniciar sesión es opcional)</td></tr>
               <tr><td>Rankings, retos, insignias, nivel y Colección</td><td>Nombre de usuario, país, partidas, récords, estadísticas</td><td>Prestarte el servicio que pides</td></tr>
               <tr><td>Comprobar que los puntajes son reales</td><td>Semilla, toques y resultado de cada partida</td><td>Interés legítimo en un juego limpio</td></tr>
               <tr><td>Saber cuánto se juega en cada plataforma (cifras generales, sin herramientas de terceros)</td><td>Tipo de plataforma de cada partida, que manda el juego o se deduce del agente de usuario del navegador o la app</td><td>Interés legítimo en mejorar el juego</td></tr>
-              <tr><td>Moderar nombres ofensivos o suplantaciones y respetar tus bloqueos</td><td>Reportes y bloqueos, nombre de usuario</td><td>Interés legítimo en una comunidad segura y nuestras Condiciones</td></tr>
+              <tr><td>Moderar nombres ofensivos o suplantaciones y respetar tus bloqueos</td><td>Reportes y bloqueos, nombre de usuario (los avisos de reportes nuevos llegan por Telegram)</td><td>Interés legítimo en una comunidad segura y nuestras Condiciones</td></tr>
               <tr><td>Evitar abusos y proteger el servidor</td><td>Dirección IP (solo en el momento)</td><td>Interés legítimo en la seguridad</td></tr>
               <tr><td>Responder tus consultas</td><td>Lo que nos escribas y tu correo</td><td>Tu solicitud</td></tr>
             </tbody>
@@ -279,13 +286,19 @@
             <a href="https://www.cloudflare.com/es-es/privacypolicy/">política de privacidad de Cloudflare</a>.
           </li>
           <li>
+            <strong>Telegram</strong>, para avisarle en privado al responsable del juego cada vez que llega un reporte nuevo, y así
+            revisarlo a tiempo. Cada aviso lleva el nombre de usuario del jugador reportado, el motivo, el comentario (si lo hay) y
+            cuántos reportes hay pendientes; <strong>nunca</strong> dice quién hizo el reporte:
+            <a href="https://telegram.org/privacy">política de privacidad de Telegram</a>.
+          </li>
+          <li>
             <strong>Google Play y la App Store</strong>, si descargas la app desde ahí, tratan los datos de la descarga según sus
             propias políticas.
           </li>
         </ul>
         <p>
-          Exigimos a quienes tratan datos por nosotros (el proveedor de alojamiento de nuestro servidor, Cloudflare, y Google y
-          Apple como proveedores de inicio de sesión) una protección de los datos igual o mayor que la que describe esta política.
+          Exigimos a quienes tratan datos por nosotros (el proveedor de alojamiento de nuestro servidor, Cloudflare, Telegram para
+          los avisos de reportes, y Google y Apple como proveedores de inicio de sesión) una protección de los datos igual o mayor que la que describe esta política.
         </p>
         <p>
           Estos servicios pueden funcionar fuera de Chile. También podríamos entregar datos si una autoridad competente lo exige
@@ -301,6 +314,10 @@
           <li>Sesiones: hasta 60 días, o hasta que cierras sesión.</li>
           <li>Datos de tu cuenta, partidas y resultados: mientras tengas la cuenta. Al eliminarla se borran de inmediato.</li>
           <li>Resultados de invitado en un reto a un amigo: mientras exista el reto (no identifican a nadie).</li>
+          <li>
+            Reportes: se borran 1 año después de creados. Si antes se elimina una de las cuentas, el reporte queda desvinculado de
+            ella hasta cumplir ese año, como registro de moderación (ver el punto 3).
+          </li>
           <li>Registros técnicos del servidor (pueden incluir la dirección IP): por un tiempo limitado, para resolver errores y abusos.</li>
           <li>
             Copias de seguridad: la base de datos se respalda a diario y los respaldos se reemplazan con el tiempo. Lo que borras
@@ -313,7 +330,10 @@
         <h2>10. Seguridad</h2>
         <ul>
           <li>Todas las conexiones con el servidor van cifradas (HTTPS).</li>
-          <li>Los tokens de sesión se guardan como huellas irreversibles; la base de datos no se publica en internet.</li>
+          <li>
+            Los tokens de sesión se guardan como huellas irreversibles y el token de Apple, cifrado; la base de datos no se publica
+            en internet.
+          </li>
           <li>
             Ningún sistema es perfecto. Si detectamos un problema de seguridad que afecte tus datos, te avisaremos por los medios
             disponibles.
@@ -356,9 +376,10 @@
           <li>
             <strong>Google</strong>: en <a href="https://myaccount.google.com/connections">myaccount.google.com</a>, ve a
             <span class="ui">Seguridad</span> → <span class="ui">Tus conexiones con apps y servicios de terceros</span> →
-            <span class="ui">Touched Block</span> → <span class="ui">Eliminar todas las conexiones</span>. Al quitar el acceso
-            de Google ya no podrás volver a entrar a esa cuenta con Google; para borrar tus datos, elimina la cuenta desde el
-            Perfil o escríbenos a <a href="mailto:contacto@touchedblock.app">contacto@touchedblock.app</a>.
+            <span class="ui">Touched Block</span> → <span class="ui">Eliminar todas las conexiones</span>. Quitar el acceso de
+            Google <strong>no borra</strong> tu cuenta de Touched Block: si vuelves a autorizar a Google, entras a la misma cuenta.
+            Para borrar la cuenta y tus datos, usa <span class="ui danger-ui">Eliminar cuenta</span> en el Perfil o escríbenos a
+            <a href="mailto:contacto@touchedblock.app">contacto@touchedblock.app</a>.
           </li>
         </ul>
         <p>
@@ -405,7 +426,10 @@
           <li>No mostramos publicidad.</li>
           <li>No vendemos ni compartimos tus datos con fines comerciales.</li>
           <li>No usamos herramientas de analítica ni rastreadores de terceros.</li>
-          <li>No usamos cookies propias (el botón de Google y Cloudflare pueden usar las suyas, según sus políticas).</li>
+          <li>
+            No usamos cookies propias (el botón de Google, la ventana de inicio de sesión de Apple en la web y Cloudflare pueden
+            usar las suyas, según sus políticas).
+          </li>
           <li>No hay compras dentro del juego.</li>
         </ul>
       </section>
