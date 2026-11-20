@@ -209,7 +209,7 @@ function MeRow({
   if (!loggedIn) {
     return (
       <View style={styles.meRow}>
-        <Text style={[styles.meT, styles.flex1]}>Inicia sesión para aparecer en el ranking.</Text>
+        <Text style={[styles.meT, styles.flex1]}>Inicia sesión para guardar tus puntajes y aparecer en el ranking.</Text>
         <SmallButton title="Iniciar sesión" onPress={onLogin} />
       </View>
     );

@@ -676,7 +676,8 @@ function DeviceSettings() {
           if (v) fx.buzz(30);
         }}
       />
-      <CollectionRow onPress={() => router.push('/coleccion')} />
+      {/* con cuentas la Colección es una pestaña; sin API (sin barra) se llega desde aquí */}
+      {features.accounts ? null : <CollectionRow onPress={() => router.push('/coleccion')} />}
       <InstallRow />
     </View>
   );

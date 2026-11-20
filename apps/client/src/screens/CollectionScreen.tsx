@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useIsFocused, useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,6 +18,7 @@ import {
 import { useMeRefresh, useViewer } from '@/api/hooks';
 import type { Me } from '@/api/types';
 import { FieldBackground } from '@/components/FieldBackground';
+import { SmallButton } from '@/components/form';
 import { BADGE_PX, TierBadge } from '@/components/TierBadge';
 import { features } from '@/config';
 import { useActiveCosmetics } from '@/cosmetics/active';
@@ -39,9 +40,11 @@ import {
 import { getPalette } from '@/cosmetics/palettes';
 import { TIER_LOOK } from '@/cosmetics/tiers';
 import { sounds } from '@/game/sounds';
+import { useMarkCollectionSeen } from '@/lib/collectionNews';
 import { useDailyLocal } from '@/lib/daily';
 import { levelFor, xpOf } from '@/lib/level';
 import { type Settings, updateSettings } from '@/lib/settings';
+import { useTabBarSpace } from '@/lib/tabBar';
 import { HEART } from '@/components/heart';
 import { C } from '@/theme';
 
@@ -365,9 +368,10 @@ function AchievementRow({ a, value, last }: { a: Achievement; value: number | nu
 // ---------------------------------------------------------------- pantalla
 
 /**
- * `/coleccion`: insignia y la siguiente, nivel, premios por tipo (tocar uno desbloqueado lo
- * activa) y logros. Las estadísticas son las de este dispositivo y, con sesión, el máximo con
- * las del servidor (`cosmetics/active.ts`).
+ * `/coleccion` (pestaña): insignia y la siguiente, nivel, premios por tipo (tocar uno desbloqueado
+ * lo activa) y logros. Las estadísticas son las de este dispositivo y, con sesión, el máximo con
+ * las del servidor (`cosmetics/active.ts`). Sin sesión, un aviso invita a iniciarla para guardar
+ * los logros. Sin API no hay barra de pestañas: se llega desde el Perfil y tiene botón Volver.
  */
 export function CollectionScreen() {
   const router = useRouter();
@@ -378,6 +382,8 @@ export function CollectionScreen() {
   const stats = active.stats;
   const me = viewer.loggedIn ? viewer.user : null;
   const dailyLocal = useDailyLocal();
+  const tabSpace = useTabBarSpace();
+  useMarkCollectionSeen(useIsFocused());
 
   const back = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
@@ -393,16 +399,29 @@ export function CollectionScreen() {
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
-      <View style={styles.top}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Volver" hitSlop={10} onPress={back} style={styles.backBtn}>
-          <Text style={styles.backT}>‹ Volver</Text>
-        </Pressable>
-      </View>
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: 28 + insets.bottom }]}>
+      {features.accounts ? null : (
+        <View style={styles.top}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Volver" hitSlop={10} onPress={back} style={styles.backBtn}>
+            <Text style={styles.backT}>‹ Volver</Text>
+          </Pressable>
+        </View>
+      )}
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingTop: features.accounts ? 24 : 4, paddingBottom: 28 + insets.bottom + tabSpace }]}
+      >
         <Text style={styles.title} accessibilityRole="header">
           Colección
         </Text>
         <Text style={styles.intro}>Tus premios cambian cómo se ve y suena el juego, nunca las reglas.</Text>
+
+        {features.accounts && !viewer.loggedIn ? (
+          <View style={styles.guest}>
+            <Text style={[styles.label, styles.flex1]}>
+              Inicia sesión para guardar tus logros. Lo que ganes como invitado queda solo en este dispositivo.
+            </Text>
+            <SmallButton title="Iniciar sesión" onPress={() => router.navigate('/perfil')} />
+          </View>
+        ) : null}
 
         <TierCard stats={stats} me={me} />
         <LevelCard stats={stats} />
@@ -448,7 +467,19 @@ const styles = StyleSheet.create({
   top: { height: 52, justifyContent: 'center', paddingHorizontal: 12 },
   backBtn: { alignSelf: 'flex-start', paddingVertical: 8, paddingHorizontal: 6 },
   backT: { color: C.accent, fontSize: 17, fontWeight: '600' },
-  content: { alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingTop: 4 },
+  content: { alignItems: 'center', gap: 14, paddingHorizontal: 16 },
+  guest: {
+    width: '100%',
+    maxWidth: 480,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: C.accentSoft,
+    borderWidth: 1,
+    borderColor: C.accent,
+    borderRadius: 16,
+    padding: 14,
+  },
   title: { color: C.text, fontSize: 28, fontWeight: '800' },
   intro: { color: C.text, opacity: 0.7, fontSize: 14, textAlign: 'center', lineHeight: 20, maxWidth: 340, marginTop: -6 },
   section: { width: '100%', maxWidth: 480, backgroundColor: C.panel, borderRadius: 16, padding: 16, gap: 12 },

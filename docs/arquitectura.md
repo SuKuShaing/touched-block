@@ -52,11 +52,11 @@ docs/                           esta documentación
 | `/perfil` | `(tabs)/perfil.tsx` |
 | `/como-jugar?nivel=basico|avanzado|completo` | `como-jugar.tsx`: onboarding (básico, avanzado o los dos seguidos) |
 | `/u/[username]` | `u/[username].tsx`: perfil público |
-| `/coleccion` | `coleccion.tsx`: insignia, nivel, premios y logros (se abre desde el Perfil) |
+| `/coleccion` | `(tabs)/coleccion.tsx`: pestaña con insignia, nivel, premios y logros (sin API, sin barra: se abre desde el Perfil) |
 
 - Los retos se abren por **parámetro**, no por ruta: `/?reto=CÓDIGO` (reto a un amigo) y `/?diario=1` (reto diario). En GitHub Pages una ruta como `/reto/CODIGO` respondía 404 (aunque cargara la app) y rompía la vista previa del enlace en WhatsApp. En Cloudflare (modo SPA) una ruta ya respondería 200, pero el formato se mantiene para no romper los enlaces ya compartidos.
 
-- Las pestañas solo aparecen con cuentas activadas.
+- Las pestañas (Jugar · Rankings · Colección · Perfil, barra flotante con íconos SVG animados en `components/TabIcons.tsx`) solo aparecen con cuentas activadas.
 - `_layout.tsx` monta `GestureHandlerRootView`, `QueryClientProvider` (staleTime 30 s, sin refetch al enfocar) y los *toasts*.
 
 **Carpetas de `src/`:**

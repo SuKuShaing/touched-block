@@ -7,6 +7,7 @@ import { ApiError, warmSession } from '@/api/client';
 import { ShareCardHost } from '@/components/ShareCardHost';
 import { ToastHost } from '@/components/Toast';
 import { startVisitTracking } from '@/lib/onboarding';
+import { TAB_BAR_GAP, TAB_BAR_H } from '@/lib/tabBar';
 import { features } from '@/config';
 import { C } from '@/theme';
 import '@/platform/webFont';
@@ -57,7 +58,7 @@ function App() {
         </Stack>
         {/* solo en nativo: dibuja y captura la tarjeta de compartir (en la web no hace nada) */}
         <ShareCardHost />
-        <ToastHost bottom={features.accounts ? 64 : 0} />
+        <ToastHost bottom={features.accounts ? TAB_BAR_H + TAB_BAR_GAP : 0} />
       </GestureHandlerRootView>
     </QueryClientProvider>
   );

@@ -1,8 +1,10 @@
 # Pendientes, riesgos e ideas
 
-Estado al **19 nov 2026**.
+Estado al **20 nov 2026**.
 
 ## Estado
+
+- **Menú nuevo (20 nov 2026, sin publicar)**: Colección como pestaña, barra flotante con fondo desenfocado (`expo-blur`, nativo: requiere APK nuevo), íconos SVG animados y punto de novedad (ver `historia-y-decisiones.md` → "Menú nuevo"). Probado en la web con viewport de celular: barra, animación, punto de novedad y aviso de invitado. **Falta probarlo en Android** (emulador o APK). Falta también que el usuario diga si el trofeo de Colección se confunde con el podio de Rankings (alternativa: medalla con cinta).
 
 - **Dominio propio (17 nov 2026)**: publicado. Motivos en `historia-y-decisiones.md` → "Dominio propio touchedblock.app…"; operación en `despliegue.md`.
   - Landing en https://touchedblock.app (Cloudflare Workers, `apps/landing`), con `/privacidad/`, `/terminos/`, `/eliminar-cuenta/` y `/soporte/`. `www` redirige a la raíz.
