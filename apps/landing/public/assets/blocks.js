@@ -72,43 +72,76 @@
   // mousedown, click, keydown; un pointerdown de un dedo no cuenta en Chrome ni en iOS), y los
   // bloques se tocan en pointerdown: por eso cada gesto real crea o reanuda el contexto y, en
   // iOS, reproduce un búfer en silencio. Todo en try/catch: sin audio, la página sigue igual. ----
+  // En iOS el contexto también puede quedar mudo al volver de segundo plano ("interrupted", o
+  // "running" con el reloj detenido): al volver, el siguiente gesto lo reanuda y revisa que el
+  // reloj avance; si no, el gesto siguiente lo recrea. El contexto solo nace dentro de un gesto:
+  // uno creado fuera (p. ej. en pointerdown) queda "suspended" para siempre en iOS.
   var ac = null;
   var lastTap = 0;
-  function audioCtx() {
-    if (!ac) {
-      var Ctor = window.AudioContext || window.webkitAudioContext;
-      if (!Ctor) return null;
-      try {
-        ac = new Ctor({ latencyHint: 'interactive' });
-      } catch (e) {
-        ac = new Ctor(); // Safari antiguo: sin opciones
-      }
+  var check = false;
+  var broken = false;
+  function createCtx() {
+    var Ctor = window.AudioContext || window.webkitAudioContext;
+    if (!Ctor) return null;
+    var c;
+    try {
+      c = new Ctor({ latencyHint: 'interactive' });
+    } catch (e) {
+      c = new Ctor(); // Safari antiguo: sin opciones
     }
-    return ac;
+    try {
+      c.addEventListener('statechange', function () {
+        if (c === ac && c.state !== 'running') check = true;
+      });
+    } catch (e) {}
+    return c;
   }
   function onGesture() {
     try {
-      var c = audioCtx();
-      if (!c || c.state === 'running') return;
-      c.resume().catch(function () {});
+      if (broken && ac) {
+        broken = false;
+        var old = ac;
+        ac = null;
+        old.close().catch(function () {});
+      }
+      if (!ac || ac.state === 'closed') ac = createCtx();
+      var c = ac;
+      if (!c || (c.state === 'running' && !check)) return;
+      check = false;
+      if (c.state !== 'running') c.resume().catch(function () {});
       var src = c.createBufferSource();
-      src.buffer = c.createBuffer(1, 1, 22050);
+      src.buffer = c.createBuffer(1, 1, c.sampleRate);
       src.connect(c.destination);
       src.start(0);
+      var t0 = c.currentTime;
+      setTimeout(function () {
+        try {
+          if (c === ac && (c.state !== 'running' || c.currentTime === t0)) broken = true;
+        } catch (e) {}
+      }, 300);
     } catch (e) {}
   }
   try {
     ['touchend', 'pointerup', 'mousedown', 'click', 'keydown'].forEach(function (t) {
       window.addEventListener(t, onGesture, { capture: true, passive: true });
     });
+    var back = function () {
+      check = true;
+    };
+    document.addEventListener('visibilitychange', back);
+    window.addEventListener('pageshow', back);
+    window.addEventListener('focus', back);
     // iOS: categoría "ambient" (respeta el modo silencio y no corta la música), como en el juego
     if (navigator.audioSession) navigator.audioSession.type = 'ambient';
   } catch (e) {}
   function beep(f, d, type, v) {
     try {
-      var c = audioCtx();
-      if (!c) return;
-      if (c.state !== 'running') c.resume().catch(function () {});
+      var c = ac; // nunca se crea aquí (fuera de un gesto): ver onGesture
+      if (!c || broken) return;
+      if (c.state !== 'running') {
+        check = true;
+        c.resume().catch(function () {});
+      }
       var o = c.createOscillator();
       var g = c.createGain();
       o.type = type || 'square';

@@ -13,36 +13,74 @@ import type { Fx, Wave } from './fx.types';
 // "suspended" (o "interrupted" en iOS al volver de segundo plano) y ningún resume() posterior
 // servía, así que el juego quedaba mudo. Por eso cada gesto que activa la página crea o reanuda
 // el contexto (y en iOS reproduce un búfer en silencio, el desbloqueo clásico de WebKit).
+//
+// Además, en iOS el contexto puede quedar mudo al volver de segundo plano (pantalla bloqueada,
+// otra app, llamada, Siri, música): o queda "interrupted"/"suspended", o dice "running" pero su
+// reloj no avanza. Por eso, al volver (visibilitychange, pageshow, focus, statechange), el
+// siguiente gesto lo reanuda y comprueba que el reloj avance; si no, el gesto siguiente lo cierra
+// y crea uno nuevo (un AudioContext solo puede nacer dentro de un gesto).
 type Ctx = AudioContext & { state: AudioContextState | 'interrupted' };
 let ac: Ctx | null = null;
+/** Volvimos de segundo plano o el contexto cambió de estado: revisar en el próximo gesto. */
+let check = false;
+/** El contexto no revivió con resume(): el próximo gesto lo recrea. */
+let broken = false;
+
+function create(): Ctx {
+  const w = window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext };
+  const Ctor = (w.AudioContext || w.webkitAudioContext) as typeof AudioContext;
+  let c: Ctx;
+  try {
+    c = new Ctor({ latencyHint: 'interactive' }) as Ctx;
+  } catch {
+    c = new Ctor() as Ctx; // Safari antiguo: sin opciones
+  }
+  try {
+    c.addEventListener('statechange', () => {
+      if (c === ac && c.state !== 'running') check = true;
+    });
+  } catch {}
+  return c;
+}
 
 function context(): Ctx {
-  if (!ac) {
-    const w = window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext };
-    const Ctor = (w.AudioContext || w.webkitAudioContext) as typeof AudioContext;
-    try {
-      ac = new Ctor({ latencyHint: 'interactive' }) as Ctx;
-    } catch {
-      ac = new Ctor() as Ctx; // Safari antiguo: sin opciones
-    }
-  }
+  if (!ac || (ac.state as string) === 'closed') ac = create();
   return ac;
 }
 
+/** Búfer de 1 muestra en silencio: el desbloqueo de iOS, que exige empezar algo dentro del gesto. */
+function silentTick(c: Ctx) {
+  const src = c.createBufferSource();
+  src.buffer = c.createBuffer(1, 1, c.sampleRate);
+  src.connect(c.destination);
+  src.start(0);
+}
+
 /**
- * Gesto que activa la página: crea o reanuda el contexto y, mientras no esté sonando, reproduce
- * un búfer de 1 muestra en silencio (el desbloqueo de iOS, que exige empezar algo dentro del gesto).
+ * Gesto que activa la página: crea, reanuda o (si quedó inservible) recrea el contexto, y después
+ * comprueba que de verdad esté corriendo.
  */
 function onGesture() {
   try {
     if (!getSettings().sound) return;
+    if (broken && ac) {
+      broken = false;
+      const old = ac;
+      ac = null;
+      old.close().catch(() => {});
+    }
     const c = context();
-    if (c.state === 'running') return;
-    c.resume().catch(() => {});
-    const src = c.createBufferSource();
-    src.buffer = c.createBuffer(1, 1, 22050);
-    src.connect(c.destination);
-    src.start(0);
+    if (c.state === 'running' && !check) return;
+    check = false;
+    if (c.state !== 'running') c.resume().catch(() => {});
+    silentTick(c);
+    const t0 = c.currentTime;
+    setTimeout(() => {
+      try {
+        // sigue sin correr, o "corre" con el reloj detenido: recrearlo en el próximo gesto
+        if (c === ac && (c.state !== 'running' || c.currentTime === t0)) broken = true;
+      } catch {}
+    }, 300);
   } catch {}
 }
 
@@ -54,7 +92,14 @@ try {
     for (const t of ['touchend', 'pointerup', 'mousedown', 'click', 'keydown']) {
       window.addEventListener(t, onGesture, opts);
     }
-    // iOS: categoría "ambient" (respeta el modo silencio y no corta la música), como en la app.
+    const back = () => {
+      check = true;
+    };
+    document.addEventListener('visibilitychange', back);
+    window.addEventListener('pageshow', back); // vuelta desde el historial (bfcache)
+    window.addEventListener('focus', back);
+    // iOS (Safari 16.4+): categoría "ambient" (respeta el modo silencio y no corta la música), como
+    // en la app. Decisión del usuario (19 nov 2026): se respeta el silencio.
     const nav = navigator as unknown as { audioSession?: { type: string } };
     if (nav.audioSession) nav.audioSession.type = 'ambient';
   }
@@ -64,8 +109,15 @@ export const fx: Fx = {
   beep(f: number, d: number, type: Wave = 'square', v = 0.05) {
     try {
       if (!getSettings().sound) return;
-      const c = context();
-      if (c.state !== 'running') c.resume().catch(() => {});
+      // El contexto solo se crea dentro de un gesto (onGesture): uno nacido aquí (pointerdown,
+      // requestAnimationFrame, un efecto) queda "suspended" para siempre en iOS. Hasta el primer
+      // gesto no suena nada; después de él, siempre hay contexto.
+      const c = ac;
+      if (!c || broken) return;
+      if (c.state !== 'running') {
+        check = true;
+        c.resume().catch(() => {});
+      }
       const o = c.createOscillator();
       const g = c.createGain();
       o.type = type;

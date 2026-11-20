@@ -308,6 +308,17 @@ El usuario reportó que en la web no sonaban los toques ni la rotura de los bloq
 - Se mantienen los osciladores, sin archivos de audio, porque no hay nada que precargar y la app usa el mismo grafo.
 - La **landing** (`apps/landing/public/assets/blocks.js`) no tenía sonido. Ahora copia lo mismo en JS plano (desbloqueo en cada gesto, búfer mudo, `setValueAtTime`, `latencyHint`, `ambient`) con los tonos del paquete "8 bits": toque (sube con cada toque, también en el que rompe), rotura, trampa y combo. El escape solo suena si se tocó un bloque en los últimos 8 s, porque en la página los bloques se escapan solos mientras se lee. Antes del primer gesto no se crea ningún `AudioContext`.
 
+### Sonido en iPhone: el contexto solo nace en un gesto y se recrea si queda atascado (19 nov 2026)
+
+El usuario reportó que en iPhone el sonido de la web fallaba a ratos: en dos teléfonos no sonaba, después sonó en uno y dejó de sonar, y luego sonaba en Safari y no en Chrome, o al revés. Los teléfonos **no** estaban en silencio (lo comprobó), así que no era la categoría `ambient`. Se mantiene `ambient`: el usuario decidió respetar el modo silencio y no cortar la música del jugador.
+
+Causas encontradas en `fx.web.ts` (y la misma en `apps/landing/public/assets/blocks.js`):
+- `beep()` creaba el `AudioContext` si no existía. Un pitido que llega antes del primer gesto (el tutorial o la cuenta regresiva que arrancan desde un efecto, un `pointerdown`) lo hacía nacer fuera de un gesto, y en iOS ese contexto queda `suspended` para siempre: ningún `resume()` posterior lo despierta. Ahora **solo `onGesture` crea el contexto**; antes del primer gesto no suena nada.
+- Al volver de segundo plano (otra app, pantalla bloqueada, llamada, otra pestaña o el otro navegador usando el audio), WebKit deja el contexto en `interrupted` y a veces `resume()` no lo saca (WebAudio/web-audio-api#2585), o dice `running` con el reloj detenido. `onGesture` volvía sin hacer nada si el estado era `running`. Ahora, tras `visibilitychange`, `pageshow`, `focus` o `statechange`, el siguiente gesto reanuda el contexto, reproduce el búfer mudo y a los 300 ms comprueba que esté `running` y que `currentTime` avance; si no, el gesto siguiente lo cierra y crea uno nuevo (un contexto solo puede nacer dentro de un gesto). Explica el patrón "Safari sí, Chrome no, y al revés": el que usó el audio último deja al otro interrumpido.
+- El búfer mudo usa `c.sampleRate` en vez de 22050.
+
+Probado en Chromium (Playwright) simulando un contexto suspendido cuyo `resume()` no hace nada: el segundo toque lo recrea y suena; con un contexto sano no se recrea. Falta probarlo en iPhone real (ver pendientes).
+
 ### Edad mínima para tener cuenta: 13 años (14 en Chile sin autorización) (18 nov 2026)
 
 - Jugar como **invitado** sigue siendo para todo público (no se piden ni guardan datos personales). Para **crear cuenta** hay que tener al menos **13 años**; en Chile, bajo **14** se necesita autorización de la madre, padre o tutor (Ley 21.719), o la edad mayor que exija la ley del país. Un tutor puede pedir por correo que se borre la cuenta de un menor.
