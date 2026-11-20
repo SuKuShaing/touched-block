@@ -1,6 +1,6 @@
 import { BlurTargetView, BlurView } from 'expo-blur';
 import { type ComponentRef, type ReactNode, type RefObject, useEffect, useRef, useSyncExternalStore } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 /**
  * Fondo translúcido con desenfoque de la barra de pestañas (expo-blur).
@@ -39,8 +39,12 @@ export function BlurScreen({ active, children }: { active: boolean; children: Re
   );
 }
 
-/** Capa del velo encima del desenfoque (el color del panel, translúcido). */
-const VEIL = 'rgba(28,28,40,0.55)';
+/**
+ * Capa del velo encima del desenfoque. En la web, el color del panel translúcido. En Android el
+ * desenfoque nativo ya suma un tinte gris que dejaba la barra bastante más clara que el fondo, así
+ * que el velo usa el color del fondo para que se vea igual que en la web.
+ */
+const VEIL = Platform.OS === 'android' ? 'rgba(18,18,26,0.6)' : 'rgba(28,28,40,0.55)';
 
 /**
  * Fondo de la barra: desenfoque + velo. Con `off` (barra escondida durante la partida) no se

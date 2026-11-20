@@ -325,10 +325,24 @@ El usuario sentía que los íconos de la barra eran genéricos y que la Colecci�
 - **4 pestañas**: Jugar · Rankings · Colección · Perfil. La ruta `/coleccion` sigue igual (ahora vive en `app/(tabs)/`). Sin API no hay barra: la Colección se abre desde el Perfil y conserva su botón Volver.
 - **Barra flotante redondeada**, separada de los bordes (`TAB_BAR_H`/`TAB_BAR_GAP` en `lib/tabBar.ts`), con un solo color de acento.
 - **Fondo translúcido con desenfoque** (pedido del usuario): `expo-blur` + un velo del color del panel (`components/TabBarBlur.tsx`). En la web es `backdrop-filter`. En Android el BlurView necesita un `BlurTargetView` con lo que hay que desenfocar: cada pantalla de las pestañas va envuelta en uno (`screenLayout` de las pestañas) y la que está a la vista se registra como objetivo. Se usa `dimezisBlurViewSdk31Plus` (en Android anterior al 12 queda solo el velo, sin el costo de RenderScript) y el desenfoque no se dibuja mientras la barra está escondida (partida). `expo-blur` es código nativo: **el próximo APK hay que compilarlo de nuevo** (el actual no lo trae).
+  - Ajustes en Android (probados en el emulador): el desenfoque nativo suma un tinte gris y la barra se veía bastante más clara que el fondo (el usuario la notó como una "sombra rara"). Por eso, en Android el velo usa el color del fondo (`rgba(18,18,26,0.6)`). La sombra (`boxShadow`) queda solo para la web. La "sombra rara" que el usuario veía **debajo** de la barra era la `elevation: 8` que React Navigation le pone por defecto a la barra: con el fondo transparente, la sombra nativa quedaba a la vista. Se apagó con `elevation: 0`. Los márgenes laterales van con `marginHorizontal`, porque en Android la barra ignora `left`/`right`.
 - **Íconos**: los de antes mejorados (no hechos de cuadros): play, podio, **trofeo** para Colección y la silueta de persona **con la insignia actual en el pecho**. Inactivo = solo borde; activo = relleno. Al cambiar de pestaña el relleno crece **desde el centro**, el ícono rebota y hay una vibración corta (respeta el ajuste). Se dibujan con `react-native-svg` (ya estaba instalado) en vez de Views, para tener bordes y rellenos limpios iguales en la web y en la app.
 - La barra de navegación dibuja dos copias de cada ícono (activa e inactiva) y solo cambia cuál se ve, así que con su `focused` nunca habría animación: el estado activo sale de la ruta (`usePathname`).
 - **Punto de novedad** en Colección cuando hay algo sin ver (insignia, premio, logro o nivel). Se guarda un solo número en `tb_set1` → `collectionSeen` (no se creó otra clave `tb_*`, así que la mudanza no cambia). Al abrir la Colección se guarda el máximo, para que cerrar sesión y volver a entrar no lo encienda; la 1.ª vez se siembra sin punto. Lógica en `lib/collectionScore.ts` (con tests) y `lib/collectionNews.ts`.
 - **Invitado**: ve el Ranking ("Inicia sesión para guardar tus puntajes y aparecer en el ranking") y su Colección local con un aviso "Inicia sesión para guardar tus logros".
+
+### APK 0.3.0 y la causa real de los cierres al abrir (20 nov 2026)
+
+El primer build del APK 0.3.0 (`versionCode` 4, con el menú nuevo y `expo-blur`) se cerraba al abrir con `TypeError: Cannot read property 'create' of undefined`. Según el mapa de fuentes, el error estaba en el `StyleSheet.create` de `ShareCardHost.native.tsx`: el mismo síntoma que el APK 0.2.0 (`PixelRatio.get`), cuya causa había quedado sin aislar.
+
+**Causa**: en el bundle, el sustituto de 'react-native' para Android (`platform/rnText.android.tsx`) dependía **de sí mismo**: su `import * as RN from 'react-native'` se resolvía al propio sustituto, que así exportaba solo `Text` y `TextInput`. `metro.config.js` excluía al sustituto y a `appFont.ts` comparando la ruta del archivo que importa, pero Metro guarda la resolución de un nombre **por carpeta** y no por archivo: con un registro de cada llamada se vio que `resolveRequest` recibe un solo 'react-native' por carpeta. La excepción solo funcionaba si esos archivos eran los primeros de su carpeta en resolverse. Al sumar archivos (las medallas en el 0.2.0, `TabBarBlur.tsx` ahora) cambiaba el orden y la app se rompía. El modo desarrollo no lo muestra.
+
+**Arreglo** (sin depender del orden):
+- El sustituto importa el real como **`react-native-real`**, un nombre que `metro.config.js` resuelve siempre al 'react-native' de verdad. Los tipos están en `platform/react-native-real.d.ts`.
+- `appFont` ya no importa 'react-native': se dividió en `appFont.ts` (web e iOS: sin fuente) y `appFont.android.ts` (Roboto).
+- Comprobado en el bundle de release: el sustituto ahora depende del módulo real.
+
+**Regla**: un archivo de `src/` no puede importar 'react-native' esperando recibir el real. Si lo necesita, usa 'react-native-real'.
 
 ### Modo silencio en iOS y orden de los botones de inicio de sesión (19 nov 2026)
 

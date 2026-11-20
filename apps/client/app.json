@@ -3,14 +3,14 @@
     "name": "Touched Block",
     "slug": "touched-block",
     "scheme": "touchedblock",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#12121a",
     "icon": "./public/icon-512.png",
     "android": {
       "package": "app.touchedblock",
-      "versionCode": 3,
+      "versionCode": 4,
       "adaptiveIcon": {
         "foregroundImage": "./assets/icono/android-foreground.png",
         "backgroundImage": "./assets/icono/android-background.png",

@@ -1,4 +1,5 @@
 import { usePathname } from 'expo-router';
+import { Platform } from 'react-native';
 import { Tabs } from 'expo-router/js-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useViewer } from '@/api/hooks';
@@ -42,8 +43,10 @@ export default function TabsLayout() {
         tabBarStyle: [
           {
             position: 'absolute',
-            left: TAB_BAR_GAP,
-            right: TAB_BAR_GAP,
+            // left/right en 0 + margen: en Android la barra ignora left/right distintos de 0
+            left: 0,
+            right: 0,
+            marginHorizontal: TAB_BAR_GAP,
             bottom: TAB_BAR_GAP + insets.bottom,
             height: TAB_BAR_H,
             paddingTop: 6,
@@ -55,7 +58,12 @@ export default function TabsLayout() {
             borderTopWidth: 1,
             borderColor: 'rgba(255,255,255,0.09)',
             borderTopColor: 'rgba(255,255,255,0.09)',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.45)',
+            // La barra trae por defecto elevation 8 (sombra nativa de Android). Con el fondo
+            // transparente, esa sombra se veía como una mancha debajo de la barra: se apaga.
+            elevation: 0,
+            shadowOpacity: 0,
+            // sombra solo en la web
+            boxShadow: Platform.OS === 'web' ? '0 8px 24px rgba(0,0,0,0.45)' : undefined,
           },
           hidden && { display: 'none' },
         ],
