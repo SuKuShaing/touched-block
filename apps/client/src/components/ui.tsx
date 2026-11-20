@@ -4,6 +4,7 @@ import { fmtDate } from '@/lib/format';
 import { updateSettings, useSettings } from '@/lib/settings';
 import { fx } from '@/platform/fx';
 import { C } from '@/theme';
+import { silentTip } from './silentTip';
 
 /** Parlante dibujado con Views (sin fuentes de íconos): con ondas si suena, con ✕ si está en silencio. */
 export function SoundIcon({ on, size = 20, color = C.text }: { on: boolean; size?: number; color?: string }) {
@@ -77,7 +78,10 @@ export function SoundToggle({ style }: { style?: ViewStyle }) {
   const toggle = () => {
     updateSettings({ sound: !sound });
     // al encenderlo, un pitido corto: confirma y habilita el audio dentro del toque (iOS)
-    if (!sound) fx.beep(660, 0.08, 'triangle', 0.06);
+    if (!sound) {
+      fx.beep(660, 0.08, 'triangle', 0.06);
+      silentTip();
+    }
   };
   return (
     <Pressable

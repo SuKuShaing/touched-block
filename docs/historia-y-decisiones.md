@@ -319,6 +319,11 @@ Causas encontradas en `fx.web.ts` (y la misma en `apps/landing/public/assets/blo
 
 Probado en Chromium (Playwright) simulando un contexto suspendido cuyo `resume()` no hace nada: el segundo toque lo recrea y suena; con un contexto sano no se recrea. Falta probarlo en iPhone real (ver pendientes).
 
+### Modo silencio en iOS y orden de los botones de inicio de sesión (19 nov 2026)
+
+- **Modo silencio**: se mantiene `ambient` (web y app), como la mayoría de los juegos de iOS y lo que recomienda Apple para efectos de sonido: respeta el modo silencio y no corta la música del jugador. Ni la web ni la app pueden saber si el iPhone está en silencio, así que en iPhone/iPad (`appleDevice() === 'ios'`; un Mac no tiene modo silencio) se muestra un aviso general: una vez por dispositivo al empezar la primera partida con sonido (campo `silentTipSeen` dentro de `tb_set1`, sin clave nueva), cada vez que se enciende el sonido, y fijo bajo «Sonido» en el Perfil. Lógica en `components/silentTip.ts`. Sonar en silencio no exigiría permiso (web: `audioSession.type = 'playback'`, que corta la música; app: `playsInSilentMode` con `mixWithOthers`), pero el usuario prefirió respetarlo.
+- **Orden de los botones de inicio de sesión** (pedido del usuario): en dispositivos de Apple (iPhone, iPad, Mac; en la app, iOS) va primero Apple y debajo Google; en los demás, o si no se sabe el dispositivo, Google primero y Apple debajo. Detección en `lib/webPlatform.ts` (`appleDeviceOf`, por userAgent/platform; iPadOS en modo escritorio cuenta como iOS) y `appleDevice()` en `platform/runPlatform`.
+
 ### Edad mínima para tener cuenta: 13 años (14 en Chile sin autorización) (18 nov 2026)
 
 - Jugar como **invitado** sigue siendo para todo público (no se piden ni guardan datos personales). Para **crear cuenta** hay que tener al menos **13 años**; en Chile, bajo **14** se necesita autorización de la madre, padre o tutor (Ley 21.719), o la edad mayor que exija la ley del país. Un tutor puede pedir por correo que se borre la cuenta de un menor.

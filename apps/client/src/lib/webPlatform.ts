@@ -5,7 +5,23 @@ export interface NavigatorLike {
   userAgent?: string;
   platform?: string;
   maxTouchPoints?: number;
-  userAgentData?: { mobile?: boolean } | null;
+  userAgentData?: { mobile?: boolean; platform?: string } | null;
+}
+
+/** Dispositivo de Apple: iPhone/iPad (`ios`) o Mac (`mac`); null si no es de Apple o no se sabe. */
+export type AppleDevice = 'ios' | 'mac' | null;
+
+/**
+ * Si el navegador corre en un dispositivo de Apple. iPadOS en modo escritorio se presenta como Mac
+ * pero tiene pantalla táctil: cuenta como `ios` (tiene modo silencio; un Mac no).
+ */
+export function appleDeviceOf(nav: NavigatorLike | null | undefined): AppleDevice {
+  if (!nav) return null;
+  const ua = nav.userAgent ?? '';
+  if (/iPhone|iPad|iPod/i.test(ua) || nav.platform === 'iPhone' || nav.platform === 'iPad') return 'ios';
+  const mac = /Macintosh|Mac OS X/i.test(ua) || nav.platform === 'MacIntel' || nav.userAgentData?.platform === 'macOS';
+  if (mac) return (nav.maxTouchPoints ?? 0) > 1 ? 'ios' : 'mac';
+  return null;
 }
 
 /**

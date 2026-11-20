@@ -11,6 +11,7 @@ import type { CheckUsername, Me, SearchUser } from '@/api/types';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import { notifyShare } from '@/components/EndPanel';
 import { Hint, SmallButton, TextField } from '@/components/form';
+import { showsSilentTip, silentTip } from '@/components/silentTip';
 import { Hearts } from '@/components/Hud';
 import { InstallRow } from '@/components/InstallCard';
 import { LegalLinks } from '@/components/LegalLinks';
@@ -660,9 +661,13 @@ function DeviceSettings() {
         value={sound}
         onChange={(v) => {
           updateSettings({ sound: v });
-          if (v) fx.beep(660, 0.08, 'triangle', 0.06);
+          if (v) {
+            fx.beep(660, 0.08, 'triangle', 0.06);
+            silentTip();
+          }
         }}
       />
+      {sound && showsSilentTip() ? <Hint>Si no escuchas nada, revisa que tu iPhone o iPad no esté en modo silencio.</Hint> : null}
       <SettingSwitch
         label="Vibración"
         value={haptics}

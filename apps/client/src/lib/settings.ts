@@ -23,6 +23,8 @@ export interface Settings {
   background: string;
   /** El jugador descartó para siempre la tarjeta de instalar la web. */
   installDismissed: boolean;
+  /** Ya se mostró el aviso del modo silencio de iPhone/iPad al empezar una partida. */
+  silentTipSeen: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -33,6 +35,7 @@ export const DEFAULT_SETTINGS: Settings = {
   effect: 'normal',
   background: 'liso',
   installDismissed: false,
+  silentTipSeen: false,
 };
 
 function read(): Settings {

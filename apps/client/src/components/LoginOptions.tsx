@@ -10,6 +10,7 @@ import { C } from '@/theme';
 import { AppleSignInButton } from './AppleSignInButton';
 import { Hint, SmallButton, TextField } from './form';
 import { LegalConsent } from './LegalLinks';
+import { appleDevice } from '@/platform/runPlatform';
 
 /** Botón oficial de Google (GIS) dibujado dentro de un View. */
 function GoogleButton({ onCredential, onError }: { onCredential: (t: string) => void; onError: (m: string) => void }) {
@@ -148,8 +149,9 @@ function useAppleAvailable() {
 }
 
 /**
- * Opciones para iniciar sesión: Sign in with Apple (iOS, y la web si hay Services ID; arriba, como
- * pide Apple), el botón de Google y, en desarrollo, "Entrar (dev)". Android: solo Google.
+ * Opciones para iniciar sesión: Sign in with Apple (iOS, y la web si hay Services ID), el botón de
+ * Google y, en desarrollo, "Entrar (dev)". En dispositivos de Apple (iPhone, iPad, Mac) Apple va
+ * primero; en los demás, o si no se sabe el dispositivo, Google primero. Android: solo Google.
  * Llama `onLoggedIn` cuando la sesión quedó guardada.
  */
 export function LoginOptions({ onLoggedIn }: { onLoggedIn?: (r: LoginResponse) => void | Promise<void> }) {
@@ -157,6 +159,8 @@ export function LoginOptions({ onLoggedIn }: { onLoggedIn?: (r: LoginResponse) =
   const [err, setErr] = useState<string | null>(null);
 
   const apple = useAppleAvailable();
+  // en un iPhone, iPad o Mac, Apple va primero; en cualquier otro (o si no se sabe), Google primero
+  const appleFirst = appleDevice() !== null;
   // evita dos inicios de sesión a la vez aunque el estado aún no se haya actualizado
   const running = useRef(false);
 
@@ -197,16 +201,21 @@ export function LoginOptions({ onLoggedIn }: { onLoggedIn?: (r: LoginResponse) =
       return res;
     });
 
+  const appleButton =
+    apple && auth.signInApple ? <AppleSignInButton onPress={loginWithApple} disabled={busy} width={280} height={40} /> : null;
+  const googleButton = auth.googleAvailable ? (
+    auth.signInGoogle ? (
+      <NativeGoogleButton onCredential={login} onError={setErr} onStart={() => setErr(null)} disabled={busy} />
+    ) : (
+      <GoogleButton onCredential={login} onError={setErr} />
+    )
+  ) : null;
+
   return (
     <View style={styles.box}>
-      {apple && auth.signInApple ? <AppleSignInButton onPress={loginWithApple} disabled={busy} width={280} height={40} /> : null}
-      {auth.googleAvailable ? (
-        auth.signInGoogle ? (
-          <NativeGoogleButton onCredential={login} onError={setErr} onStart={() => setErr(null)} disabled={busy} />
-        ) : (
-          <GoogleButton onCredential={login} onError={setErr} />
-        )
-      ) : null}
+      {appleFirst ? appleButton : null}
+      {googleButton}
+      {appleFirst ? null : appleButton}
       {config.authDevFake ? <DevLogin onToken={login} busy={busy} /> : null}
       {busy ? <Text style={styles.busy}>Iniciando sesión…</Text> : null}
       {err ? <Hint tone="bad">{err}</Hint> : null}

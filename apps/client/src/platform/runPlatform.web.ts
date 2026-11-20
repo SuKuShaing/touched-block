@@ -1,4 +1,4 @@
-import { webPlatformOf } from '@/lib/webPlatform';
+import { type AppleDevice, appleDeviceOf, webPlatformOf } from '@/lib/webPlatform';
 import type { RunPlatform } from './runPlatform.types';
 
 let cached: RunPlatform | null = null;
@@ -10,6 +10,16 @@ export function runPlatform(): RunPlatform | null {
     if (typeof navigator === 'undefined') return null;
     cached = webPlatformOf(navigator as Navigator & { userAgentData?: { mobile?: boolean } });
     return cached;
+  } catch {
+    return null;
+  }
+}
+
+/** iPhone/iPad, Mac o ninguno (null también si no se sabe). Nunca lanza. */
+export function appleDevice(): AppleDevice {
+  try {
+    if (typeof navigator === 'undefined') return null;
+    return appleDeviceOf(navigator as Navigator & { userAgentData?: { mobile?: boolean; platform?: string } });
   } catch {
     return null;
   }

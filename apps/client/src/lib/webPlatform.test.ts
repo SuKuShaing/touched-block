@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { webPlatformOf } from './webPlatform';
+import { appleDeviceOf, webPlatformOf } from './webPlatform';
 
 const UA = {
   chromeAndroid: 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36',
@@ -29,5 +29,20 @@ describe('webPlatformOf', () => {
   it('sin datos: web_desktop', () => {
     expect(webPlatformOf(null)).toBe('web_desktop');
     expect(webPlatformOf({})).toBe('web_desktop');
+  });
+});
+
+describe('appleDeviceOf', () => {
+  it('iPhone y iPad (también iPadOS en modo escritorio) son ios; Mac es mac', () => {
+    expect(appleDeviceOf({ userAgent: UA.iphone, platform: 'iPhone', maxTouchPoints: 5 })).toBe('ios');
+    expect(appleDeviceOf({ userAgent: UA.mac, platform: 'MacIntel', maxTouchPoints: 5 })).toBe('ios');
+    expect(appleDeviceOf({ userAgent: UA.mac, platform: 'MacIntel', maxTouchPoints: 0 })).toBe('mac');
+  });
+
+  it('Android, Windows o sin datos: null', () => {
+    expect(appleDeviceOf({ userAgent: UA.chromeAndroid, userAgentData: { mobile: true } })).toBeNull();
+    expect(appleDeviceOf({ userAgent: UA.windows, platform: 'Win32' })).toBeNull();
+    expect(appleDeviceOf(null)).toBeNull();
+    expect(appleDeviceOf({})).toBeNull();
   });
 });

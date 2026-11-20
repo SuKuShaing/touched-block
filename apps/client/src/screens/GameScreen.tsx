@@ -112,6 +112,7 @@ import { useTabBarSpace } from '@/lib/tabBar';
 import { useFieldTaps } from '@/platform/fieldTaps';
 import { HEART } from '@/components/heart';
 import { C, LOW_TIME } from '@/theme';
+import { silentTipOnce } from '@/components/silentTip';
 
 interface EndInfo {
   /** Cambia en cada partida (reinicia la animación del camino). */
@@ -550,6 +551,7 @@ export function GameScreen() {
       const normal = opts.mode === 'normal';
       // El sonido va dentro del toque (iOS solo habilita el audio durante un gesto del usuario).
       sounds.play('start');
+      silentTipOnce();
       setStartFail(null);
       // Avisos de esta partida: el récord local de ahora y, con sesión, los puntajes semanales de
       // los amigos (si no llegan, no hay avisos de amigos). En los retos no hay ninguno de los dos.
