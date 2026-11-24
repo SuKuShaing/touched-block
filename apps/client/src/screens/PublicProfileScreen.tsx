@@ -7,7 +7,6 @@ import { follow, unblockUser, unfollow } from '@/api/endpoints';
 import { useInvalidate, useProfile, useViewer } from '@/api/hooks';
 import { SmallButton } from '@/components/form';
 import { PlayerHoverArea, usePlayerMenu } from '@/components/PlayerMenu';
-import { ProfileIcon } from '@/components/ProfileIcon';
 import { TierBadge } from '@/components/TierBadge';
 import { toast } from '@/components/Toast';
 import { tierStepOf } from '@/cosmetics/tiers';
@@ -86,11 +85,8 @@ export function PublicProfileScreen() {
     body = (
       <>
         <PlayerHoverArea menu={menu} user={p.isMe ? null : p} style={styles.head} moreStyle={styles.more} a11yLabel={`Perfil de @${p.username}`}>
-          <View style={styles.avatar}>
-            <ProfileIcon size={34} />
-          </View>
           <View style={styles.titleRow}>
-            <Text style={[styles.title, styles.shrink]} accessibilityRole="header">
+            <Text style={[styles.title, styles.shrink, p.username.length >= 14 && styles.titleLong]} accessibilityRole="header">
               @{p.username}
             </Text>
             <TierBadge tier={p.tier} size="md" />
@@ -165,19 +161,11 @@ const styles = StyleSheet.create({
   head: { alignSelf: 'stretch', alignItems: 'center', gap: 14, paddingHorizontal: 44 },
   more: { top: 0, marginTop: 0, right: 0 },
   center: { alignItems: 'center', gap: 12, marginTop: 40 },
-  avatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: C.panel,
-    borderWidth: 1,
-    borderColor: C.panelBorder,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   title: { color: C.text, fontSize: 26, fontWeight: '800' },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, maxWidth: '100%' },
-  shrink: { flexShrink: 1 },
+  // minWidth 0: en la web, sin esto el nombre no se encoge y empuja la insignia fuera de la pantalla
+  shrink: { flexShrink: 1, minWidth: 0, textAlign: 'center' },
+  titleLong: { fontSize: 22 },
   tierT: { color: C.text, opacity: 0.75, fontSize: 14, fontWeight: '600', marginTop: -8 },
   sub: { color: C.text, opacity: 0.75, fontSize: 15 },
   muted: { color: C.text, opacity: 0.65, fontSize: 14, textAlign: 'center' },
