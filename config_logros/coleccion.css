@@ -1,0 +1,458 @@
+/* Premios y logros: réplica de la Colección (CollectionScreen.tsx). Usa las variables y .panelJuego de styles.css */
+.premios,
+.logrosSec {
+  margin: 0 0 3rem;
+  padding: 0 40px;
+}
+
+.premios h2,
+.logrosSec h2 {
+  font-size: 1.1rem;
+  margin: 0 0 1.2rem;
+}
+
+/* Dos columnas: Paletas (la más larga) a la izquierda; Sonidos, Efectos y Fondos apilados a la derecha */
+.grillaPremios {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.grillaPremios > .panelJuego:first-child {
+  grid-row: span 3;
+}
+
+.listaColeccion {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.filaColeccion {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 4px;
+  border-top: 1px solid #26263a; /* C.rowBorder */
+}
+
+.filaColeccion:first-child {
+  border-top: 0;
+}
+
+.filaColeccion.cambia {
+  box-shadow: inset 3px 0 0 var(--accent);
+  padding-left: 10px;
+  background: rgba(119, 204, 255, 0.07);
+}
+
+.textoColeccion {
+  min-width: 0;
+}
+
+.nombreColeccion {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.reqColeccion {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+.reqColeccion img {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
+.antesColeccion {
+  margin-top: 2px;
+  font-size: 11px;
+  opacity: 0.55;
+  text-decoration: line-through;
+}
+
+/* vistas previas */
+.vpPaleta {
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+  width: 44px;
+  height: 44px;
+}
+
+.vpPaleta i {
+  border-radius: 3px;
+}
+
+.vpPaleta.brillo i {
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.45), transparent 55%);
+  background-blend-mode: screen;
+}
+
+.vpIcono {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #12121a;
+  border: 1px solid #2a2a3d;
+  font-size: 22px;
+}
+
+.vpFondo {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: #12121a;
+  border: 1px solid #2a2a3d;
+}
+
+.vpFondo.grilla {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background-size: 9px 9px;
+}
+
+.vpFondo.estrellas {
+  background-image: radial-gradient(1.5px 1.5px at 20% 30%, #fff, transparent), radial-gradient(1px 1px at 70% 60%, #fff, transparent), radial-gradient(1.5px 1.5px at 45% 80%, #cfe, transparent), radial-gradient(1px 1px at 85% 20%, #fff, transparent), radial-gradient(1px 1px at 10% 75%, #fff, transparent);
+}
+
+.vpFondo.aurora {
+  background: radial-gradient(ellipse at 30% 100%, rgba(95, 224, 138, 0.55), transparent 60%), radial-gradient(ellipse at 75% 90%, rgba(130, 90, 255, 0.5), transparent 60%), #12121a;
+}
+
+/* logros */
+.logrosSec .panelJuego {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.tablaEnvuelta {
+  overflow-x: auto;
+}
+
+.tablaLogros {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.tablaLogros th,
+.tablaLogros td {
+  text-align: left;
+  padding: 10px 12px;
+  border-top: 1px solid #26263a;
+  vertical-align: top;
+}
+
+.tablaLogros thead th {
+  border-top: 0;
+  font-size: 12px;
+  opacity: 0.8;
+  white-space: nowrap;
+}
+
+.tablaLogros thead th img {
+  vertical-align: middle;
+}
+
+.tablaLogros tbody th {
+  font-size: 14px;
+  min-width: 150px;
+}
+
+.tablaLogros td {
+  min-width: 130px;
+}
+
+.tablaLogros td b {
+  display: block;
+  font-size: 17px;
+}
+
+.tablaLogros td small {
+  opacity: 0.6;
+  font-size: 11px;
+}
+
+@media (max-width: 600px) {
+  .premios,
+  .logrosSec {
+    padding: 0 16px;
+  }
+
+  .grillaPremios {
+    grid-template-columns: 1fr;
+  }
+
+  .grillaPremios > .panelJuego:first-child {
+    grid-row: auto;
+  }
+}
+
+/* fila de logro que cambia con el interruptor */
+.tablaLogros tr.cambia > th {
+  box-shadow: inset 3px 0 0 var(--accent);
+  background: rgba(119, 204, 255, 0.07);
+}
+
+/* etiqueta de un logro nuevo (con el interruptor en "Con cambios") */
+.etiquetaNueva {
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* umbrales y materiales nuevos con el interruptor en "Con cambios" */
+.tablaLogros th.nueva,
+.tablaLogros td.nueva {
+  background: rgba(119, 204, 255, 0.08);
+}
+
+/* CAMBIO-011: icono propio de cada logro (clic: modal con la familia) */
+.nombreLogro {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.iconoLogro {
+  display: block;
+  flex: none;
+  padding: 0;
+  margin: 0 0 6px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  cursor: pointer;
+}
+
+.nombreLogro .iconoLogro {
+  margin: 0;
+}
+
+.iconoLogro img {
+  display: block;
+}
+
+.iconoLogro:hover,
+.iconoLogro:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.parImg {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.familiaItem {
+  min-width: 150px;
+}
+
+.modalNota {
+  flex: 0 0 100%;
+  margin: 0 0 6px;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+  opacity: 0.85;
+}
+
+/* Logros en el celular: réplica de la tarjeta "Logros" de la Colección (CollectionScreen.tsx) */
+.logrosCelular {
+  margin: 0 0 3rem;
+  padding: 0 40px;
+}
+
+.logrosCelular h2 {
+  font-size: 1.1rem;
+  margin: 0 0 0.6rem;
+}
+
+.logrosCelular > .nota {
+  max-width: 760px;
+  margin: 0 auto 1rem;
+  text-align: center;
+}
+
+.simulador {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px 18px;
+  margin: 0 auto 1.4rem;
+  max-width: 900px;
+}
+
+.simulador {
+  align-items: flex-start;
+}
+
+/* tres filas fijas (título, nota, campo): con o sin nota, todos los campos quedan a la misma altura */
+.simulador label {
+  display: grid;
+  grid-template-rows: 16px 14px auto;
+  row-gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+  opacity: 0.9;
+}
+
+.simulador label small {
+  grid-row: 2;
+  font-weight: 400;
+  line-height: 14px;
+  opacity: 0.7;
+}
+
+.simulador input {
+  grid-row: 3;
+  width: 110px;
+  padding: 6px 8px;
+  border: 1px solid #2a2a3d;
+  border-radius: 8px;
+  background: #1c1c28;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+}
+
+.celulares {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 28px;
+}
+
+.celular {
+  width: 358px;
+  max-width: 100%;
+  text-align: left;
+}
+
+.celularEtiqueta {
+  margin: 0 0 8px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 800;
+  opacity: 0.8;
+}
+
+.celularEtiqueta.acento {
+  color: var(--accent);
+  opacity: 1;
+}
+
+.seccionCelular {
+  box-sizing: border-box;
+  padding: 16px;
+  border-radius: 16px;
+  background: #1c1c28; /* C.panel */
+}
+
+.tituloCelular {
+  margin-bottom: 12px;
+  font-size: 11px;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+.listaCelular {
+  border-radius: 12px;
+  overflow: hidden;
+  background: #12121a; /* C.bg */
+}
+
+.itemCelular {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #26263a; /* C.rowBorder */
+  border-left: 3px solid transparent;
+}
+
+.itemCelular.ultimo {
+  border-bottom: 0;
+}
+
+.cajaMedalla {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+}
+
+.cajaMedalla img {
+  display: block;
+}
+
+.medallaVacia {
+  box-sizing: border-box;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2px dashed #2a2a3d;
+  background: #12121a;
+}
+
+.textoCelular {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nombreCelular {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.matCelular {
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.barraCelular {
+  height: 8px;
+  border-radius: 4px;
+  background: #232333; /* C.barBg */
+  overflow: hidden;
+}
+
+.barraCelular > div {
+  height: 100%;
+  border-radius: 4px;
+}
+
+.pequeCelular {
+  font-size: 13px;
+  line-height: 18px;
+  opacity: 0.6;
+}
+
+@media (max-width: 600px) {
+  .logrosCelular {
+    padding: 0 16px;
+  }
+}

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Config logros</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="coleccion.css">
+</head>
+<body>
+  <!-- Interruptor: Ahora (como está hoy en el juego) / Con cambios (lo propuesto en cambios.md) -->
+  <label class="interruptor">
+    <span class="lblAhora">Ahora</span>
+    <button id="interruptor" type="button" role="switch" aria-checked="false" aria-label="Mostrar con los cambios propuestos"><span class="perilla"></span></button>
+    <span class="lblCambios">Con cambios</span>
+  </label>
+
+  <h1>Config de logros</h1>
+
+  <!--
+    Escala de etapas (réplica de la que sale al terminar una partida).
+    Referencia en la app:
+      - apps/client/src/components/StageTrack.tsx  (dibujo y estilos)
+      - apps/client/src/lib/stagePath.ts           (trackPos / milestonePos: cada hito ocupa el mismo ancho)
+      - packages/engine/src/progress.ts            (MILESTONES: los hitos y sus íconos)
+      - apps/client/src/theme.ts                   (colores)
+    Aquí es una copia estática: no importa nada de la app.
+  -->
+  <div id="escala" class="wrap"></div>
+
+  <!--
+    Insignias (réplica). Referencia: packages/engine/src/progress.ts (TIERS) y
+    apps/client/src/cosmetics/medal.ts (dibujo). Los SVG de insignias/ se generaron con medalSvg().
+  -->
+  <section class="insignias">
+    <h2>Insignias</h2>
+    <div id="lista" class="lista"></div>
+  </section>
+
+  <!--
+    Recta de bloques destruidos, con el nivel al que se llega con cada cantidad (en chico, debajo).
+    Referencia: apps/client/src/lib/level.ts (el nivel n empieza en LEVEL_FACTOR · n · (n − 1) bloques,
+    LEVEL_FACTOR = 25; cuentan los bloques destruidos más los bloques extra de las misiones).
+  -->
+  <section class="bloques">
+    <h2 id="tituloNivel">Bloques destruidos y nivel</h2>
+    <div id="rectaBloques" class="wrap"></div>
+    <p class="nota formulaNivel" id="formulaNivel"></p>
+    <p class="nota">Arriba, bloques destruidos (más los de misiones). Abajo, en chico, el nivel al que llegas. En celeste, los niveles que desbloquean un fondo.</p>
+  </section>
+
+  <!--
+    Retos (el reto diario) y misiones del día. Réplica de cómo se ven en el celular:
+      - apps/client/src/components/DailyCard.tsx y components/MissionList.tsx (dibujo)
+      - packages/engine/src/daily.ts (DAILY_CALENDAR, intentos, vidas, racha)
+      - packages/engine/src/missions.ts (MISSION_POOL, MISSIONS_PER_DAY; 13 hoy, 21 con CAMBIO-014 y CAMBIO-015)
+    Se llenan desde script.js.
+  -->
+  <section class="retos">
+    <h2>Retos <span id="retosContador" class="contadorTitulo"></span></h2>
+    <div id="retosReglas" class="panelJuego reglasReto"></div>
+    <div id="retosSemana" class="semana"></div>
+  </section>
+
+  <section class="misiones">
+    <h2>Misiones</h2>
+    <div id="misionesLista" class="panelJuego listaMisiones"></div>
+  </section>
+
+  <section class="logrosSec">
+    <h2>Logros</h2>
+    <div id="logrosTabla" class="panelJuego"></div>
+  </section>
+
+  <!--
+    Logros en el celular: réplica de la tarjeta "Logros" de la pestaña Colección (CollectionScreen.tsx, AchievementRow),
+    hoy o con los cambios (según el interruptor), con un jugador de ejemplo editable. Se llena desde coleccion.js.
+  -->
+  <section class="logrosCelular">
+    <h2>Logros en el celular</h2>
+    <p class="nota">Así se ve la tarjeta "Logros" de la Colección en el celular, con el mismo jugador de ejemplo. Cambia los números y usa el interruptor de arriba para comparar cómo se reparten los materiales hoy y con los cambios.</p>
+    <div class="simulador">
+      <label>Mejor combo<input id="ej_racha" type="number" min="0" value="60"></label>
+      <label>Partidas jugadas<input id="ej_partidas" type="number" min="0" value="160"></label>
+      <label>Bloques destruidos<small>(solo hoy)</small><input id="ej_bloques" type="number" min="0" value="1200"></label>
+      <label>Días seguidos de reto<input id="ej_diasReto" type="number" min="0" value="9"></label>
+      <label>Mejor % en un reto<small>(vacío: nunca jugó)</small><input id="ej_mejorReto" type="number" min="0" max="99" value="80"></label>
+    </div>
+    <div class="celulares">
+      <div class="celular"><div id="celularEtiqueta" class="celularEtiqueta">Hoy</div><div id="celularActual"></div></div>
+    </div>
+  </section>
+
+  <!--
+    Premios (paletas, sonidos, efectos al destruir, fondos del campo) y logros. Réplica de la Colección:
+      - apps/client/src/screens/CollectionScreen.tsx (dibujo)
+      - apps/client/src/cosmetics/catalog.ts (requisitos), palettes.ts (colores)
+      - packages/engine/src/achievements.ts (logros)
+    Se llenan desde script.js y cambian con el interruptor Ahora / Con cambios.
+  -->
+  <section class="premios">
+    <h2>Premios</h2>
+    <div id="premiosGrilla" class="grillaPremios"></div>
+  </section>
+
+  <!-- Modal con los tamaños de una insignia (se llena desde script.js) -->
+  <div id="modal" class="modal" hidden>
+    <div class="modalCaja" role="dialog" aria-modal="true" aria-labelledby="modalTitulo">
+      <button id="modalCerrar" class="cerrar" aria-label="Cerrar">×</button>
+      <h2 id="modalTitulo"></h2>
+      <p id="modalMeta" class="modalMeta"></p>
+      <div id="modalTamanos" class="tamanos"></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+  <script src="coleccion.js"></script>
+</body>
+</html>
