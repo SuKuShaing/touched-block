@@ -7,7 +7,7 @@
 | Landing                   | Cloudflare Workers: `https://touchedblock.app`                                                                                                        | Cada push a `main` que toque `apps/landing/**`, o a mano                                                                                            |
 | Web vieja (solo redirige) | GitHub Pages: `https://sukushaing.github.io/touched-block/`                                                                                           | Cuando cambia `deploy/gh-pages-redirect/**`, o a mano                                                                                               |
 | App Android               | APK firmado (`apps/client/android/app/build/outputs/apk/release/app-release.apk`); por ahora se reparte a mano; Google Play más adelante              | A mano (ver sección 5)                                                                                                                              |
-| API + base de datos       | VPS del usuario con **Dokploy** (servicio *Compose*): `https://api.touchedblock.app` (y `https://vps23906.cubepath.net`, que usa el APK ya repartido) | Cada tag `vX.Y.Z`                                                                                                                                   |
+| API + base de datos       | VPS del usuario con **Dokploy** (servicio *Compose*): `https://api.touchedblock.app` (por el proxy de Cloudflare) | Cada tag `vX.Y.Z`                                                                                                                                   |
 
 
 **Regla de oro**: el repositorio es **público**. Ningún secreto entra al repo. Los valores reales viven en Dokploy (pestaña Environment) y en los *Secrets* de GitHub (Dokploy y Cloudflare). `.env` y `.env.*` están en `.gitignore`, salvo los `.env.example`.
@@ -23,7 +23,7 @@ Desde el 17 nov 2026 el proyecto usa el dominio **`touchedblock.app`** (comprado
 | --------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | `https://touchedblock.app`                    | Landing: inicio, `/privacidad/`, `/terminos/`, `/eliminar-cuenta/`, `/soporte/` | Cloudflare Workers, activos estáticos (`apps/landing`, `apps/landing/wrangler.jsonc`)                  |
 | `https://web.touchedblock.app`                | El juego web (este cliente Expo, en la raíz)                                    | Cloudflare Workers, activos estáticos (`apps/client/wrangler.jsonc`)                                   |
-| `https://api.touchedblock.app`                | La API                                                                          | Dokploy (sección 3). `https://vps23906.cubepath.net` sigue funcionando: el APK ya repartido apunta ahí |
+| `https://api.touchedblock.app`                | La API                                                                          | Dokploy (sección 3). Pasa por el proxy de Cloudflare; el dominio viejo `vps23906.cubepath.net` se quitó el 24 nov 2026 |
 | `https://sukushaing.github.io/touched-block/` | Web vieja: solo redirige al juego y le pasa los datos locales                   | GitHub Pages (`deploy/gh-pages-redirect/`)                                                             |
 
 
@@ -166,7 +166,7 @@ El archivo `deploy/.env` (ignorado por git) ya tiene los valores reales generado
 
 ### Configuración inicial en Dokploy (una vez)
 
-1. **DNS**: crea un registro A `api.<tu-dominio>` que apunte a la IP del VPS (hoy `api.touchedblock.app`; el dominio viejo `vps23906.cubepath.net` se deja también en *Domains*). Créalo primero en **solo DNS** (nube gris) para que Traefik obtenga el certificado de Let's Encrypt. Desde el 24 nov 2026 se pasa al **proxy de Cloudflare** (nube naranja) con SSL **Full (strict)**, y el dominio lleva el middleware `touchedblock-cloudflare-only@file`, que rechaza (403) a quien entre directo sin pasar por Cloudflare. `vps23906.cubepath.net` sigue directo y sin ese middleware (no puede pasar por Cloudflare). Detalle en `historia-y-decisiones.md`.
+1. **DNS**: crea un registro A `api.<tu-dominio>` que apunte a la IP del VPS (hoy `api.touchedblock.app`). Créalo primero en **solo DNS** (nube gris) para que Traefik obtenga el certificado de Let's Encrypt. Desde el 24 nov 2026 se pasa al **proxy de Cloudflare** (nube naranja) con SSL **Full (strict)**, y el dominio lleva el middleware `touchedblock-cloudflare-only@file`, que rechaza (403) a quien entre directo sin pasar por Cloudflare. Detalle en `historia-y-decisiones.md`.
    - Hace falta un dominio real, porque la web está en HTTPS y el navegador bloquea llamadas a una API sin HTTPS.
    - Los dominios `traefik.me` que sugiere Dokploy no sirven: son HTTP.
 2. **Project → Create Service → Compose**.
@@ -320,7 +320,7 @@ EXPO_PUBLIC_API_URL=https://api.touchedblock.app NODE_ENV=production ./gradlew a
 
 - Subir `android.versionCode` (y `version`) en `app.json` en cada APK que se reparta: Android no instala encima una versión con el mismo `versionCode`.
 - La API no necesita CORS para la app, porque las apps no envían `Origin`.
-- Los APK anteriores a noviembre de 2026 apuntan a `https://vps23906.cubepath.net`: ese dominio tiene que seguir en Dokploy (*Domains*) mientras haya gente con esos APK.
+- Los APK anteriores a noviembre de 2026 apuntaban a `https://vps23906.cubepath.net`. Ese dominio se quitó de Dokploy el 24 nov 2026 (solo quedaba un APK, en un celular de prueba): esos APK ya no se conectan a la API.
 - La app comparte enlaces con `https://web.touchedblock.app/` (`config.siteUrl`) y abre las páginas legales de `https://touchedblock.app/` (`config.landingUrl`).
 
 ## 6. Sign in with Apple (app iOS y web)

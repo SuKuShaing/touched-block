@@ -10,7 +10,7 @@ Estado al **20 nov 2026**.
 - **Dominio propio (17 nov 2026)**: publicado. Motivos en `historia-y-decisiones.md` → "Dominio propio touchedblock.app…"; operación en `despliegue.md`.
   - Landing en https://touchedblock.app (Cloudflare Workers, `apps/landing`), con `/privacidad/`, `/terminos/`, `/eliminar-cuenta/` y `/soporte/`. `www` redirige a la raíz.
   - Juego en https://web.touchedblock.app (Cloudflare Workers). Verificado en producción: carga, tutorial de 1.ª visita, partida creada contra la API nueva enviando `platform`, sin errores de consola.
-  - API `v0.4.0` en https://api.touchedblock.app; sigue también en `vps23906.cubepath.net` para el APK repartido. `CORS_ORIGINS` = `https://web.touchedblock.app,https://sukushaing.github.io`. Respaldo previo `touched_block-20261118-001134.dump` (OK). Migración `add_run_platform` aplicada.
+  - API `v0.4.0` en https://api.touchedblock.app; el dominio viejo `vps23906.cubepath.net` se quitó el 24 nov 2026. `CORS_ORIGINS` = `https://web.touchedblock.app,https://sukushaing.github.io`. Respaldo previo `touched_block-20261118-001134.dump` (OK). Migración `add_run_platform` aplicada.
   - GitHub Pages publica solo la redirección con mudanza de datos (`deploy/gh-pages-redirect/`). Probado en producción: un enlace viejo llega a la misma ruta con el récord; un jugador antiguo que entra primero por un enlace nuevo (`/?reto=…`) hace una sola ida y vuelta y vuelve al reto con sus datos. Las URLs legales viejas llevan a la landing.
   - Google Cloud: origen `https://web.touchedblock.app` autorizado; página principal y legales en `touchedblock.app`; dominio autorizado `touchedblock.app`. Login real con Google en la web nueva **confirmado por el usuario** (18 nov 2026).
   - Correo `contacto@touchedblock.app` (Email Routing de Cloudflare → Gmail del usuario). Correo de prueba **confirmado por el usuario** (18 nov 2026).
@@ -36,14 +36,17 @@ Estado al **20 nov 2026**.
   - **`api.touchedblock.app` detrás del proxy de Cloudflare desde el 24 nov 2026** (opción B de la nota del VPS; motivo y diseño en `historia-y-decisiones.md`):
     - `TRUST_PROXY` con los rangos de Cloudflare en `deploy/docker-compose.yml`, desplegado.
     - Zona `touchedblock.app` en SSL **Full (strict)**; registro `api` con proxy (nube naranja).
-    - Middleware `touchedblock-cloudflare-only@file` (`/etc/dokploy/traefik/dynamic/touchedblock-cloudflare-only.yml`, `ipAllowList` con los rangos de Cloudflare) asignado **solo** al dominio `api.touchedblock.app` en Dokploy. `vps23906.cubepath.net` sigue directo y sin filtro.
-    - Verificado: `/health` 200 por Cloudflare (IPv4 e IPv6) y 403 al entrar directo a la IP del VPS; `vps23906.cubepath.net` 200; preflight CORS desde `web.touchedblock.app` 204; la API ve la IP real (el contador `X-Ratelimit-Remaining` de `/daily` baja en conjunto entre los dos nombres); Learn-it, UltimaType, la landing, la web y el panel siguen en 200.
+    - Middleware `touchedblock-cloudflare-only@file` (`/etc/dokploy/traefik/dynamic/touchedblock-cloudflare-only.yml`, `ipAllowList` con los rangos de Cloudflare) asignado **solo** al dominio `api.touchedblock.app` en Dokploy.
+    - Verificado: `/health` 200 por Cloudflare (IPv4 e IPv6) y 403 al entrar directo a la IP del VPS; preflight CORS desde `web.touchedblock.app` 204; la API ve la IP real (el contador `X-Ratelimit-Remaining` de `/daily` baja en conjunto entre los dos nombres); Learn-it, UltimaType, la landing, la web y el panel siguen en 200.
     - Cómo revertir (en este orden, si no da 403 a todos): quitar el middleware del dominio en Dokploy y redesplegar; después volver el registro `api` a "DNS only". `TRUST_PROXY` puede quedarse.
-    - Pendiente: subir el TLS mínimo de la zona de 1.0 a 1.2 (lo recomienda la nota; no se hizo).
+    - TLS mínimo de la zona `touchedblock.app` subido de 1.0 a 1.2 (24 nov 2026; verificado: TLS 1.1 se rechaza).
+    - La API key de Dokploy para GitHub se rotó el 24 nov 2026 ("Key para Github"). Sigue existiendo "Api Key para mis MCPs" (9 nov), que también viajó por HTTP: rotarla.
+    - Dominio `vps23906.cubepath.net` quitado del Compose el 24 nov 2026 (redesplegado; ahora responde 404). Los APK viejos ya no se conectan; solo quedaba uno, en un celular de prueba. Todos los dominios del VPS pasan ahora por Cloudflare.
+    - Para el administrador del VPS (no es de este proyecto): ya se puede aplicar la opción C (80/443 solo desde Cloudflare); además, desde internet se ven abiertos 2377 y 7946 (Docker Swarm), que conviene cerrar, y revisar 4789/UDP.
   - Proyecto **Touched Block** (`6eSA39oT4nPDO4U034YGw`), entorno `production`.
   - Compose **API**: id `5ZlPmSATtXjdrF-3c-vPs`, appName `touched-block-bz408h`. Fuente Git `https://github.com/SuKuShaing/touched-block.git`, rama `main`, ruta `./deploy/docker-compose.yml`. *Isolated Deployment* activado y *autoDeploy* desactivado (se despliega por tag).
   - Las variables de `deploy/.env` están cargadas (incluida `DAILY_SECRET` desde el 12 nov 2026).
-  - **API en producción: `https://vps23906.cubepath.net`** (hostname del VPS que da el proveedor). Certificado Let's Encrypt vigente hasta el 8 feb 2027, con renovación automática por Traefik. `/health` responde `rulesVersion: 5`, versión `v0.3.0` (desde el 12 nov 2026). CORS solo acepta `https://sukushaing.github.io`.
+  - API en producción en `https://api.touchedblock.app` (hasta el 17 nov 2026 fue `https://vps23906.cubepath.net`, el hostname del proveedor, quitado el 24 nov 2026). Certificado Let's Encrypt vigente hasta el 8 feb 2027, con renovación automática por Traefik. `/health` responde `rulesVersion: 5`, versión `v0.3.0` (desde el 12 nov 2026). CORS solo acepta `https://sukushaing.github.io`.
   - Tarea programada `touched-block-respaldo` (respaldo diario de la base, ver `despliegue.md`).
   - Se despliega solo con cada tag: `v0.1.1` y `v0.1.2` (10 nov 2026, buscador de "¿Quién te invitó?") corrieron completos, tests → GHCR → Dokploy.
   - Desde el 17 nov 2026 la API también responde en `https://api.touchedblock.app` (la que usan la web y los APK nuevos). El hostname del VPS se mantiene mientras haya APK viejos repartidos.
