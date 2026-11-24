@@ -72,11 +72,14 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 12,
     minHeight: 44,
+    // en una fila con un botón (p. ej. "Guardar"), sin esto en la web el input no se encoge por
+    // debajo de su ancho propio y se monta sobre el botón en pantallas angostas
+    minWidth: 0,
     flex: 1,
   },
   prefix: { color: C.text, opacity: 0.5, fontSize: 16, marginRight: 2 },
   // outlineStyle 'none' solo existe en la web (quita el borde de foco del navegador); en nativo no es válido
-  input: { flex: 1, color: C.text, fontSize: 16, paddingVertical: 10, ...Platform.select({ web: { outlineStyle: 'none' }, default: {} }) } as object,
+  input: { flex: 1, minWidth: 0, color: C.text, fontSize: 16, paddingVertical: 10, ...Platform.select({ web: { outlineStyle: 'none' }, default: {} }) } as object,
   btn: { borderRadius: 12, paddingVertical: 11, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', minHeight: 44 },
   primary: { backgroundColor: C.accent },
   ghost: { backgroundColor: C.barBg },
