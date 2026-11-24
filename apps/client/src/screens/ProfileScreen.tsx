@@ -744,7 +744,7 @@ export function ProfileScreen() {
           <>
             {/* sin foto (decisión del usuario): solo usuario, insignia y país */}
             {me ? (
-              <ProfileName username={me.username} tier={me.tier} fontSize={28} />
+              <ProfileName username={me.username} tier={me.tier} fontSize={28} isMe />
             ) : (
               <Text style={styles.title} accessibilityRole="header">
                 Perfil

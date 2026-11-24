@@ -83,7 +83,7 @@ export function PublicProfileScreen() {
     body = (
       <>
         <PlayerHoverArea menu={menu} user={p.isMe ? null : p} style={styles.head} moreStyle={styles.more} a11yLabel={`Perfil de @${p.username}`}>
-          <ProfileName username={p.username} tier={p.tier} fontSize={26} />
+          <ProfileName username={p.username} tier={p.tier} fontSize={26} isMe={p.isMe === true} />
           {p.country ? (
             <Text style={styles.sub}>
               {flag(p.country)} {countryName(p.country)}
