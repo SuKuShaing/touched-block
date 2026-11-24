@@ -435,6 +435,15 @@ El usuario pidió que no haya que saberse el usuario exacto de quien te invitó:
 - Al tocar un resultado se pide confirmación, porque quien te invitó no se puede cambiar.
 - Sin índice: recorre la tabla de usuarios, que es chica. Si crece mucho, agregar un índice trigram (`pg_trgm`).
 
+### Panel de Dokploy con dominio y la API detrás de Cloudflare (24 nov 2026)
+
+El VPS es compartido con Learn-it y UltimaType. Su administrador cerró el puerto 3000 del panel (ahora `https://dokploy.sanhueza.pro`) y protegió Learn-it para que solo acepte tráfico de Cloudflare; preguntó si Touched Block quería lo mismo.
+
+- `DOKPLOY_URL` (secreto de GitHub y variable local) pasó a `https://dokploy.sanhueza.pro`. La API key de Dokploy se usó por HTTP sin cifrar: hay que rotarla.
+- El usuario eligió poner **`api.touchedblock.app` detrás del proxy de Cloudflare** (protección DDoS/WAF) y bloquear el acceso directo a ese nombre con un `ipAllowList` propio en Traefik (`touchedblock-cloudflare-only`), asignado solo a ese dominio en Dokploy (no en la configuración global de Traefik, que es de los tres proyectos).
+- **`vps23906.cubepath.net` queda directo y sin filtro**: es el nombre del proveedor, no está en nuestro Cloudflare y los APK viejos apuntan ahí. Con el filtro daría 403 a todos.
+- **IP del jugador**: con Cloudflare delante, el `trust proxy` por defecto (`loopback, linklocal, uniquelocal`) haría que la API viera la IP del borde de Cloudflare y que todos compartieran el límite de 120 peticiones por minuto. Se agregaron los rangos de Cloudflare a `TRUST_PROXY` en `deploy/docker-compose.yml`: Express recorre el `X-Forwarded-For` desde la derecha saltando Traefik y Cloudflare, y se queda con la IP real. Sirve también para el acceso directo, porque ahí Traefik reescribe el `X-Forwarded-For` con la IP de la conexión. Se descartó `trust proxy = 2` porque fallaría con el acceso directo (tomaría un valor que el cliente puede inventar), y `CF-Connecting-IP` porque obliga a tocar código. Si Cloudflare cambia sus rangos, actualizar la lista (o sobrescribirla con la variable `TRUST_PROXY` en Dokploy).
+
 ---
 
 ## Cómo se trabajó

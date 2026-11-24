@@ -1088,7 +1088,7 @@ Al arrancar, el contenedor aplica las migraciones pendientes (`prisma migrate de
 | `PORT` | no | 3000 |
 | `THROTTLE_LIMIT` | no | Peticiones por minuto por IP (120) |
 | `CLEANUP_INTERVAL_MS` | no | Cada cuánto se limpian partidas viejas y sesiones vencidas (1 h; `0` la desactiva) |
-| `TRUST_PROXY` | no | Valor de `trust proxy` de Express (por defecto `loopback, linklocal, uniquelocal`, que sirve detrás de Traefik/Dokploy) |
+| `TRUST_PROXY` | no | Valor de `trust proxy` de Express (por defecto `loopback, linklocal, uniquelocal`, que sirve detrás de Traefik/Dokploy). En producción, `deploy/docker-compose.yml` le suma los rangos de Cloudflare, porque `api.touchedblock.app` pasa por su proxy |
 | `APP_VERSION` | no | Lo pone la imagen Docker (tag de git) y aparece en `/health` |
 | `APPLE_TOKEN_KEY` | no | Clave para cifrar (AES-256-GCM) el refresh token de Apple guardado; en producción, al menos 32 caracteres si se define. Sin ella se usa la derivada de `JWT_SECRET` (como antes). Los tokens cifrados con la clave anterior se siguen pudiendo leer, así que con `APPLE_TOKEN_KEY` definida se puede rotar `JWT_SECRET` sin perder la revocación. Una vez definida, no cambiarla. **Secreto: nunca en el repo** |
 | `TELEGRAM_BOT_TOKEN` | no | Token del bot de Telegram que avisa de cada reporte nuevo. Sin esta o sin `TELEGRAM_CHAT_ID` no se manda ningún aviso (queda un aviso en el log al arrancar). **Secreto: nunca en el repo** |

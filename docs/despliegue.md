@@ -166,7 +166,7 @@ El archivo `deploy/.env` (ignorado por git) ya tiene los valores reales generado
 
 ### Configuración inicial en Dokploy (una vez)
 
-1. **DNS**: crea un registro A `api.<tu-dominio>` que apunte a la IP del VPS (hoy `api.touchedblock.app`, en Cloudflare: **solo DNS**, nube gris, para que Let's Encrypt de Traefik pueda emitir el certificado; el dominio viejo `vps23906.cubepath.net` se deja también en *Domains*).
+1. **DNS**: crea un registro A `api.<tu-dominio>` que apunte a la IP del VPS (hoy `api.touchedblock.app`; el dominio viejo `vps23906.cubepath.net` se deja también en *Domains*). Créalo primero en **solo DNS** (nube gris) para que Traefik obtenga el certificado de Let's Encrypt. Desde el 24 nov 2026 se pasa al **proxy de Cloudflare** (nube naranja) con SSL **Full (strict)**, y el dominio lleva el middleware `touchedblock-cloudflare-only@file`, que rechaza (403) a quien entre directo sin pasar por Cloudflare. `vps23906.cubepath.net` sigue directo y sin ese middleware (no puede pasar por Cloudflare). Detalle en `historia-y-decisiones.md`.
    - Hace falta un dominio real, porque la web está en HTTPS y el navegador bloquea llamadas a una API sin HTTPS.
    - Los dominios `traefik.me` que sugiere Dokploy no sirven: son HTTP.
 2. **Project → Create Service → Compose**.
@@ -187,7 +187,7 @@ En GitHub: **repositorio → Settings → Secrets and variables → Actions**. L
 
 | Secreto              | De dónde sale                                                                                                                                                                                                     |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DOKPLOY_URL`        | La dirección con la que abres el panel de Dokploy en el navegador, sin `/` al final (por ejemplo `https://dokploy.tudominio.com` o `http://IP-del-VPS:3000`). GitHub tiene que poder llegar a ella desde internet |
+| `DOKPLOY_URL`        | La dirección con la que abres el panel de Dokploy en el navegador, sin `/` al final (hoy `https://dokploy.sanhueza.pro`; el puerto 3000 del panel está cerrado desde el 24 nov 2026, así que no sirve `http://…:3000`). GitHub tiene que poder llegar a ella desde internet |
 | `DOKPLOY_API_KEY`    | En Dokploy: avatar (arriba a la derecha) → **Profile** → sección **API/CLI** → *Generate Token*. Cópialo al tiro: no se vuelve a mostrar                                                                          |
 | `DOKPLOY_COMPOSE_ID` | El id del Compose. Es el último tramo de la URL cuando abres el servicio en Dokploy. También se puede ver con `curl -H "x-api-key: <token>" https://<dokploy>/api/project.all` (campo `composeId`)                |
 

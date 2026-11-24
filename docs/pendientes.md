@@ -31,7 +31,15 @@ Estado al **20 nov 2026**.
     - Las cuentas creadas con Apple antes de cargar las variables quedan sin token guardado (no se pueden revocar) hasta su siguiente login.
   - Sin probar en la app: compartir la imagen hasta una red social real.
 - **Web**: GitHub Pages **con cuentas y rankings activos** desde el 10 nov 2026 (variables `EXPO_PUBLIC_API_URL` y `EXPO_PUBLIC_GOOGLE_CLIENT_ID` creadas). Incluye las reglas v5, las páginas legales y los dos tutoriales (básico y avanzado). Se verificó de punta a punta: partida de invitado validada por el servidor, rankings y login real con Google.
-- **Dokploy** (panel `http://vps23906.cubepath.net:3000`, IP 144.225.147.103, Dokploy v0.31.0; ahí también vive el proyecto UltimaType con `ultimatype.xyz`):
+- **Dokploy** (panel `https://dokploy.sanhueza.pro` desde el 24 nov 2026; el puerto 3000 del panel quedó cerrado, así que `http://vps23906.cubepath.net:3000` ya no responde. IP 144.225.147.103, Dokploy v0.31.4. En el mismo VPS viven también UltimaType (`ultimatype.xyz`) y Learn-it (`getlearnit.app`); la configuración global de Traefik se coordina con sus responsables):
+  - **Pendiente (24 nov 2026)**: rotar la API key de Dokploy (viajó sin cifrar por `http://…:3000`) y actualizarla en el secreto `DOKPLOY_API_KEY` de GitHub y en la variable local `DOKPLOY_API_KEY`.
+  - **`api.touchedblock.app` detrás del proxy de Cloudflare desde el 24 nov 2026** (opción B de la nota del VPS; motivo y diseño en `historia-y-decisiones.md`):
+    - `TRUST_PROXY` con los rangos de Cloudflare en `deploy/docker-compose.yml`, desplegado.
+    - Zona `touchedblock.app` en SSL **Full (strict)**; registro `api` con proxy (nube naranja).
+    - Middleware `touchedblock-cloudflare-only@file` (`/etc/dokploy/traefik/dynamic/touchedblock-cloudflare-only.yml`, `ipAllowList` con los rangos de Cloudflare) asignado **solo** al dominio `api.touchedblock.app` en Dokploy. `vps23906.cubepath.net` sigue directo y sin filtro.
+    - Verificado: `/health` 200 por Cloudflare (IPv4 e IPv6) y 403 al entrar directo a la IP del VPS; `vps23906.cubepath.net` 200; preflight CORS desde `web.touchedblock.app` 204; la API ve la IP real (el contador `X-Ratelimit-Remaining` de `/daily` baja en conjunto entre los dos nombres); Learn-it, UltimaType, la landing, la web y el panel siguen en 200.
+    - Cómo revertir (en este orden, si no da 403 a todos): quitar el middleware del dominio en Dokploy y redesplegar; después volver el registro `api` a "DNS only". `TRUST_PROXY` puede quedarse.
+    - Pendiente: subir el TLS mínimo de la zona de 1.0 a 1.2 (lo recomienda la nota; no se hizo).
   - Proyecto **Touched Block** (`6eSA39oT4nPDO4U034YGw`), entorno `production`.
   - Compose **API**: id `5ZlPmSATtXjdrF-3c-vPs`, appName `touched-block-bz408h`. Fuente Git `https://github.com/SuKuShaing/touched-block.git`, rama `main`, ruta `./deploy/docker-compose.yml`. *Isolated Deployment* activado y *autoDeploy* desactivado (se despliega por tag).
   - Las variables de `deploy/.env` están cargadas (incluida `DAILY_SECRET` desde el 12 nov 2026).
