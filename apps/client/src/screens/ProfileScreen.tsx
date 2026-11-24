@@ -16,6 +16,7 @@ import { Hearts } from '@/components/Hud';
 import { InstallRow } from '@/components/InstallCard';
 import { LegalLinks } from '@/components/LegalLinks';
 import { LoginOptions } from '@/components/LoginOptions';
+import { ProfileName } from '@/components/ProfileName';
 import { BADGE_PX, TierBadge } from '@/components/TierBadge';
 import { toast } from '@/components/Toast';
 import { GhostButton, RecordPill } from '@/components/ui';
@@ -705,7 +706,6 @@ export function ProfileScreen() {
 
   const back = () => (router.canGoBack() ? router.back() : router.replace('/'));
   const me = viewer.user;
-  const meTier = tierStepOf(me?.tier ?? null);
 
   const doLogout = async () => {
     await logout();
@@ -743,13 +743,13 @@ export function ProfileScreen() {
         {features.accounts && viewer.loggedIn ? (
           <>
             {/* sin foto (decisión del usuario): solo usuario, insignia y país */}
-            <View style={styles.titleRow}>
-              <Text style={[styles.title, styles.shrink, (me?.username.length ?? 0) >= 14 && styles.titleLong]} accessibilityRole="header">
-                {me ? '@' + me.username : 'Perfil'}
+            {me ? (
+              <ProfileName username={me.username} tier={me.tier} fontSize={28} />
+            ) : (
+              <Text style={styles.title} accessibilityRole="header">
+                Perfil
               </Text>
-              {meTier ? <TierBadge tier={meTier} size="md" /> : null}
-            </View>
-            {meTier ? <Text style={styles.tierT}>Insignia {meTier.name}</Text> : null}
+            )}
             {me?.country ? (
               <Text style={styles.sub}>
                 {flag(me.country)} {countryName(me.country)}
@@ -851,11 +851,6 @@ const styles = StyleSheet.create({
   backT: { color: C.accent, fontSize: 17, fontWeight: '600' },
   content: { alignItems: 'center', gap: 16, paddingHorizontal: 20 },
   title: { color: C.text, fontSize: 28, fontWeight: '800' },
-  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, maxWidth: '100%' },
-  // minWidth 0: en la web, sin esto el nombre no se encoge y empuja la insignia fuera de la pantalla
-  shrink: { flexShrink: 1, minWidth: 0, textAlign: 'center' },
-  titleLong: { fontSize: 22 },
-  tierT: { color: C.text, opacity: 0.75, fontSize: 14, fontWeight: '600', marginTop: -8 },
   sub: { color: C.text, opacity: 0.75, fontSize: 15, marginTop: -8 },
   muted: { color: C.text, opacity: 0.65, fontSize: 14, textAlign: 'center', lineHeight: 20 },
   section: { width: '100%', maxWidth: 360, backgroundColor: C.panel, borderRadius: 16, padding: 16, gap: 12, alignItems: 'center' },

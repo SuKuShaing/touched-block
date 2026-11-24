@@ -373,7 +373,8 @@ const styles = StyleSheet.create({
   userBtn: { flex: 1, minWidth: 0 },
   // nombre + insignia: el nombre se corta antes que la insignia
   userRow: { flexDirection: 'row', alignItems: 'center', gap: 6, minWidth: 0 },
-  user: { flexShrink: 1, color: C.text, fontSize: 15, fontWeight: '600' },
+  // minWidth 0: en la web el nombre largo se corta con "…" en vez de empujar la insignia
+  user: { flexShrink: 1, minWidth: 0, color: C.text, fontSize: 15, fontWeight: '600' },
   me: { color: C.accent },
   date: { flex: 1, color: C.text, opacity: 0.7, fontSize: 14, fontVariant: ['tabular-nums'] },
   k: { color: C.text, fontSize: 17, fontWeight: '800', minWidth: 44, textAlign: 'right', fontVariant: ['tabular-nums'] },
