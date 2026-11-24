@@ -6,6 +6,8 @@
   <title>Config logros</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="coleccion.css">
+  <link rel="stylesheet" href="preview.css">
+  <link rel="stylesheet" href="extras-fondos.css">
 </head>
 <body>
   <!-- Interruptor: Ahora (como está hoy en el juego) / Con cambios (lo propuesto en cambios.md) -->
@@ -53,7 +55,7 @@
     Retos (el reto diario) y misiones del día. Réplica de cómo se ven en el celular:
       - apps/client/src/components/DailyCard.tsx y components/MissionList.tsx (dibujo)
       - packages/engine/src/daily.ts (DAILY_CALENDAR, intentos, vidas, racha)
-      - packages/engine/src/missions.ts (MISSION_POOL, MISSIONS_PER_DAY; 13 hoy, 21 con CAMBIO-014 y CAMBIO-015)
+      - packages/engine/src/missions.ts (MISSION_POOL, MISSIONS_PER_DAY; 13 hoy, 28 con CAMBIO-014 y CAMBIO-015)
     Se llenan desde script.js.
   -->
   <section class="retos">
@@ -96,7 +98,8 @@
       - apps/client/src/screens/CollectionScreen.tsx (dibujo)
       - apps/client/src/cosmetics/catalog.ts (requisitos), palettes.ts (colores)
       - packages/engine/src/achievements.ts (logros)
-    Se llenan desde script.js y cambian con el interruptor Ahora / Con cambios.
+    Se llenan desde coleccion.js y cambian con el interruptor Ahora / Con cambios.
+    Bajo el panel Paletas va la "Vista previa" interactiva (preview.js / preview.css): clic en una fila la selecciona.
   -->
   <section class="premios">
     <h2>Premios</h2>
@@ -115,5 +118,7 @@
 
   <script src="script.js"></script>
   <script src="coleccion.js"></script>
+  <script src="sonidos.js"></script>
+  <script src="preview.js"></script>
 </body>
 </html>

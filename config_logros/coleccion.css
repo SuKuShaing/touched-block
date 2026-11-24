@@ -21,8 +21,12 @@
   margin: 0 auto;
 }
 
-.grillaPremios > .panelJuego:first-child {
-  grid-row: span 3;
+/* cada columna apila sus paneles; la izquierda lleva debajo de Paletas el hueco de la "Vista previa" (preview.js) */
+.colPremios {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
 }
 
 .listaColeccion {
@@ -49,6 +53,46 @@
   background: rgba(119, 204, 255, 0.07);
 }
 
+/* Selección para la vista previa (preview.js): anillo y marca dorados, distintos del celeste de "cambia / nuevo" */
+.filaColeccion[data-premio] {
+  cursor: pointer;
+  border-radius: 10px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.filaColeccion[data-premio]:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.filaColeccion[data-premio]:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: -2px;
+}
+
+.filaColeccion.seleccionada {
+  background: rgba(255, 209, 102, 0.1); /* C.gold */
+  box-shadow: inset 0 0 0 1.5px #ffd166;
+}
+
+.filaColeccion.seleccionada.cambia {
+  box-shadow: inset 3px 0 0 var(--accent), inset 0 0 0 1.5px #ffd166; /* conserva la barra celeste de "cambia" */
+}
+
+.filaColeccion.seleccionada::after {
+  content: '✓';
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin-left: auto;
+  border-radius: 50%;
+  background: #ffd166;
+  color: #12121a;
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .textoColeccion {
   min-width: 0;
 }
@@ -72,6 +116,17 @@
   flex: none;
 }
 
+.nombreColeccion .etiquetaNueva {
+  margin-top: 0;
+}
+
+.listaColeccion + .pieJuego {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #26263a;
+  line-height: 1.45;
+}
+
 .antesColeccion {
   margin-top: 2px;
   font-size: 11px;
@@ -91,11 +146,57 @@
 
 .vpPaleta i {
   border-radius: 3px;
+  box-sizing: border-box;
+}
+
+/* estilo 'plano' (el de siempre): relleno liso con el color de la posición (--c) */
+.vpPaleta.plano i {
+  background-color: var(--c);
 }
 
 .vpPaleta.brillo i {
   background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.45), transparent 55%);
   background-blend-mode: screen;
+}
+
+/* CAMBIO-017, estilo 'cristal': color al 50 % (--relleno) + degradado blanco de arriba + borde claro + hilo de luz arriba.
+   Sin blur: es el "vidrio falso" que se ve igual en la web y en la app (ver cambios.md). */
+.vpPaleta.cristal i {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.38) 0%, rgba(255, 255, 255, 0) 55%), var(--relleno);
+  border: 1.5px solid rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* CAMBIO-018, estilo 'degrade': relleno opaco con un degradé vertical de dos tonos del mismo color (--arriba, --abajo) */
+.vpPaleta.degrade i {
+  background: linear-gradient(180deg, var(--arriba), var(--abajo));
+}
+
+/* CAMBIO-019, estilo 'esmerilado': capa blanco-azulada (--tinte) con brillo diagonal, borde de 1 px claro y luz superior */
+.vpPaleta.esmerilado i {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.08) 60%), var(--tinte);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+/* CAMBIO-019, estilo 'tenue': relleno atenuado (--c) y borde del color de la Clásica (--borde) */
+.vpPaleta.tenue i {
+  background: var(--c);
+  border: 4px solid var(--borde);
+}
+
+/* CAMBIO-019, estilo 'boton': relleno opaco con sombras interiores (luz arriba-izquierda, sombra abajo-derecha) */
+.vpPaleta.boton i {
+  background: var(--c);
+  box-shadow: inset 1px 1px 1px rgba(255, 255, 255, 0.35), inset -1px -2px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* CAMBIO-017, estilo 'contorno': borde de 3 px del color pleno y relleno del mismo color al 55 % (--relleno; provisional, antes 0) */
+.vpPaleta.contorno i {
+  background: var(--relleno);
+  border: 3px solid var(--c);
 }
 
 .vpIcono {
@@ -196,8 +297,9 @@
     grid-template-columns: 1fr;
   }
 
-  .grillaPremios > .panelJuego:first-child {
-    grid-row: auto;
+  /* en el celular las columnas se disuelven y los paneles se apilan: Paletas, Vista previa, Sonidos, Efectos, Fondos */
+  .colPremios {
+    display: contents;
   }
 }
 

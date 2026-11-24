@@ -386,7 +386,7 @@ function dibujarRetos() {
 var redibujarRetos = dibujarRetos; // `var` a propósito: aplicarModo() (más arriba) la llama
 dibujarRetos();
 
-// Misiones del día: salen 3 del pool (13 hoy, 21 con CAMBIO-014 y CAMBIO-015), de tipos distintos e iguales para todos ese día. `premio` = bloques extra para el nivel.
+// Misiones del día: salen 3 del pool (13 hoy, 28 con CAMBIO-014 y CAMBIO-015), de tipos distintos e iguales para todos ese día. `premio` = bloques extra para el nivel.
 const MISIONES = [
   { titulo: 'Racha de 10', tipo: 'Racha en una partida', meta: '10', premio: 20 },
   { titulo: 'Racha de 15', tipo: 'Racha en una partida', meta: '15', premio: 30 },
@@ -403,12 +403,13 @@ const MISIONES = [
   { titulo: 'Juega el reto del día', tipo: 'Reto del día', meta: '1', premio: 40 },
 ];
 
-// Misiones nuevas (solo con el interruptor en "Con cambios"): 13 de hoy + 8 = 21 posibles.
+// Misiones nuevas (solo con el interruptor en "Con cambios"): 13 de hoy + 15 = 28 posibles.
 // CAMBIO-014: "Sigue a un jugador hoy". Es un tipo nuevo (`follow`), así que cuenta como distinto de los demás. Solo se puede cumplir
 // con cuenta, pero se sortea igual para todos: a un invitado se le muestra bloqueada ("Crea tu cuenta para desbloquearla").
 // "Invita a alguien" queda para más adelante.
-// CAMBIO-015: 7 más, solo con datos que `DayAgg` ya tiene (racha, etapa alcanzada, bloques y partidas del día).
-// Fecha desde la que rige el pool de 21 (antes, el de 13 de hoy): el lunes en que también arranca el ciclo de retos (RETO_INICIO_CICLO).
+// CAMBIO-015: 14 más (7 + 7 para diluir "Juega el reto del día"), solo con datos que `DayAgg` ya tiene (racha, etapa alcanzada,
+// bloques y partidas del día). El orden de esta lista es el que tendrían al final de `MISSION_POOL` (importa para el sorteo).
+// Fecha desde la que rige el pool de 28 (antes, el de 13 de hoy): el lunes en que también arranca el ciclo de retos (RETO_INICIO_CICLO).
 // En el motor sería MISSIONS_POOL_FROM.
 const MISIONES_INICIO_POOL = '2026-12-07';
 const MISIONES_TEXTO_BLOQUEADA = 'Crea tu cuenta para desbloquearla';
@@ -427,10 +428,17 @@ const MISIONES_NUEVAS = [
   { titulo: 'Racha de 20', tipo: 'Racha en una partida', meta: '20', premio: 40 },
   { titulo: 'Racha de 40', tipo: 'Racha en una partida', meta: '40', premio: 60 },
   { titulo: 'Llega al 9', tipo: 'Llegar a una etapa', meta: '120 s', premio: 40 },
-  { titulo: 'Llega a los bloques de 4 s', tipo: 'Llegar a una etapa', meta: '350 s', premio: 80 },
+  { titulo: 'Llega a los bloques de 4 s', tipo: 'Llegar a una etapa', meta: '350 s', premio: 60 },
   { titulo: 'Destruye 90 bloques hoy', tipo: 'Bloques en el día', meta: '90', premio: 40 },
   { titulo: 'Destruye 250 bloques hoy', tipo: 'Bloques en el día', meta: '250', premio: 60 },
-  { titulo: 'Juega 8 partidas hoy', tipo: 'Partidas en el día', meta: '8', premio: 40 },
+  { titulo: 'Juega 6 partidas hoy', tipo: 'Partidas en el día', meta: '6', premio: 30 },
+  { titulo: 'Racha de 30', tipo: 'Racha en una partida', meta: '30', premio: 50 },
+  { titulo: 'Racha de 50', tipo: 'Racha en una partida', meta: '50', premio: 60 },
+  { titulo: 'Llega al 7', tipo: 'Llegar a una etapa', meta: '80 s', premio: 30 },
+  { titulo: 'Destruye 180 bloques hoy', tipo: 'Bloques en el día', meta: '180', premio: 50 },
+  { titulo: 'Destruye 400 bloques hoy', tipo: 'Bloques en el día', meta: '400', premio: 60 },
+  { titulo: 'Juega 10 partidas hoy', tipo: 'Partidas en el día', meta: '10', premio: 40 },
+  { titulo: 'Juega 15 partidas hoy', tipo: 'Partidas en el día', meta: '15', premio: 50 },
 ];
 
 /** Dibuja la lista de misiones y su contador según el interruptor Ahora / Con cambios. */

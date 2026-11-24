@@ -1,0 +1,1598 @@
+{
+  "candidatos": [
+    {
+      "id": "actual",
+      "rojo": "#ff2a2a",
+      "numero": "#ffffff",
+      "nota": "lo que hay hoy (theme.ts)",
+      "luminanciaRojo": 0.23083096052864413,
+      "contrasteRojoFondo": 4.982990110892005,
+      "contrasteNumeroFondo": 18.630921628396948,
+      "contrasteRojoNumero": 3.738903994144557,
+      "hslRojo": {
+        "h": 0,
+        "s": 1.0000000000000002,
+        "l": 0.5823529411764706
+      },
+      "dE_rojo_fondo": 106.66856519549363,
+      "dE_rojo_numero": 103.1450694712092,
+      "dE_rojo_rojoContorno": 33.15628045558099,
+      "dE_rojo_naranjaContorno": 42.83578281304811,
+      "dE_rojo_bordeMasCercano": {
+        "pos": 0,
+        "hex": "#ff4d6d",
+        "dE": 33.15628045558099
+      },
+      "reglas": [
+        {
+          "regla": "tono SAFE en rango Clásica ±5°",
+          "ok": true,
+          "valor": 120,
+          "umbral": "[37.47, 178.06]°",
+          "margen": 58.061224489795904,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "caso más difícil de tono",
+          "ok": false,
+          "valor": 120,
+          "umbral": "mínimo ≤ 50.47°",
+          "margen": -69.53424657534248,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "media de tono",
+          "ok": true,
+          "valor": 120,
+          "umbral": "119.46 ± 20°",
+          "margen": 19.46304688093612,
+          "donde": "promedio de las 6 SAFE"
+        },
+        {
+          "regla": "contraste rojo en rango Clásica",
+          "ok": false,
+          "valor": 4.982990110892005,
+          "umbral": "[1.156, 1.730]",
+          "margen": -3.252760828447464,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "caso más difícil de contraste",
+          "ok": false,
+          "valor": 4.982990110892005,
+          "umbral": "mínimo ≤ 1.256",
+          "margen": -3.7267501488013193,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "texto blanco ≥ Clásica",
+          "ok": true,
+          "valor": 18.630921628396948,
+          "umbral": "≥ 2.161",
+          "margen": 16.469991841760766,
+          "donde": "pos 0 #12121a"
+        },
+        {
+          "regla": "9 colores #rrggbb distintos",
+          "ok": false,
+          "valor": 1,
+          "umbral": "9 distintos",
+          "margen": -8,
+          "donde": ""
+        }
+      ],
+      "pasaTodas": false,
+      "pasaTodasMenos9Distintos": false
+    },
+    {
+      "id": "usuario-7a1f2a",
+      "rojo": "#7a1f2a",
+      "numero": "#ffffff",
+      "nota": "familia propuesta por el usuario",
+      "luminanciaRojo": 0.05284715358536017,
+      "contrasteRojoFondo": 1.8248926268119519,
+      "contrasteNumeroFondo": 18.630921628396948,
+      "contrasteRojoNumero": 10.209324841727684,
+      "hslRojo": {
+        "h": 352.74725274725273,
+        "s": 0.5947712418300654,
+        "l": 0.3
+      },
+      "dE_rojo_fondo": 48.69858961117532,
+      "dE_rojo_numero": 84.24809758771282,
+      "dE_rojo_rojoContorno": 43.4967901851273,
+      "dE_rojo_naranjaContorno": 67.5027203330377,
+      "dE_rojo_bordeMasCercano": {
+        "pos": 0,
+        "hex": "#ff4d6d",
+        "dE": 43.4967901851273
+      },
+      "reglas": [
+        {
+          "regla": "tono SAFE en rango Clásica ±5°",
+          "ok": true,
+          "valor": 112.74725274725273,
+          "umbral": "[37.47, 178.06]°",
+          "margen": 65.31397174254317,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "caso más difícil de tono",
+          "ok": false,
+          "valor": 112.74725274725273,
+          "umbral": "mínimo ≤ 50.47°",
+          "margen": -62.28149932259521,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "media de tono",
+          "ok": true,
+          "valor": 112.74725274725274,
+          "umbral": "119.46 ± 20°",
+          "margen": 13.284205866316626,
+          "donde": "promedio de las 6 SAFE"
+        },
+        {
+          "regla": "contraste rojo en rango Clásica",
+          "ok": false,
+          "valor": 1.8248926268119519,
+          "umbral": "[1.156, 1.730]",
+          "margen": -0.09466334436741053,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "caso más difícil de contraste",
+          "ok": false,
+          "valor": 1.8248926268119519,
+          "umbral": "mínimo ≤ 1.256",
+          "margen": -0.5686526647212662,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "texto blanco ≥ Clásica",
+          "ok": true,
+          "valor": 18.630921628396948,
+          "umbral": "≥ 2.161",
+          "margen": 16.469991841760766,
+          "donde": "pos 0 #12121a"
+        },
+        {
+          "regla": "9 colores #rrggbb distintos",
+          "ok": false,
+          "valor": 1,
+          "umbral": "9 distintos",
+          "margen": -8,
+          "donde": ""
+        }
+      ],
+      "pasaTodas": false,
+      "pasaTodasMenos9Distintos": false
+    },
+    {
+      "id": "usuario-8a2030",
+      "rojo": "#8a2030",
+      "numero": "#ffffff",
+      "nota": "familia propuesta por el usuario",
+      "luminanciaRojo": 0.06649697564106895,
+      "contrasteRojoFondo": 2.0670914505847846,
+      "contrasteNumeroFondo": 18.630921628396948,
+      "contrasteRojoNumero": 9.013109518268395,
+      "hslRojo": {
+        "h": 350.9433962264151,
+        "s": 0.6235294117647059,
+        "l": 0.3333333333333333
+      },
+      "dE_rojo_fondo": 54.86423762621269,
+      "dE_rojo_numero": 84.21023947547651,
+      "dE_rojo_rojoContorno": 37.346607642586505,
+      "dE_rojo_naranjaContorno": 64.82170826541501,
+      "dE_rojo_bordeMasCercano": {
+        "pos": 0,
+        "hex": "#ff4d6d",
+        "dE": 37.346607642586505
+      },
+      "reglas": [
+        {
+          "regla": "tono SAFE en rango Clásica ±5°",
+          "ok": true,
+          "valor": 110.94339622641508,
+          "umbral": "[37.47, 178.06]°",
+          "margen": 67.11782826338083,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "caso más difícil de tono",
+          "ok": false,
+          "valor": 110.94339622641508,
+          "umbral": "mínimo ≤ 50.47°",
+          "margen": -60.477642801757554,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "media de tono",
+          "ok": true,
+          "valor": 110.94339622641508,
+          "umbral": "119.46 ± 20°",
+          "margen": 11.480349345478956,
+          "donde": "promedio de las 6 SAFE"
+        },
+        {
+          "regla": "contraste rojo en rango Clásica",
+          "ok": false,
+          "valor": 2.0670914505847846,
+          "umbral": "[1.156, 1.730]",
+          "margen": -0.3368621681402433,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "caso más difícil de contraste",
+          "ok": false,
+          "valor": 2.0670914505847846,
+          "umbral": "mínimo ≤ 1.256",
+          "margen": -0.8108514884940989,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "texto blanco ≥ Clásica",
+          "ok": true,
+          "valor": 18.630921628396948,
+          "umbral": "≥ 2.161",
+          "margen": 16.469991841760766,
+          "donde": "pos 0 #12121a"
+        },
+        {
+          "regla": "9 colores #rrggbb distintos",
+          "ok": false,
+          "valor": 1,
+          "umbral": "9 distintos",
+          "margen": -8,
+          "donde": ""
+        }
+      ],
+      "pasaTodas": false,
+      "pasaTodasMenos9Distintos": false
+    },
+    {
+      "id": "usuario-a02030",
+      "rojo": "#a02030",
+      "numero": "#ffffff",
+      "nota": "familia propuesta por el usuario",
+      "luminanciaRojo": 0.08720007104012859,
+      "contrasteRojoFondo": 2.4344416866277423,
+      "contrasteNumeroFondo": 18.630921628396948,
+      "contrasteRojoNumero": 7.653057261850058,
+      "hslRojo": {
+        "h": 352.5,
+        "s": 0.6666666666666666,
+        "l": 0.3764705882352941
+      },
+      "dE_rojo_fondo": 64.99409097074847,
+      "dE_rojo_numero": 86.16875676081078,
+      "dE_rojo_rojoContorno": 29.541895175765234,
+      "dE_rojo_naranjaContorno": 58.16403031308999,
+      "dE_rojo_bordeMasCercano": {
+        "pos": 0,
+        "hex": "#ff4d6d",
+        "dE": 29.541895175765234
+      },
+      "reglas": [
+        {
+          "regla": "tono SAFE en rango Clásica ±5°",
+          "ok": true,
+          "valor": 112.5,
+          "umbral": "[37.47, 178.06]°",
+          "margen": 65.5612244897959,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "caso más difícil de tono",
+          "ok": false,
+          "valor": 112.5,
+          "umbral": "mínimo ≤ 50.47°",
+          "margen": -62.03424657534248,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "media de tono",
+          "ok": true,
+          "valor": 112.5,
+          "umbral": "119.46 ± 20°",
+          "margen": 13.036953119063881,
+          "donde": "promedio de las 6 SAFE"
+        },
+        {
+          "regla": "contraste rojo en rango Clásica",
+          "ok": false,
+          "valor": 2.4344416866277423,
+          "umbral": "[1.156, 1.730]",
+          "margen": -0.704212404183201,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "caso más difícil de contraste",
+          "ok": false,
+          "valor": 2.4344416866277423,
+          "umbral": "mínimo ≤ 1.256",
+          "margen": -1.1782017245370566,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "texto blanco ≥ Clásica",
+          "ok": true,
+          "valor": 18.630921628396948,
+          "umbral": "≥ 2.161",
+          "margen": 16.469991841760766,
+          "donde": "pos 0 #12121a"
+        },
+        {
+          "regla": "9 colores #rrggbb distintos",
+          "ok": false,
+          "valor": 1,
+          "umbral": "9 distintos",
+          "margen": -8,
+          "donde": ""
+        }
+      ],
+      "pasaTodas": false,
+      "pasaTodasMenos9Distintos": false
+    },
+    {
+      "id": "oscuro-6e1a24",
+      "rojo": "#6e1a24",
+      "numero": "#ffffff",
+      "nota": "contraste ~1,63",
+      "luminanciaRojo": 0.041811604729134616,
+      "contrasteRojoFondo": 1.6290807736055863,
+      "contrasteNumeroFondo": 18.630921628396948,
+      "contrasteRojoNumero": 11.43646277720275,
+      "hslRojo": {
+        "h": 352.85714285714283,
+        "s": 0.6176470588235295,
+        "l": 0.26666666666666666
+      },
+      "dE_rojo_fondo": 45.04745455002675,
+      "dE_rojo_numero": 85.84414494906638,
+      "dE_rojo_rojoContorno": 47.64518594525803,
+      "dE_rojo_naranjaContorno": 70.07306542629414,
+      "dE_rojo_bordeMasCercano": {
+        "pos": 0,
+        "hex": "#ff4d6d",
+        "dE": 47.64518594525803
+      },
+      "reglas": [
+        {
+          "regla": "tono SAFE en rango Clásica ±5°",
+          "ok": true,
+          "valor": 112.85714285714283,
+          "umbral": "[37.47, 178.06]°",
+          "margen": 65.20408163265307,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "caso más difícil de tono",
+          "ok": false,
+          "valor": 112.85714285714283,
+          "umbral": "mínimo ≤ 50.47°",
+          "margen": -62.39138943248531,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "media de tono",
+          "ok": true,
+          "valor": 112.85714285714285,
+          "umbral": "119.46 ± 20°",
+          "margen": 13.394095976206728,
+          "donde": "promedio de las 6 SAFE"
+        },
+        {
+          "regla": "contraste rojo en rango Clásica",
+          "ok": true,
+          "valor": 1.6290807736055863,
+          "umbral": "[1.156, 1.730]",
+          "margen": 0.10114850883895499,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "caso más difícil de contraste",
+          "ok": false,
+          "valor": 1.6290807736055863,
+          "umbral": "mínimo ≤ 1.256",
+          "margen": -0.37284081151490067,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "texto blanco ≥ Clásica",
+          "ok": true,
+          "valor": 18.630921628396948,
+          "umbral": "≥ 2.161",
+          "margen": 16.469991841760766,
+          "donde": "pos 0 #12121a"
+        },
+        {
+          "regla": "9 colores #rrggbb distintos",
+          "ok": false,
+          "valor": 1,
+          "umbral": "9 distintos",
+          "margen": -8,
+          "donde": ""
+        }
+      ],
+      "pasaTodas": false,
+      "pasaTodasMenos9Distintos": false
+    },
+    {
+      "id": "oscuro-5a1520",
+      "rojo": "#5a1520",
+      "numero": "#ffffff",
+      "nota": "contraste ~1,39",
+      "luminanciaRojo": 0.028142745679483584,
+      "contrasteRojoFondo": 1.3865441624592505,
+      "contrasteNumeroFondo": 18.630921628396948,
+      "contrasteRojoNumero": 13.436947868542555,
+      "hslRojo": {
+        "h": 350.4347826086956,
+        "s": 0.6216216216216217,
+        "l": 0.21764705882352942
+      },
+      "dE_rojo_fondo": 36.88402419908006,
+      "dE_rojo_numero": 87.55743711500573,
+      "dE_rojo_rojoContorno": 55.4547893640748,
+      "dE_rojo_naranjaContorno": 76.98434044329183,
+      "dE_rojo_bordeMasCercano": {
+        "pos": 0,
+        "hex": "#ff4d6d",
+        "dE": 55.4547893640748
+      },
+      "reglas": [
+        {
+          "regla": "tono SAFE en rango Clásica ±5°",
+          "ok": true,
+          "valor": 110.43478260869563,
+          "umbral": "[37.47, 178.06]°",
+          "margen": 67.62644188110028,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "caso más difícil de tono",
+          "ok": false,
+          "valor": 110.43478260869563,
+          "umbral": "mínimo ≤ 50.47°",
+          "margen": -59.96902918403811,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "media de tono",
+          "ok": true,
+          "valor": 110.43478260869563,
+          "umbral": "119.46 ± 20°",
+          "margen": 10.971735727759508,
+          "donde": "promedio de las 6 SAFE"
+        },
+        {
+          "regla": "contraste rojo en rango Clásica",
+          "ok": true,
+          "valor": 1.3865441624592505,
+          "umbral": "[1.156, 1.730]",
+          "margen": 0.23030420036856492,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "caso más difícil de contraste",
+          "ok": false,
+          "valor": 1.3865441624592505,
+          "umbral": "mínimo ≤ 1.256",
+          "margen": -0.13030420036856483,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "texto blanco ≥ Clásica",
+          "ok": true,
+          "valor": 18.630921628396948,
+          "umbral": "≥ 2.161",
+          "margen": 16.469991841760766,
+          "donde": "pos 0 #12121a"
+        },
+        {
+          "regla": "9 colores #rrggbb distintos",
+          "ok": false,
+          "valor": 1,
+          "umbral": "9 distintos",
+          "margen": -8,
+          "donde": ""
+        }
+      ],
+      "pasaTodas": false,
+      "pasaTodasMenos9Distintos": false
+    },
+    {
+      "id": "oscuro-4d101a",
+      "rojo": "#4d101a",
+      "numero": "#ffffff",
+      "nota": "contraste ~1,25: dentro de la franja 1,156-1,256",
+      "luminanciaRojo": 0.02022943860587129,
+      "contrasteRojoFondo": 1.2461325396879075,
+      "contrasteNumeroFondo": 18.630921628396948,
+      "contrasteRojoNumero": 14.95099520718963,
+      "hslRojo": {
+        "h": 350.1639344262295,
+        "s": 0.6559139784946235,
+        "l": 0.18235294117647058
+      },
+      "dE_rojo_fondo": 32.68407391266915,
+      "dE_rojo_numero": 89.81755916776952,
+      "dE_rojo_rojoContorno": 60.313334956794904,
+      "dE_rojo_naranjaContorno": 80.50995264812258,
+      "dE_rojo_bordeMasCercano": {
+        "pos": 0,
+        "hex": "#ff4d6d",
+        "dE": 60.313334956794904
+      },
+      "reglas": [
+        {
+          "regla": "tono SAFE en rango Clásica ±5°",
+          "ok": true,
+          "valor": 110.1639344262295,
+          "umbral": "[37.47, 178.06]°",
+          "margen": 67.8972900635664,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "caso más difícil de tono",
+          "ok": false,
+          "valor": 110.1639344262295,
+          "umbral": "mínimo ≤ 50.47°",
+          "margen": -59.69818100157198,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "media de tono",
+          "ok": true,
+          "valor": 110.1639344262295,
+          "umbral": "119.46 ± 20°",
+          "margen": 10.700887545293384,
+          "donde": "promedio de las 6 SAFE"
+        },
+        {
+          "regla": "contraste rojo en rango Clásica",
+          "ok": true,
+          "valor": 1.2461325396879075,
+          "umbral": "[1.156, 1.730]",
+          "margen": 0.08989257759722191,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "caso más difícil de contraste",
+          "ok": true,
+          "valor": 1.2461325396879075,
+          "umbral": "mínimo ≤ 1.256",
+          "margen": 0.010107422402778177,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "texto blanco ≥ Clásica",
+          "ok": true,
+          "valor": 18.630921628396948,
+          "umbral": "≥ 2.161",
+          "margen": 16.469991841760766,
+          "donde": "pos 0 #12121a"
+        },
+        {
+          "regla": "9 colores #rrggbb distintos",
+          "ok": false,
+          "valor": 1,
+          "umbral": "9 distintos",
+          "margen": -8,
+          "donde": ""
+        }
+      ],
+      "pasaTodas": false,
+      "pasaTodasMenos9Distintos": false
+    },
+    {
+      "id": "oscuro-4a0f18",
+      "rojo": "#4a0f18",
+      "numero": "#ffffff",
+      "nota": "dentro de la franja",
+      "luminanciaRojo": 0.01863441507661197,
+      "contrasteRojoFondo": 1.217830865050689,
+      "contrasteNumeroFondo": 18.630921628396948,
+      "contrasteRojoNumero": 15.298447562027823,
+      "hslRojo": {
+        "h": 350.8474576271187,
+        "s": 0.6629213483146066,
+        "l": 0.17450980392156865
+      },
+      "dE_rojo_fondo": 31.858050198829577,
+      "dE_rojo_numero": 90.38491847753993,
+      "dE_rojo_rojoContorno": 61.433333982313265,
+      "dE_rojo_naranjaContorno": 81.0271100947547,
+      "dE_rojo_bordeMasCercano": {
+        "pos": 0,
+        "hex": "#ff4d6d",
+        "dE": 61.433333982313265
+      },
+      "reglas": [
+        {
+          "regla": "tono SAFE en rango Clásica ±5°",
+          "ok": true,
+          "valor": 110.84745762711867,
+          "umbral": "[37.47, 178.06]°",
+          "margen": 67.21376686267723,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "caso más difícil de tono",
+          "ok": false,
+          "valor": 110.84745762711867,
+          "umbral": "mínimo ≤ 50.47°",
+          "margen": -60.38170420246115,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "media de tono",
+          "ok": true,
+          "valor": 110.84745762711869,
+          "umbral": "119.46 ± 20°",
+          "margen": 11.384410746182567,
+          "donde": "promedio de las 6 SAFE"
+        },
+        {
+          "regla": "contraste rojo en rango Clásica",
+          "ok": true,
+          "valor": 1.217830865050689,
+          "umbral": "[1.156, 1.730]",
+          "margen": 0.06159090296000347,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "caso más difícil de contraste",
+          "ok": true,
+          "valor": 1.217830865050689,
+          "umbral": "mínimo ≤ 1.256",
+          "margen": 0.03840909703999662,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "texto blanco ≥ Clásica",
+          "ok": true,
+          "valor": 18.630921628396948,
+          "umbral": "≥ 2.161",
+          "margen": 16.469991841760766,
+          "donde": "pos 0 #12121a"
+        },
+        {
+          "regla": "9 colores #rrggbb distintos",
+          "ok": false,
+          "valor": 1,
+          "umbral": "9 distintos",
+          "margen": -8,
+          "donde": ""
+        }
+      ],
+      "pasaTodas": false,
+      "pasaTodasMenos9Distintos": false
+    },
+    {
+      "id": "claro-ff6b6b",
+      "rojo": "#ff6b6b",
+      "numero": "#ffffff",
+      "nota": "rojo claro",
+      "luminanciaRojo": 0.3283692696402063,
+      "contrasteRojoFondo": 6.7136840088195004,
+      "contrasteNumeroFondo": 18.630921628396948,
+      "contrasteRojoNumero": 2.7750668044433198,
+      "hslRojo": {
+        "h": 0,
+        "s": 1,
+        "l": 0.7098039215686275
+      },
+      "dE_rojo_fondo": 86.76794584373106,
+      "dE_rojo_numero": 72.8541146664623,
+      "dE_rojo_rojoContorno": 14.761833722844496,
+      "dE_rojo_naranjaContorno": 44.832642505053855,
+      "dE_rojo_bordeMasCercano": {
+        "pos": 0,
+        "hex": "#ff4d6d",
+        "dE": 14.761833722844496
+      },
+      "reglas": [
+        {
+          "regla": "tono SAFE en rango Clásica ±5°",
+          "ok": true,
+          "valor": 120,
+          "umbral": "[37.47, 178.06]°",
+          "margen": 58.061224489795904,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "caso más difícil de tono",
+          "ok": false,
+          "valor": 120,
+          "umbral": "mínimo ≤ 50.47°",
+          "margen": -69.53424657534248,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "media de tono",
+          "ok": true,
+          "valor": 120,
+          "umbral": "119.46 ± 20°",
+          "margen": 19.46304688093612,
+          "donde": "promedio de las 6 SAFE"
+        },
+        {
+          "regla": "contraste rojo en rango Clásica",
+          "ok": false,
+          "valor": 6.7136840088195004,
+          "umbral": "[1.156, 1.730]",
+          "margen": -4.983454726374959,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "caso más difícil de contraste",
+          "ok": false,
+          "valor": 6.7136840088195004,
+          "umbral": "mínimo ≤ 1.256",
+          "margen": -5.457444046728815,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "texto blanco ≥ Clásica",
+          "ok": true,
+          "valor": 18.630921628396948,
+          "umbral": "≥ 2.161",
+          "margen": 16.469991841760766,
+          "donde": "pos 0 #12121a"
+        },
+        {
+          "regla": "9 colores #rrggbb distintos",
+          "ok": false,
+          "valor": 1,
+          "umbral": "9 distintos",
+          "margen": -8,
+          "donde": ""
+        }
+      ],
+      "pasaTodas": false,
+      "pasaTodasMenos9Distintos": false
+    },
+    {
+      "id": "claro-ff9a9a",
+      "rojo": "#ff9a9a",
+      "numero": "#ffffff",
+      "nota": "rojo claro",
+      "luminanciaRojo": 0.4670429628555374,
+      "contrasteRojoFondo": 9.174273256643497,
+      "contrasteNumeroFondo": 18.630921628396948,
+      "contrasteRojoNumero": 2.030779017281339,
+      "hslRojo": {
+        "h": 0,
+        "s": 1.0000000000000002,
+        "l": 0.8019607843137255
+      },
+      "dE_rojo_fondo": 79.99875479518016,
+      "dE_rojo_numero": 48.58166018808321,
+      "dE_rojo_rojoContorno": 34.5534084007806,
+      "dE_rojo_naranjaContorno": 53.556222466948675,
+      "dE_rojo_bordeMasCercano": {
+        "pos": 0,
+        "hex": "#ff4d6d",
+        "dE": 34.5534084007806
+      },
+      "reglas": [
+        {
+          "regla": "tono SAFE en rango Clásica ±5°",
+          "ok": true,
+          "valor": 120,
+          "umbral": "[37.47, 178.06]°",
+          "margen": 58.061224489795904,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "caso más difícil de tono",
+          "ok": false,
+          "valor": 120,
+          "umbral": "mínimo ≤ 50.47°",
+          "margen": -69.53424657534248,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "media de tono",
+          "ok": true,
+          "valor": 120,
+          "umbral": "119.46 ± 20°",
+          "margen": 19.46304688093612,
+          "donde": "promedio de las 6 SAFE"
+        },
+        {
+          "regla": "contraste rojo en rango Clásica",
+          "ok": false,
+          "valor": 9.174273256643497,
+          "umbral": "[1.156, 1.730]",
+          "margen": -7.444043974198956,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "caso más difícil de contraste",
+          "ok": false,
+          "valor": 9.174273256643497,
+          "umbral": "mínimo ≤ 1.256",
+          "margen": -7.918033294552812,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "texto blanco ≥ Clásica",
+          "ok": true,
+          "valor": 18.630921628396948,
+          "umbral": "≥ 2.161",
+          "margen": 16.469991841760766,
+          "donde": "pos 0 #12121a"
+        },
+        {
+          "regla": "9 colores #rrggbb distintos",
+          "ok": false,
+          "valor": 1,
+          "umbral": "9 distintos",
+          "margen": -8,
+          "donde": ""
+        }
+      ],
+      "pasaTodas": false,
+      "pasaTodasMenos9Distintos": false
+    },
+    {
+      "id": "claro-ffb3b3",
+      "rojo": "#ffb3b3",
+      "numero": "#ffffff",
+      "nota": "rojo muy claro / rosa",
+      "luminanciaRojo": 0.5675487254068172,
+      "contrasteRojoFondo": 10.957620861686513,
+      "contrasteNumeroFondo": 18.630921628396948,
+      "contrasteRojoNumero": 1.7002706941194001,
+      "hslRojo": {
+        "h": 0,
+        "s": 1,
+        "l": 0.8509803921568627
+      },
+      "dE_rojo_fondo": 80.31793370309019,
+      "dE_rojo_numero": 35.87993428667837,
+      "dE_rojo_rojoContorno": 46.99502473558714,
+      "dE_rojo_naranjaContorno": 60.37626352634765,
+      "dE_rojo_bordeMasCercano": {
+        "pos": 0,
+        "hex": "#ff4d6d",
+        "dE": 46.99502473558714
+      },
+      "reglas": [
+        {
+          "regla": "tono SAFE en rango Clásica ±5°",
+          "ok": true,
+          "valor": 120,
+          "umbral": "[37.47, 178.06]°",
+          "margen": 58.061224489795904,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "caso más difícil de tono",
+          "ok": false,
+          "valor": 120,
+          "umbral": "mínimo ≤ 50.47°",
+          "margen": -69.53424657534248,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "media de tono",
+          "ok": true,
+          "valor": 120,
+          "umbral": "119.46 ± 20°",
+          "margen": 19.46304688093612,
+          "donde": "promedio de las 6 SAFE"
+        },
+        {
+          "regla": "contraste rojo en rango Clásica",
+          "ok": false,
+          "valor": 10.957620861686513,
+          "umbral": "[1.156, 1.730]",
+          "margen": -9.22739157924197,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "caso más difícil de contraste",
+          "ok": false,
+          "valor": 10.957620861686513,
+          "umbral": "mínimo ≤ 1.256",
+          "margen": -9.701380899595828,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "texto blanco ≥ Clásica",
+          "ok": true,
+          "valor": 18.630921628396948,
+          "umbral": "≥ 2.161",
+          "margen": 16.469991841760766,
+          "donde": "pos 0 #12121a"
+        },
+        {
+          "regla": "9 colores #rrggbb distintos",
+          "ok": false,
+          "valor": 1,
+          "umbral": "9 distintos",
+          "margen": -8,
+          "donde": ""
+        }
+      ],
+      "pasaTodas": false,
+      "pasaTodasMenos9Distintos": false
+    },
+    {
+      "id": "oscuro-4d101a+gris-d0d0d0",
+      "rojo": "#4d101a",
+      "numero": "#d0d0d0",
+      "nota": "número gris claro",
+      "luminanciaRojo": 0.02022943860587129,
+      "contrasteRojoFondo": 1.2461325396879075,
+      "contrasteNumeroFondo": 12.079174147844757,
+      "contrasteRojoNumero": 9.69333017406798,
+      "hslRojo": {
+        "h": 350.1639344262295,
+        "s": 0.6559139784946235,
+        "l": 0.18235294117647058
+      },
+      "dE_rojo_fondo": 32.68407391266915,
+      "dE_rojo_numero": 74.51274169861829,
+      "dE_rojo_rojoContorno": 60.313334956794904,
+      "dE_rojo_naranjaContorno": 80.50995264812258,
+      "dE_rojo_bordeMasCercano": {
+        "pos": 0,
+        "hex": "#ff4d6d",
+        "dE": 60.313334956794904
+      },
+      "reglas": [
+        {
+          "regla": "tono SAFE en rango Clásica ±5°",
+          "ok": true,
+          "valor": 110.1639344262295,
+          "umbral": "[37.47, 178.06]°",
+          "margen": 67.8972900635664,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "caso más difícil de tono",
+          "ok": false,
+          "valor": 110.1639344262295,
+          "umbral": "mínimo ≤ 50.47°",
+          "margen": -59.69818100157198,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "media de tono",
+          "ok": true,
+          "valor": 110.1639344262295,
+          "umbral": "119.46 ± 20°",
+          "margen": 10.700887545293384,
+          "donde": "promedio de las 6 SAFE"
+        },
+        {
+          "regla": "contraste rojo en rango Clásica",
+          "ok": true,
+          "valor": 1.2461325396879075,
+          "umbral": "[1.156, 1.730]",
+          "margen": 0.08989257759722191,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "caso más difícil de contraste",
+          "ok": true,
+          "valor": 1.2461325396879075,
+          "umbral": "mínimo ≤ 1.256",
+          "margen": 0.010107422402778177,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "texto blanco ≥ Clásica",
+          "ok": true,
+          "valor": 12.079174147844757,
+          "umbral": "≥ 2.161",
+          "margen": 9.918244361208576,
+          "donde": "pos 0 #12121a"
+        },
+        {
+          "regla": "9 colores #rrggbb distintos",
+          "ok": false,
+          "valor": 1,
+          "umbral": "9 distintos",
+          "margen": -8,
+          "donde": ""
+        }
+      ],
+      "pasaTodas": false,
+      "pasaTodasMenos9Distintos": false
+    },
+    {
+      "id": "oscuro-4d101a+gris-a0a0a0",
+      "rojo": "#4d101a",
+      "numero": "#a0a0a0",
+      "nota": "número gris medio",
+      "luminanciaRojo": 0.02022943860587129,
+      "contrasteRojoFondo": 1.2461325396879075,
+      "contrasteNumeroFondo": 7.1246879928944615,
+      "contrasteRojoNumero": 5.717439972058535,
+      "hslRojo": {
+        "h": 350.1639344262295,
+        "s": 0.6559139784946235,
+        "l": 0.18235294117647058
+      },
+      "dE_rojo_fondo": 32.68407391266915,
+      "dE_rojo_numero": 58.91817861727764,
+      "dE_rojo_rojoContorno": 60.313334956794904,
+      "dE_rojo_naranjaContorno": 80.50995264812258,
+      "dE_rojo_bordeMasCercano": {
+        "pos": 0,
+        "hex": "#ff4d6d",
+        "dE": 60.313334956794904
+      },
+      "reglas": [
+        {
+          "regla": "tono SAFE en rango Clásica ±5°",
+          "ok": true,
+          "valor": 110.1639344262295,
+          "umbral": "[37.47, 178.06]°",
+          "margen": 67.8972900635664,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "caso más difícil de tono",
+          "ok": false,
+          "valor": 110.1639344262295,
+          "umbral": "mínimo ≤ 50.47°",
+          "margen": -59.69818100157198,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "media de tono",
+          "ok": true,
+          "valor": 110.1639344262295,
+          "umbral": "119.46 ± 20°",
+          "margen": 10.700887545293384,
+          "donde": "promedio de las 6 SAFE"
+        },
+        {
+          "regla": "contraste rojo en rango Clásica",
+          "ok": true,
+          "valor": 1.2461325396879075,
+          "umbral": "[1.156, 1.730]",
+          "margen": 0.08989257759722191,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "caso más difícil de contraste",
+          "ok": true,
+          "valor": 1.2461325396879075,
+          "umbral": "mínimo ≤ 1.256",
+          "margen": 0.010107422402778177,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "texto blanco ≥ Clásica",
+          "ok": true,
+          "valor": 7.1246879928944615,
+          "umbral": "≥ 2.161",
+          "margen": 4.96375820625828,
+          "donde": "pos 0 #12121a"
+        },
+        {
+          "regla": "9 colores #rrggbb distintos",
+          "ok": false,
+          "valor": 1,
+          "umbral": "9 distintos",
+          "margen": -8,
+          "donde": ""
+        }
+      ],
+      "pasaTodas": false,
+      "pasaTodasMenos9Distintos": false
+    },
+    {
+      "id": "usuario-8a2030+gris-d0d0d0",
+      "rojo": "#8a2030",
+      "numero": "#d0d0d0",
+      "nota": "número gris claro",
+      "luminanciaRojo": 0.06649697564106895,
+      "contrasteRojoFondo": 2.0670914505847846,
+      "contrasteNumeroFondo": 12.079174147844757,
+      "contrasteRojoNumero": 5.843560595457706,
+      "hslRojo": {
+        "h": 350.9433962264151,
+        "s": 0.6235294117647059,
+        "l": 0.3333333333333333
+      },
+      "dE_rojo_fondo": 54.86423762621269,
+      "dE_rojo_numero": 71.30734988535531,
+      "dE_rojo_rojoContorno": 37.346607642586505,
+      "dE_rojo_naranjaContorno": 64.82170826541501,
+      "dE_rojo_bordeMasCercano": {
+        "pos": 0,
+        "hex": "#ff4d6d",
+        "dE": 37.346607642586505
+      },
+      "reglas": [
+        {
+          "regla": "tono SAFE en rango Clásica ±5°",
+          "ok": true,
+          "valor": 110.94339622641508,
+          "umbral": "[37.47, 178.06]°",
+          "margen": 67.11782826338083,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "caso más difícil de tono",
+          "ok": false,
+          "valor": 110.94339622641508,
+          "umbral": "mínimo ≤ 50.47°",
+          "margen": -60.477642801757554,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "media de tono",
+          "ok": true,
+          "valor": 110.94339622641508,
+          "umbral": "119.46 ± 20°",
+          "margen": 11.480349345478956,
+          "donde": "promedio de las 6 SAFE"
+        },
+        {
+          "regla": "contraste rojo en rango Clásica",
+          "ok": false,
+          "valor": 2.0670914505847846,
+          "umbral": "[1.156, 1.730]",
+          "margen": -0.3368621681402433,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "caso más difícil de contraste",
+          "ok": false,
+          "valor": 2.0670914505847846,
+          "umbral": "mínimo ≤ 1.256",
+          "margen": -0.8108514884940989,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "texto blanco ≥ Clásica",
+          "ok": true,
+          "valor": 12.079174147844757,
+          "umbral": "≥ 2.161",
+          "margen": 9.918244361208576,
+          "donde": "pos 0 #12121a"
+        },
+        {
+          "regla": "9 colores #rrggbb distintos",
+          "ok": false,
+          "valor": 1,
+          "umbral": "9 distintos",
+          "margen": -8,
+          "donde": ""
+        }
+      ],
+      "pasaTodas": false,
+      "pasaTodasMenos9Distintos": false
+    },
+    {
+      "id": "oscuro-5a1520+gris-808080",
+      "rojo": "#5a1520",
+      "numero": "#808080",
+      "nota": "número gris oscuro (casi al límite de la regla del blanco)",
+      "luminanciaRojo": 0.028142745679483584,
+      "contrasteRojoFondo": 1.3865441624592505,
+      "contrasteNumeroFondo": 4.717358230198546,
+      "contrasteRojoNumero": 3.402241600319158,
+      "hslRojo": {
+        "h": 350.4347826086956,
+        "s": 0.6216216216216217,
+        "l": 0.21764705882352942
+      },
+      "dE_rojo_fondo": 36.88402419908006,
+      "dE_rojo_numero": 48.25007392930322,
+      "dE_rojo_rojoContorno": 55.4547893640748,
+      "dE_rojo_naranjaContorno": 76.98434044329183,
+      "dE_rojo_bordeMasCercano": {
+        "pos": 0,
+        "hex": "#ff4d6d",
+        "dE": 55.4547893640748
+      },
+      "reglas": [
+        {
+          "regla": "tono SAFE en rango Clásica ±5°",
+          "ok": true,
+          "valor": 110.43478260869563,
+          "umbral": "[37.47, 178.06]°",
+          "margen": 67.62644188110028,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "caso más difícil de tono",
+          "ok": false,
+          "valor": 110.43478260869563,
+          "umbral": "mínimo ≤ 50.47°",
+          "margen": -59.96902918403811,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "media de tono",
+          "ok": true,
+          "valor": 110.43478260869563,
+          "umbral": "119.46 ± 20°",
+          "margen": 10.971735727759508,
+          "donde": "promedio de las 6 SAFE"
+        },
+        {
+          "regla": "contraste rojo en rango Clásica",
+          "ok": true,
+          "valor": 1.3865441624592505,
+          "umbral": "[1.156, 1.730]",
+          "margen": 0.23030420036856492,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "caso más difícil de contraste",
+          "ok": false,
+          "valor": 1.3865441624592505,
+          "umbral": "mínimo ≤ 1.256",
+          "margen": -0.13030420036856483,
+          "donde": "pos 2 #12121a"
+        },
+        {
+          "regla": "texto blanco ≥ Clásica",
+          "ok": true,
+          "valor": 4.717358230198546,
+          "umbral": "≥ 2.161",
+          "margen": 2.5564284435623645,
+          "donde": "pos 0 #12121a"
+        },
+        {
+          "regla": "9 colores #rrggbb distintos",
+          "ok": false,
+          "valor": 1,
+          "umbral": "9 distintos",
+          "margen": -8,
+          "donde": ""
+        }
+      ],
+      "pasaTodas": false,
+      "pasaTodasMenos9Distintos": false
+    }
+  ],
+  "barrido": {
+    "total": {
+      "n": 636056,
+      "contrasteOk": 4804,
+      "tonoOk": 0,
+      "ambas": 0,
+      "todasMenos9": 0
+    },
+    "tonoBg": 240,
+    "tonosQuePasanLasTresReglasDeTono": [],
+    "coloresEnBandaDeContraste": 4804,
+    "rojosReconocibles_enBandaDeContraste": 662,
+    "ejemplosRojosEnBanda": [
+      {
+        "hex": "#2d1e15",
+        "c": 1.1605427957180614,
+        "h": 22.5,
+        "s": 0.3636363636363637
+      },
+      {
+        "hex": "#301e12",
+        "c": 1.1711924941459528,
+        "h": 24,
+        "s": 0.4545454545454546
+      },
+      {
+        "hex": "#301e15",
+        "c": 1.1730503407155073,
+        "h": 20,
+        "s": 0.3913043478260871
+      },
+      {
+        "hex": "#331b0f",
+        "c": 1.1572752874400172,
+        "h": 20,
+        "s": 0.5454545454545455
+      },
+      {
+        "hex": "#331b12",
+        "c": 1.1589046893435526,
+        "h": 16.363636363636374,
+        "s": 0.47826086956521735
+      }
+    ],
+    "luminanciaBandaContraste": [
+      0.015163279863985996,
+      0.020799071914120573
+    ],
+    "contrasteBanda": [
+      1.1562399620906856,
+      1.2562399620906857
+    ],
+    "distanciaDeTonoMinimaDeUnRojo": 95
+  },
+  "visibilidad": {
+    "clasica": [
+      {
+        "pos": 2,
+        "fill": "#e5a50a",
+        "dE": 67.94741748814569,
+        "contraste": 1.7302292824445413,
+        "dE_rojo_numero": 103.1450694712092
+      },
+      {
+        "pos": 3,
+        "fill": "#30a46c",
+        "dE": 125.66660525946166,
+        "contraste": 1.1844138134726387,
+        "dE_rojo_numero": 103.1450694712092
+      },
+      {
+        "pos": 4,
+        "fill": "#0091ff",
+        "dE": 135.3332313563347,
+        "contraste": 1.1562399620906856,
+        "dE_rojo_numero": 103.1450694712092
+      },
+      {
+        "pos": 5,
+        "fill": "#6e56cf",
+        "dE": 119.54529116323195,
+        "contraste": 1.4419654682207723,
+        "dE_rojo_numero": 103.1450694712092
+      },
+      {
+        "pos": 7,
+        "fill": "#12a594",
+        "dE": 127.33492903842644,
+        "contraste": 1.216994859726425,
+        "dE_rojo_numero": 103.1450694712092
+      },
+      {
+        "pos": 8,
+        "fill": "#8e4ec6",
+        "dE": 110.10857590074563,
+        "contraste": 1.384988050537804,
+        "dE_rojo_numero": 103.1450694712092
+      }
+    ],
+    "cristal": [
+      {
+        "pos": 2,
+        "fill": "#897440",
+        "dE": 77.94641891915046,
+        "contraste": 1.2115586055085887,
+        "dE_rojo_numero": 103.1450694712092
+      },
+      {
+        "pos": 3,
+        "fill": "#53816e",
+        "dE": 107.57418873012448,
+        "contraste": 1.1866780836992485,
+        "dE_rojo_numero": 103.1450694712092
+      },
+      {
+        "pos": 4,
+        "fill": "#4c6f8d",
+        "dE": 109.30059240517515,
+        "contraste": 1.416302004596844,
+        "dE_rojo_numero": 103.1450694712092
+      },
+      {
+        "pos": 5,
+        "fill": "#5d5d8d",
+        "dE": 103.53039623826096,
+        "contraste": 1.6443109375250522,
+        "dE_rojo_numero": 103.1450694712092
+      },
+      {
+        "pos": 7,
+        "fill": "#417b75",
+        "dE": 111.82460835868787,
+        "contraste": 1.3017048118154864,
+        "dE_rojo_numero": 103.1450694712092
+      },
+      {
+        "pos": 8,
+        "fill": "#6d578d",
+        "dE": 98.51398358026852,
+        "contraste": 1.652852252145135,
+        "dE_rojo_numero": 103.1450694712092
+      }
+    ],
+    "contorno55": [
+      {
+        "pos": 2,
+        "fill": "#94740c",
+        "dE": 72.32980573812124,
+        "contraste": 1.179306645151044,
+        "dE_rojo_numero": 103.1450694712092
+      },
+      {
+        "pos": 3,
+        "fill": "#168759",
+        "dE": 122.87624569561643,
+        "contraste": 1.209446714995289,
+        "dE_rojo_numero": 103.1450694712092
+      },
+      {
+        "pos": 4,
+        "fill": "#286998",
+        "dE": 117.61605223913706,
+        "contraste": 1.5758194299543076,
+        "dE_rojo_numero": 103.1450694712092
+      },
+      {
+        "pos": 5,
+        "fill": "#655d98",
+        "dE": 103.87060750655891,
+        "contraste": 1.5721903887745114,
+        "dE_rojo_numero": 103.1450694712092
+      },
+      {
+        "pos": 7,
+        "fill": "#088379",
+        "dE": 122.00297667643417,
+        "contraste": 1.2390676660130298,
+        "dE_rojo_numero": 103.1450694712092
+      },
+      {
+        "pos": 8,
+        "fill": "#7d5198",
+        "dE": 97.1774324744979,
+        "contraste": 1.6036641168017929,
+        "dE_rojo_numero": 103.1450694712092
+      }
+    ],
+    "contornoPuroActual": [
+      {
+        "pos": 2,
+        "fill": "#12121a",
+        "dE": 106.66856519549363,
+        "contraste": 4.982990110892005,
+        "dE_rojo_numero": 103.1450694712092
+      },
+      {
+        "pos": 3,
+        "fill": "#12121a",
+        "dE": 106.66856519549363,
+        "contraste": 4.982990110892005,
+        "dE_rojo_numero": 103.1450694712092
+      },
+      {
+        "pos": 4,
+        "fill": "#12121a",
+        "dE": 106.66856519549363,
+        "contraste": 4.982990110892005,
+        "dE_rojo_numero": 103.1450694712092
+      },
+      {
+        "pos": 5,
+        "fill": "#12121a",
+        "dE": 106.66856519549363,
+        "contraste": 4.982990110892005,
+        "dE_rojo_numero": 103.1450694712092
+      },
+      {
+        "pos": 7,
+        "fill": "#12121a",
+        "dE": 106.66856519549363,
+        "contraste": 4.982990110892005,
+        "dE_rojo_numero": 103.1450694712092
+      },
+      {
+        "pos": 8,
+        "fill": "#12121a",
+        "dE": 106.66856519549363,
+        "contraste": 4.982990110892005,
+        "dE_rojo_numero": 103.1450694712092
+      }
+    ],
+    "contornoPuro_4d101a": [
+      {
+        "pos": 2,
+        "fill": "#12121a",
+        "dE": 32.68407391266915,
+        "contraste": 1.2461325396879075,
+        "dE_rojo_numero": 89.81755916776952
+      },
+      {
+        "pos": 3,
+        "fill": "#12121a",
+        "dE": 32.68407391266915,
+        "contraste": 1.2461325396879075,
+        "dE_rojo_numero": 89.81755916776952
+      },
+      {
+        "pos": 4,
+        "fill": "#12121a",
+        "dE": 32.68407391266915,
+        "contraste": 1.2461325396879075,
+        "dE_rojo_numero": 89.81755916776952
+      },
+      {
+        "pos": 5,
+        "fill": "#12121a",
+        "dE": 32.68407391266915,
+        "contraste": 1.2461325396879075,
+        "dE_rojo_numero": 89.81755916776952
+      },
+      {
+        "pos": 7,
+        "fill": "#12121a",
+        "dE": 32.68407391266915,
+        "contraste": 1.2461325396879075,
+        "dE_rojo_numero": 89.81755916776952
+      },
+      {
+        "pos": 8,
+        "fill": "#12121a",
+        "dE": 32.68407391266915,
+        "contraste": 1.2461325396879075,
+        "dE_rojo_numero": 89.81755916776952
+      }
+    ],
+    "contornoPuro_8a2030": [
+      {
+        "pos": 2,
+        "fill": "#12121a",
+        "dE": 54.86423762621269,
+        "contraste": 2.0670914505847846,
+        "dE_rojo_numero": 84.21023947547651
+      },
+      {
+        "pos": 3,
+        "fill": "#12121a",
+        "dE": 54.86423762621269,
+        "contraste": 2.0670914505847846,
+        "dE_rojo_numero": 84.21023947547651
+      },
+      {
+        "pos": 4,
+        "fill": "#12121a",
+        "dE": 54.86423762621269,
+        "contraste": 2.0670914505847846,
+        "dE_rojo_numero": 84.21023947547651
+      },
+      {
+        "pos": 5,
+        "fill": "#12121a",
+        "dE": 54.86423762621269,
+        "contraste": 2.0670914505847846,
+        "dE_rojo_numero": 84.21023947547651
+      },
+      {
+        "pos": 7,
+        "fill": "#12121a",
+        "dE": 54.86423762621269,
+        "contraste": 2.0670914505847846,
+        "dE_rojo_numero": 84.21023947547651
+      },
+      {
+        "pos": 8,
+        "fill": "#12121a",
+        "dE": 54.86423762621269,
+        "contraste": 2.0670914505847846,
+        "dE_rojo_numero": 84.21023947547651
+      }
+    ]
+  },
+  "rojoVsBlanco": {
+    "dE": 103.1450694712092,
+    "contraste": 3.738903994144557
+  },
+  "paletas": [
+    "clasica",
+    "contraste",
+    "pastel",
+    "neon",
+    "retro",
+    "dorado",
+    "diamante",
+    "constancia"
+  ]
+}

@@ -1,0 +1,7 @@
+#ff2a2a sobre amarillo Clásica #e5a50a (pos 2)             normal   67.9  protanopía   42.2
+#ff2a2a sobre verde Clásica #30a46c (pos 3)                normal  125.7  protanopía   22.0
+#ff2a2a sobre azul Clásica #0091ff (pos 4)                 normal  135.3  protanopía   97.0
+#ff2a2a sobre fondo #12121a (Contorno puro actual)         normal  106.7  protanopía   57.0
+#4d101a sobre fondo #12121a (rojo oscuro)                  normal   32.7  protanopía   10.8
+#8a2030 sobre fondo #12121a                                normal   54.9  protanopía   22.8
+#ff2a2a sobre efectivo Contorno 55 % pos 2 #94740c         normal   72.3  protanopía   17.8

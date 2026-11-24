@@ -1,0 +1,331 @@
+/* Vista previa de los premios (preview.js). Usa .panelJuego y .capJuego de styles.css.
+   Bloque: Block.tsx (radio 16, sombra 0 5px 0 rgba(0,0,0,.35), número en negrita de la mitad del alto).
+   Estilos de paleta: CAMBIO-017 de cambios.md. Fondos: FieldBackground.tsx. */
+
+.vpSlot {
+  min-width: 0;
+}
+
+.vpPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* campo: el fondo de la app (C.bg) y los bloques encima; las partículas se dibujan en .vpFx */
+.vpCampo {
+  position: relative;
+  box-sizing: border-box;
+  overflow: hidden;
+  padding: 14px 14px 18px;
+  background: var(--bg);
+  border: 1px solid #2a2a3d;
+  border-radius: 12px;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.vpFondoCampo,
+.vpFx {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.vpFx {
+  z-index: 2;
+}
+
+/* fondos */
+.vpLinea {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.vpLinea.v {
+  top: 0;
+  bottom: 0;
+  width: 1px;
+}
+
+.vpLinea.h {
+  left: 0;
+  right: 0;
+  height: 1px;
+}
+
+.vpEstrella {
+  position: absolute;
+  background: #ffffff;
+}
+
+/* 3×3: cada casilla mide 1,7:1 (el ancho de un bloque de operación); el número es cuadrado y va centrado */
+.vpBloques {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px 12px;
+}
+
+.vpCel {
+  container-type: size;
+  align-self: start;
+  aspect-ratio: 1.7 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vpBq {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  background-color: var(--c);
+  box-shadow: 0 5px 0 rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-family: Roboto, system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 29px; /* respaldo; lo normal: la mitad del alto del bloque */
+  font-size: 50cqh;
+  line-height: 1.15;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.vpBq.num {
+  aspect-ratio: 1 / 1;
+}
+
+.vpBq.op {
+  width: 100%;
+}
+
+.vpBq.fuera {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.vpBq:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+.vpTexto {
+  position: relative;
+  z-index: 1;
+}
+
+/* Cristal (CAMBIO-017): color al relleno + degradado blanco de arriba + borde claro + hilo de luz; sin blur */
+.vpCristal .vpBq {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.38) 0%, rgba(255, 255, 255, 0) 55%), var(--relleno);
+  border: 1.5px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 5px 0 rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* Degradé (CAMBIO-018): relleno opaco con un degradé vertical de dos tonos del mismo color (--arriba, --abajo) */
+.vpDegrade .vpBq {
+  background: linear-gradient(180deg, var(--arriba), var(--abajo));
+}
+
+/* Esmerilado (CAMBIO-019): vidrio esmerilado. Capa blanco-azulada con el tinte insinuado (--tinte, 70 %), brillo diagonal,
+   borde de 1 px claro, luz superior, sombra suave exterior, desenfoque del fondo (backdrop-filter, solo web) y grano. */
+.vpEsmerilado .vpBq {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.08) 60%), var(--tinte);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.vpEsmerilado .vpBq::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.22;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='90' height='90'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* Tenue (CAMBIO-019): relleno atenuado de la Clásica (--c) y borde de 5 px del color de la Clásica (--borde) */
+.vpTenue .vpBq {
+  background: var(--c);
+  border: 5px solid var(--borde);
+}
+
+/* Botón (CAMBIO-019): relleno opaco con relieve de botón: sombras interiores clara arriba-izquierda y oscura abajo-derecha */
+.vpBoton .vpBq {
+  background: var(--c);
+  box-shadow: 0 5px 0 rgba(0, 0, 0, 0.35), inset 3px 3px 4px rgba(255, 255, 255, 0.32), inset -3px -4px 5px rgba(0, 0, 0, 0.3);
+}
+
+/* Contorno (CAMBIO-017): borde de 3 px del color pleno y relleno del mismo color al 55 % (--relleno; provisional); el número sigue blanco */
+.vpContorno .vpBq {
+  background: var(--relleno);
+  border: 3px solid var(--c);
+}
+
+/* Diamante: reflejo fijo en la esquina, lejos del número (Block.tsx) */
+.vpBrillo,
+.vpBrilloPunto {
+  display: none;
+  position: absolute;
+  border-radius: 99px;
+}
+
+.vpConBrillo .vpBrillo,
+.vpConBrillo .vpBrilloPunto {
+  display: block;
+}
+
+.vpBrillo {
+  width: 24%;
+  height: max(3px, 7%);
+  top: 8%;
+  left: 8%;
+  background: rgba(255, 255, 255, 0.42);
+  transform: rotate(-24deg);
+}
+
+.vpBrilloPunto {
+  height: max(3px, 6%);
+  aspect-ratio: 1 / 1;
+  top: 20%;
+  left: 7%;
+  background: rgba(255, 255, 255, 0.32);
+}
+
+/* partículas del efecto (Fx.tsx) */
+.vpPart {
+  position: absolute;
+  pointer-events: none;
+}
+
+.vpGlifo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Roboto, system-ui, sans-serif;
+  font-weight: 800;
+  text-align: center;
+}
+
+/* CAMBIO-023: piezas de los efectos nuevos (FX_NUEVOS en preview.js). Las que llevan color propio lo traen en `style`. */
+.vpBurbuja {
+  box-sizing: border-box;
+  border: 1.5px solid rgba(255, 255, 255, 0.75);
+  border-radius: 50%;
+}
+
+.vpReflejo {
+  position: absolute;
+  left: 20%;
+  top: 16%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.vpEmoji {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
+}
+
+.vpOnda {
+  box-sizing: border-box;
+  border: 4px solid;
+  border-radius: 50%;
+}
+
+.vpMoneda {
+  box-sizing: border-box;
+  border: 2px solid #c98a00;
+  border-radius: 50%;
+  background: #ffc933;
+}
+
+.vpTrazo {
+  border-radius: 2px;
+}
+
+.vpPunto {
+  border-radius: 50%;
+}
+
+.vpSeleccion {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.vpAyuda {
+  font-size: 12px;
+  line-height: 1.4;
+  opacity: 0.6;
+}
+
+.vpAyuda b {
+  color: var(--text);
+}
+
+/* Celular: se apila (Paletas, Vista previa, Sonidos, Efectos, Fondos). Si la pantalla es alta, la vista previa
+   queda fija arriba, justo bajo el interruptor, para probar cada fila sin perder de vista los bloques. */
+@media (max-width: 600px) {
+  .grillaPremios {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .vpCampo {
+    padding: 10px 10px 14px;
+  }
+
+  .vpBloques {
+    gap: 10px;
+  }
+}
+
+@media (max-width: 600px) and (min-height: 700px) {
+  .vpSlot {
+    position: sticky;
+    top: 64px;
+    z-index: 5;
+  }
+
+  .vpPanel {
+    gap: 6px;
+    padding: 10px 12px;
+    box-shadow: 0 8px 14px rgba(0, 0, 0, 0.4);
+  }
+
+  /* compacta: sin la explicación larga y con el campo más bajo, para tapar lo menos posible */
+  .vpAyudaLarga,
+  .vpDondeIra {
+    display: none;
+  }
+
+  .vpSeleccion {
+    font-size: 12px;
+  }
+
+  .vpCampo {
+    padding: 8px 8px 12px;
+  }
+
+  .vpBloques {
+    gap: 8px;
+  }
+}

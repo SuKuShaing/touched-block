@@ -1,0 +1,143 @@
+{
+  "contornoRelleno": {
+    "tramosQueCumplen": [
+      [
+        0.53,
+        0.55
+      ],
+      [
+        0.85,
+        0.85
+      ]
+    ],
+    "en0": {
+      "a": 0,
+      "ok": false,
+      "fallan": [
+        "caso más difícil de tono",
+        "contraste rojo en rango Clásica",
+        "caso más difícil de contraste",
+        "9 colores #rrggbb distintos"
+      ]
+    },
+    "en55": {
+      "a": 0.55,
+      "ok": true,
+      "fallan": []
+    },
+    "en50": {
+      "a": 0.5,
+      "ok": false,
+      "fallan": [
+        "contraste rojo en rango Clásica",
+        "caso más difícil de contraste"
+      ]
+    },
+    "en60": {
+      "a": 0.6,
+      "ok": false,
+      "fallan": [
+        "contraste rojo en rango Clásica"
+      ]
+    },
+    "en52": {
+      "a": 0.52,
+      "ok": false,
+      "fallan": [
+        "caso más difícil de contraste"
+      ]
+    },
+    "en56": {
+      "a": 0.56,
+      "ok": false,
+      "fallan": [
+        "contraste rojo en rango Clásica"
+      ]
+    },
+    "en85": {
+      "a": 0.85,
+      "ok": true,
+      "fallan": []
+    }
+  },
+  "esmeriladoCrudo": {
+    "fallanHoy": [
+      "tono SAFE en rango Clásica ±5°",
+      "contraste rojo en rango Clásica",
+      "texto blanco ≥ Clásica"
+    ],
+    "pos7Original": "#1cc7c2",
+    "candidato": {
+      "hex": "#19c4be",
+      "d": 1.2161407046995254
+    },
+    "pasaCrudoConCandidato": true,
+    "efectivoConCandidato": [
+      "#b08995",
+      "#a7908e",
+      "#a9a18d",
+      "#85a9a3",
+      "#8ba0c0",
+      "#9796ba",
+      "#b183ab",
+      "#81aab4",
+      "#988bba"
+    ],
+    "pasaEfectivoConCandidato": true,
+    "fallanEfectivoConCandidato": []
+  },
+  "cristalCrudo": [
+    {
+      "regla": "contraste rojo en rango Clásica",
+      "valor": 2.760063127193262,
+      "umbral": "[1.156, 1.730]",
+      "margen": -1.0298338447487205,
+      "donde": "pos 3 #94f0c2"
+    },
+    {
+      "regla": "caso más difícil de contraste",
+      "valor": 1.702262576656006,
+      "umbral": "mínimo ≤ 1.256",
+      "margen": -0.44602261456532033,
+      "donde": "pos 8 #c79bff"
+    },
+    {
+      "regla": "texto blanco ≥ Clásica",
+      "valor": 1.35464437653884,
+      "umbral": "≥ 2.161",
+      "margen": -0.8062854100973418,
+      "donde": "pos 3 #94f0c2"
+    }
+  ],
+  "contornoCrudo": [
+    {
+      "regla": "contraste rojo en rango Clásica",
+      "valor": 2.3409048387110767,
+      "umbral": "[1.156, 1.730]",
+      "margen": -0.6106755562665354,
+      "donde": "pos 2 #ffc400"
+    },
+    {
+      "regla": "caso más difícil de contraste",
+      "valor": 1.5211847299673076,
+      "umbral": "mínimo ≤ 1.256",
+      "margen": -0.2649447678766219,
+      "donde": "pos 8 #d484ff"
+    },
+    {
+      "regla": "texto blanco ≥ Clásica",
+      "valor": 1.597204607515456,
+      "umbral": "≥ 2.161",
+      "margen": -0.5637251791207258,
+      "donde": "pos 2 #ffc400"
+    }
+  ],
+  "SAFE_POS": [
+    2,
+    3,
+    4,
+    5,
+    7,
+    8
+  ]
+}

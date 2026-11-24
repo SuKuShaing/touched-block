@@ -7,36 +7,136 @@
 // Los requisitos por insignia y por nivel siguen el interruptor Ahora / Con cambios.
 
 // req: { tipo: 'siempre' | 'insignia' | 'nivel' | 'texto', ... }
+//
+// PALETAS (contrato de cada entrada; lo lee también el panel de vista previa, así que no renombrar):
+//   id           el id del juego (cosmetics/catalog.ts). También lo llevan SONIDOS, EFECTOS y FONDOS: la vista previa
+//                (preview.js) selecciona por `data-premio="<paleta|sonido|efecto|fondo>:<id>"`.
+//   n            nombre visible.
+//   req          requisito de HOY (el del juego). Con el interruptor en "Ahora" es lo único que se usa.
+//   nivelNuevo   CAMBIO-016: con el interruptor en "Con cambios" la paleta se gana por este nivel (curva de CAMBIO-004)
+//                en vez de por la insignia de `req`. Las que no lo llevan ("siempre" y Constancia) no cambian.
+//   nuevo        CAMBIO-017: paleta que no existe hoy; solo se ve con "Con cambios" y lleva la marca "nuevo".
+//   estilo       CAMBIO-017, 018 y 019: cómo se dibuja el bloque: 'plano' (por defecto: relleno liso) | 'cristal' | 'contorno'
+//                | 'degrade' | 'esmerilado' | 'tenue' | 'boton'. En el juego es el campo `style` de la paleta
+//                ('solid' | 'glass' | 'outline' | 'gradient' | 'frosted' | 'soft' | 'inset').
+//   borde        CAMBIO-019: solo 'tenue': los 9 colores del borde (los de la Clásica). `colores` es el relleno atenuado.
+//   colores      los 9 colores #rrggbb, en el orden de COLORS del motor (posición 0 = rojo de la Clásica … 8 = morado),
+//                leídos de izquierda a derecha y de arriba abajo en la muestra de 3×3. `c` es el mismo arreglo
+//                (nombre antiguo que usa vistaPrevia); se completa solo, abajo.
+//   relleno      opacidad 0..1 del relleno sobre el fondo oscuro: solo para 'cristal' y 'contorno'
+//                (cristal 0,5; contorno 0,55 = prueba provisional del usuario del 2026-11-25; 0 sería el contorno puro).
+//   nota, brillo líneas extra de la fila ("Pensada para daltónicos", "Con brillo").
+//
+// Receta de dibujo de cada estilo (la misma en la web y en la app; ver CAMBIO-017):
+//   plano     fondo = color.
+//   cristal   fondo = color al `relleno` + degradado blanco de arriba (.38 → 0 a 55 % del alto, ángulo 160°)
+//             + borde de 1,5 px blanco al 55 % + hilo de luz blanco al 50 % en el borde de arriba.
+//   contorno  fondo = el color del borde al `relleno` (0,55) sobre el fondo + borde de 3 px del color pleno. El número sigue blanco.
+//   degrade   CAMBIO-018: relleno OPACO con un degradé vertical de dos tonos del mismo color:
+//             `linear-gradient(180deg, arriba, abajo)` con arriba = color mezclado 3,5 % con blanco y
+//             abajo = color mezclado 3,5 % con negro (mezcla por canal en sRGB, ver `degradeTonos`). Sin borde ni brillo.
+//             La vista previa y la muestra reciben los tonos en `--arriba` y `--abajo`.
+//   esmerilado CAMBIO-019: vidrio esmerilado (glassmorfismo). `colores` son los 9 tintes; la capa es
+//             `rgba(mezcla(#dde8ff, tinte, 35 % de tinte), 0,70)` + brillo diagonal blanco (.30 → .08) + borde de 1 px blanco al 45 %
+//             + luz superior + sombra suave exterior `0 8px 24px` + grano. En la web, además `backdrop-filter: blur(10px)`;
+//             en la app, BlurView de expo-blur como la barra de pestañas, con vidrio falso de respaldo (ver cambios.md). Variables: `--tinte` (la capa) y `--c`.
+//   tenue     CAMBIO-019: relleno = color de la Clásica atenuado (`colores`, mismo matiz, saturación HSL × 0,55 y luminancia
+//             relativa fija 0,29) + borde de 5 px del color de la Clásica (`borde`, tal cual; en la muestra 3×3 de la web, 4 px). Variables `--c` y `--borde`.
+//   boton     CAMBIO-019: relleno opaco del color + sombras interiores `inset` (luz arriba-izquierda blanco .32, sombra
+//             abajo-derecha negro .30) + la sombra exterior dura de siempre: relieve de botón físico.
+const CLASICA = ['#e5484d', '#f76b15', '#e5a50a', '#30a46c', '#0091ff', '#6e56cf', '#d6409f', '#12a594', '#8e4ec6'];
 const PALETAS = [
-  { n: 'Clásica', req: { tipo: 'siempre' }, c: ['#e5484d', '#f76b15', '#e5a50a', '#30a46c', '#0091ff', '#6e56cf', '#d6409f', '#12a594', '#8e4ec6'] },
-  { n: 'Alto contraste', req: { tipo: 'siempre' }, nota: 'Pensada para daltónicos', c: ['#ba4e00', '#cea500', '#d071b0', '#3ba0d8', '#6a52c8', '#00a88a', '#0072b2', '#5f6e98', '#b981c4'] },
-  { n: 'Pastel', req: { tipo: 'insignia', tier: 'madera', step: 2 }, c: ['#d47a8c', '#d98a63', '#c79a3e', '#5fa889', '#5e95d6', '#8b8fd8', '#c477b0', '#4ea6a3', '#b884c8'] },
-  { n: 'Neón', req: { tipo: 'insignia', tier: 'bronce', step: 1 }, c: ['#ff2e88', '#ff6a00', '#d9a800', '#00b85c', '#2398ff', '#5a3dff', '#f000b8', '#00a8a0', '#b026ff'] },
-  { n: 'Retro', req: { tipo: 'insignia', tier: 'plata', step: 1 }, c: ['#b84a2e', '#d27d2d', '#c49a2c', '#63a23d', '#3f78c0', '#6c4fa8', '#b4456f', '#34a392', '#8c5a9e'] },
-  { n: 'Dorado', req: { tipo: 'insignia', tier: 'oro', step: 1 }, c: ['#b8860b', '#c47a2c', '#d4a017', '#8b9a3b', '#93a4b4', '#666fa9', '#b8737a', '#45a28b', '#b481be'] },
-  { n: 'Diamante', req: { tipo: 'insignia', tier: 'diamante', step: 1 }, brillo: true, c: ['#4f7cff', '#3fa0e8', '#df67b7', '#32ac8d', '#1658ca', '#7761e3', '#d16ce5', '#1fa4b0', '#9a57d5'] },
-  { n: 'Constancia', req: { tipo: 'texto', texto: 'Juega el reto diario 7 días seguidos' }, c: ['#c2304f', '#e0782a', '#d9a400', '#21a868', '#2f6fd6', '#8e44c8', '#b8306a', '#1aa39c', '#5a4fd0'] },
+  { id: 'clasica', n: 'Clásica', req: { tipo: 'siempre' }, colores: ['#e5484d', '#f76b15', '#e5a50a', '#30a46c', '#0091ff', '#6e56cf', '#d6409f', '#12a594', '#8e4ec6'] },
+  { id: 'contraste', n: 'Alto contraste', req: { tipo: 'siempre' }, nota: 'Pensada para daltónicos', colores: ['#ba4e00', '#cea500', '#d071b0', '#3ba0d8', '#6a52c8', '#00a88a', '#0072b2', '#5f6e98', '#b981c4'] },
+  { id: 'pastel', n: 'Pastel', req: { tipo: 'insignia', tier: 'madera', step: 2 }, nivelNuevo: 3, colores: ['#d47a8c', '#d98a63', '#c79a3e', '#5fa889', '#5e95d6', '#8b8fd8', '#c477b0', '#4ea6a3', '#b884c8'] },
+  { id: 'neon', n: 'Neón', req: { tipo: 'insignia', tier: 'bronce', step: 1 }, nivelNuevo: 7, colores: ['#ff2e88', '#ff6a00', '#d9a800', '#00b85c', '#2398ff', '#5a3dff', '#f000b8', '#00a8a0', '#b026ff'] },
+  // CAMBIO-019: los colores de la Clásica atenuados + borde del color de la Clásica
+  { id: 'tenue', n: 'Tenue', nuevo: true, estilo: 'tenue', req: { tipo: 'nivel', nivel: 9 }, nota: 'Relleno atenuado, borde intenso', borde: CLASICA, colores: ['#c97e81', '#c98156', '#b18f3a', '#57a17d', '#5399cd', '#968cc2', '#c17ea9', '#3fa196', '#a487bc'] },
+  // CAMBIO-017: tonos claros y fríos tintados; al 50 % sobre el fondo oscuro cumplen la regla de no ventaja (ver cambios.md)
+  { id: 'cristal', n: 'Cristal', nuevo: true, estilo: 'cristal', relleno: 0.5, req: { tipo: 'nivel', nivel: 12 }, nota: 'Translúcida, con brillo', colores: ['#ff9fb5', '#ffb88a', '#ffd666', '#94f0c2', '#85cbff', '#a8a7ff', '#ff9be0', '#6fe3d0', '#c79bff'] },
+  { id: 'retro', n: 'Retro', req: { tipo: 'insignia', tier: 'plata', step: 1 }, nivelNuevo: 15, colores: ['#b84a2e', '#d27d2d', '#c49a2c', '#63a23d', '#3f78c0', '#6c4fa8', '#b4456f', '#34a392', '#8c5a9e'] },
+  // CAMBIO-019: relleno opaco con relieve de botón (sombras interiores); colores "caramelo"
+  { id: 'boton', n: 'Botón', nuevo: true, estilo: 'boton', req: { tipo: 'nivel', nivel: 16 }, nota: 'Relieve interior de botón', colores: ['#ed417d', '#e16a2f', '#c9a32f', '#1aaf6a', '#1b76c3', '#8c56e1', '#e873c5', '#13c4a4', '#b63bd7'] },
+  // CAMBIO-017: colores saturados que se leen como borde sobre el fondo oscuro; relleno translúcido al 55 % (prueba provisional del usuario, 2026-11-25; antes 0, el contorno puro)
+  { id: 'contorno', n: 'Contorno', nuevo: true, estilo: 'contorno', relleno: 0.55, req: { tipo: 'nivel', nivel: 18 }, nota: 'Borde intenso, relleno translúcido', colores: ['#ff4d6d', '#ff8a1f', '#ffc400', '#19e68c', '#3ab0ff', '#a89bff', '#ff3fb4', '#00e0c6', '#d484ff'] },
+  // CAMBIO-018: degradé sutil entre dos tonos del mismo color (más claro arriba, más oscuro abajo); relleno opaco
+  { id: 'degrade', n: 'Degradé', nuevo: true, estilo: 'degrade', req: { tipo: 'nivel', nivel: 22 }, nota: 'Degradé sutil, relleno opaco', colores: ['#d34566', '#ee7e0f', '#cea017', '#39aa62', '#2373da', '#8259ca', '#cb64c5', '#2eb79c', '#9c3eb9'] },
+  { id: 'dorado', n: 'Dorado', req: { tipo: 'insignia', tier: 'oro', step: 1 }, nivelNuevo: 25, colores: ['#b8860b', '#c47a2c', '#d4a017', '#8b9a3b', '#93a4b4', '#666fa9', '#b8737a', '#45a28b', '#b481be'] },
+  // CAMBIO-019: vidrio esmerilado (glassmorfismo): blanco-azulado lechoso con el color apenas insinuado
+  { id: 'esmerilado', n: 'Esmerilado', nuevo: true, estilo: 'esmerilado', req: { tipo: 'nivel', nivel: 27 }, nota: 'Vidrio esmerilado, color insinuado', colores: ['#f4282e', '#c74710', '#d59a0a', '#2ebf6e', '#4893f4', '#7e66d6', '#f91395', '#19c4be', '#8534db'] },
+  { id: 'diamante', n: 'Diamante', req: { tipo: 'insignia', tier: 'diamante', step: 1 }, nivelNuevo: 30, brillo: true, colores: ['#4f7cff', '#3fa0e8', '#df67b7', '#32ac8d', '#1658ca', '#7761e3', '#d16ce5', '#1fa4b0', '#9a57d5'] },
+  { id: 'constancia', n: 'Constancia', req: { tipo: 'texto', texto: 'Juega el reto diario 7 días seguidos' }, colores: ['#c2304f', '#e0782a', '#d9a400', '#21a868', '#2f6fd6', '#8e44c8', '#b8306a', '#1aa39c', '#5a4fd0'] },
 ];
+// Valores por defecto: todas llevan `estilo`, `colores` y `c` (alias de `colores`).
+PALETAS.forEach((p) => {
+  p.estilo = p.estilo || 'plano';
+  p.c = p.colores;
+});
 
 const SONIDOS = [
-  { n: '8 bits', req: { tipo: 'siempre' } },
-  { n: 'Suave', req: { tipo: 'texto', texto: 'Termina tu primera partida' } },
-  { n: 'Marimba', req: { tipo: 'insignia', tier: 'plata', step: 1 } },
+  { id: '8bits', n: '8 bits', req: { tipo: 'siempre' } },
+  { id: 'suave', n: 'Suave', req: { tipo: 'texto', texto: 'Termina tu primera partida' } },
+  { id: 'marimba', n: 'Marimba', req: { tipo: 'insignia', tier: 'plata', step: 1 } },
+  // CAMBIO-024: 6 sonidos nuevos (solo con "Con cambios"; marcados "nuevo"), de fácil a difícil. Contrato igual al de EFECTOS: `nuevo`, `req`
+  // (los tipos de siempre; partidas, racha y reto diario van como `texto` con la frase exacta de `goalOf`; el de nivel lleva `tipo: 'nivel'` y se
+  // muestra sin "Hoy") y `nota` (una frase). Los suena `sonidos.js` (sintetizadores; `TBSonidos.paquetes[id]`), no hay archivos de audio.
+  // En el juego: `termina 5 partidas` = runs 5, `racha de 50` = streak 50, `reto 21 días` = dailyStreak 21, insignia Oro = tier oro.
+  { id: 'palitos', n: 'Palitos', nuevo: true, req: { tipo: 'texto', texto: 'Termina 5 partidas' }, nota: 'Dos palitos de madera que chocan' },
+  { id: 'electronico', n: 'Electrónico', nuevo: true, req: { tipo: 'texto', texto: 'Termina 25 partidas' }, nota: 'Sintetizador: sierras con filtro que se cierra' },
+  { id: 'viento', n: 'Viento', nuevo: true, req: { tipo: 'texto', texto: 'Haz una racha de 50' }, nota: 'Flauta: soplo suave con vibrato' },
+  { id: 'piano', n: 'Piano', nuevo: true, req: { tipo: 'texto', texto: 'Juega el reto diario 21 días seguidos' }, nota: 'Piano sintético: cuerdas y golpe de martillo' },
+  { id: 'guitarra', n: 'Guitarra eléctrica', nuevo: true, req: { tipo: 'insignia', tier: 'oro', step: 1 }, nota: 'Distorsionada: toque con la palma, acorde al destruir' },
+  { id: 'futurista', n: 'Futurista', nuevo: true, req: { tipo: 'nivel', nivel: 28 }, nota: 'Tonos metálicos que suben, con eco' },
 ];
+
+/** Los sonidos que existen en el modo actual: con "Ahora", los 3 de hoy; con "Con cambios", los 9 (CAMBIO-024). */
+const sonidosVisibles = () => (conCambios ? SONIDOS : SONIDOS.filter((s) => !s.nuevo));
 
 const EFECTOS = [
-  { n: 'Clásico', req: { tipo: 'siempre' }, glifo: '✹', color: '#0091ff' },
-  { n: 'Chispas', req: { tipo: 'insignia', tier: 'madera', step: 3 }, glifo: '✦', color: '#9be7ff' },
-  { n: 'Confeti', req: { tipo: 'texto', texto: 'Haz una racha de 25' }, glifo: '▰', color: '#ff6b9a' },
-  { n: 'Corazones', req: { tipo: 'texto', texto: 'Invita a 1 amigo · necesitas una cuenta' }, glifo: '♥', color: '#ff4d8d' },
+  { id: 'normal', n: 'Clásico', req: { tipo: 'siempre' }, glifo: '✹', color: '#0091ff' },
+  { id: 'chispas', n: 'Chispas', req: { tipo: 'insignia', tier: 'madera', step: 3 }, glifo: '✦', color: '#9be7ff' },
+  { id: 'confeti', n: 'Confeti', req: { tipo: 'texto', texto: 'Haz una racha de 25' }, glifo: '▰', color: '#ff6b9a' },
+  { id: 'corazones', n: 'Corazones', req: { tipo: 'texto', texto: 'Invita a 1 amigo · necesitas una cuenta' }, glifo: '♥', color: '#ff4d8d' },
+  // CAMBIO-023: 6 efectos nuevos (solo con "Con cambios"; marcados "nuevo"), de fácil a difícil. Contrato (lo lee preview.js, que dibuja
+  // el estallido en `FX_NUEVOS`): `nuevo`, `req` (los tipos que ya existen; los de partidas, racha y reto diario van como `texto` con la
+  // frase exacta que genera `goalOf` de catalog.ts; el de nivel lleva `tipo: 'nivel'` y se muestra sin "Hoy"), `glifo` y `color` (la
+  // fila) y `nota` (la descripción corta). En el juego: `termina 10 partidas` = runs 10, `racha de 100` = streak 100, `reto 14 días` = dailyStreak 14.
+  { id: 'burbujas', n: 'Burbujas', nuevo: true, req: { tipo: 'texto', texto: 'Termina 10 partidas' }, glifo: '○', color: '#8fd8ff', nota: 'Burbujas con reflejo que suben y revientan' },
+  { id: 'emojis', n: 'Emojis', nuevo: true, req: { tipo: 'nivel', nivel: 13 }, glifo: '😎', color: '#ffd24a', nota: 'Emojis que saltan: 🎉 ⭐ 🔥 💥 😎 😍 💯 ✨' },
+  { id: 'ondas', n: 'Ondas', nuevo: true, req: { tipo: 'texto', texto: 'Juega el reto diario 14 días seguidos' }, glifo: '◉', color: '#5ad0c0', nota: 'Anillos que se expanden y gotas' },
+  { id: 'monedas', n: 'Monedas', nuevo: true, req: { tipo: 'texto', texto: 'Termina 150 partidas' }, glifo: '$', color: '#ffc933', nota: 'Monedas que giran y caen' },
+  { id: 'rayos', n: 'Rayos', nuevo: true, req: { tipo: 'texto', texto: 'Haz una racha de 100' }, glifo: '↯', color: '#e8f6ff', nota: 'Rayos en zigzag con un destello' },
+  { id: 'fuegos', n: 'Fuegos artificiales', nuevo: true, req: { tipo: 'nivel', nivel: 35 }, glifo: '❋', color: '#ff9f43', nota: 'Un cohete sube y estalla en chispas' },
 ];
 
+/** Los efectos que existen en el modo actual: con "Ahora", los 4 de hoy; con "Con cambios", los 10 (CAMBIO-023). */
+const efectosVisibles = () => (conCambios ? EFECTOS : EFECTOS.filter((e) => !e.nuevo));
+
 const FONDOS = [
-  { n: 'Liso', req: { tipo: 'siempre' }, clase: 'liso' },
-  { n: 'Grilla', req: { tipo: 'nivel', nivel: 5 }, clase: 'grilla' },
-  { n: 'Estrellas', req: { tipo: 'nivel', nivel: 10 }, clase: 'estrellas' },
-  { n: 'Aurora', req: { tipo: 'nivel', nivel: 20 }, clase: 'aurora' },
+  { id: 'liso', n: 'Liso', req: { tipo: 'siempre' }, clase: 'liso' },
+  { id: 'grilla', n: 'Grilla', req: { tipo: 'nivel', nivel: 5 }, clase: 'grilla' },
+  { id: 'estrellas', n: 'Estrellas', req: { tipo: 'nivel', nivel: 10 }, clase: 'estrellas' },
+  { id: 'aurora', n: 'Aurora', req: { tipo: 'nivel', nivel: 20 }, clase: 'aurora' },
+  // CAMBIO-022: 11 fondos nuevos (solo con el interruptor en "Con cambios"; marcados "nuevo"). Contrato (lo leen preview.js y
+  // herramientas/prueba-fondos): `nuevo`, `req` (nivel, curva de CAMBIO-004), `clase` (= id; la miniatura es `.vpFondo.<clase>` y el campo
+  // de la vista previa `.fx-<clase>`, ambos en extras-fondos.css), `nota` (la frase de la fila), `animado` (true: lluvia, nieve, luciérnagas)
+  // y `prueba`: los colores del fondo bajo los bloques (el principal primero, luego los extremos del degradé) que mide la prueba de paletas.
+  { id: 'puntos', n: 'Puntos', nuevo: true, req: { tipo: 'nivel', nivel: 2 }, clase: 'puntos', nota: 'Puntitos blancos muy tenues sobre el fondo de siempre', prueba: ['#12121a'] },
+  { id: 'rayas', n: 'Rayas', nuevo: true, req: { tipo: 'nivel', nivel: 4 }, clase: 'rayas', nota: 'Rayas diagonales azuladas casi invisibles', prueba: ['#0f0f16'] },
+  { id: 'hexagonos', n: 'Hexágonos', nuevo: true, req: { tipo: 'nivel', nivel: 6 }, clase: 'hexagonos', nota: 'Panal de líneas finas sobre azul pizarra', prueba: ['#0b101a'] },
+  { id: 'circuito', n: 'Circuito', nuevo: true, req: { tipo: 'nivel', nivel: 8 }, clase: 'circuito', nota: 'Pistas de placa electrónica verde azulado', prueba: ['#091314'] },
+  { id: 'atardecer', n: 'Atardecer', nuevo: true, req: { tipo: 'nivel', nivel: 11 }, clase: 'atardecer', nota: 'Del azul noche al morado, con un resplandor anaranjado abajo', prueba: ['#0e0f1e', '#0c0f1d', '#14101a', '#161018'] },
+  { id: 'oceano', n: 'Océano', nuevo: true, req: { tipo: 'nivel', nivel: 14 }, clase: 'oceano', nota: 'Aguas profundas con luz arriba y burbujas', prueba: ['#07111c', '#08111e', '#06141c'] },
+  { id: 'bosque', n: 'Bosque nocturno', nuevo: true, req: { tipo: 'nivel', nivel: 17 }, clase: 'bosque', nota: 'Pinos en silueta bajo la luna', prueba: ['#071315', '#09121c', '#07140d'] },
+  { id: 'lluvia', n: 'Lluvia', nuevo: true, animado: true, req: { tipo: 'nivel', nivel: 21 }, clase: 'lluvia', nota: 'Lluvia suave que cae despacio (animado)', prueba: ['#0c121a', '#0b1119', '#0d131c'] },
+  { id: 'nieve', n: 'Nieve', nuevo: true, animado: true, req: { tipo: 'nivel', nivel: 26 }, clase: 'nieve', nota: 'Copos que bajan en dos capas (animado)', prueba: ['#0b121b', '#0a111a', '#0c131c'] },
+  { id: 'nebulosa', n: 'Nebulosa', nuevo: true, req: { tipo: 'nivel', nivel: 32 }, clase: 'nebulosa', nota: 'Nubes de gas moradas y turquesa con estrellitas', prueba: ['#0f0f1c', '#140e1c', '#0d0e1b', '#0f0c1c'] },
+  { id: 'luciernagas', n: 'Luciérnagas', nuevo: true, animado: true, req: { tipo: 'nivel', nivel: 40 }, clase: 'luciernagas', nota: 'Luces que laten entre el pasto (animado)', prueba: ['#09150f', '#091310'] },
 ];
+
+/** Los fondos que existen en el modo actual: con "Ahora", los 4 de hoy; con "Con cambios", los 15, ordenados por nivel (CAMBIO-022). */
+const fondosVisibles = () =>
+  conCambios ? FONDOS.slice().sort((a, b) => (a.req.tipo === 'nivel' ? a.req.nivel : 0) - (b.req.tipo === 'nivel' ? b.req.nivel : 0)) : FONDOS.filter((f) => !f.nuevo);
 
 // Logros (achievements.ts): cinco umbrales por logro, de Madera a Diamante.
 // CAMBIO-010: con Papel y Cartón (CAMBIO-005) pasan a siete. Los números no se mueven de lugar:
@@ -58,7 +158,7 @@ const MATERIALES_NUEVOS = [
   ['Diamante', 'insignias/diamante-1-small.svg'],
 ];
 
-// CAMBIO-011: cada logro tiene su propio icono en los siete materiales (carpeta logros_iconos/).
+// CAMBIO-011: cada logro tiene su propio icono (medalla hexagonal con el símbolo dentro) en los siete materiales (carpeta logros_iconos/).
 // Archivos: <id>-<material>.svg y <id>-vacio.svg. Se dibujan a 38 px (fila de la Colección) y 74 px (celebración).
 const MAT_ICONO = [
   ['Papel', 'papel'],
@@ -107,21 +207,95 @@ function requisito(req) {
   };
 }
 
+/** "Llega al nivel 3 · desde 300 bloques" (la curva sigue el interruptor, como en los fondos). */
+const textoNivel = (n) => `Llega al nivel ${n} · desde ${fmt(inicioNivel(n))} bloques`;
+
+/**
+ * Requisito de una paleta. En "Ahora", el de hoy. Con cambios (CAMBIO-016 y 017) las que dependían de una insignia
+ * piden un nivel, con lo que pide el juego hoy tachado y sin miniatura de insignia; las nuevas piden su nivel sin "Hoy".
+ */
+function requisitoPaleta(p) {
+  if (!conCambios) return requisito(p.req);
+  if (p.nivelNuevo != null) {
+    const hoy = AHORA.find((t) => t.tier === p.req.tier && t.step === p.req.step);
+    return { texto: textoNivel(p.nivelNuevo), antes: imperativo(hoy.goal) };
+  }
+  if (p.req.tipo === 'nivel') return { texto: textoNivel(p.req.nivel) }; // paleta nueva: no existe hoy, no hay "Hoy"
+  return requisito(p.req);
+}
+
+/** #rrggbb → rgba(r, g, b, a) */
+function rgba(hex, a) {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
+}
+
+/** CAMBIO-018: mezcla un color con otro (blanco o negro) en la proporción `t`, por canal en sRGB. */
+function mezclarHex(hex, destino, t) {
+  const n = parseInt(hex.slice(1), 16);
+  const c = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v, i) => Math.round(v * (1 - t) + destino[i] * t));
+  return '#' + c.map((v) => v.toString(16).padStart(2, '0')).join('');
+}
+
+/** Cuánto se aclara arriba y se oscurece abajo el degradé (3,5 %). Con más, el bloque empieza a parecer un botón brillante; ver CAMBIO-018. */
+const DEGRADE_MEZCLA = 0.035;
+
+/** Los dos tonos del degradé de un color base: [arriba, abajo]. */
+const degradeTonos = (hex) => [mezclarHex(hex, [255, 255, 255], DEGRADE_MEZCLA), mezclarHex(hex, [0, 0, 0], DEGRADE_MEZCLA)];
+
+/** CAMBIO-019, Esmerilado: la capa de vidrio = blanco-azulado mezclado con 35 % del tinte, al 70 % de opacidad. */
+const ESMERILADO_BASE = '#dde8ff';
+const ESMERILADO_TINTE = 0.35;
+const ESMERILADO_OPACIDAD = 0.7;
+const aRgb = (hex) => {
+  const n = parseInt(hex.slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+};
+const esmeriladoTintado = (hex) => mezclarHex(ESMERILADO_BASE, aRgb(hex), ESMERILADO_TINTE);
+
+/** Variables CSS de la casilla `i` de una paleta (las leen la muestra de 3×3 y la vista previa). */
+function varsPaleta(p, i) {
+  const c = p.colores[i];
+  const [arriba, abajo] = degradeTonos(c);
+  return {
+    '--c': c,
+    '--relleno': rgba(c, p.relleno ?? 1),
+    '--arriba': arriba,
+    '--abajo': abajo,
+    '--tinte': rgba(esmeriladoTintado(c), ESMERILADO_OPACIDAD),
+    '--borde': p.borde ? p.borde[i] : c,
+  };
+}
+
 function vistaPrevia(tipo, f) {
-  if (tipo === 'paletas') return `<div class="vpPaleta${f.brillo ? ' brillo' : ''}">${f.c.map((c) => `<i style="background:${c}"></i>`).join('')}</div>`;
+  if (tipo === 'paletas') {
+    const celdas = f.colores
+      .map((_, i) => `<i style="${Object.entries(varsPaleta(f, i)).map(([k, v]) => `${k}:${v}`).join(';')}"></i>`)
+      .join('');
+    return `<div class="vpPaleta ${f.estilo}${f.brillo ? ' brillo' : ''}">${celdas}</div>`;
+  }
   if (tipo === 'sonidos') return `<div class="vpIcono">♪</div>`;
   if (tipo === 'efectos') return `<div class="vpIcono" style="color:${f.color}">${f.glifo}</div>`;
   return `<div class="vpFondo ${f.clase}"></div>`;
 }
 
-function panelPremios(titulo, tipo, lista) {
+/** Clave de `data-premio` de cada panel (la lee preview.js). */
+const CLAVE_PREMIO = { paletas: 'paleta', sonidos: 'sonido', efectos: 'efecto', fondos: 'fondo' };
+
+function panelPremios(titulo, tipo, lista, pie = '') {
   const filas = lista
     .map((f) => {
-      const r = requisito(f.req);
+      // los fondos nuevos (CAMBIO-022) no existen hoy: piden su nivel sin "Hoy"
+      // los efectos nuevos (CAMBIO-023) tampoco: si piden un nivel, sin "Hoy"
+      // los sonidos nuevos (CAMBIO-024) tampoco; si piden una insignia, sin "Hoy: …" (no existían)
+      const nuevoPorNivel = (tipo === 'fondos' || tipo === 'efectos' || tipo === 'sonidos') && f.nuevo && f.req.tipo === 'nivel';
+      const r0 = tipo === 'paletas' ? requisitoPaleta(f) : nuevoPorNivel ? { texto: textoNivel(f.req.nivel) } : requisito(f.req);
+      const r = tipo === 'sonidos' && f.nuevo ? { ...r0, antes: null } : r0;
+      // la fila se puede seleccionar (preview.js pone la clase `seleccionada` y aria-pressed)
       return (
-        `<div class="filaColeccion${r.antes ? ' cambia' : ''}">` +
+        `<div class="filaColeccion${r.antes || f.nuevo ? ' cambia' : ''}" role="button" tabindex="0" aria-pressed="false" data-premio="${CLAVE_PREMIO[tipo]}:${f.id}">` +
         vistaPrevia(tipo, f) +
-        `<div class="textoColeccion"><div class="nombreColeccion">${f.n}</div>` +
+        `<div class="textoColeccion"><div class="nombreColeccion">${f.n}${f.nuevo ? ' <span class="etiquetaNueva">nuevo</span>' : ''}</div>` +
         `<div class="reqColeccion">${r.medalla ? `<img src="${r.medalla}" alt="${r.nombre}" title="${r.nombre}">` : ''}<span>${r.texto}</span></div>` +
         (f.nota ? `<div class="reqColeccion"><span>${f.nota}</span></div>` : '') +
         (f.brillo ? `<div class="reqColeccion"><span>Con brillo</span></div>` : '') +
@@ -130,16 +304,46 @@ function panelPremios(titulo, tipo, lista) {
       );
     })
     .join('');
-  return `<div class="panelJuego"><div class="capJuego">${titulo}</div><div class="listaColeccion">${filas}</div></div>`;
+  return `<div class="panelJuego"><div class="capJuego">${titulo}</div><div class="listaColeccion">${filas}</div>${pie ? `<div class="pieJuego arriba">${pie}</div>` : ''}</div>`;
 }
+
+/** Pie del panel Paletas con los cambios (CAMBIO-016 y CAMBIO-017). */
+const PIE_PALETAS =
+  '<b>Por nivel (CAMBIO-016):</b> las paletas ya no se ganan por la insignia sino por el nivel (bloques destruidos), como los fondos; la curva es la de CAMBIO-004. ' +
+  '<b>Seis paletas nuevas, seis estilos de dibujo (CAMBIO-017, 018 y 019):</b> Cristal (translúcido con brillo), Contorno (borde intenso, relleno translúcido al 55 %, prueba provisional), Degradé (degradé sutil del mismo color), Tenue (relleno atenuado con borde intenso), Botón (relieve interior) y Esmerilado (vidrio esmerilado) cambian cómo se dibuja el bloque, no solo los colores. ' +
+  'Clásica, Alto contraste y Constancia no cambian.';
+
+/** Pie del panel Fondos con los cambios (CAMBIO-022). */
+const PIE_FONDOS =
+  '<b>Once fondos nuevos (CAMBIO-022):</b> de 4 a 15, repartidos entre los niveles 2 y 40 y ordenados por nivel. Todos son oscuros y de bajo contraste (el dibujo va al 5 – 18 % de opacidad) para que los bloques destaquen siempre. ' +
+  'Ocho son estáticos; <b>Lluvia, Nieve y Luciérnagas</b> tienen una animación lenta (se detiene con "reducir movimiento"). Se pueden hacer con lo que el juego ya tiene instalado.';
+
+/** Pie del panel Sonidos con los cambios (CAMBIO-024). */
+const PIE_SONIDOS =
+  '<b>Seis sonidos nuevos (CAMBIO-024):</b> Palitos, Electrónico, Viento, Piano, Guitarra eléctrica y Futurista, de fácil a difícil (partidas, racha, reto diario, insignia, nivel). ' +
+  'Son <b>sintetizadores que imitan al instrumento</b> (no grabaciones): se reconocen, pero no suenan como el real. Se generan en el momento con los mismos nodos de audio que ya usa la app; no hay archivos de audio. ' +
+  'Haz clic en una fila para oírla y toca bloques en la "Vista previa".';
+
+/** Pie del panel Efectos con los cambios (CAMBIO-023). */
+const PIE_EFECTOS =
+  '<b>Seis efectos nuevos (CAMBIO-023):</b> de 4 a 10, de fácil a difícil, con motivos distintos (partidas, nivel, reto diario, racha). ' +
+  'Burbujas, Emojis, Ondas, Monedas, Rayos y Fuegos artificiales se dibujan con vistas, texto y Reanimated (hasta 12 piezas por estallido, ≤ 0,85 s). ' +
+  'Los <b>emojis</b> los dibuja cada sistema con su propio diseño (Android, iOS y web no se ven igual). Pruébalos en la "Vista previa".';
 
 function dibujarColeccion() {
   dibujarCelular(); // la tarjeta del celular también sigue el interruptor
+  // Columna izquierda: Paletas y, debajo, el hueco de la "Vista previa" (preview.js mete ahí su panel, que no se
+  // destruye al redibujar). Columna derecha: Sonidos, Efectos y Fondos.
   document.getElementById('premiosGrilla').innerHTML =
-    panelPremios('Paletas', 'paletas', PALETAS) +
-    panelPremios('Sonidos', 'sonidos', SONIDOS) +
-    panelPremios('Efectos al destruir', 'efectos', EFECTOS) +
-    panelPremios('Fondos del campo', 'fondos', FONDOS);
+    `<div class="colPremios">` +
+    panelPremios('Paletas', 'paletas', PALETAS.filter((p) => conCambios || !p.nuevo), conCambios ? PIE_PALETAS : '') +
+    `<div id="vistaPreviaSlot" class="vpSlot"></div></div>` +
+    `<div class="colPremios">` +
+    panelPremios('Sonidos', 'sonidos', sonidosVisibles(), conCambios ? PIE_SONIDOS : '') +
+    panelPremios('Efectos al destruir', 'efectos', efectosVisibles(), conCambios ? PIE_EFECTOS : '') +
+    panelPremios('Fondos del campo', 'fondos', fondosVisibles(), conCambios ? PIE_FONDOS : '') +
+    `</div>`;
+  if (typeof alRedibujarPremios === 'function') alRedibujarPremios(); // `var` de preview.js (carga después de este archivo)
 
   document.getElementById('logrosTabla').innerHTML =
     `<div class="tablaEnvuelta"><table class="tablaLogros"><thead><tr><th>Logro</th>` +
@@ -179,7 +383,7 @@ function dibujarColeccion() {
     (conCambios
       ? `<br><b>Siete materiales (CAMBIO-010):</b> los números no cambian de lugar, los materiales se corren dos lugares a la derecha. Ejemplo: Máximo combo 10 hoy da Madera y pasaría a dar Papel. Oro y Diamante tienen umbrales nuevos (resaltados). `
       : '') +
-    (conCambios ? `<br><b>Un icono por logro (CAMBIO-011):</b> el icono dice qué logro es y el material dice hasta dónde llegaste. Haz clic en un icono para ver toda su familia. ` : '') +
+    (conCambios ? `<br><b>Un icono por logro (CAMBIO-011):</b> una medalla hexagonal cuyo símbolo dice qué logro es; el material dice hasta dónde llegaste. Haz clic en un icono para ver toda su familia. ` : '') +
     `Los dos del reto diario solo existen si el reto existe.</div>`;
 }
 

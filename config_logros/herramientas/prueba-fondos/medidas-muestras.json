@@ -1,0 +1,750 @@
+{
+ "puntos": {
+  "cristal": {
+   "fallan": 0,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": 3.233638282899392,
+    "caso más difícil de tono": 6.90410958904107,
+    "media de tono": 16.131120429631878,
+    "contraste rojo en rango Clásica": 0.013997360161560612,
+    "caso más difícil de contraste": 0.0517266678329138,
+    "texto blanco ≥ Clásica": 2.214475211629772,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#13131b",
+    "caso más difícil de tono": "#0f0f16",
+    "media de tono": "#13131b",
+    "contraste rojo en rango Clásica": "#13131b",
+    "caso más difícil de contraste": "#0f0f16",
+    "texto blanco ≥ Clásica": "#13131b",
+    "9 colores #rrggbb distintos": "#0f0f16"
+   }
+  },
+  "contorno": {
+   "fallan": 0,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": 2.9392732702837066,
+    "caso más difícil de tono": 4.4803519648035035,
+    "media de tono": 18.348488898985906,
+    "contraste rojo en rango Clásica": 0.018446443471680007,
+    "caso más difícil de contraste": 0.060523941765783906,
+    "texto blanco ≥ Clásica": 2.23110990698826,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#12121a",
+    "caso más difícil de tono": "#0f0f16",
+    "media de tono": "#0f0f16",
+    "contraste rojo en rango Clásica": "#13131b",
+    "caso más difícil de contraste": "#0f0f16",
+    "texto blanco ≥ Clásica": "#13131b",
+    "9 colores #rrggbb distintos": "#0f0f16"
+   }
+  },
+  "esmerilado": {
+   "fallan": 0,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": 5.391389432485312,
+    "caso más difícil de tono": 5.465753424657521,
+    "media de tono": 14.65457616225926,
+    "contraste rojo en rango Clásica": 0.031490206168706125,
+    "caso más difícil de contraste": 0.05328453950480627,
+    "texto blanco ≥ Clásica": 0.3563395556709592,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#12121a",
+    "caso más difícil de tono": "#0f0f16",
+    "media de tono": "#101017",
+    "contraste rojo en rango Clásica": "#0f0f16",
+    "caso más difícil de contraste": "#13131b",
+    "texto blanco ≥ Clásica": "#12121a",
+    "9 colores #rrggbb distintos": "#0f0f16"
+   }
+  }
+ },
+ "rayas": {
+  "cristal": {
+   "fallan": 0,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": 3.145970252507823,
+    "caso más difícil de tono": 6.522091452826544,
+    "media de tono": 15.463457471915717,
+    "contraste rojo en rango Clásica": 0.01623591867472607,
+    "caso más difícil de contraste": 0.049422865532978255,
+    "texto blanco ≥ Clásica": 2.222844966995773,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#11131b",
+    "caso más difícil de tono": "#11131b",
+    "media de tono": "#11131b",
+    "contraste rojo en rango Clásica": "#11131b",
+    "caso más difícil de contraste": "#0e1016",
+    "texto blanco ≥ Clásica": "#11131b",
+    "9 colores #rrggbb distintos": "#0e1016"
+   }
+  },
+  "contorno": {
+   "fallan": 0,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": 3.3838051349572424,
+    "caso más difícil de tono": 4.4803519648035035,
+    "media de tono": 18.025421909116773,
+    "contraste rojo en rango Clásica": 0.023066683060358528,
+    "caso más difícil de contraste": 0.060523941765783906,
+    "texto blanco ≥ Clásica": 2.248384539240275,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#0e1016",
+    "caso más difícil de tono": "#0e1016",
+    "media de tono": "#11131b",
+    "contraste rojo en rango Clásica": "#11131b",
+    "caso más difícil de contraste": "#0e1016",
+    "texto blanco ≥ Clásica": "#11131b",
+    "9 colores #rrggbb distintos": "#0e1016"
+   }
+  },
+  "esmerilado": {
+   "fallan": 0,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": 5.391389432485312,
+    "caso más difícil de tono": 5.465753424657521,
+    "media de tono": 14.39419115719339,
+    "contraste rojo en rango Clásica": 0.028068548275764327,
+    "caso más difícil de contraste": 0.05673517245458082,
+    "texto blanco ≥ Clásica": 0.36105152424794884,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#11131b",
+    "caso más difícil de tono": "#0e1016",
+    "media de tono": "#0e1017",
+    "contraste rojo en rango Clásica": "#0e1016",
+    "caso más difícil de contraste": "#11131b",
+    "texto blanco ≥ Clásica": "#11131b",
+    "9 colores #rrggbb distintos": "#0e1016"
+   }
+  }
+ },
+ "hexagonos": {
+  "cristal": {
+   "fallan": 0,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": 1.012044161927065,
+    "caso más difícil de tono": 5.465753424657521,
+    "media de tono": 13.290411570897135,
+    "contraste rojo en rango Clásica": 0.0043703576158127255,
+    "caso más difícil de contraste": 0.04938253796126513,
+    "texto blanco ≥ Clásica": 2.1784807733598357,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#0d131f",
+    "caso más difícil de tono": "#0d131e",
+    "media de tono": "#0e1521",
+    "contraste rojo en rango Clásica": "#0e1521",
+    "caso más difícil de contraste": "#0b101a",
+    "texto blanco ≥ Clásica": "#0e1521",
+    "9 colores #rrggbb distintos": "#0c111b"
+   }
+  },
+  "contorno": {
+   "fallan": 0,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": 2.313192993732855,
+    "caso más difícil de tono": 3.898589245553069,
+    "media de tono": 16.708678230127305,
+    "contraste rojo en rango Clásica": 0.015836976779548984,
+    "caso más difícil de contraste": 0.051234679480614886,
+    "texto blanco ≥ Clásica": 2.2213533615504635,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#0e1521",
+    "caso más difícil de tono": "#0b1019",
+    "media de tono": "#0e1521",
+    "contraste rojo en rango Clásica": "#0e1521",
+    "caso más difícil de contraste": "#0b1019",
+    "texto blanco ≥ Clásica": "#0e1521",
+    "9 colores #rrggbb distintos": "#0c111b"
+   }
+  },
+  "esmerilado": {
+   "fallan": 0,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": 5.734246575342468,
+    "caso más difícil de tono": 4.865753424657555,
+    "media de tono": 13.137239306444343,
+    "contraste rojo en rango Clásica": 0.026185172127410228,
+    "caso más difícil de contraste": 0.04674666090052848,
+    "texto blanco ≥ Clásica": 0.3335815047969004,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#0d131f",
+    "caso más difícil de tono": "#0e1420",
+    "media de tono": "#0e1521",
+    "contraste rojo en rango Clásica": "#0b101a",
+    "caso más difícil de contraste": "#0e1521",
+    "texto blanco ≥ Clásica": "#0e1521",
+    "9 colores #rrggbb distintos": "#0c111b"
+   }
+  }
+ },
+ "circuito": {
+  "cristal": {
+   "fallan": 0,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": 6.4987244897959044,
+    "caso más difícil de tono": 2.465753424657521,
+    "media de tono": 13.12352026948787,
+    "contraste rojo en rango Clásica": 0.013938252033210974,
+    "caso más difícil de contraste": 0.04045055709163736,
+    "texto blanco ≥ Clásica": 2.2142542120125994,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#091415",
+    "caso más difícil de tono": "#091516",
+    "media de tono": "#0a1617",
+    "contraste rojo en rango Clásica": "#0a1617",
+    "caso más difícil de contraste": "#081011",
+    "texto blanco ≥ Clásica": "#0a1617",
+    "9 colores #rrggbb distintos": "#081112"
+   }
+  },
+  "contorno": {
+   "fallan": 0,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": 4.251700680272052,
+    "caso más difícil de tono": 2.465753424657521,
+    "media de tono": 16.48080436159971,
+    "contraste rojo en rango Clásica": 0.01396102607390226,
+    "caso más difícil de contraste": 0.04619413370080094,
+    "texto blanco ≥ Clásica": 2.2143393619643033,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#081011",
+    "caso más difícil de tono": "#091415",
+    "media de tono": "#0a1617",
+    "contraste rojo en rango Clásica": "#0a1616",
+    "caso más difícil de contraste": "#081112",
+    "texto blanco ≥ Clásica": "#0a1616",
+    "9 colores #rrggbb distintos": "#081112"
+   }
+  },
+  "esmerilado": {
+   "fallan": 0,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": 7.117828263380829,
+    "caso más difícil de tono": 1.1800391389432434,
+    "media de tono": 12.076469447188884,
+    "contraste rojo en rango Clásica": 0.018324843581597916,
+    "caso más difícil de contraste": 0.05469936886920679,
+    "texto blanco ≥ Clásica": 0.35006399180725545,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#0a1616",
+    "caso más difícil de tono": "#091414",
+    "media de tono": "#091516",
+    "contraste rojo en rango Clásica": "#081011",
+    "caso más difícil de contraste": "#0a1616",
+    "texto blanco ≥ Clásica": "#0a1616",
+    "9 colores #rrggbb distintos": "#081112"
+   }
+  }
+ },
+ "atardecer": {
+  "cristal": {
+   "fallan": 0,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": 0.09512279488058084,
+    "caso más difícil de tono": 6.751467710371799,
+    "media de tono": 14.467222119959274,
+    "contraste rojo en rango Clásica": 0.000692894561880486,
+    "caso más difícil de contraste": 0.03231620490296394,
+    "texto blanco ≥ Clásica": 2.192793329793163,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#0d0f1d",
+    "caso más difícil de tono": "#0a0d18",
+    "media de tono": "#0d0f1d",
+    "contraste rojo en rango Clásica": "#0a0d18",
+    "caso más difícil de contraste": "#0a0d18",
+    "texto blanco ≥ Clásica": "#19131a",
+    "9 colores #rrggbb distintos": "#0a0d18"
+   }
+  },
+  "contorno": {
+   "fallan": 0,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": 1.932192231731392,
+    "caso más difícil de tono": 4.346350439582864,
+    "media de tono": 17.167269494623312,
+    "contraste rojo en rango Clásica": 0.004567430816670326,
+    "caso más difícil de contraste": 0.039390623313851014,
+    "texto blanco ≥ Clásica": 2.1792176111376613,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#0d0f1d",
+    "caso más difícil de tono": "#0a0d18",
+    "media de tono": "#0d0f1e",
+    "contraste rojo en rango Clásica": "#19121a",
+    "caso más difícil de contraste": "#0a0d18",
+    "texto blanco ≥ Clásica": "#19121a",
+    "9 colores #rrggbb distintos": "#0a0d18"
+   }
+  },
+  "esmerilado": {
+   "fallan": 0,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": 2.534246575342479,
+    "caso más difícil de tono": 6.61959957850371,
+    "media de tono": 14.586725207621981,
+    "contraste rojo en rango Clásica": 0.026185172127410228,
+    "caso más difícil de contraste": 0.04980486181478483,
+    "texto blanco ≥ Clásica": 0.3515990717089088,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#18121a",
+    "caso más difícil de tono": "#0d0f1d",
+    "media de tono": "#0d0f1e",
+    "contraste rojo en rango Clásica": "#0a0d18",
+    "caso más difícil de contraste": "#19121a",
+    "texto blanco ≥ Clásica": "#18121a",
+    "9 colores #rrggbb distintos": "#0a0d18"
+   }
+  }
+ },
+ "oceano": {
+  "cristal": {
+   "fallan": 0,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": 0.9183673469387941,
+    "caso más difícil de tono": 3.193026151930269,
+    "media de tono": 11.680995598884834,
+    "contraste rojo en rango Clásica": 0.004588830019043533,
+    "caso más difícil de contraste": 0.031200294748694457,
+    "texto blanco ≥ Clásica": 2.2429831561694047,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#09131f",
+    "caso más difícil de tono": "#07131c",
+    "media de tono": "#07141d",
+    "contraste rojo en rango Clásica": "#070e19",
+    "caso más difícil de contraste": "#070e19",
+    "texto blanco ≥ Clásica": "#0a1421",
+    "9 colores #rrggbb distintos": "#070e19"
+   }
+  },
+  "contorno": {
+   "fallan": 0,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": 1.8407520488510727,
+    "caso más difícil de tono": 2.465753424657521,
+    "media de tono": 15.611742274721834,
+    "contraste rojo en rango Clásica": 0.0248728311699562,
+    "caso más difícil de contraste": 0.02981976199608427,
+    "texto blanco ≥ Clásica": 2.255137553621266,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#0a1421",
+    "caso más difícil de tono": "#07141d",
+    "media de tono": "#06131c",
+    "contraste rojo en rango Clásica": "#0a1421",
+    "caso más difícil de contraste": "#070e19",
+    "texto blanco ≥ Clásica": "#0a1421",
+    "9 colores #rrggbb distintos": "#070e19"
+   }
+  },
+  "esmerilado": {
+   "fallan": 0,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": 5.734246575342468,
+    "caso más difícil de tono": 2.004214963119068,
+    "media de tono": 11.821105488994746,
+    "contraste rojo en rango Clásica": 0.021311877662822276,
+    "caso más difícil de contraste": 0.06049900454592949,
+    "texto blanco ≥ Clásica": 0.3653878457460791,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#0a131f",
+    "caso más difícil de tono": "#051017",
+    "media de tono": "#06131c",
+    "contraste rojo en rango Clásica": "#051017",
+    "caso más difícil de contraste": "#0a131f",
+    "texto blanco ≥ Clásica": "#0a131f",
+    "9 colores #rrggbb distintos": "#070e19"
+   }
+  }
+ },
+ "bosque": {
+  "cristal": {
+   "fallan": 2,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": 2.8231292517007205,
+    "caso más difícil de tono": 1.2990867579908922,
+    "media de tono": 12.664635348232707,
+    "contraste rojo en rango Clásica": -0.08443411983561488,
+    "caso más difícil de contraste": 0.04378470226659448,
+    "texto blanco ≥ Clásica": 1.846449357918773,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#18222b",
+    "caso más difícil de tono": "#091712",
+    "media de tono": "#18222b",
+    "contraste rojo en rango Clásica": "#18222b",
+    "caso más difícil de contraste": "#070f17",
+    "texto blanco ≥ Clásica": "#18222b",
+    "9 colores #rrggbb distintos": "#070f17"
+   }
+  },
+  "contorno": {
+   "fallan": 2,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": 2.7856339386148647,
+    "caso más difícil de tono": 1.8526147385261424,
+    "media de tono": 16.23347175385041,
+    "contraste rojo en rango Clásica": -0.06742055986869788,
+    "caso más difícil de contraste": 0.04173191625909234,
+    "texto blanco ≥ Clásica": 1.9100614252336965,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#08121a",
+    "caso más difícil de tono": "#0a1812",
+    "media de tono": "#18222b",
+    "contraste rojo en rango Clásica": "#18222b",
+    "caso más difícil de contraste": "#070f17",
+    "texto blanco ≥ Clásica": "#18222b",
+    "9 colores #rrggbb distintos": "#070f17"
+   }
+  },
+  "esmerilado": {
+   "fallan": 1,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": 5.120048019207616,
+    "caso más difícil de tono": 0.8105810108644391,
+    "media de tono": 11.03551962637026,
+    "contraste rojo en rango Clásica": 0.021311877662822276,
+    "caso más difícil de contraste": -0.007168110813634998,
+    "texto blanco ≥ Clásica": 0.2540501627638849,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#081611",
+    "caso más difícil de tono": "#081611",
+    "media de tono": "#081611",
+    "contraste rojo en rango Clásica": "#070f17",
+    "caso más difícil de contraste": "#18222b",
+    "texto blanco ≥ Clásica": "#182129",
+    "9 colores #rrggbb distintos": "#070f17"
+   }
+  }
+ },
+ "lluvia": {
+  "cristal": {
+   "fallan": 0,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": 2.8999341672152923,
+    "caso más difícil de tono": 5.037181996086076,
+    "media de tono": 13.535892007766662,
+    "contraste rojo en rango Clásica": 0.003322911150074992,
+    "caso más difícil de contraste": 0.031172719353787404,
+    "texto blanco ≥ Clásica": 2.174564471585436,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#0f161f",
+    "caso más difícil de tono": "#0d131a",
+    "media de tono": "#0f161f",
+    "contraste rojo en rango Clásica": "#0f161f",
+    "caso más difícil de contraste": "#090e15",
+    "texto blanco ≥ Clásica": "#0f161f",
+    "9 colores #rrggbb distintos": "#0a0f16"
+   }
+  },
+  "contorno": {
+   "fallan": 0,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": 2.8231292517007205,
+    "caso más difícil de tono": 3.5484601915748044,
+    "media de tono": 16.74891772100281,
+    "contraste rojo en rango Clásica": 0.004620681554745154,
+    "caso más difícil de contraste": 0.03436680703525519,
+    "texto blanco ≥ Clásica": 2.1794167105349405,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#0c121b",
+    "caso más difícil de tono": "#0f161f",
+    "media de tono": "#0f161f",
+    "contraste rojo en rango Clásica": "#0f161f",
+    "caso más difícil de contraste": "#090e15",
+    "texto blanco ≥ Clásica": "#0f161f",
+    "9 colores #rrggbb distintos": "#0a0f16"
+   }
+  },
+  "esmerilado": {
+   "fallan": 0,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": 6.38040042149629,
+    "caso más difícil de tono": 3.7990867579908922,
+    "media de tono": 13.124816089706087,
+    "contraste rojo en rango Clásica": 0.02467579550395138,
+    "caso más difícil de contraste": 0.043325003007586904,
+    "texto blanco ≥ Clásica": 0.3335815047969004,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#0d131c",
+    "caso más difícil de tono": "#090e15",
+    "media de tono": "#0e151e",
+    "contraste rojo en rango Clásica": "#0a0f16",
+    "caso más difícil de contraste": "#0f161f",
+    "texto blanco ≥ Clásica": "#0f161f",
+    "9 colores #rrggbb distintos": "#0a0f16"
+   }
+  }
+ },
+ "nieve": {
+  "cristal": {
+   "fallan": 0,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": 2.8999341672152923,
+    "caso más difícil de tono": 5.037181996086076,
+    "media de tono": 13.535892007766662,
+    "contraste rojo en rango Clásica": 0.003322911150074992,
+    "caso más difícil de contraste": 0.02889385711886372,
+    "texto blanco ≥ Clásica": 2.174564471585436,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#0b121b",
+    "caso más difícil de tono": "#090f16",
+    "media de tono": "#0b121b",
+    "contraste rojo en rango Clásica": "#0f161f",
+    "caso más difícil de contraste": "#080e16",
+    "texto blanco ≥ Clásica": "#0f161f",
+    "9 colores #rrggbb distintos": "#080e16"
+   }
+  },
+  "contorno": {
+   "fallan": 0,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": 2.7856339386148647,
+    "caso más difícil de tono": 3.4508280515232173,
+    "media de tono": 16.74891772100281,
+    "contraste rojo en rango Clásica": 0.004620681554745154,
+    "caso más difícil de contraste": 0.03448330017677059,
+    "texto blanco ≥ Clásica": 2.1794167105349405,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#0c131c",
+    "caso más difícil de tono": "#090f16",
+    "media de tono": "#0f161f",
+    "contraste rojo en rango Clásica": "#0f161f",
+    "caso más difícil de contraste": "#080e16",
+    "texto blanco ≥ Clásica": "#0f161f",
+    "9 colores #rrggbb distintos": "#080e16"
+   }
+  },
+  "esmerilado": {
+   "fallan": 0,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": 6.38040042149629,
+    "caso más difícil de tono": 3.7990867579908922,
+    "media de tono": 13.124816089706087,
+    "contraste rojo en rango Clásica": 0.021311877662822276,
+    "caso más difícil de contraste": 0.043325003007586904,
+    "texto blanco ≥ Clásica": 0.3335815047969004,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#0c131c",
+    "caso más difícil de tono": "#080e16",
+    "media de tono": "#0e151e",
+    "contraste rojo en rango Clásica": "#080e16",
+    "caso más difícil de contraste": "#0f161f",
+    "texto blanco ≥ Clásica": "#0f161f",
+    "9 colores #rrggbb distintos": "#080e16"
+   }
+  }
+ },
+ "nebulosa": {
+  "cristal": {
+   "fallan": 4,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": -0.8861439312566972,
+    "caso más difícil de tono": 7.367161875361774,
+    "media de tono": 15.093354791996077,
+    "contraste rojo en rango Clásica": -0.009293934413923344,
+    "caso más difícil de contraste": 0.02080315255886167,
+    "texto blanco ≥ Clásica": 2.308484195448884,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#0f0d1d",
+    "caso más difícil de tono": "#0d0d18",
+    "media de tono": "#0f0e1d",
+    "contraste rojo en rango Clásica": "#0d0b19",
+    "caso más difícil de contraste": "#0c0c17",
+    "texto blanco ≥ Clásica": "#130f1d",
+    "9 colores #rrggbb distintos": "#0e0c18"
+   }
+  },
+  "contorno": {
+   "fallan": 0,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": 1.5038474406155729,
+    "caso más difícil de tono": 4.6879756468797495,
+    "media de tono": 17.655934102034394,
+    "contraste rojo en rango Clásica": 0.029697234546226303,
+    "caso más difícil de contraste": 0.03221091255472497,
+    "texto blanco ≥ Clásica": 2.273175534674167,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#0f0d1d",
+    "caso más difícil de tono": "#0d0d18",
+    "media de tono": "#0e0f1c",
+    "contraste rojo en rango Clásica": "#130f1d",
+    "caso más difícil de contraste": "#0d0c17",
+    "texto blanco ≥ Clásica": "#130f1d",
+    "9 colores #rrggbb distintos": "#0e0c18"
+   }
+  },
+  "esmerilado": {
+   "fallan": 0,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": 3.2485322896282014,
+    "caso más difícil de tono": 6.61959957850371,
+    "media de tono": 14.842837011400121,
+    "contraste rojo en rango Clásica": 0.028068548275764327,
+    "caso más difícil de contraste": 0.06202980624859311,
+    "texto blanco ≥ Clásica": 0.3765734818538333,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#140f1d",
+    "caso más difícil de tono": "#100f1c",
+    "media de tono": "#0e0f1c",
+    "contraste rojo en rango Clásica": "#0e0c17",
+    "caso más difícil de contraste": "#130f1d",
+    "texto blanco ≥ Clásica": "#130f1d",
+    "9 colores #rrggbb distintos": "#0e0c18"
+   }
+  }
+ },
+ "luciernagas": {
+  "cristal": {
+   "fallan": 3,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": 8.537414965986386,
+    "caso más difícil de tono": 1.8171047760088754,
+    "media de tono": 13.77487683924464,
+    "contraste rojo en rango Clásica": -0.013023957981528778,
+    "caso más difícil de contraste": 0.038281763714898664,
+    "texto blanco ≥ Clásica": 2.1134450972975247,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#091310",
+    "caso más difícil de tono": "#0b1710",
+    "media de tono": "#09160f",
+    "contraste rojo en rango Clásica": "#0d1911",
+    "caso más difícil de contraste": "#08100d",
+    "texto blanco ≥ Clásica": "#0d1911",
+    "9 colores #rrggbb distintos": "#08100d"
+   }
+  },
+  "contorno": {
+   "fallan": 4,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": 5.204081632653015,
+    "caso más difícil de tono": 1.7701012507444602,
+    "media de tono": 16.818877514206832,
+    "contraste rojo en rango Clásica": -0.012859654423028388,
+    "caso más difícil de contraste": 0.045965571096223234,
+    "texto blanco ≥ Clásica": 2.1140594125286545,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#08100d",
+    "caso más difícil de tono": "#0d1a11",
+    "media de tono": "#09160f",
+    "contraste rojo en rango Clásica": "#0d1a11",
+    "caso más difícil de contraste": "#08100d",
+    "texto blanco ≥ Clásica": "#0d1a11",
+    "9 colores #rrggbb distintos": "#08100d"
+   }
+  },
+  "esmerilado": {
+   "fallan": 0,
+   "total": 80,
+   "peor": {
+    "tono SAFE en rango Clásica ±5°": 4.0612244897959044,
+    "caso más difícil de tono": 0.465753424657521,
+    "media de tono": 11.495097601415523,
+    "contraste rojo en rango Clásica": 0.018324843581597916,
+    "caso más difícil de contraste": 0.04383946704922925,
+    "texto blanco ≥ Clásica": 0.32772913311302876,
+    "9 colores #rrggbb distintos": 0
+   },
+   "peorColor": {
+    "tono SAFE en rango Clásica ±5°": "#0d1911",
+    "caso más difícil de tono": "#0d1811",
+    "media de tono": "#09160f",
+    "contraste rojo en rango Clásica": "#08100d",
+    "caso más difícil de contraste": "#0d1811",
+    "texto blanco ≥ Clásica": "#0d1911",
+    "9 colores #rrggbb distintos": "#08100d"
+   }
+  }
+ }
+}

@@ -1,0 +1,21 @@
+{
+  "nota": "Candidatos de rojo de trampa y de color del número para Contorno PURO (relleno 0: bajo el número queda el fondo #12121a). Ninguno está en el juego.",
+  "fondo": "#12121a",
+  "candidatos": [
+    { "id": "actual", "rojo": "#ff2a2a", "numero": "#ffffff", "nota": "lo que hay hoy (theme.ts)" },
+    { "id": "usuario-7a1f2a", "rojo": "#7a1f2a", "numero": "#ffffff", "nota": "familia propuesta por el usuario" },
+    { "id": "usuario-8a2030", "rojo": "#8a2030", "numero": "#ffffff", "nota": "familia propuesta por el usuario" },
+    { "id": "usuario-a02030", "rojo": "#a02030", "numero": "#ffffff", "nota": "familia propuesta por el usuario" },
+    { "id": "oscuro-6e1a24", "rojo": "#6e1a24", "numero": "#ffffff", "nota": "contraste ~1,63" },
+    { "id": "oscuro-5a1520", "rojo": "#5a1520", "numero": "#ffffff", "nota": "contraste ~1,39" },
+    { "id": "oscuro-4d101a", "rojo": "#4d101a", "numero": "#ffffff", "nota": "contraste ~1,25: dentro de la franja 1,156-1,256" },
+    { "id": "oscuro-4a0f18", "rojo": "#4a0f18", "numero": "#ffffff", "nota": "dentro de la franja" },
+    { "id": "claro-ff6b6b", "rojo": "#ff6b6b", "numero": "#ffffff", "nota": "rojo claro" },
+    { "id": "claro-ff9a9a", "rojo": "#ff9a9a", "numero": "#ffffff", "nota": "rojo claro" },
+    { "id": "claro-ffb3b3", "rojo": "#ffb3b3", "numero": "#ffffff", "nota": "rojo muy claro / rosa" },
+    { "id": "oscuro-4d101a+gris-d0d0d0", "rojo": "#4d101a", "numero": "#d0d0d0", "nota": "número gris claro" },
+    { "id": "oscuro-4d101a+gris-a0a0a0", "rojo": "#4d101a", "numero": "#a0a0a0", "nota": "número gris medio" },
+    { "id": "usuario-8a2030+gris-d0d0d0", "rojo": "#8a2030", "numero": "#d0d0d0", "nota": "número gris claro" },
+    { "id": "oscuro-5a1520+gris-808080", "rojo": "#5a1520", "numero": "#808080", "nota": "número gris oscuro (casi al límite de la regla del blanco)" }
+  ]
+}
