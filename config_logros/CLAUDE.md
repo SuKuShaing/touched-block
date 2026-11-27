@@ -4,6 +4,10 @@ Esta carpeta de configuración debe tomarse aparte de toda la aplicación.
 
 Todo lo que está aquí es una réplica de la aplicación y no influye en ella.
 
+## Estado (2026-11-27)
+
+Los CAMBIO-001 a 026 y el reinicio de registros (alcance A) están **aplicados en la rama `feat/premios-y-logros`, sin desplegar**: producción sigue igual, no se ha borrado ningún dato y no se ha probado en un teléfono (ver `../docs/pendientes.md` y `PLAN_IMPLEMENTACION.md`). El modo **Ahora** de la web muestra el juego publicado (anterior a estos cambios); las descripciones de "hoy" y las líneas de código citadas en `cambios.md` son las de antes de aplicarlos. La maqueta no se actualiza sola.
+
 ## Referencias
 
 La escala de etapas de `index.html` copia la de la pantalla final de la partida:
@@ -35,10 +39,10 @@ Con el interruptor en "Con cambios" hay 20 fondos, 12 efectos y 9 sonidos (hoy 4
 
 ## Cómo trabajamos aquí
 
-- Esta carpeta es para **analizar** logros, niveles, retos, premios e insignias y su forma de entregarse. **No se modifica nada del juego** (`apps/`, `packages/`, `docs/`) hasta que el usuario diga expresamente "aplica el cambio X".
+- Esta carpeta es para **analizar** logros, niveles, retos, premios e insignias y su forma de entregarse. Para los CAMBIO-001 a 026 la regla de no tocar el juego ya no rige (el usuario pidió aplicarlos). Para **cualquier cambio nuevo** sigue igual: **no se modifica nada del juego** (`apps/`, `packages/`, `docs/`) hasta que el usuario diga expresamente "aplica el cambio X".
 - Cada cambio propuesto se anota en `cambios.md` como un ToDo con su contexto (qué, por qué, dónde en el código, qué más afecta). Leer ese archivo antes de proponer algo nuevo.
 - La web tiene un interruptor **Ahora / Con cambios**. Lo propuesto vive en `CAMBIOS` de `script.js` y debe coincidir con `cambios.md`.
-- Antes de aplicar un cambio, recordar la regla de la raíz: no reiniciar rankings ni récords (no subir `RULES_VERSION`). El usuario aprobó un reset el 2026-11-26 (CAMBIO-025), pero **su alcance está por confirmar**: no ejecutar nada sin él.
+- Antes de aplicar un cambio, recordar la regla de la raíz: no reiniciar rankings ni récords (no subir `RULES_VERSION`). El reset aprobado (CAMBIO-025) quedó cerrado en el **alcance A (todo)**, con `RULES_VERSION` 6 y claves nuevas; es una excepción que no autoriza otros. **Borrar datos de producción** se hace solo tras el visto bueno del usuario en el celular y de mostrarle el conteo (`../docs/despliegue.md`, sección 8).
 
 Las secciones "Retos" y "Misiones" copian `DailyCard.tsx` y `MissionList.tsx` (apps/client/src/components); los datos salen de `packages/engine/src/daily.ts` (`DAILY_CALENDAR`, intentos, vidas, racha) y `packages/engine/src/missions.ts` (`MISSION_POOL`, `MISSIONS_PER_DAY`). Si cambian allí, actualizar `RETO_SEMANA`, `RETO_REGLAS` y `MISIONES` en `script.js`. `RETO_NUEVOS` son los 8 retos nuevos de CAMBIO-013 (solo con el interruptor en "Con cambios"); el contador junto al título "Retos" cuenta las tarjetas que se ven. `MISIONES_NUEVAS` son las 15 misiones nuevas (el orden de la lista es el del pool propuesto): "Sigue a un jugador hoy" (CAMBIO-014: solo se cumple con cuenta, pero se sortea igual para todos y a un invitado se le muestra bloqueada con "Crea tu cuenta para desbloquearla"; la web tiene un selector "Ver como: con cuenta | invitado" que solo afecta esa fila) y 14 más (CAMBIO-015). `MISIONES_INICIO_POOL` (lunes 2026-12-07, el mismo de `RETO_INICIO_CICLO`) es la fecha desde la que rige el pool de 28; antes, el de 13. Igual que los retos, la lista de misiones depende del interruptor (`dibujarMisiones`, que `aplicarModo()` llama vía `var redibujarMisiones`) y su contador "Misiones posibles" pasa de 13 (Ahora) a 28 (Con cambios).
 

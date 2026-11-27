@@ -444,6 +444,49 @@ El VPS es compartido con Learn-it y UltimaType. Su administrador cerró el puert
 - **`vps23906.cubepath.net` se quitó** el mismo día: es el nombre del proveedor, no puede pasar por Cloudflare y solo lo usaba un APK viejo en un celular de prueba (los jugadores usan la web). Así todos los dominios del VPS quedan detrás de Cloudflare y el administrador puede limitar 80/443 a las IP de Cloudflare (opción C de su nota).
 - **IP del jugador**: con Cloudflare delante, el `trust proxy` por defecto (`loopback, linklocal, uniquelocal`) haría que la API viera la IP del borde de Cloudflare y que todos compartieran el límite de 120 peticiones por minuto. Se agregaron los rangos de Cloudflare a `TRUST_PROXY` en `deploy/docker-compose.yml`: Express recorre el `X-Forwarded-For` desde la derecha saltando Traefik y Cloudflare, y se queda con la IP real. Sirve también para el acceso directo, porque ahí Traefik reescribe el `X-Forwarded-For` con la IP de la conexión. Se descartó `trust proxy = 2` porque fallaría con el acceso directo (tomaría un valor que el cliente puede inventar), y `CF-Connecting-IP` porque obliga a tocar código. Si Cloudflare cambia sus rangos, actualizar la lista (o sobrescribirla con la variable `TRUST_PROXY` en Dokploy).
 
+### Premios, logros y reinicio de registros: reglas v6 (20 a 27 nov 2026; sin desplegar)
+
+El usuario analizó insignias, logros, retos y premios en una réplica aparte (`config_logros/`), anotando 26 propuestas (CAMBIO-001 a 026), y el 27 nov pidió aplicarlas. Están en la rama `feat/premios-y-logros`. **Al cierre de esta nota nada está desplegado, no se ha borrado ningún dato y no se ha probado en un teléfono.** Valores en `reglas-y-balance.md`.
+
+**Qué cambia**: siete insignias (Papel, Cartón y Madera reemplazan a las tres maderas; ninguna bajo 20 s; Diamante a los bloques de 2 s), "Experiencia" con nivel desde 0, logros de siete materiales con iconos propios ("Partidas jugadas" reemplaza a "Bloques destruidos"), 55 premios, ciclo de 15 retos y 28 misiones desde el 7 dic, ver en grande y compartir premios y vista previa en la Colección.
+
+**Reinicio (reset A)**
+
+- Con la entrega nueva, mucha gente habría perdido premios ya ganados (se recalculan, no se guardan). El usuario prefirió reiniciar: "ahora solo tenemos testers" que saben del cambio, y eligió el alcance **A, todo**: se conservan las cuentas; partidas, rankings, estadísticas, nivel, logros, insignias, reto, misiones, desafíos e invitaciones vuelven a cero. Es la excepción aprobada a "no romper los registros".
+- **`RULES_VERSION` 6 sin cambiar reglas de partida**: es la forma de que la API rechace las partidas de los clientes viejos y sus datos no vuelvan. Claves locales de progreso nuevas por el mismo motivo; las viejas no se borran ni se leen, y la mudanza dejó de importarlas.
+- **El borrado es un script manual, no una migración**: las migraciones corren solas al arrancar el contenedor. Simulación por defecto, confirmación literal, una transacción y una marca (`DataReset`) para que no se repita. En el despliegue se corre con la API detenida, para que ninguna petición en curso reescriba datos viejos.
+- Trampas cerradas: el servidor recalcula el porcentaje desde `DailyEntry` (se borra); el cliente toma el máximo entre dispositivo y cuenta (claves nuevas y servidor en cero); las estadísticas locales se reconstruyen desde el historial (lee las claves nuevas); la web vieja podía reimportar datos.
+- **Sin respaldo previo**, por decisión del usuario (27 nov): el borrado no se puede deshacer. Se ejecutará después de su visto bueno en el celular y de mostrarle el conteo de producción.
+- **`409 client_outdated`**: un cliente viejo podría gastar su intento del reto en una partida que la API rechazaría después; ahora `duel` y `daily` exigen `rulesVersion` y se cortan antes de crear nada. Consecuencia: el APK 0.3.1 deja de entrar al ranking y hay que repartir el 0.4.0.
+
+**Fechas de retos y misiones**
+
+- El ciclo de 15 retos y el pool de 28 rigen desde el lunes **7 dic 2026**. Antes de esa fecha no cambia nada: la API repite cada partida con los modificadores de su fecha y las misiones ya sorteadas no deben cambiar. Cliente y servidor deben estar publicados antes.
+
+**Premios y celebraciones**
+
+- Paletas por nivel, sonidos por insignia, efectos y fondos por logro (uno por escalón, 4 × 7), y tres por invitar. La paleta Constancia pasa a llamarse **Amistad** (premia invitar, no volver cada día); el id `constancia` se mantiene.
+- Los premios que decide la cuenta (invitar, porcentaje y días seguidos del reto) se celebran **desde la cuenta**, comparando con lo ya anunciado: antes no se veían (la foto local no tenía invitados y lo del servidor se registraba en silencio). El día que completa una racha puede jugarse en otro equipo. En la primera siembra de un equipo con sesión se celebran una vez los de invitar y porcentaje ya ganados; los días seguidos se siembran en silencio.
+- **Un invitado solo gana, en el logro del porcentaje, el escalón de participar**: no está en el ranking de un día cerrado, y lo que ve al terminar ("habrías quedado") es provisional. Al entrar con cuenta vale el porcentaje de la cuenta.
+- La API guarda el porcentaje al leer `GET /daily`; si `/me` salió antes, no lo traía hasta recargar, así que el cliente vuelve a pedirlo.
+
+**Dibujo y sonido**
+
+- Paletas translúcidas (Cristal, Contorno, Esmerilado) sobre un **respaldo opaco**: su color no depende del fondo y la regla de no ventaja se puede medir sobre el color efectivo. Esmerilado va **sin desenfoque real** (decidido el 26 nov). Se descartó Contorno sin relleno, porque la trampa roja sobre el fondo oscuro se veía unas tres veces más que en la Clásica: quedó con relleno al 55 %. En Android anterior a la API 29, que no dibuja sombras interiores, Botón usa un degradado.
+- Fondos animados con una sola propiedad por capa y efectos con un valor compartido por pieza, por rendimiento en Android; quietos con "reducir movimiento".
+- Sonidos **híbridos** (decisión del usuario, 26 nov): sintetizados en vivo, los nuevos usan mucho más grafo de audio que los de antes (6 a 14 nodos por toque contra 2); se renderiza una vez el paquete elegido y se reutiliza, con respaldo en vivo. Sin muestras grabadas ni dependencias nuevas. `react-native-audio-api` 1.0.0 no libera los contextos de render si no se les quita a mano un aviso interno (revisar al actualizarla).
+- Los 7 sonidos que la maqueta no definió se derivaron de la escala de cada paquete y quedaron en un solo archivo (`game/synth/events.ts`) para reemplazarlos.
+
+**Colección más corta (CAMBIO-027, 27 nov)**
+
+- Pedido del usuario al verla en el emulador: las tarjetas de paletas, sonidos, efectos y fondos hacían la pantalla muy larga. Ahora cada una muestra unas 4 filas, asoma la 5.ª y el resto se desplaza dentro de la tarjeta; en los extremos sigue la pantalla. El alto se calcula con las filas medidas (cambian con el texto, el ancho y la letra del sistema) y no pasa del 60 % de la pantalla (`lib/prizeList.ts`).
+
+**APK de prueba**
+
+- Para probar en el teléfono sin publicar ni tocar la app real: id `.prueba`, firma debug, API `https://api.invalid` (producción es v5 y además recibiría datos de prueba; una API local exige USB o red) y todo desbloqueado. Como las `EXPO_PUBLIC_*` quedan dentro del bundle, Gradle las declara como entradas de la tarea y el release se limpia antes: sin eso podía reutilizar el bundle de prueba.
+
+**Valores por defecto adoptados** (sección B del plan; los marcados "por confirmar" están en `pendientes.md`): estrella sin numerales en Papel, Cartón y Madera; "Nivel 0" visible; "Máximo combo" en la pantalla final sin tocar misiones ni la franja; iconos de logros tal como se diseñaron; sin premio ganado se abre "Todavía no lo tienes" sin compartir; los premios cosméticos se comparten como tarjeta de texto; la misión "Invita a alguien" quedó fuera; Degradé en nivel 22 con 3,5 %; vista previa al final y solo con lo equipado; logro y premio en ventanas separadas; se reinicia "visto en Colección" y se conservan ajustes, selección y desbloqueo.
+
 ---
 
 ## Cómo se trabajó

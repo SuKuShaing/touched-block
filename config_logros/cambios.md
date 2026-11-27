@@ -1,6 +1,6 @@
 # Cambios por hacer (config_logros)
 
-Lista de cambios **propuestos** (001 a 026) a logros, niveles, insignias, retos y premios. **Ninguno está aplicado en el juego.** No se toca el juego hasta que el usuario diga "aplica el cambio X" (ver `CLAUDE.md` de esta carpeta).
+Lista de cambios (001 a 027) a logros, niveles, insignias, retos y premios. **Al 2026-11-27 los 27 están aplicados en la rama `feat/premios-y-logros`, sin desplegar** (nada publicado, ningún dato borrado, sin probar en teléfono). Cada entrada conserva su texto original: su "Estado", sus "el juego no se tocó" y sus líneas de código son de cuando se escribió; el estado actual es la línea **"Estado en el juego"**. Donde una entrada contradiga a otra posterior, vale la resolución de `PLAN_IMPLEMENTACION.md` (secciones A y B). Un cambio nuevo sigue necesitando que el usuario diga "aplica el cambio X" (ver `CLAUDE.md` de esta carpeta).
 
 La web (`index.html`) tiene un interruptor arriba a la derecha: **Ahora** muestra cómo está hoy el juego y **Con cambios** muestra estos cambios (marcados en celeste, con la posición de hoy en gris). Los valores propuestos están en `CAMBIOS` de `script.js`; si se agrega o cambia una entrada aquí, hay que reflejarla allí.
 
@@ -19,6 +19,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-001 · Madera I se gana al llegar al 4
 
 - **Estado:** aprobado (propuesto 2026-11-20; el 2026-11-26 el usuario confirmó: "ese cambio irá"). Todavía no aplicado en el juego. De él depende el sonido Marimba por la insignia Papel (CAMBIO-025).
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**.
 - **Qué:** Madera I pasa de "Terminar una partida" (0 s) a **"Llegar al 4" (20 s)**.
 - **Por qué:** pedido del usuario. Queda alineada con la primera etapa de la escala (aparece el 4).
 - **Dónde:** `packages/engine/src/progress.ts` → `TIERS[0]`: `at: numAt(4)` (= 20) y `goal: 'Llegar al 4'`.
@@ -34,6 +35,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-002 · Madera II se gana al llegar al 6
 
 - **Estado:** propuesto (2026-11-20)
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**.
 - **Qué:** Madera II pasa de "Llegar al 5" (40 s) a **"Llegar al 6" (60 s)**.
 - **Por qué:** pedido del usuario.
 - **Dónde:** `packages/engine/src/progress.ts` → `TIERS[1]`: `at: numAt(6)` (= 60) y `goal: 'Llegar al 6'`.
@@ -46,6 +48,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-003 · Diamante se gana al llegar a los bloques de 2 s
 
 - **Estado:** propuesto (2026-11-20)
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**.
 - **Qué:** Diamante pasa de "Llegar a los bloques de 1 s" (440 s) a **"Llegar a los bloques de 2 s" (410 s)**.
 - **Por qué:** pedido del usuario. Hoy 440 s es la última etapa; en la práctica casi nadie llega.
 - **Dónde:** `packages/engine/src/progress.ts` → `DIAMOND_AT` pasa de `LIFE_STAGE_START + (LIFE_STAGE_FIRST − LIFE_STAGE_LAST) × LIFE_STAGE_STEP` (440) a `LIFE_STAGE_START + (LIFE_STAGE_FIRST − 2) × LIFE_STAGE_STEP` (410), y `goal: 'Llegar a los bloques de 2 s'`. Hoy el texto usa `LIFE_STAGE_LAST` (1); no dejar el número a mano.
@@ -66,6 +69,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-004 · El nivel 1 llega a los 50 bloques (la curva se corre un nivel)
 
 - **Estado:** propuesto (2026-11-20). El usuario vio la comparación y la aprobó como idea ("así me gusta"); falta que diga "aplica".
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**.
 - **Qué:** el nivel n deja de empezar en `25 · n · (n − 1)` bloques y pasa a empezar en **`25 · n · (n + 1)`**. De 0 a 49 bloques no hay nivel (nivel 0); el **nivel 1 llega a los 50**. Se mantiene el factor 25 y la forma de la curva (triangular: subir del nivel n al n+1 cuesta `50 · (n + 1)` bloques).
 - **Por qué:** pedido del usuario. Hoy "Nivel 1" se tiene con 0 bloques, así que no hay una primera meta; con el cambio, el primer nivel se gana al destruir 50 bloques.
 - **Contexto de la fórmula actual:** `LEVEL_FACTOR = 25` en `apps/client/src/lib/level.ts`; es un valor *provisorio* que el usuario confirmó tal cual el 12 nov 2026 (ver `docs/historia-y-decisiones.md`, línea ~210). No hay una razón de balance documentada para el 25. Cuentan los bloques destruidos en total **más** los bloques extra de las misiones (`totalKilled + bonusXp`).
@@ -102,6 +106,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-005 · Las tres maderas pasan a ser Papel, Cartón y Madera (dibujos nuevos)
 
 - **Estado:** propuesto (2026-11-20). Los **nombres nuevos** (Papel / Cartón / Madera) son una propuesta: el usuario debe confirmarlos antes de aplicar.
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**. Nombres Papel, Cartón y Madera (B1).
 - **Qué:** las tres primeras insignias dejan de ser "el mismo disco de madera con I, II o III" y pasan a ser tres materiales:
   - **Madera I → Papel**: disco de papel crema con el borde dentado (cortado con tijera de picos, como un pirotín), pliegues radiales finos en el borde, cara de **hoja de cuaderno** (renglones azules y margen rojo) y, al centro, el bloque del juego en **azul tinta** con la **esquina de arriba a la derecha doblada** y una estrella blanca. Sin clavos ni numeral.
   - **Madera II → Cartón**: disco kraft con el **canto corrugado** (la onda entre dos capas, como el borde de una caja cortada), fibras del kraft y canaletas muy suaves en la cara, y el bloque del juego en cartón oscuro con estrella kraft clara, **pegado con un trozo de cinta de embalar** arriba. Sin clavos ni numeral.
@@ -136,6 +141,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-006 · El cuadro de Logros va entre Nivel y Paletas en la Colección
 
 - **Estado:** propuesto (2026-11-20).
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**.
 - **Qué:** en la pestaña **Colección** del juego, el cuadro (sección) **"Logros"** pasa a mostrarse **justo debajo de "Nivel" y antes de "Paletas"**. Hoy está al final de la pantalla, después de Paletas, Sonidos, Efectos al destruir y Fondos del campo.
 - **Orden hoy (arriba → abajo):** Insignia · Nivel · Paletas · Sonidos · Efectos al destruir · Fondos del campo · Logros.
 - **Orden propuesto:** Insignia · Nivel (se llamaría Experiencia con CAMBIO-007) · **Logros** · Paletas · Sonidos · Efectos al destruir · Fondos del campo (y, al final, la Vista previa de CAMBIO-020).
@@ -151,6 +157,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-007 · El "Nivel" pasa a llamarse "Experiencia"
 
 - **Estado:** propuesto (2026-11-20).
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**.
 - **Qué:** el concepto que hoy se llama **Nivel** (se sube destruyendo bloques; más los bloques extra de las misiones) pasa a presentarse como **Experiencia**. En la Colección, el cuadro que hoy dice **"NIVEL"** pasa a decir **"EXPERIENCIA"**. Dentro del cuadro se sigue hablando de niveles: "Nivel 1", "Nivel 10".
 - **Decisiones del usuario (2026-11-20):**
   1. Se mantiene la palabra **"nivel"** (Nivel 1, Nivel 10); lo que cambia es que queda claro que es el nivel **de experiencia**.
@@ -182,6 +189,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-008 · El logro "Mejor racha" pasa a llamarse "Máximo combo"
 
 - **Estado:** propuesto (2026-11-20).
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**.
 - **Qué:** el logro que hoy se llama **"Mejor racha"** pasa a llamarse **"Máximo combo"**. Sus umbrales (10, 25, 50, 100, 200) y su cálculo no cambian.
 - **Qué es (para quien no vio la conversación):** es el **combo más largo en una sola partida**: bloques destruidos seguidos sin ningún error (se corta al tocar una trampa, fallar un toque —que cuesta una vida— o dejar escapar un bloque). El logro toma el **máximo** de todas las partidas (no la suma), y solo cuentan las partidas normales sin modificadores (`countsForBest`; el reto diario no suma). En el motor es `bestStreak` (`packages/engine/src/game.ts`); los combos del juego dan segundos extra a las rachas 3, 5, 10, 15 y 20 (ciclo de 20) y un corazón cada 25 (`COMBO_REWARDS`, `HEART_COMBO` en `constants.ts`).
 - **Por qué:** pedido del usuario. El juego ya llama "combo" a esa mecánica (tutorial, premio de segundos, "¡Combo!"); "racha" confunde con la **racha de días** del reto diario, que es otra cosa. Con el cambio, "racha" queda solo para los días seguidos.
@@ -202,6 +210,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-009 · "Bloques destruidos" se reemplaza por el logro "Partidas jugadas"
 
 - **Estado:** propuesto (2026-11-20).
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**.
 - **Qué:** el logro **"Bloques destruidos"** (hoy 100 / 500 / 2.000 / 10.000 / 50.000, de Madera a Diamante) se **elimina** y en su lugar se añade **"Partidas jugadas"**. Los otros logros quedan: Máximo combo (CAMBIO-008), Días seguidos de reto diario y Mejor resultado en un reto diario (estos dos el usuario los quiere conservar tal cual).
 - **Por qué se quita "Bloques destruidos":** pedido del usuario. La cantidad de bloques destruidos **ya se premia con el nivel** (de experiencia, ver CAMBIO-007): ambos salen de la misma cifra (`stats.totalKilled`), así que eran dos premios por lo mismo. `achievementValues` lo muestra: `bloques: s.totalKilled`, y el nivel usa `totalKilled + bonusXp` (`lib/level.ts`).
 - **Por qué "Partidas jugadas":** mide **constancia** (cuántas veces vuelve el jugador), algo que ni el nivel, ni las insignias (partida más larga), ni el combo premian. Funciona también como invitado y **no necesita cambios en la API**: la estadística ya existe (`CatalogStats.runs`; en la cuenta es `PlayerStats.totalRuns`; con sesión el cliente toma el máximo entre la del dispositivo y la del servidor). Cuenta **todas** las partidas terminadas (normales, de reto y duelos), igual que los bloques. Riesgo asumido: premia jugar mucho, incluso partidas cortas; como es solo cosmético y sin ventaja, se acepta.
@@ -232,6 +241,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-010 · Los logros pasan de 5 a 7 materiales (Papel y Cartón al principio)
 
 - **Estado:** propuesto (2026-11-20).
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**. Umbrales por confirmar (B4).
 - **Qué:** con las insignias nuevas **Papel** y **Cartón** (CAMBIO-005) los logros pasan a tener **siete** materiales, de menor a mayor: **Papel · Cartón · Madera · Bronce · Plata · Oro · Diamante** (hoy: Madera · Bronce · Plata · Oro · Diamante).
 - **Regla pedida por el usuario (sobre una captura de la tabla de Logros con flechas):** los **números de cada logro no se mueven de lugar**: los cinco umbrales de hoy pasan a ser los de los cinco primeros niveles, y los **materiales se corren dos lugares a la derecha** (Madera pasa al 3.er lugar, Bronce al 4.º, Plata al 5.º). Los dos primeros lugares (los umbrales más bajos) son de Papel y Cartón, y hay que **crear dos umbrales más altos** para Oro y Diamante.
 - **Tabla de umbrales propuesta** (los números en **negrita** son los nuevos; el resto son los de hoy, con otro material):
@@ -270,6 +280,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-011 · Cada logro tiene su propio icono, en los siete materiales (ya no usa las insignias)
 
 - **Estado:** propuesto (2026-11-20). Los diseños los hace el subagente de diseño contra este encargo; lo que entregue se anota abajo, en "Diseños entregados". **Rediseñado el 2026-11-24 por pedido del usuario:** los iconos pasaron de siluetas sueltas a **medallas hexagonales con el símbolo dentro**, y la copa se cambió por una diana con flecha (ver "Diseños entregados").
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**.
 - **Qué:** hoy un logro se dibuja con **la misma medalla redonda que las insignias** (`TierBadge` con `tier: material.toLowerCase()`, `step: 1` y una estrella): un logro "Plata" se ve como la insignia Plata. En su lugar, **cada logro tiene un icono propio**: una **medalla hexagonal** (la insignia es redonda, así que no se confunden) **con el símbolo del logro dentro**, y ese icono se dibuja en **los siete materiales** (Papel, Cartón, Madera, Bronce, Plata, Oro, Diamante; ver CAMBIO-010). El icono dice **qué logro es**; el material dice **hasta dónde llegó** el jugador.
 - **Por qué:** pruebas con usuarios. La insignia se gana por la **partida más larga**; los logros se ganan por **otras estadísticas**, pero se dibujan igual (mismo disco, mismos materiales, mismos colores), y los jugadores los confunden: no entienden que son dos progresos distintos.
 - **Los cuatro iconos (decisión del usuario, 2026-11-20):**
@@ -328,6 +339,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-012 · Ver en grande y compartir insignias, logros y premios ganados
 
 - **Estado:** propuesto (2026-11-20). Solo está anotado: todavía no se maquetó en la web de esta carpeta.
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**. Sin maqueta; con el comportamiento por defecto B6.
 - **Qué (cuatro piezas, todas con el mismo botón de compartir):**
   1. **Logro:** al tocar el **icono de un logro** en la Colección (la fila `AchievementRow`, con su icono de 38 px) se abre una **ventana (modal) que lo muestra en grande**, con su nombre, su material, su meta y el progreso, y un botón **Compartir**.
   2. **Insignia:** al tocar la **medalla de la tarjeta "Insignia"** de la Colección (`TierCard`, hoy a 74 px) se abre una ventana equivalente que la muestra en grande, con su nombre, la partida más larga que la dio y el botón **Compartir**.
@@ -360,6 +372,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-013 · 8 retos del día nuevos (ciclo de 15 días)
 
 - **Estado:** propuesto (2026-11-23), con las decisiones del usuario ya tomadas (ver abajo). Solo está anotado y maquetado en la web de esta carpeta (interruptor "Con cambios"); el juego no se tocó.
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**. Rige desde el 2026-12-07.
 - **Qué:** hoy el reto del día tiene **7 retos**, uno por día de la semana, y se repiten igual cada semana (lunes y domingo son los dos "Partida normal", así que solo hay 6 distintos). Se **agregan 8 retos nuevos** y el calendario deja de depender del día de la semana: pasa a ser un **ciclo de 15 días** que se cuenta desde un lunes fijo y, al terminar, **vuelve a empezar**. Los días 1 a 7 del ciclo son los 7 retos de hoy (en el mismo orden); los días 8 a 15 son los nuevos. En la web, junto al título "Retos" hay un contador que cambia entre "7 retos" (Ahora) y "15 retos" (Con cambios).
 - **El ciclo (día 1 = lunes 7 de diciembre de 2026):**
 
@@ -407,6 +420,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-014 · Misión "Sigue a un jugador hoy"
 
 - **Estado:** propuesto (2026-11-23), por decisión del usuario. Solo está anotado y maquetado en la web de esta carpeta (interruptor "Con cambios"); el juego no se tocó. La misión **"Invita a alguien" queda para más adelante** (no descartada): ver la sección "Pendiente para más adelante" al final de esta entrada. No está maquetada.
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**. Rige desde el 2026-12-07; "Invita a alguien" sigue pendiente.
 - **Qué:** se agrega al pool de misiones del día una misión nueva, **"Sigue a un jugador hoy"**: tipo nuevo "Seguir a un jugador" (`follow`), meta 1, premio **+20 bloques extra** para el nivel (como las misiones más fáciles). Se cumple al **empezar a seguir a alguien ese día**. **Solo se puede cumplir con cuenta** (un invitado no puede seguir a nadie), **pero se sortea y se ve igual para todos**: `missionsFor(fecha)` es idéntico para cualquiera. A un **invitado** se le muestra **bloqueada**, con el texto exacto **"Crea tu cuenta para desbloquearla"**, y al tocarla lo lleva a crear la cuenta (decisión del usuario, 2026-11-23; ver "Consecuencias de mostrarla bloqueada a invitados"). El pool pasa de 13 a 14 misiones (28 con CAMBIO-015); siguen saliendo 3 por día. En la web, la sección "Misiones" cambia el contador "Misiones posibles" de 13 (Ahora) a 28 (Con cambios) y muestra la fila nueva con borde celeste, la marca "nuevo" y un selector "Ver como: con cuenta | invitado" que solo cambia esa fila.
 - **Por qué:** pedido del usuario. Seguir a otros jugadores ya existe; una misión es una forma suave de empujar al jugador a usar el lado social (perfiles públicos, rankings). Premio chico para que no distorsione el nivel.
 - **Lo que ya existe (hechos verificados en el código):**
@@ -475,6 +489,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-015 · 14 misiones más (de 14 a 28 posibles)
 
 - **Estado:** propuesto (2026-11-23); decisiones cerradas por el usuario el 2026-11-24 (ver "Decisiones cerradas"). Solo está anotado y maquetado en la web de esta carpeta (interruptor "Con cambios"); el juego no se tocó. Va junto a **CAMBIO-014**: 13 de hoy + "Sigue a un jugador hoy" + estas 14 = **28 misiones posibles**.
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**. Rige desde el 2026-12-07.
 - **Qué:** se agregan 14 misiones al pool, solo con datos que `DayAgg` ya tiene (`runs`, `killed`, `bestStreak`, `maxTicks`; `packages/engine/src/missions.ts:99-110`). **No hay tipos nuevos, ni campos nuevos en `DayAgg`, ni cambios en la API o en el cliente**: son filas nuevas de `MISSION_POOL` y `missionProgress` ya las sabe calcular. Siguen saliendo 3 por día, de tipos distintos.
 - **Aclaración de lo pedido:** el usuario pidió sumar "7 más" para diluir la frecuencia de "Juega el reto del día". Se interpreta como **7 misiones más** (7 + 7 = 14 nuevas), no como retos del día (modificadores de partida): agregar retos de ese tipo no cambiaría cuántos días sale esa misión.
 - **Las 14, en el orden en que irían al final de `MISSION_POOL`** (el orden importa para el sorteo; van después de `sigue`):
@@ -533,6 +548,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-016 · Las paletas se ganan por el nivel del jugador, no por la insignia
 
 - **Estado:** propuesto (2026-11-24), por decisión del usuario. Maquetado en la web de esta carpeta (sección "Premios", panel "Paletas", interruptor "Con cambios"); el juego no se tocó. Los niveles son una propuesta que el usuario revisará.
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**. Niveles por confirmar (B9).
 - **Reemplazado por CAMBIO-025:** Constancia se gana invitando a un 2.º amigo; Marimba pasa a la insignia Papel, Chispas y los fondos a logros (las otras paletas siguen por nivel como aquí).
 - **Qué:** hoy cinco paletas se ganan por la **insignia** (la partida más larga): Pastel (Madera II), Neón (Bronce), Retro (Plata), Dorado (Oro) y Diamante (Diamante). Pasan a ganarse por el **nivel** (bloques destruidos + bloques extra de misiones, `lib/level.ts`), igual que ya hacen los fondos (Grilla 5, Estrellas 10, Aurora 20). Clásica y Alto contraste siguen "Desde el inicio"; **Constancia** (7 días seguidos de reto) no cambia (ver decisiones). Con CAMBIO-017 se suman dos paletas nuevas que también van por nivel.
 - **Por qué:** pedido del usuario. Las insignias miden **una** partida larga (habilidad); el nivel mide **todo lo jugado** (constancia). Además, así las paletas dejan de depender de qué insignia se mueva (CAMBIO-001, 002, 003, 005): esos cambios ya no tocan ningún premio salvo Chispas y Marimba.
@@ -578,6 +594,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-017 · Dos paletas nuevas: "Cristal" (vidrio) y "Contorno" (borde intenso, relleno translúcido; antes "solo el borde")
 
 - **Estado:** propuesto (2026-11-24), por decisión del usuario. Maquetado en la web de esta carpeta con el interruptor en "Con cambios" (marcadas "nuevo"); el juego no se tocó. Los colores son una propuesta. **Contorno es ahora provisional, con relleno translúcido al 55 %** (decisión del usuario, 2026-11-25, para ver cómo se ve y si se parece mucho a Tenue; ver "Contorno al 55 %" al final de este cambio). Prueba en Android: ver CAMBIO-021.
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**. Contorno con relleno 0,55; abierto el brillo de Cristal frente a la trampa roja (`../docs/pendientes.md`).
 - **Actualización (2026-11-26):** Cristal y Contorno se dibujan sobre un respaldo opaco `#12121a`, ver CAMBIO-022 (reemplaza lo que aquí se dice sobre depender del fondo).
 - **Qué:** se agregan dos paletas, **Cristal** (nivel 12) y **Contorno** (nivel 18), ganadas por nivel (CAMBIO-016). **No son solo nueve colores: son un estilo de dibujo del bloque.** Hasta hoy una paleta solo cambia el `backgroundColor` del bloque (`paletteColor`, `palettes.ts:95-99`; `Block.tsx:93`) y, en Diamante, suma un brillo (`shine`, `Block.tsx:97-104`). Estas dos cambian **cómo se pinta el bloque**:
   - **Campo nuevo `style` en la paleta** (`palettes.ts:27-33`, interfaz `Palette`): `'solid'` (por defecto; lo que hacen todas hoy) · `'glass'` (Cristal) · `'outline'` (Contorno). En la web es `estilo: 'plano' | 'cristal' | 'contorno'` (mismo significado) y `colores` (los 9 hex); ver el comentario de `PALETAS` en `coleccion.js`, que es el contrato que leerá la vista previa.
@@ -666,6 +683,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-018 · Paleta "Degradé": un degradé sutil entre dos tonos del mismo color
 
 - **Estado:** propuesto (2026-11-24), por decisión del usuario. Maquetado en la web de esta carpeta (panel "Paletas" y "Vista previa", interruptor "Con cambios"); el juego no se tocó. **Nombre propuesto: "Degradé"**; alternativa en una línea: **"Satén"** (un acabado suave, sin la palabra técnica). Nivel y colores: a confirmar.
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**.
 - **Qué:** una paleta nueva donde cada bloque lleva un degradé vertical **muy sutil entre dos tonos de su propio color** (un poco más claro arriba, un poco más oscuro abajo). Es un **tercer estilo de dibujo del bloque**, después de `'glass'` y `'outline'` (CAMBIO-017): **`style: 'gradient'`** en el juego (`Palette.style`, `palettes.ts:27-33`) y `estilo: 'degrade'` en la web. El relleno es **opaco** (a diferencia de Cristal), sin borde y sin brillo; el número sigue blanco y la trampa roja `#ff2a2a`.
 - **Por qué:** pedido del usuario. Da profundidad sin cambiar la identidad del color y sin parecerse a Cristal (translúcido, con borde y brillo) ni a Diamante (reflejo blanco diagonal del 45 % y dos destellos, `Block.tsx:97-104`, `coleccion.css .vpPaleta.brillo`).
 - **El degradé, con exactitud.**
@@ -735,6 +753,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-019 · Tres paletas más (Esmerilado, Tenue y Botón)
 
 - **Estado:** propuesto (2026-11-24), por decisión del usuario. Maquetado en la web de esta carpeta (panel "Paletas" y "Vista previa", interruptor "Con cambios"); el juego no se tocó. Con CAMBIO-017 y 018 quedan **14 paletas** (las 8 de hoy + 6 nuevas: Tenue, Cristal, Botón, Contorno, Degradé, Esmerilado). Comparte con CAMBIO-017 y 018 la infraestructura del campo `style` del bloque; se implementa junto o después.
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**. Esmerilado sin desenfoque.
 - **Actualización (2026-11-26):** Esmerilado se dibuja sobre un respaldo opaco `#12121a`, ver CAMBIO-022 (alternativa A; **decidido: sin blur real, 2026-11-26**: Esmerilado queda como está en la web).
 - **Qué:** tres paletas que cambian **cómo se dibuja el bloque**, no solo los colores. Valores nuevos de `Palette.style` (`palettes.ts:27-33`): `'frosted'` (Esmerilado), `'soft'` (Tenue) e `'inset'` (Botón); en la web, `estilo: 'esmerilado' | 'tenue' | 'boton'` (contrato en el comentario de `PALETAS`, `coleccion.js`). Todas van **por nivel** (CAMBIO-016).
 - **Cómo se midió la regla de no ventaja (igual que CAMBIO-017 y 018).** Con una copia mía de las funciones de `palettes.ts` (`hue`, `hueDistance`, `luminance`, `contrastRatio`) y de los umbrales de `palettes.test.ts:102-131` (**no se corrió vitest**), sobre el **color efectivo que queda bajo el número**, no sobre el hex. Referencia de la Clásica: el rojo `#ff2a2a` contrasta 1,156–1,730 con sus colores SAFE (posiciones 2, 3, 4, 5, 7 y 8), caso más difícil ≤ 1,256; blanco ≥ 2,161; tono 42,5–173,1° (media 119,5°); distancia ΔE (CIELAB) mínima entre sus colores: 11,7. Fondo base: `#12121a` (`theme.ts:3`).
@@ -864,6 +883,7 @@ Sección "Premios", panel "Paletas". Con "Ahora", 8 paletas, como hoy. Con "Con 
 ## CAMBIO-020 · Vista previa interactiva dentro del juego (pestaña Colección)
 
 - **Estado:** propuesto (2026-11-25), pedido del usuario. La web de esta carpeta ya tiene ese panel ("Vista previa", `preview.js` y `preview.css`) como maqueta; **el juego no se tocó**. Depende de CAMBIO-006 (orden de las tarjetas) y de CAMBIO-017/018/019 (los estilos nuevos de bloque; sin ellos la vista previa solo mostraría paletas lisas).
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**.
 - **Qué:** el panel interactivo de la web (un campo de 3×3 bloques que se tocan y se destruyen, con la paleta, el fondo, el efecto y el sonido que se elijan) existe también **dentro del juego, en la pestaña Colección, al final de las tarjetas de premios, justo después de "Fondos del campo"**. **Orden final de la pantalla** (con CAMBIO-006 y CAMBIO-007; confirmado por el usuario el 2026-11-25): **Insignia → Experiencia → Logros → Paletas → Sonidos → Efectos → Fondos del campo → Vista previa.** La tarjeta **Insignia** ya existe y va primera: `TierCard` es lo primero que se dibuja (`CollectionScreen.tsx:426`; su `Section title="Insignia"`, `:98`), antes de `LevelCard` (`:427`, "Nivel" hoy, "Experiencia" con CAMBIO-007).
 - **Por qué:** hoy cada premio se ve como un dibujito fijo (`CollectionScreen.tsx:158-192`, `Preview`) y el sonido solo suena al elegirlo (`sounds.preview`, `:395`); no se puede ver cómo queda un bloque real, con su efecto y su fondo, ni oírlo al tocar. Con estilos de bloque nuevos (cristal, degradé, esmerilado, relieve), un cuadradito de color ya no basta para decidir.
 
@@ -940,6 +960,7 @@ Sección "Premios": panel "Vista previa" (bajo Paletas). Elige una paleta, un so
 ## CAMBIO-021 · Probar las paletas y la vista previa en Android con un APK de prueba, antes del APK final
 
 - **Estado:** propuesto (2026-11-25), pedido del usuario. **Es solo un plan para después de implementar CAMBIO-016 a 020; hoy no se toca nada del juego.**
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**. Aplicado el modo de prueba (compilación `.prueba` y desbloqueo); el resultado de la prueba del APK se anota en `../docs/pendientes.md`.
 - **Qué:** una vez implementados los cambios de paletas (016 a 019) y la vista previa (020), generar un **APK de prueba** para ver cómo se ven **todos los colores y estilos nuevos en Android** (emulador `Pixel_Mi_Device` y teléfono real), con **todo desbloqueado** (sin candados), solo para mirar. Cuando todo se vea bien, se genera el **APK definitivo**. Quedan **dos APK: uno de prueba y uno real.**
 - **Por qué:** la web no basta para dar por buenos los estilos. Ya pasó con el menú: en la web se veía bien y en el APK dejaba una "sombra rara" (el desenfoque nativo de Android suma un tinte gris); se resolvió probándolo en el emulador y con el aviso del usuario (`docs/historia-y-decisiones.md:327-328`: el velo de Android usa el color del fondo). Puede repetirse con **Esmerilado** (capas translúcidas sobre un respaldo opaco; **decidido: sin blur real, 2026-11-26**), **Botón** (sombras interiores `inset`, que exigen Android 10 o mayor: `InsetBoxShadowDrawable.kt:30`, CAMBIO-019), **Cristal**, **Degradé**, **Tenue** (borde de 5 px) y **Contorno**. Y el build que se reparte (release, con el JS empaquetado) puede fallar de formas que no se ven al desarrollar: el primer build del APK 0.3.0 se cerraba al abrir por un problema de resolución de módulos del bundle (`docs/historia-y-decisiones.md:336-338`). Por eso el APK de prueba debe ser un build **release** (con el JS dentro), no solo el cliente de desarrollo.
 
@@ -986,6 +1007,7 @@ No hay nada que ver en la web: es un plan. La web de esta carpeta ya muestra tod
 ## CAMBIO-022 · 11 fondos del campo nuevos (de 4 a 15)
 
 - **Estado:** propuesto (2026-11-25), pedido del usuario: "los fondos de campo: quiero 11 más para tener un total de 15". Maquetado en la web de esta carpeta con el interruptor en "Con cambios" (marcados "nuevo"); **el juego no se tocó**. Prueba en Android: ver CAMBIO-021.
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**. Los requisitos son los de CAMBIO-025/026.
 - **Reemplazado por CAMBIO-025:** los niveles de los 15 fondos y el orden por nivel (columnas "Nivel" y "Desde", decisión 2): ahora se ganan por logros y Bosque nocturno por invitar a un 3.er amigo; los dibujos no cambian.
 - **Ampliado por CAMBIO-026:** 5 fondos más (con "Con cambios" son 20).
 - **Qué:** a Liso (inicio), Grilla (nivel 5), Estrellas (10) y Aurora (20) se suman **11 fondos nuevos**, repartidos entre los niveles 2 y 40, todos **de color pero oscuros** (repintados más vivos el 2026-11-26, ver decisión 1), ocho estáticos y tres con una animación lenta. En "Fondos del campo" la lista pasa a estar **ordenada por nivel** (con "Ahora" siguen los 4 de hoy). El campo de la "Vista previa" (CAMBIO-020) dibuja el fondo elegido.
@@ -1111,6 +1133,7 @@ Sección "Premios", panel **Fondos del campo**: con "Ahora" salen los 4 de hoy; 
 ## CAMBIO-023 · 6 efectos al destruir nuevos (de 4 a 10): Burbujas, Emojis, Ondas, Monedas, Rayos y Fuegos artificiales
 
 - **Estado:** propuesto (2026-11-25), pedido del usuario: "los efectos al destruir: quiero 6 más, para tener un total de 10; añade uno que sean emojis, burbujas". Maquetado en la web de esta carpeta con el interruptor en "Con cambios" (marcados "nuevo", con su requisito) y en la **Vista previa** (al destruir un bloque con el efecto elegido se ve el efecto). Con "Ahora" siguen los 4 de hoy. **El juego no se tocó.** Prueba en Android: ver CAMBIO-021.
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**. Los requisitos son los de CAMBIO-025/026.
 - **Reemplazado por CAMBIO-025:** los requisitos y su orden (columnas "Requisito" y "En el juego", decisión 2) y los de Chispas y Confeti: se ganan por logros (Corazones no cambia); el dibujo de los efectos no cambia.
 - **Ampliado por CAMBIO-026:** 2 efectos más (con "Con cambios" son 12).
 - **Qué:** a Clásico (✹, siempre), Chispas (✦), Confeti (▰) y Corazones (♥) se suman **seis efectos**: los dos que pidió el usuario (**Emojis** y **Burbujas**) y cuatro a criterio (**Ondas, Monedas, Rayos, Fuegos artificiales**), elegidos para que se distingan por el movimiento y no solo por la forma: unos suben (Burbujas), otros caen con gravedad (Monedas), uno es un abanico con rebote (Emojis), uno no tiene partículas que vuelen sino anillos (Ondas), uno es instantáneo y parpadea (Rayos) y uno tiene dos tiempos (Fuegos). Se desbloquean por motivos distintos (partidas, nivel, reto diario, racha) y de fácil a difícil.
@@ -1213,6 +1236,7 @@ Sección "Premios", interruptor en **Con cambios**: "Efectos al destruir" pasa d
 ## CAMBIO-024 · 6 sonidos nuevos (de 3 a 9): Electrónico, Futurista, Piano, Guitarra eléctrica, Palitos y Viento
 
 - **Estado:** propuesto (2026-11-24), pedido del usuario: "los sonidos, quiero más… añade un sonido electrónico; ¿de instrumentos puedes añadir? piano, guitarra eléctrica, unos palitos que se chocan, unos instrumentos de viento… añade el sonido electrónico, y uno futurista". Maquetado en la web de esta carpeta con el interruptor en "Con cambios" (marcados "nuevo", con su requisito y una frase) y en la **Vista previa** (al tocar un bloque suena el sonido elegido; al destruirlo, el de destruir). Con "Ahora" siguen los 3 de hoy, idénticos (verificado: Marimba sigue creando los mismos 14 osciladores). **El juego no se tocó.**
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**. Híbrido en web y app; requisitos de CAMBIO-025; los otros 7 sonidos son derivados y están por definir (B12).
 - **Reemplazado por CAMBIO-025:** los requisitos y su orden por dificultad (columnas "Requisito" y "En el juego", decisiones 3 y 6) y el de Marimba: un sonido por insignia, de Papel (Marimba) a Diamante (Futurista). La forma de implementarlos quedó decidida más abajo ("Decisión cerrada: método híbrido").
 - **Qué:** a 8 bits (siempre), Suave (1.ª partida) y Marimba (insignia Plata) se suman **seis sonidos**, cada uno con `hit(n)` (toque; la altura sube con los toques dados, tope 12), `kill()` (destruir) y `combo(b)` (subida por combo: 2 a 5 notas según los segundos de premio), igual que los paquetes de hoy.
 - **Por qué:** pedido del usuario; más premios a lo largo de la progresión y un tipo de premio que se oye (y se nota al jugar).
@@ -1375,6 +1399,7 @@ Sección "Premios", interruptor en **Con cambios**: "Sonidos" pasa de 3 a 9 fila
 ## CAMBIO-025 · Nueva forma de entregar los premios
 
 - **Estado:** propuesto (2026-11-26). Las reglas de entrega son **decisión del usuario** (2026-11-26); el reparto de los 21 efectos y fondos entre los escalones de logro es **mi propuesta, por confirmar**. Maquetado en la web de esta carpeta (interruptor "Con cambios"); **el juego no se tocó**.
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**. Incluye el reset A como código (script manual **sin ejecutar**) y las celebraciones desde la cuenta; el reparto vigente es el de CAMBIO-026.
 - **Actualización (2026-11-26):** decisiones del usuario más abajo (**reset aprobado, alcance A: todo**; la paleta "Constancia" pasa a llamarse **"Amistad"**; celebraciones aprobadas; los premios del porcentaje se quedan; CAMBIO-001 se aplicará). **Ampliado por CAMBIO-026:** los 7 escalones vacíos ya tienen premio.
 - **Qué:**
   1. Los **6 sonidos nuevos** se generan una vez con código y se reutilizan desde memoria (detalle en CAMBIO-024).
@@ -1581,6 +1606,7 @@ Interruptor en **Con cambios**: los paneles Sonidos, Efectos, Fondos y Paletas m
 ## CAMBIO-026 · 5 fondos y 2 efectos más: los 28 escalones de logro con premio
 
 - **Estado:** propuesto (2026-11-26). Pedido del usuario: crear 2 efectos al destruir y 5 fondos y repartirlos entre los 7 escalones sin premio. Los dibujos y el reparto son **mi propuesta**. Maquetado en la web de esta carpeta; **el juego no se tocó**.
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**. Reparto por confirmar (B16).
 - **Qué:** con "Con cambios" hay **20 fondos** (antes 15) y **12 efectos** (antes 10); "Ahora" sigue en 4 y 4. Amplía CAMBIO-022, 023 y 025.
 
 ### Los premios nuevos
@@ -1633,3 +1659,14 @@ Motor, reglas, replay, API, base de datos, `RULES_VERSION`, rankings, récords, 
 ### Cómo verlo en esta carpeta
 
 Interruptor en **Con cambios**: los 7 aparecen con "nuevo" en Efectos y Fondos y como "Premio: …" en la tabla **Logros** (28 de 28). Clic en la fila y tocar bloques en "Vista previa". Datos en `coleccion.js`; fondos en `extras-fondos.css`; efectos en `preview.js` (`FX_NUEVOS`: `pixeles`, `fugaces`) y `preview.css`.
+
+---
+
+## CAMBIO-027 · Tarjetas de premios de la Colección más cortas, con desplazamiento propio
+
+- **Estado:** pedido por el usuario y aplicado el 2026-11-27, mirando el emulador.
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**.
+- **Pedido (textual):** "las cards que contienen las paletas de colores, los fondos, efectos y sonidos, están muy grandes, puesto que hay muchos, hagamos la card más chica y que sean visibles unos 4 items y dentro de la card haya un scroll para ver el resto de premios de cada card, para que no quede tan larga esa pantalla".
+- **Qué:** las tarjetas Paletas, Sonidos, Efectos al destruir y Fondos del campo muestran 4 filas y la mitad de la 5.ª; el resto se desplaza dentro de la tarjeta, con barra visible (en Android una propia: la nativa salía oscura sobre el fondo y no se veía). Al llegar a un extremo se desplaza la pantalla. Insignia, Experiencia, Logros, Vista previa y la galería de prueba no cambian.
+- **Dónde:** `screens/CollectionScreen.tsx` (`PrizeList`) y `lib/prizeList.ts` (alto con las filas medidas, tope del 60 % de la pantalla; test en `lib/prizeList.test.ts`).
+- **Qué NO cambia:** premios, requisitos, orden, equipar, motor, API ni claves locales. La web de esta carpeta no se actualizó.

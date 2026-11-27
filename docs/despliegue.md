@@ -68,7 +68,7 @@ La variable del repositorio `EXPO_PUBLIC_GOOGLE_CLIENT_ID` (pestaña *Variables*
 
 La página lleva a la misma ruta y parámetros del sitio nuevo: `/touched-block/como-jugar?nivel=basico` → `https://web.touchedblock.app/como-jugar?nivel=basico`, `/touched-block/?reto=K7M2QXAB` → `https://web.touchedblock.app/?reto=K7M2QXAB`. No es un 301 ciego porque **los datos locales del jugador** (récord, historial, sesión, tutoriales vistos…) viven en el `localStorage` del origen `https://sukushaing.github.io` y no pasan solos a otro dominio:
 
-1. Con JavaScript, la página lee **solo las claves del juego**, por nombre exacto (el origen `sukushaing.github.io` lo comparten todos los proyectos del autor): `tb_rt1`, `tb_me1`, `tb_best5`, `tb_stats1`, `tb_hist5`, `tb_onb1`, `tb_onb_adv1`, `tb_visits1`, `tb_last1`, `tb_unlock1`, `tb_set1`, `tb_miss1`, `tb_daily1`, `tb_reto1` y `tb_cele1`. No borra ni cambia nada en el origen viejo.
+1. Con JavaScript, la página lee **solo las claves del juego**, por nombre exacto (el origen `sukushaing.github.io` lo comparten todos los proyectos del autor): `tb_rt1`, `tb_me2`, `tb_best6`, `tb_stats2`, `tb_hist6`, `tb_onb1`, `tb_onb_adv1`, `tb_visits1`, `tb_last1`, `tb_unlock1`, `tb_set1`, `tb_miss2`, `tb_daily2`, `tb_reto1` y `tb_cele2`. No borra ni cambia nada en el origen viejo. Desde el reset de la v6 (rama `feat/premios-y-logros`, sin desplegar) las claves de progreso de antes (`tb_best5`, `tb_hist5`, `tb_stats1`, `tb_daily1`, `tb_miss1`, `tb_cele1`, `tb_me1`) ya no están en ninguna de las dos listas: la web vieja solo guarda esas, así que desde ella pasan ajustes, tutoriales, visitas, desbloqueo, reto pendiente y sesión, pero no progreso.
 2. Las empaqueta en el **fragmento** de la URL nueva: `#tbmigrar=<base64url de {"v":1,"d":{clave:valor}}>`. El fragmento nunca viaja a ningún servidor (tampoco a Cloudflare). Tope de unos 200 KB; los datos reales pesan pocos KB.
 3. Hace `location.replace` (la página vieja no queda en el historial). Sin JavaScript, un `<meta http-equiv="refresh">` lleva a `https://web.touchedblock.app/` y queda un enlace visible.
 
@@ -81,15 +81,15 @@ En el sitio nuevo, el script `tb-mudanza` del `<head>` de `apps/client/public/in
   
   | Clave                                  | Regla                                                                                                                                                                                                                                   |
   | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-  | `tb_best5`, `tb_visits1`, `tb_last1`   | El mayor                                                                                                                                                                                                                                |
+  | `tb_best6`, `tb_visits1`, `tb_last1`   | El mayor                                                                                                                                                                                                                                |
   | `tb_onb1`, `tb_onb_adv1`, `tb_unlock1` | `1` si alguno de los dos lados la tiene                                                                                                                                                                                                 |
-  | `tb_stats1`                            | El mayor campo a campo (como `maxOf` de `lib/stats.ts`). `runs`, `totalKilled` y `bonusXp` son acumulados: si se jugó en los dos sitios, queda el mayor de los dos y no la suma (sumar contaría doble si la mudanza se repite)          |
-  | `tb_hist5`                             | Unión sin repetir (misma fecha, destruidos y escapados), la más reciente primero, máx. 30 (`HIST_MAX`)                                                                                                                                  |
-  | `tb_cele1`                             | Unión (logros ya celebrados: así no se repiten)                                                                                                                                                                                         |
-  | `tb_miss1`                             | Unión de ids por fecha (una misión premiada en cualquiera de los dos no se vuelve a premiar)                                                                                                                                            |
-  | `tb_daily1`                            | Fechas jugadas unidas (racha), `rulesSeen` si alguno, `yesterdaySeen` y `bestPct` el mayor. Por día: intentos con el mayor (no regala intentos al invitado), partidas unidas, reclamo y "habrías quedado" del sitio nuevo si los hay    |
+  | `tb_stats2`                            | El mayor campo a campo (como `maxOf` de `lib/stats.ts`). `runs`, `totalKilled` y `bonusXp` son acumulados: si se jugó en los dos sitios, queda el mayor de los dos y no la suma (sumar contaría doble si la mudanza se repite)          |
+  | `tb_hist6`                             | Unión sin repetir (misma fecha, destruidos y escapados), la más reciente primero, máx. 30 (`HIST_MAX`)                                                                                                                                  |
+  | `tb_cele2`                             | Unión (logros ya celebrados: así no se repiten)                                                                                                                                                                                         |
+  | `tb_miss2`                             | Unión de ids por fecha (una misión premiada en cualquiera de los dos no se vuelve a premiar)                                                                                                                                            |
+  | `tb_daily2`                            | Fechas jugadas unidas (racha), `rulesSeen` si alguno, `yesterdaySeen` y `bestPct` el mayor. Por día: intentos con el mayor (no regala intentos al invitado), partidas unidas, reclamo y "habrías quedado" del sitio nuevo si los hay    |
   | `tb_set1`, `tb_reto1`                  | Se conserva el del sitio nuevo; el viejo solo si aquí no hay                                                                                                                                                                            |
-  | `tb_rt1` + `tb_me1`                    | Solo si aquí no hay sesión (nunca se cambia de cuenta). El token viaja de nuestro dominio viejo al nuevo, por fragmento y en el mismo navegador. Si ya se había usado (rota en cada uso), la app lo descarta sola y queda como invitado |
+  | `tb_rt1` + `tb_me2`                    | Solo si aquí no hay sesión (nunca se cambia de cuenta). El token viaja de nuestro dominio viejo al nuevo, por fragmento y en el mismo navegador. Si ya se había usado (rota en cada uso), la app lo descarta sola y queda como invitado |
   
 - **Tutorial**: como `tb_onb1`, `tb_visits1` y `tb_last1` se importan antes de que la app cuente la visita, un jugador antiguo no vuelve a ver el tutorial de la 1.ª visita.
 - Al importar, marca `tb_mig1=1`.
@@ -230,6 +230,8 @@ Si falta un secreto, el último paso falla con un mensaje claro.
 
 En Dokploy, cambia `API_TAG=v0.1.0` (o la versión que quieras) en Environment y presiona *Deploy*. Para volver a la normalidad, deja `API_TAG=latest`.
 
+La migración `20261127000000_add_data_reset` (reglas v6) solo crea la tabla `DataReset`; el borrado de datos no es una migración (sección 8) y volver de versión no lo deshace.
+
 Las migraciones de Prisma no se deshacen solas. Si la versión nueva cambió el esquema, revisa la compatibilidad antes de volver atrás. Las migraciones del plan de jugabilidad (fases 2 a 5) solo **agregan** tablas, columnas opcionales o con valor por defecto e índices, así que una API anterior sigue funcionando sobre la base nueva (ignora lo que no conoce).
 
 ### Respaldos
@@ -324,10 +326,31 @@ EXPO_PUBLIC_API_URL=https://api.touchedblock.app NODE_ENV=production ./gradlew a
 - Las `EXPO_PUBLIC_*` quedan incrustadas en el JavaScript. Antes de un release, abrir una terminal nueva (sin las variables del APK de prueba exportadas) y hacer siempre la limpieza de arriba. Además, `plugins/withReleaseSigning.js` declara esas variables, la del APK de prueba y los archivos `.env` como entradas de la tarea del bundle: si cambian, Gradle lo vuelve a generar.
 - Antes de repartirlo, comprobar que el paquete es `app.touchedblock`, que el bundle apunta a `https://api.touchedblock.app` (ni `localhost` ni `api.invalid`) y que al abrirlo no se ve "MODO PRUEBA".
 
+- Versión en la rama `feat/premios-y-logros`: `0.4.0`, `versionCode` 6 (reglas v6). El APK definitivo **todavía no se generó para repartir**: va después del reset y de publicar la web (sección 8).
 - Subir `android.versionCode` (y `version`) en `app.json` en cada APK que se reparta: Android no instala encima una versión con el mismo `versionCode`.
 - La API no necesita CORS para la app, porque las apps no envían `Origin`.
 - Los APK anteriores a noviembre de 2026 apuntaban a `https://vps23906.cubepath.net`. Ese dominio se quitó de Dokploy el 24 nov 2026 (solo quedaba un APK, en un celular de prueba): esos APK ya no se conectan a la API.
 - La app comparte enlaces con `https://web.touchedblock.app/` (`config.siteUrl`) y abre las páginas legales de `https://touchedblock.app/` (`config.landingUrl`).
+
+### APK de prueba (todo desbloqueado, sin tocar producción)
+
+Para probar en el emulador o en un teléfono antes de publicar. **No se sube ni se reparte.**
+
+- Se instala **junto** a la app real, sin tocar sus datos: id `app.touchedblock.prueba` y firma **debug**. Lo hace `plugins/withReleaseSigning.js` cuando Gradle ve `TB_TEST_APK=1` (no lee las claves de subida). Sin esa variable no cambia nada.
+- `EXPO_PUBLIC_UNLOCK_ALL=1` desbloquea los 55 premios, muestra el rótulo "MODO PRUEBA" y, en la Colección, la sección "Galería de prueba" (todas las insignias y logros en grande). Lo que se tiene de verdad sigue calculándose de las estadísticas, así que las celebraciones funcionan igual.
+- La API es ficticia (`https://api.invalid`, dominio que nunca resuelve) con un client ID inventado: se ven las pestañas y los premios de cuenta y de reto, nada llega a producción, y es esperable ver errores de conexión en rankings y reto diario. No sirve para probar flujos con cuenta (esos van con la app de desarrollo y la API local, `desarrollo.md`).
+- Antes, guardar aparte el `app-release.apk` anterior: este build lo reemplaza.
+
+```bash
+cd apps/client
+pnpm exec expo prebuild -p android
+cd android
+./gradlew clean
+TB_TEST_APK=1 EXPO_PUBLIC_UNLOCK_ALL=1 EXPO_PUBLIC_API_URL=https://api.invalid EXPO_PUBLIC_GOOGLE_CLIENT_ID=prueba NODE_ENV=production ./gradlew app:assembleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a,x86_64
+# copiar app/build/outputs/apk/release/app-release.apk como touched-block-prueba.apk
+```
+
+Comprobar: paquete `app.touchedblock.prueba` (`aapt dump badging`), firma debug (`apksigner`) y `api.invalid` en el bundle (las variables del comando mandan sobre `apps/client/.env`). `lib/unlockGuard.test.ts` vigila que la bandera de desbloqueo no aparezca en los workflows, en la configuración del cliente ni en el comando del APK que se reparte (lee este documento).
 
 ## 6. Sign in with Apple (app iOS y web)
 
@@ -680,3 +703,68 @@ La web se publica sola y puede llegar antes que la API: el menú "⋯" solo apar
 1. Agregar `ADMIN_TOKEN` en la pestaña Environment de Dokploy (opcional, solo para `/admin/*`) y, si se quieren los avisos, `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` ("Avisos por Telegram", arriba).
 2. Crear el tag de la API (`vX.Y.Z`). La migración `20261118200000_add_moderation` solo agrega las tablas `Report` y `Block` (no toca datos).
 3. Correr `check-usernames.mjs` (arriba).
+
+---
+
+## 8. Publicar premios, logros y reinicio de registros (reglas v6)
+
+**Estado al 27 nov 2026: nada de esto se ha hecho.** El código está en la rama `feat/premios-y-logros`; producción sigue en la v5, no se ha borrado ningún dato y no se probó en un teléfono. El usuario autorizó el despliegue y el reset (alcance A, **sin respaldo previo**: el borrado no se puede deshacer), a ejecutar **después de su visto bueno tras probar en el celular** y de mostrarle antes el conteo de producción.
+
+### Antes de empezar
+
+- Visto bueno del usuario (en un mensaje suyo) y decisiones abiertas revisadas (`pendientes.md`).
+- Fecha anterior al **7 dic 2026** (`DAILY_CYCLE_FROM` y `MISSIONS_POOL_FROM`). Si no se alcanza, mover las dos constantes del motor al lunes siguiente antes de desplegar.
+- Versiones: API `v0.7.0` (el tag anterior es `v0.6.0`); app `0.4.0`, `versionCode` 6. No hay variables de producción nuevas.
+- Acceso al VPS (SSH, o una tarea temporal del servidor en Dokploy como la del cortafuegos, que se borra después). La terminal del contenedor `api` de Dokploy **no sirve** para el paso 3: ese contenedor estará detenido.
+
+### Orden (no cambiarlo)
+
+Mezclar a `main` publica **solo** web, landing y redirección; la API se publica por tag. Si la web sale antes que la API, la API vieja rechaza el campo `rulesVersion` (`400`) y los retos no funcionan; si sale antes que el reset, los dispositivos siembran celebraciones y estadísticas con datos que se van a borrar.
+
+1. **Tag de la API** sobre el commit de la rama, sin mezclar todavía a `main`: `git tag v0.7.0 && git push origin v0.7.0`. Esperar el workflow y comprobar que `https://api.touchedblock.app/health` responde `rulesVersion: 6`. Al arrancar corre la migración `add_data_reset` (solo crea la tabla; no borra nada).
+2. **Conteo de solo lectura** y mostrárselo al usuario. En el VPS:
+   ```bash
+   docker compose ls --all                      # confirmar el proyecto (touched-block-bz408h) y la ruta de su archivo
+   cd /etc/dokploy/compose/touched-block-bz408h/code/deploy     # usar la ruta que muestre el comando anterior
+   docker compose -p touched-block-bz408h -f docker-compose.yml exec api node scripts/reset-progress.mjs
+   ```
+   Esperar su respuesta. Anotar cuántas cuentas hay.
+3. **Con su sí**: detener la API, borrar, verificar y recién entonces reanudar (mismo directorio):
+   ```bash
+   docker compose -p touched-block-bz408h -f docker-compose.yml stop api
+   # simulación con la API detenida: las cuentas deben coincidir con las del paso 2
+   docker compose -p touched-block-bz408h -f docker-compose.yml run --rm --no-deps api node scripts/reset-progress.mjs
+   # borra (no se puede deshacer)
+   docker compose -p touched-block-bz408h -f docker-compose.yml run --rm --no-deps api node scripts/reset-progress.mjs --apply --confirm=BORRAR-PROGRESO
+   # verificación
+   docker compose -p touched-block-bz408h -f docker-compose.yml run --rm --no-deps api node scripts/reset-progress.mjs
+   ```
+   La verificación debe mostrar **las mismas cuentas** y **0** en todo lo demás: cuentas con partidas, **cuentas con estadísticas**, partidas, récords, resultados del reto diario, desafíos, **premios de misión** e **invitaciones**, y decir que el reinicio `v6-2026` ya se aplicó. Los premios del catálogo no se guardan: con estadísticas e invitaciones en 0 no queda ninguno ganado. Solo entonces:
+   ```bash
+   docker compose -p touched-block-bz408h -f docker-compose.yml start api
+   ```
+   Comprobar `/health` y que los rankings estén vacíos.
+4. **Enseguida**, mezclar a `main` y hacer push (web, redirección y landing). Entre el paso 1 y este, la web publicada no entra al ranking: hacerlo seguido.
+5. **APK definitivo** `0.4.0` (sección 5, con su limpieza, sin las variables del APK de prueba): comprobar firma de release, paquete `app.touchedblock`, `https://api.touchedblock.app` en el bundle y que no se vea "MODO PRUEBA"; probar el login con Google, repartirlo y avisar a quienes tengan el `0.3.1`.
+
+**Sobre el comando.** `run` crea un contenedor aparte con la imagen de `API_TAG` y las variables del `.env` que Dokploy deja junto al compose; al pasarle el comando reemplaza el arranque (no corre migraciones ni levanta la API) y trabaja en `/app`. **`-p` y `-f` son obligatorios**: sin el nombre del proyecto, Compose crearía otro proyecto con una base **vacía** y la simulación saldría en cero sin haber tocado producción (por eso las cuentas deben coincidir con el paso 2). `--no-deps` evita que se toque `tb-db`, que ya está corriendo. Si la ruta o el proyecto no coinciden, parar y revisar. El procedimiento no se ha ejecutado en el VPS.
+
+### El script de reinicio
+
+`apps/api/scripts/reset-progress.mjs` (lógica en `src/maintenance/reset-progress.ts`). Ningún arranque, workflow ni compose lo invoca.
+
+| | |
+|---|---|
+| Sin argumentos | Simulación en una transacción de solo lectura: solo cuenta |
+| Borrar | Exactamente `--apply --confirm=BORRAR-PROGRESO`; cualquier otra combinación es un error |
+| Borra | Partidas (con y sin cuenta), récords, resultados del reto diario, desafíos y sus resultados, premios de misión |
+| Pone en cero | `UserStats` (mejor duración, racha, bloques, partidas, bloques extra, porcentaje) e invitaciones (`invitedById`, `invitedAt`: los corazones vuelven a 5 y se puede volver a responder "¿Quién te invitó?") |
+| Conserva | Cuentas y su usuario y país, identidades, sesiones, seguidos, bloqueos, reportes y el campo de cada reto diario |
+| Protecciones | Se niega con `RULES_VERSION` < 6; una sola transacción con cerrojo y bloqueo de tablas; se aplica una sola vez (fila `v6-2026` en `DataReset`, que guarda los conteos) |
+
+### Si algo falla
+
+- La API nueva falla **antes** de borrar: `API_TAG=v0.6.0` en Dokploy y *Deploy* (el esquema es compatible).
+- El script falla: no cambia nada (transacción única). Reanudar la API (`start api`) y revisar.
+- **Después** de borrar se puede volver de versión, pero los datos no vuelven.
+- Clientes viejos con la API v6 (APK `0.3.1`, pestañas sin recargar): las partidas normales se juegan pero no entran al ranking (`rules_version`); reto diario y desafío responden `409 client_outdated`; rankings, perfil, seguir e invitar funcionan. Su Colección sigue mostrando sus datos locales viejos, solo en ese equipo.

@@ -1,5 +1,7 @@
 # API de Touched Block
 
+> **Versión descrita**: el código de la rama `feat/premios-y-logros` (reglas v6, API `v0.7.0` prevista). **Al 27 nov 2026 no está desplegada**: producción sigue con las reglas v5, sin `client_outdated`, sin `followedToday` y rechazando `rulesVersion` como campo desconocido. Publicación y reinicio de datos: `despliegue.md`, sección 8.
+
 NestJS + Prisma + PostgreSQL. Todas las peticiones y respuestas son JSON (`Content-Type: application/json`). Las fechas van en ISO 8601 UTC (`"2026-11-09T14:13:54.449Z"`). Los mensajes de error (`message`) vienen en español y se pueden mostrar tal cual al usuario.
 
 - **Local**: `http://localhost:3000` (ver "Desarrollo local" al final).
@@ -70,6 +72,7 @@ No se aceptan propiedades extra en los cuerpos: devuelven `400 validation_error`
 | 404 | `run_not_found` | Partida inexistente (o id que no es UUID) |
 | 404 | `challenge_not_found` | Reto inexistente (o código sin la forma de un código) |
 | 404 | `report_not_found` | Reporte inexistente (`/admin/reports/:id/resolve`) |
+| 409 | `client_outdated` | `POST /runs` en modo `duel` o `daily` sin `rulesVersion` o con una distinta de la actual ("Actualiza Touched Block para jugar el reto."). No crea nada ni gasta intento |
 | 409 | `username_taken` | Nombre de usuario tomado |
 | 409 | `country_change_too_soon` | Cambio de país antes de 30 días (incluye `nextCountryChangeAt`) |
 | 409 | `inviter_already_set` | Ya se indicó quién te invitó |
@@ -144,7 +147,7 @@ General: 120 por minuto (`THROTTLE_LIMIT`). Límites por ruta:
 - `invitedBy`: es `null` si todavía no indicó quién lo invitó.
 - `maxLives`: corazones con que juega, `min(5 + invitedCount, 8)`.
 - `stats`: estadísticas del jugador (objeto `Stats`, abajo). Siempre viene; con ceros si todavía no jugó.
-- `tier`: su insignia (`TierRef`, abajo), o `null` si todavía no terminó ninguna partida válida.
+- `tier`: su insignia (`TierRef`, abajo), o `null` si todavía no tiene ninguna (su mejor partida normal dura menos de 20 s, o no jugó).
 
 `stats` y `tier` también vienen en `user` de las respuestas de login (`LoginResponse`).
 
@@ -171,8 +174,8 @@ Las cuentas que ya existían al publicar la fase 2 recibieron sus totales de las
 ```
 
 - `tier`: `"madera"`, `"bronce"`, `"plata"`, `"oro"` o `"diamante"`.
-- `step`: 1, 2 o 3 en madera; siempre 1 en las demás.
-- Se calcula con `tierRefForTicks(stats.bestTicks)` del motor (umbrales en `TIERS`); no se guarda. Es `null` cuando el jugador no tiene partidas válidas.
+- `step`: 1, 2 o 3 en madera; siempre 1 en las demás. Desde la v6 `madera` 1, 2 y 3 se llaman Papel, Cartón y Madera (los valores de la API no cambian).
+- Se calcula con `tierRefForTicks(stats.bestTicks)` del motor (umbrales en `TIERS`); no se guarda. Es `null` cuando la mejor partida normal dura menos de 20 s o no hay partidas válidas.
 
 ### `GameMods` (modificadores de una partida)
 
@@ -216,7 +219,7 @@ Todos opcionales. Es el tipo `GameMods` del motor y se pasa tal cual a `createGa
 `200`:
 
 ```json
-{ "status": "ok", "db": "ok", "rulesVersion": 5, "version": "v0.5.0", "features": ["moderation"], "time": "2026-11-09T14:13:54.353Z" }
+{ "status": "ok", "db": "ok", "rulesVersion": 6, "version": "v0.7.0", "features": ["moderation"], "time": "2026-11-09T14:13:54.353Z" }
 ```
 
 `features` lista funciones opcionales de esta versión de la API (desde la versión con moderación; v0.4.0 no lo manda). La web se publica antes que la API, así que el cliente solo muestra lo que depende de ellas si aparecen aquí: con `moderation`, el menú para reportar y bloquear.
@@ -364,7 +367,7 @@ Busca el texto en **cualquier parte** del nombre de usuario. Antes de comparar, 
 }
 ```
 
-- `tier` es su insignia (`TierRef`), o `null` si no tiene partidas válidas. La insignia es pública.
+- `tier` es su insignia (`TierRef`), o `null` si todavía no tiene (menos de 20 s o sin partidas válidas). La insignia es pública.
 - `best` es el récord histórico con la versión de reglas actual, o `null`.
 - `isMe`, `isFollowing` e `isBlocked` (lo bloqueé) solo vienen con sesión.
 - Si ese usuario **te bloqueó**, responde `404 user_not_found` como si no existiera.
@@ -480,7 +483,7 @@ Si la API no responde en el paso 1, se juega con una semilla local (`randomSeed(
 
 En `duel` y `daily` el cliente manda su tamaño real, como siempre, y **juega con el `fieldW`/`fieldH` que devuelve el servidor** (dibujado en un rectángulo escalado dentro de su pantalla). Los toques se envían en coordenadas de ese campo.
 
-Las reglas actuales son la **versión 5** (`RULES_VERSION = 5` en `@tb/engine`): números hasta 10, bloques con sumas/restas y después multiplicaciones/divisiones, restas con resultado ≤ 0 como trampa, castigo por escape según la etapa (×5 / ×6 / ×7) combos que suman segundos y un corazón de recuperación cada 25 de racha. Las reglas exactas están en el motor (`packages/engine/src/constants.ts`) y en [`reglas-y-balance.md`](reglas-y-balance.md). Una buena partida puede durar 6–9 minutos: el límite de 2 h para enviarla y la comparación con el reloj real (+5 s) son relativos a la duración, así que no hay un tope de minutos de juego.
+Las reglas actuales son la **versión 6** (`RULES_VERSION = 6` en `@tb/engine`; las reglas de partida son las de la v5, el número subió por el reinicio de registros): números hasta 10, bloques con sumas/restas y después multiplicaciones/divisiones, restas con resultado ≤ 0 como trampa, castigo por escape según la etapa (×5 / ×6 / ×7) combos que suman segundos y un corazón de recuperación cada 25 de racha. Las reglas exactas están en el motor (`packages/engine/src/constants.ts`) y en [`reglas-y-balance.md`](reglas-y-balance.md). Una buena partida puede durar 6–9 minutos: el límite de 2 h para enviarla y la comparación con el reloj real (+5 s) son relativos a la duración, así que no hay un tope de minutos de juego.
 
 ### `POST /runs` (sesión opcional)
 
@@ -495,8 +498,11 @@ Las reglas actuales son la **versión 5** (`RULES_VERSION = 5` en `@tb/engine`):
 | `challenge` | string (hasta 32) | no | Solo con `mode: "duel"`: código del reto al que se une. Se aceptan minúsculas y espacios alrededor. Sin él, se **crea** un reto nuevo |
 | `date` | string `"AAAA-MM-DD"` | con `mode: "daily"` | Solo con `mode: "daily"`: fecha **local** del jugador (D7) |
 | `platform` | `"app_android"` | `"app_ios"` | `"web_mobile"` | `"web_desktop"` | no | Desde dónde se juega, **solo para estadística** (no cambia reglas, rankings ni la respuesta). Ver "Plataforma de la partida" abajo |
+| `rulesVersion` | number | en `duel` y `daily` | La `RULES_VERSION` del motor del cliente. En los retos, si falta o no es la actual: `409 client_outdated`. En `normal` se ignora (el cliente no la envía) |
 
-Ejemplos: `{ "fieldW": 390, "fieldH": 640, "mode": "duel" }` (crear reto), `{ "fieldW": 412, "fieldH": 915, "mode": "duel", "challenge": "K7M2QXAB" }` (unirse), `{ "fieldW": 390, "fieldH": 640, "mode": "daily", "date": "2026-11-12" }` (reto diario).
+Ejemplos: `{ "fieldW": 390, "fieldH": 640, "mode": "duel", "rulesVersion": 6 }` (crear reto), `{ "fieldW": 412, "fieldH": 915, "mode": "duel", "challenge": "K7M2QXAB", "rulesVersion": 6 }` (unirse), `{ "fieldW": 390, "fieldH": 640, "mode": "daily", "date": "2026-11-12", "rulesVersion": 6 }` (reto diario).
+
+**Orden de despliegue**: la API de las reglas v5 rechaza `rulesVersion` (`400 validation_error`) y el cliente no reintenta sin él, así que la API v6 se publica **antes** que la web y la app nuevas. Con la API v6, un cliente viejo juega partidas normales (no entran al ranking: `rules_version`) y no puede crear ni jugar retos.
 
 Un cliente que manda solo `{ fieldW, fieldH }` recibe lo mismo que antes, más `mode: "normal"` y `mods: null`.
 
@@ -543,7 +549,7 @@ GROUP BY 1;
   "runId": "efe6332b-b2d1-4490-8c4d-94fd6200dc11",
   "seed": 17496603,
   "maxLives": 5,
-  "rulesVersion": 5,
+  "rulesVersion": 6,
   "fieldW": 390,
   "fieldH": 640,
   "startedAt": "2026-11-09T14:25:06.487Z",
@@ -614,6 +620,7 @@ Errores:
 | 400 | `validation_error` | Cuerpo inválido. También `challenge` sin `mode: "duel"` o `date` sin `mode: "daily"` (`fields: [{ "field": "challenge", "problems": ["mode"] }]`) |
 | 400 | `daily_date_invalid` | `mode: "daily"` sin `date`, con una fecha inválida o fuera de la ventana de fechas (ver "Reto diario") |
 | 404 | `challenge_not_found` | El código no existe (o no tiene la forma de un código) |
+| 409 | `client_outdated` | `duel` o `daily` sin la `rulesVersion` actual (se comprueba antes de crear nada) |
 | 409 | `daily_attempts_exhausted` | Con sesión, ya empezó 3 partidas del reto de esa fecha (terminadas o no) |
 | 410 | `challenge_expired` | El reto venció (30 días) o es de otra versión de reglas |
 
@@ -903,7 +910,7 @@ Una partida por día, **igual para todos**: misma semilla, mismo campo y mismos 
 - **Fecha**: la fecha **local** del jugador, `AAAA-MM-DD` (D7). El servidor la acepta solo si **alguna zona horaria real** (de UTC−12 a UTC+14) está en esa fecha en este momento: `D 00:00 UTC − 14 h ≤ ahora < (D+1) 00:00 UTC + 12 h`. Por ejemplo, el 13 se acepta desde las 10:00 UTC del 12 (medianoche en UTC+14) hasta las 12:00 UTC del 14 (medianoche en UTC−12), sin incluirla. Un jugador con el reloj bien puesto siempre está dentro; nadie recibe la semilla de una fecha que todavía no empezó en ningún lugar. Fuera de la ventana, `400 daily_date_invalid`. La misma ventana vale para `GET /daily` y `GET /missions`.
 - **Semilla**: `HMAC-SHA256(DAILY_SECRET, fecha)` recortada a 31 bits. No se puede adivinar la de mañana, y el servidor no la entrega antes de que esa fecha empiece en alguna zona horaria.
 - **Campo**: el campo común vigente cuando se juega la **primera** partida de esa fecha; desde ahí queda fijo para todos ese día.
-- **Modificadores y título**: `dailyModsFor(fecha)` del motor (calendario por día de la semana). Vidas: 5, o `mods.lives`.
+- **Modificadores y título**: `dailyModsFor(fecha)` del motor: calendario por día de la semana antes del 7 dic 2026 y, desde ese día, ciclo de 15 retos (`reglas-y-balance.md`). Vidas: 5, o `mods.lives`.
 - **Número**: `dailyNumber(fecha)` del motor ("Reto #42").
 - **Intentos** (D8): 3 con cuenta (cuenta el mejor) y 1 como invitado. Un intento se gasta **al empezar** (`POST /runs`), aunque la partida nunca se termine. El servidor cuenta los de las cuentas; los del invitado los cuenta el cliente. Una partida de invitado se puede reclamar solo si la cuenta todavía no empezó el reto de ese día (ver `POST /runs/:id/claim`).
 - No entra al ranking general, al récord ni al historial (D6). Suma a `totalKilled` y `totalRuns`.
@@ -1011,8 +1018,11 @@ El avance se calcula al leer, con las partidas **válidas** del usuario cuyo fin
 | `bestStreak` | Mejor racha, solo en partidas **sin modificadores** |
 | `maxTicks` | Duración de la más larga, solo en partidas **sin modificadores** |
 | `playedDaily` | Tiene una partida válida del reto diario de **esa fecha** (`date`) |
+| `followedToday` | Creó un seguimiento dentro de ese día local, sin contar el que va hacia quien lo invitó ni los que van hacia alguien que él invitó (los crea `POST /me/inviter`). Dejar de seguir borra el seguimiento |
 
 Y `missionProgress(mision, dia)` del motor da `value` y `done`.
+
+`kind` puede ser `streak`, `reach`, `killDay`, `runsDay`, `daily` o `follow` ("Sigue a un jugador hoy", meta 1). Hasta el 6 dic 2026 se sortea entre 13 misiones; desde el 7 dic, entre 28 (con `follow`). Si una misión `follow` ya premiada deja de cumplirse (se dejó de seguir), viene `done: false, rewarded: true`: el cliente la muestra cumplida.
 
 `200`:
 

@@ -6,9 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 "Touched Block" (antes "Rompe el bloque"): juego táctil para celular, en español. Aparecen bloques con un número o una operación ("2+3", "8÷2"); hay que tocar cada uno tantas veces como su resultado antes de que desaparezca. Supervivencia contra el reloj, con vidas, combos y bloques trampa. Es una web (`https://web.touchedblock.app`, en Cloudflare; landing en `https://touchedblock.app`) con cuentas y rankings y, desde el 16 nov 2026, también una app Android (`app.touchedblock`, APK) con el mismo código; iOS más adelante.
 
+**Estado (27 nov 2026)**: la rama `feat/premios-y-logros` trae las reglas v6 (reinicio de registros aprobado), premios y logros nuevos. **Sin desplegar, sin datos borrados y sin probar en teléfono**: producción sigue en la v5. El despliegue y el reinicio se hacen solo tras el visto bueno del usuario en el celular y de mostrarle el conteo de producción (`docs/despliegue.md`, sección 8; `docs/pendientes.md`).
+
 La documentación completa está en `docs/` (índice en `docs/README.md`). Es la memoria del proyecto: qué se hizo y **por qué**.
 - `docs/historia-y-decisiones.md`: cronología y motivo de cada decisión técnica. Léelo al empezar.
-- `docs/reglas-y-balance.md`: reglas con sus valores exactos e historial de cambios de reglas (v1–v8). Léelo antes de cambiar reglas o balance, y actualiza sus tablas si cambias reglas o constantes.
+- `docs/reglas-y-balance.md`: reglas con sus valores exactos e historial de cambios de reglas (v1–v11), premios, logros, retos y misiones. Léelo antes de cambiar reglas o balance, y actualiza sus tablas si cambias reglas o constantes.
 - `docs/arquitectura.md`, `docs/api.md` (contrato de la API), `docs/despliegue.md`, `docs/desarrollo.md`, `docs/pendientes.md`.
 - Al tomar una decisión no obvia, anótala con su motivo en `docs/historia-y-decisiones.md`; al terminar o dejar algo a medias, actualiza `docs/pendientes.md`.
 
@@ -17,7 +19,12 @@ La documentación completa está en `docs/` (índice en `docs/README.md`). Es la
 - `packages/engine` (`@tb/engine`): motor del juego en TypeScript puro y **determinista** (PRNG mulberry32 con semilla, paso fijo de 1/60 s). Lo usan el cliente y la API (que repite cada partida con `replay()` para validar el puntaje). **Todas las reglas y constantes de balance viven en `src/constants.ts`.**
 - `apps/client` (`@tb/client`): Expo Router (SDK 58), web primero. El juego se dibuja con `View` + Reanimated (sin Skia, para que la web cargue liviana). Módulos por plataforma en `src/platform/*.web.ts` / `*.native.ts` (audio, vibración, almacenamiento, toques, login, compartir, ciclo de vida, país); las dos versiones están completas. La web y la app deben verse y jugarse igual: todo cambio visual se revisa en las dos.
 - `apps/api` (`@tb/api`): NestJS 12 + Prisma 7 + PostgreSQL. Contrato exacto de cada endpoint en `docs/api.md`.
-- `legacy/`: el juego original en HTML/CSS/JS (reglas v6). Solo referencia; ya no se publica.
+- Premios (en `apps/client/src`): `cosmetics/` (catálogo, paletas, insignias, iconos de logros), `components/backgrounds/` (fondos), `lib/fxShapes.ts` (efectos), `game/synth/` (sonidos), `game/celebrations*.ts`.
+- `config_logros/`: maqueta aparte donde se analizan logros y premios (tiene su propio `CLAUDE.md`).
+- Claves locales (v6): `tb_best6`, `tb_hist6`, `tb_stats2`, `tb_daily2`, `tb_miss2`, `tb_me2`, `tb_cele2`, `tb_cele2p`; sin cambio `tb_set1`, `tb_rt1`, `tb_onb1`, `tb_onb_adv1`, `tb_visits1`, `tb_last1`, `tb_unlock1`, `tb_reto1`, `tb_mig1`. Las anteriores no se borran ni se leen.
+- `EXPO_PUBLIC_UNLOCK_ALL=1` y `TB_TEST_APK=1`: solo para probar; nunca en lo que se publica.
+- `apps/api/scripts/reset-progress.mjs` borra datos: no correrlo contra producción sin confirmación expresa del usuario.
+- `legacy/`: el juego original en HTML/CSS/JS (su "v6" de reglas es la numeración antigua, no `RULES_VERSION` 6). Solo referencia; ya no se publica.
 
 ## Comandos
 
@@ -41,7 +48,7 @@ No hay npm en esta máquina: usar `pnpm`, `pnpm exec` (en vez de npx) y `pnpm dl
 ## Reglas importantes al tocar código
 
 - **Las reglas viven solo en el motor.** El cliente dibuja a partir de los eventos (`drainEvents`) y nunca decide reglas; la API valida repitiendo la partida.
-- **No romper los registros de los jugadores.** Ya hay gente jugando y habrá app móvil: los rankings, récords e historiales **no se reinician** salvo un cambio muy grande que lo amerite y que el usuario apruebe expresamente (preguntar antes). Subir `RULES_VERSION` o cambiar las claves locales (`tb_best5`/`tb_hist5`) **reinicia** rankings y récord local: no se hace por ajustes menores (duración de un bloque, textos, interfaz, valores que apenas alteran los puntajes). Antes de tocar reglas, evalúa si el cambio es compatible; si no lo es, propón alternativas (p. ej. temporadas con rankings archivados, o migrar el récord local en vez de cambiar la clave). Si de verdad hay reinicio: subir `RULES_VERSION`, cambiar las claves locales (siguiente número) y avisarlo con claridad.
+- **No romper los registros de los jugadores.** Ya hay gente jugando y habrá app móvil: los rankings, récords e historiales **no se reinician** salvo un cambio muy grande que lo amerite y que el usuario apruebe expresamente (preguntar antes). Subir `RULES_VERSION` o cambiar las claves locales (`tb_best6`/`tb_hist6`) **reinicia** rankings y récord local: no se hace por ajustes menores (duración de un bloque, textos, interfaz, valores que apenas alteran los puntajes). Antes de tocar reglas, evalúa si el cambio es compatible; si no lo es, propón alternativas (p. ej. temporadas con rankings archivados, o migrar el récord local en vez de cambiar la clave). El reinicio de la v6 fue una excepción aprobada; no autoriza otros. Si de verdad hay reinicio: subir `RULES_VERSION`, cambiar las claves locales (siguiente número) y avisarlo con claridad.
 - El motor no puede usar `Math.random`, `Date`, ni funciones de `Math` cuyo resultado pueda variar entre motores JS (sin, cos, pow…): el replay del servidor debe dar exactamente lo mismo que el navegador.
 - El texto del onboarding toma los números de las constantes del motor; no escribirlos a mano.
 - Trampas: internamente `trap` (cualquier trampa) y `red` (trampa roja, texto `#ff2a2a`). Las restas con resultado ≤ 0 también son trampa y se ven normales. Si el color de fondo es rojizo (`REDDISH`), una trampa roja usa la paleta `SAFE`.

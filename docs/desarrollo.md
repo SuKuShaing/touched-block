@@ -23,7 +23,7 @@ pnpm --filter @tb/engine build       # genera dist/, que usa la API (el cliente 
 # Cliente
 pnpm --filter @tb/client web                      # http://localhost:8081 (el sitio vive en la raíz, igual que en https://web.touchedblock.app)
 pnpm --filter @tb/client exec tsc --noEmit
-pnpm --filter @tb/client test                     # vitest, solo módulos puros (lib/, cosmetics/, game/*.ts)
+pnpm --filter @tb/client test                     # vitest, solo módulos puros (lib/, cosmetics/, game/, components/**/*.test.ts)
 pnpm --filter @tb/client exec expo export -p web --output-dir dist
 
 # API
@@ -44,6 +44,20 @@ Resultado esperado al 12 nov 2026 (plan de jugabilidad): motor **160/160** (incl
 
 La API de desarrollo necesita `DAILY_SECRET` solo en producción (en local usa un valor de desarrollo). Para probar con el cliente: `AUTH_DEV_FAKE=1`, `CORS_ORIGINS=http://localhost:8081` y, si el puerto 3000 está ocupado, otro `PORT`; el cliente con `EXPO_PUBLIC_API_URL` apuntando a ese puerto y `EXPO_PUBLIC_AUTH_DEV_FAKE=1`. Expo con `CI=1` no recarga los cambios del código.
 
+Para ver todos los premios sin ganarlos: cliente con `EXPO_PUBLIC_UNLOCK_ALL=1` (reiniciar Metro con `--clear` al ponerla y al quitarla; muestra "MODO PRUEBA" y la "Galería de prueba" en la Colección). Nunca en lo que se publica. El APK de prueba con esa bandera está en `despliegue.md`, sección 5.
+
+El reto de 15 días y las 28 misiones rigen desde el 7 dic 2026: antes de esa fecha se comprueban con los tests del motor (o poniendo la fecha en el dispositivo para las misiones de invitado), sin cambiar las constantes.
+
+**Reinicio de registros en local** (reglas v6; borra la base que indique `DATABASE_URL`, en local la de `apps/api/.env`):
+
+```bash
+pnpm --filter @tb/engine build && pnpm --filter @tb/api build
+node apps/api/scripts/reset-progress.mjs                                      # simulación, solo lectura
+node apps/api/scripts/reset-progress.mjs --apply --confirm=BORRAR-PROGRESO    # borra, una sola vez
+```
+
+En producción solo con la confirmación del usuario y siguiendo `despliegue.md`, sección 8.
+
 ## App Android (desarrollo)
 
 Requisitos ya instalados en la máquina: Android Studio con el SDK en `%LOCALAPPDATA%\Android\Sdk`, JDK 21 (Adoptium) y el emulador `Pixel_Mi_Device`.
@@ -63,6 +77,7 @@ adb shell am start -a android.intent.action.VIEW -d "exp+touched-block://expo-de
 - Los cambios de JS/TS se ven al instante en la web y en la app (*fast refresh*). Para comparar, usar la web con Playwright en 412×915 (el emulador es 1080×2400 a densidad 2,625).
 - `android/` se genera: no se edita a mano. Lo nativo va en `app.json` y en `plugins/`. Si algo nativo queda raro: `pnpm exec expo prebuild -p android --clean`.
 - Ícono de la app: se edita `assets/icono/icon-movil.svg` y se exportan los PNG de 1024 px con Chrome (Playwright: `page.setContent` con el SVG y `page.screenshot({ omitBackground: true })`). `android-background.png`: solo `#fondo`. `android-foreground.png`: todo menos `#fondo`. Los dos con el `viewBox` completo `0 0 108 108`. `icon-movil.png`: completo, con `viewBox="14 14 80 80"`. Después, `expo prebuild` y volver a compilar.
+- Los flujos con cuenta (misión de seguir, celebraciones de invitados y del porcentaje del reto) se prueban con esta app de desarrollo, `adb reverse` y la API local con `AUTH_DEV_FAKE`, no con el APK de prueba.
 - Si después de un `pnpm install` Metro responde 404 al pedir el bundle, reiniciarlo con `--clear`.
 - El C++ se compila en `~/.tbcxx/` (rutas cortas; ver `historia-y-decisiones.md` → "App Android"). Se puede borrar para forzar una recompilación limpia.
 
@@ -96,7 +111,7 @@ adb shell am start -a android.intent.action.VIEW -d "exp+touched-block://expo-de
 - **No romper los registros de los jugadores** (decisión del usuario, 11 nov 2026): subir `RULES_VERSION` o cambiar las claves locales reinicia rankings y récords. Solo con un cambio muy grande que lo amerite y con aprobación expresa; si no, buscar una alternativa compatible.
 - Al cambiar reglas:
   1. Evaluar si el cambio obliga a reiniciar (casi nunca debería). Si sí y está aprobado: subir `RULES_VERSION`.
-  2. En ese caso, cambiar las claves locales (`tb_bestN`/`tb_histN`).
+  2. En ese caso, cambiar las claves locales (`tb_bestN`/`tb_histN`; si el reinicio es total, todas las de progreso, como en el de la v6) y sumarlas a las dos listas de la mudanza.
   3. Actualizar `docs/reglas-y-balance.md` y los tests del motor.
   - Los textos del onboarding se actualizan solos si usan las constantes.
 

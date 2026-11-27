@@ -5,7 +5,7 @@ Qué es el juego, las reglas actuales con sus valores exactos y la historia de c
 - Idioma del juego y del usuario: **español**.
 - Plataforma: **web pensada para celular** (GitHub Pages), con cuentas y rankings. Después, si le va bien, app Android/iOS con el mismo código (Expo).
 - Nombre: **Touched Block** (antes "Rompe el bloque"; el nombre queda en inglés aunque el resto del texto sea en español).
-- Reglas actuales: **v5 del motor** (`RULES_VERSION = 5`), que corresponde a la decisión v8 de la sección 3.
+- Reglas del código: **v6 del motor** (`RULES_VERSION = 6`, rama `feat/premios-y-logros`). Las reglas de partida son las mismas de la v5; la versión sube por el reinicio de registros aprobado por el usuario (decisión 12 de la sección 3). **Al 27 nov 2026 no está desplegada**: producción sigue en la v5 y no se ha borrado ningún dato.
 
 ---
 
@@ -37,7 +37,7 @@ Todas las constantes están en `packages/engine/src/constants.ts`.
 | Corte del combo | **cualquier error**: bloque escapado, trampa tocada o toque fuera. Los premios ya ganados se conservan (cortar en 18 = ya ganaste los de 3, 5, 10 y 15) |
 | Corazón de recuperación | Al llegar la racha a **25, 50, 75…** (`HEART_COMBO`), **si falta alguna vida**, aparece un bloque rosado con ♥ que dura **2 s** (`HEART_LIFE`). Un toque → **+1 vida** (sin pasar del máximo); no suma tiempo ni toca la racha. Si se escapa: sin castigo, sin cortar la racha. No cuenta para el máximo de bloques simultáneos |
 | Fin de partida | tiempo ≤ 0, **o** vidas = 0 |
-| Récord local | `localStorage` `tb_best5`; historial `tb_hist5` (últimas 30, se muestran 10) |
+| Récord local | `localStorage` `tb_best6`; historial `tb_hist6` (últimas 30, se muestran 10). En la v5 publicada: `tb_best5`/`tb_hist5` |
 
 Detalles importantes:
 
@@ -73,9 +73,10 @@ Detalles importantes:
 - Cabecera: **Destruidos** · **Tiempo** (m:ss) · **Vidas** (corazones, de 5 a 8). Barra de tiempo relativa al máximo alcanzado; roja con ≤ 5 s.
 - Indicador de racha durante el juego y texto flotante ("+Ns") sobre cada bloque destruido.
 - **Franja de avisos** (plan de jugabilidad, fase 1): una franja fija y fina bajo la barra de tiempo, **fuera del campo** (no tapa bloques ni recibe toques), con una línea que se llena hacia el próximo hito y su ícono ("5", "+ −", "× ÷", "4 s"). Ahí aparecen todos los avisos de la partida, **uno a la vez** y por importancia: récord > amigo superado > hito ("¡Sumas y restas! Escapar ahora resta ×6", con el castigo tomado de las constantes) > combo ("+1s · ¡Combo ×3!") > racha cortada ("Racha de N · +X s"). Si coinciden, el menos importante se descarta. Por la franja, el campo de la partida normal es unos 22 px más bajo que antes.
-- Pantalla de fin: título ("¡Nuevo récord!", "¡Sin vidas!", "¡Se acabó el tiempo!"), destruidos, escapados y mejor racha; **camino de etapas** (todos los hitos con el mismo ancho, marcadores "Hoy" y "Tu mejor", y la frase "¡Llegaste a las sumas y restas!" o "Te faltaron 28 s para las sumas y restas"); **"Jugar de nuevo"** visible sin desplazarse; tarjeta de premio si subió de insignia o desbloqueó algo (con "Probar ahora"); "Te faltaron N bloques para tu récord" y, con sesión, "Estás a N bloques de @x esta semana"; después ranking, Compartir, Retar a un amigo e Invitar, y al final récord e historial. En plena partida, avisos "¡Nuevo récord!" y "Superaste a @x" (amigos de la semana que todavía no habías superado).
+- Pantalla de fin: título ("¡Nuevo récord!", "¡Sin vidas!", "¡Se acabó el tiempo!"), destruidos, escapados y **Máximo combo**; **camino de etapas** (todos los hitos con el mismo ancho, marcadores "Hoy" y "Tu mejor", y la frase "¡Llegaste a las sumas y restas!" o "Te faltaron 28 s para las sumas y restas"); **"Jugar de nuevo"** visible sin desplazarse; tarjeta de premio si subió de insignia o desbloqueó algo (con "Probar ahora"); "Te faltaron N bloques para tu récord" y, con sesión, "Estás a N bloques de @x esta semana"; después ranking, Compartir, Retar a un amigo e Invitar, y al final récord e historial. En plena partida, avisos "¡Nuevo récord!" y "Superaste a @x" (amigos de la semana que todavía no habías superado).
 - **Inicio**: logo, texto, "Jugar" como botón principal y **como máximo una tarjeta** (el reto de hoy con las misiones debajo desde la 2.ª visita o la 3.ª partida, o la de instalar la web desde la 2.ª visita). Mientras el reto y las misiones siguen bloqueados, después de la 1.ª partida el inicio y la pantalla final avisan cuántas faltan ("Te faltan 2 partidas para desbloquear el reto del día y las misiones", con ●○○); la partida que los desbloquea lo celebra y muestra el reto ahí mismo. Las partidas son las del dispositivo o las de la cuenta, la mayor; ícono de sonido arriba a la izquierda. La web es **instalable** (manifest, sin service worker); la tarjeta de instalar se puede descartar para siempre y también está en el Perfil.
 - **Perfil → En este dispositivo**: interruptores de Sonido y Vibración (`tb_set1`), fila de la Colección con la insignia y el nivel, e instalar.
+- **Colección** (orden): Insignia, Experiencia, Logros, Paletas, Sonidos, Efectos al destruir, Fondos del campo, Vista previa y pie. Tocar una insignia o un logro lo muestra en grande, con compartir si ya es tuyo (sin ganar: "Todavía no lo tienes"). La **vista previa** es un campo de 3×3 bloques (números, operaciones y una trampa) que usa la paleta, el fondo, el efecto y el sonido **equipados**; no usa el motor ni toca estadísticas.
 - **Tutorial (onboarding)**: slides animadas con los mismos componentes del juego, una por regla: tocar, tiempo, escapes, vidas, trampas rojas, operaciones, restas ≤ 0, solo positivos, corazón de recuperación, combos (+ invitar y ranking si hay cuentas). Sus textos toman los números de las constantes del motor. Son dos: el **básico** (tocar, tiempo, escapes, vidas, trampas rojas, combos) se abre solo en la **1.ª visita** del dispositivo, y el **avanzado** (operaciones, restas ≤ 0, solo positivos, corazón de recuperación) en la **3.ª**; en la 2.ª se va directo a jugar. "Ver tutorial de nuevo" en el **Perfil** repite el básico o, si ya vio los dos, ambos seguidos (básico y luego avanzado).
 - Pestañas Jugar / Rankings / Colección / Perfil (solo con cuentas activadas; Colección es pestaña desde el 20 nov 2026). Rankings "General | Reto de hoy"; el general con Tú / País / Mundial / Amigos y filtros Semana / Mes / Año / Histórico (períodos en UTC), con la insignia junto a cada nombre.
 
@@ -89,20 +90,25 @@ Detalles importantes:
 
 ### Progreso, retos y metas (plan de jugabilidad)
 
-Lo agrega el [plan de jugabilidad](plan-jugabilidad.md). **No cambia las reglas de una partida normal**: `RULES_VERSION` sigue en 5 y las claves `tb_best5`/`tb_hist5` no cambian. Todo vive en el motor (funciones puras, sin `Date` ni `Math.random`) para que el cliente y el servidor den lo mismo. Lo marcado *provisorio* lo confirmó el usuario tal cual el 12 nov 2026; se vuelve a medir con jugadores reales.
+Lo agrega el [plan de jugabilidad](plan-jugabilidad.md) y lo amplían los cambios 001 a 026 de `config_logros/cambios.md` (27 nov 2026, sin desplegar). **Nada de esto cambia las reglas de una partida** (`game.ts` es el mismo). Todo vive en el motor (funciones puras, sin `Date` ni `Math.random`) para que el cliente y el servidor den lo mismo. Lo marcado *provisorio* lo confirmó el usuario tal cual el 12 nov 2026; se vuelve a medir con jugadores reales.
 
-**Prueba dorada** (`packages/engine/test/golden.test.ts` + `golden.json`): 20 semillas fijas × 2 campos (360×540 y 412×732) jugadas por un bot determinista de habilidad variable (partidas de unos 9 s a 470 s, varias pasan de 140 s, 275 s y 350 s). Compara destruidos, escapados, mejor racha, ticks, motivo del fin y una huella (FNV-1a) de todos los bloques generados (tick, id, texto, posición, tamaño, color, vida, trampa roja, corazón), y exige que `replay()` dé lo mismo. Los valores salieron del motor v5 **antes** de agregar los modificadores. Si falla, el cambio alteró las partidas normales: no se regenera salvo un cambio de reglas aprobado por el usuario (`GOLDEN_WRITE=1`, ver el comentario del archivo).
+**Prueba dorada** (`packages/engine/test/golden.test.ts` + `golden.json`): 20 semillas fijas × 2 campos (360×540 y 412×732) jugadas por un bot determinista de habilidad variable (partidas de unos 9 s a 470 s, varias pasan de 140 s, 275 s y 350 s). Compara destruidos, escapados, mejor racha, ticks, motivo del fin y una huella (FNV-1a) de todos los bloques generados (tick, id, texto, posición, tamaño, color, vida, trampa roja, corazón), y exige que `replay()` dé lo mismo. Los valores salieron del motor v5 **antes** de agregar los modificadores. Si falla, el cambio alteró las partidas normales: no se regenera salvo un cambio de reglas aprobado por el usuario (`GOLDEN_WRITE=1`, ver el comentario del archivo). El paso a la v6 **no** la regeneró.
 
 #### Hitos e insignias (`progress.ts`)
 
-| Segundo | Hito | Insignia (*provisorio*, D1) |
-|---|---|---|
-| — | Terminar una partida | Madera I |
-| 20, 40, 60, 80, 100, 120 | Aparece el 4, 5, 6, 7, 8, 9 | 40 s = Madera II, 100 s = Madera III |
-| 140 (`ADD_START`) | Aparece el 10 y las sumas y restas | Bronce |
-| 275 (`MUL_START`) | Multiplicaciones y divisiones | Plata |
-| 350, 380, 410, 440 | Etapa final: bloques de 4, 3, 2 y 1 s | 350 s = Oro, 440 s = Diamante |
+Los hitos son 20, 40, 60, 80, 100 y 120 s (aparece el 4, 5, 6, 7, 8 y 9), 140 s (`ADD_START`: el 10 y las sumas y restas), 275 s (`MUL_START`: multiplicaciones y divisiones) y 350, 380, 410 y 440 s (etapa final: bloques de 4, 3, 2 y 1 s). Las insignias salen de ellos (*provisorio*, D1):
 
+| Índice | `tier`/`step` | Insignia | Requisito | Segundos |
+|---|---|---|---|---|
+| 0 | madera/1 | Papel | Llegar al 4 | 20 |
+| 1 | madera/2 | Cartón | Llegar al 6 | 60 |
+| 2 | madera/3 | Madera | Llegar al 8 | 100 |
+| 3 | bronce/1 | Bronce | Llegar a las sumas y restas | 140 |
+| 4 | plata/1 | Plata | Llegar a las multiplicaciones y divisiones | 275 |
+| 5 | oro/1 | Oro | Llegar a la etapa final | 350 |
+| 6 | diamante/1 | Diamante | Llegar a los bloques de 2 s | 410 |
+
+- Todos los valores salen de constantes del motor. **Con menos de 20 s no hay insignia** (`tierIndexForTicks` devuelve −1). `TierId` y `step` no cambiaron porque viajan en la API. Antes (v5 publicada): Madera I (terminar una partida), Madera II (40 s), Madera III (100 s), Bronce, Plata, Oro y Diamante (440 s).
 - `milestoneIndexAt(played)` usa las mismas curvas del motor, así que el aviso coincide con el tick exacto en que cambia la partida. En una partida con modificador hay que pasarle `difficultyTime(s)`.
 - `tierForTicks(ticks)` compara enteros (`ticks >= at × 60`). La insignia sale de la mejor partida **normal** (las de reto y con modificador no cuentan).
 
@@ -122,12 +128,33 @@ Lo agrega el [plan de jugabilidad](plan-jugabilidad.md). **No cambia las reglas 
 
 - Fecha local del jugador `AAAA-MM-DD` (D7), años 2000–2100; aritmética de calendario entera. Número del reto: días desde `DAILY_EPOCH` = **2026-11-12**, que es el **#1** (*provisorio*).
 - **5 vidas** (`DAILY_LIVES = BASE_LIVES`), **3 intentos con cuenta y 1 como invitado** (D8).
-- Calendario de modificadores por día de la semana (*provisorio*, `DAILY_CALENDAR` / `dailyModsFor`):
+- **Antes del 7 dic 2026**: calendario por día de la semana (*provisorio*, `DAILY_CALENDAR`):
 
 | Lunes | Martes | Miércoles | Jueves | Viernes | Sábado | Domingo |
 |---|---|---|---|---|---|---|
 | Partida normal | Directo a las sumas (`startAt` 140) | Solo 3 vidas (`lives` 3) | Solo multiplicaciones y divisiones (`only` mul + `startAt` 275) | Sin trampas rojas (`noRed`) | Directo a las multiplicaciones (`startAt` 275) | Partida normal |
 
+- **Desde el 7 dic 2026** (`DAILY_CYCLE_FROM`, un lunes): ciclo de **15 retos** (`DAILY_CYCLE`), en la posición `(día − 7 dic 2026) mod 15`:
+
+| # | Reto | Modificadores |
+|---|---|---|
+| 1 | Partida normal | — |
+| 2 | Directo a las sumas | `startAt` 140 |
+| 3 | Solo 3 vidas | `lives` 3 |
+| 4 | Solo multiplicaciones y divisiones | `only` mul, `startAt` 275 |
+| 5 | Sin trampas rojas | `noRed` |
+| 6 | Directo a las multiplicaciones | `startAt` 275 |
+| 7 | Partida normal | — |
+| 8 | Solo 4 vidas | `lives` 4 |
+| 9 | Solo números | `only` num |
+| 10 | Solo sumas y restas | `only` add |
+| 11 | Sumas sin trampas rojas | `startAt` 140, `noRed` |
+| 12 | Solo 2 vidas | `lives` 2 |
+| 13 | Multiplicaciones con 3 vidas | `only` mul, `startAt` 275, `lives` 3 |
+| 14 | Directo a la etapa final | `startAt` 350 |
+| 15 | Una sola vida | `lives` 1 |
+
+- Las fechas anteriores no cambian de reto: la API repite cada partida con los modificadores de su fecha, y cliente y servidor deben elegir lo mismo. **API y web tienen que estar publicadas antes del 7 dic 2026**; si no, mover `DAILY_CYCLE_FROM` y `MISSIONS_POOL_FROM` al lunes siguiente antes de desplegar.
 - **Racha de días con perdón** (*provisorio*, `dailyStreak`): cada día jugado suma 1. Un hueco de **exactamente un día** no corta la racha si desde que empezó (o desde el último perdón) se jugaron al menos **7 días** (`DAILY_STREAK_GRACE_EVERY`); el día del hueco no suma y la cuenta para el siguiente perdón vuelve a cero. Dos días seguidos sin jugar siempre cortan. La racha vigente sigue viva si el último día jugado es hoy o ayer (o anteayer, si el hueco de ayer sería perdonable).
 
 #### Retos: campo común, reto a un amigo y reto diario (API y cliente)
@@ -139,53 +166,71 @@ Lo agrega el [plan de jugabilidad](plan-jugabilidad.md). **No cambia las reglas 
 
 #### Misiones del día (`missions.ts`, *provisorias*)
 
-Tres por día, de **tipos distintos**, elegidas de forma determinista a partir de la fecha (FNV-1a + mulberry32). Solo usan datos que el servidor verifica. Premio: bloques extra para el nivel.
+Tres por día, de **tipos distintos**, elegidas de forma determinista a partir de la fecha (FNV-1a + mulberry32). Solo usan datos que el servidor verifica. Premio: bloques extra para el nivel. **Antes del 7 dic 2026** (`MISSIONS_POOL_FROM`) rigen las 13 de siempre (cada fecha sortea lo mismo que hoy en producción); desde ese día, **28**. El orden del pool decide el sorteo: no se reordena ni se inserta, y ampliarlo exige una fecha de inicio nueva.
 
-| Tipo | Misiones (premio) |
-|---|---|
-| Racha en una partida | 10 (20), 15 (30), 25 (50) |
-| Llegar a un hito en una partida | al 5 (20), al 8 (30), a las sumas y restas (50), a las multiplicaciones y divisiones (60) |
-| Bloques destruidos hoy | 30 (20), 60 (30), 120 (50) |
-| Partidas jugadas hoy | 3 (20), 5 (30) |
-| Jugar el reto del día | (40) |
+| Tipo | Las 13 de siempre (premio) | Nuevas desde el 7 dic (premio) | Total |
+|---|---|---|---|
+| Racha en una partida | 10 (20), 15 (30), 25 (50) | 20 (40), 40 (60), 30 (50), 50 (60) | 7 |
+| Llegar a un hito en una partida | al 5 (20), al 8 (30), a las sumas y restas (50), a las multiplicaciones y divisiones (60) | al 9 (40), a los bloques de 4 s (60), al 7 (30) | 7 |
+| Bloques destruidos hoy | 30 (20), 60 (30), 120 (50) | 90 (40), 250 (60), 180 (50), 400 (60) | 7 |
+| Partidas jugadas hoy | 3 (20), 5 (30) | 6 (30), 10 (40), 15 (50) | 5 |
+| Jugar el reto del día | (40) | — | 1 |
+| Seguir a un jugador hoy | — | "Sigue a un jugador hoy" (20) | 1 |
 
-El avance (`missionProgress`) se calcula con el resumen del día (`DayAgg`) y se acota a la meta; "llegar" compara ticks enteros.
+- "Sigue a un jugador hoy" (`follow`) **solo se cumple con cuenta**: cuenta un seguimiento creado ese día local, sin contar a quien te invitó ni a quien invitaste (esos los crea la invitación sola). A un invitado se le muestra bloqueada ("Crea tu cuenta para desbloquearla", lleva al Perfil). Se sortea igual para todos. Si ya se cobró y luego se deja de seguir, sigue mostrándose cumplida.
+- Con el ciclo de 15 retos, los días de "Partida normal" bajan a 2 de cada 15 (afecta a las misiones de racha y duración, que cuentan la partida del reto solo esos días).
+- El avance (`missionProgress`) se calcula con el resumen del día (`DayAgg`, ahora con `followedToday`) y se acota a la meta; "llegar" compara ticks enteros.
 
-#### Logros de cinco niveles (`achievements.ts`, *provisorios*)
+#### Logros de siete niveles (`achievements.ts`, *provisorios*)
 
-| Logro | Madera | Bronce | Plata | Oro | Diamante |
-|---|---|---|---|---|---|
-| Mejor racha | 10 | 25 | 50 | 100 | 200 |
-| Bloques destruidos en total | 100 | 500 | 2.000 | 10.000 | 50.000 |
-| Días seguidos de reto diario | 3 | 7 | 14 | 30 | 100 |
-| Mejor resultado en un reto diario | Participar | Mejor que el 50 % | 75 % | 90 % | 99 % |
+| Logro (id) | Papel | Cartón | Madera | Bronce | Plata | Oro | Diamante |
+|---|---|---|---|---|---|---|---|
+| Máximo combo (`racha`) | 10 | 25 | 50 | 100 | 200 | 300 | 500 |
+| Partidas jugadas (`partidas`) | 10 | 50 | 150 | 500 | 1.500 | 3.000 | 6.000 |
+| Días seguidos de reto diario (`diasReto`) | 3 | 7 | 14 | 30 | 100 | 200 | 365 |
+| Mejor resultado en un reto diario (`mejorReto`) | Participar | Mejor que el 25 % | 50 % | 75 % | 90 % | 95 % | 99 % |
+
+- "Partidas jugadas" reemplaza a "Bloques destruidos" (las claves viejas `ach:bloques:*` se ignoran). Usa las partidas del dispositivo y, con sesión, el máximo con las de la cuenta.
+- "Máximo combo" es el nombre nuevo de "Mejor racha"; la franja de la partida y las misiones siguen diciendo "Racha".
+- Cada logro tiene iconos propios (medallas hexagonales en los siete materiales y vacío).
 
 #### Premios, nivel y Colección (cliente, *provisorios*)
 
-- **Nivel** (`lib/level.ts`): según bloques destruidos en total + bloques extra de misiones. El nivel n pide `25 · n · (n − 1)` (nivel 2 = 50, 5 = 500, 10 = 2.250, 20 = 9.500).
-- **Catálogo** (`cosmetics/catalog.ts`): nada se "entrega" ni se guarda; lo desbloqueado se recalcula desde las estadísticas. Con sesión se usa el máximo entre las del dispositivo y las de la cuenta.
+- **Experiencia** (`lib/level.ts`; la sección de la Colección antes llamada "Nivel"): bloques destruidos en total + bloques extra de misiones. El nivel n empieza en `25 · n · (n + 1)` y el mínimo es el 0 (0 a 49 bloques): 1 = 50, 2 = 150, 3 = 300, 5 = 750, 10 = 2.750, 30 = 23.250.
+- **Catálogo** (`cosmetics/catalog.ts`, **55 premios**): nada se "entrega" ni se guarda como ganado; lo desbloqueado se recalcula desde las estadísticas. Con sesión se usa el máximo entre las del dispositivo y las de la cuenta, salvo el porcentaje del reto (el de la cuenta; como invitado solo cuenta haber participado).
 
-| Premio | Tipo | Se desbloquea con |
+**Paletas (14)**
+
+| Paleta | Se desbloquea con | Estilo |
 |---|---|---|
-| Clásica, Alto contraste (daltónicos, D9) | Paleta | Siempre |
-| 8 bits | Sonido | Siempre (el de siempre) |
-| Clásico | Efecto | Siempre |
-| Liso | Fondo | Siempre |
-| Suave | Sonido | Terminar 1 partida |
-| Pastel | Paleta | Madera II |
-| Chispas | Efecto | Madera III |
-| Confeti | Efecto | Racha de 25 |
-| Neón | Paleta | Bronce |
-| Retro | Paleta | Plata |
-| Marimba | Sonido | Plata |
-| Dorado | Paleta (y marco en el ranking) | Oro |
-| Diamante | Paleta con brillo (y marco) | Diamante |
-| Grilla, Estrellas, Aurora | Fondo del campo | Nivel 5, 10, 20 |
-| Corazones | Efecto | Invitar a 1 amigo |
-| Constancia | Paleta | 7 días seguidos de reto diario |
+| Clásica, Alto contraste (daltónicos, D9) | Siempre | liso |
+| Pastel / Neón | Nivel 3 / 7 | liso |
+| Tenue | Nivel 9 | relleno atenuado, borde intenso |
+| Cristal | Nivel 12 | translúcida, con brillo |
+| Retro | Nivel 15 | liso |
+| Botón | Nivel 16 | relieve interior |
+| Contorno | Nivel 18 | borde intenso, relleno translúcido |
+| Degradé | Nivel 22 | degradé sutil, opaco |
+| Dorado | Nivel 25 | liso |
+| Esmerilado | Nivel 27 | vidrio esmerilado (sin desenfoque) |
+| Diamante | Nivel 30 | con brillo |
+| Amistad (id `constancia`) | Invitar a 2 amigos (cuenta) | liso |
 
-- **Regla de no ventaja de las paletas** (test `cosmetics/palettes.test.ts`): el motor sigue asignando sus colores y el cliente los traduce por posición en `COLORS`. Las trampas rojas (`#ff2a2a`) solo caen en las posiciones `SAFE` (2, 3, 4, 5, 7, 8), así que en ellas cada paleta debe quedar dentro del rango de la Clásica en **contraste de luminancia** y en **distancia de tono** al rojo (±5°), su caso más difícil debe ser tan difícil como el de la Clásica (tono mínimo ≤ el de la Clásica + 8°; contraste mínimo ≤ el de la Clásica + 0,1) y la distancia de tono media debe estar cerca de la de la Clásica (±20°). El texto blanco debe leerse igual o mejor. Así ninguna paleta delata más las trampas, y ninguna (por ejemplo, la de un premio) las esconde más.
-- **Sonidos** (`game/sounds.ts`): paquetes de parámetros (onda, notas, duración, volumen), sin archivos de audio. `8bits` tiene exactamente los valores de siempre (lo comprueba un test).
+**Sonidos (9)**: 8 bits (siempre), Suave (1 partida), Marimba (insignia Papel), Palitos (Cartón), Electrónico (Madera), Viento (Bronce), Piano (Plata), Guitarra eléctrica (Oro), Futurista (Diamante). Ninguno exige el reto diario.
+
+**Efectos (12) y fondos (20)**: Clásico y Liso desde el inicio; Corazones (efecto) con 1 amigo invitado y Bosque nocturno (fondo) con 3; los otros 28 se ganan por logro, uno por escalón (E = efecto, F = fondo). Los 14 de las dos filas del reto solo existen donde existe el reto.
+
+| Logro | Papel | Cartón | Madera | Bronce | Plata | Oro | Diamante |
+|---|---|---|---|---|---|---|---|
+| Máximo combo | Grilla F | Confeti E | Circuito F | Rayos E | Océano F | Nebulosa F | Píxeles E |
+| Partidas jugadas | Chispas E | Estrellas F | Aurora F | Monedas E | Ciudad nocturna F | Nieve F | Galaxia F |
+| Días seguidos de reto | Emojis E | Puntos F | Ondas E | Atardecer F | Cristales F | Luciérnagas F | Estrellas fugaces E |
+| Mejor resultado en un reto | Rayas F | Burbujas E | Hexágonos F | Topografía F | Lluvia F | Vitral F | Fuegos artificiales E |
+
+- Fondos animados: Lluvia, Nieve, Luciérnagas y Galaxia (quietos en miniatura, con "reducir movimiento", con la partida terminada y con la app en segundo plano).
+- **Celebraciones**: insignia, premios y logros al terminar la partida. Con sesión, además, los premios por invitar y los logros "Días seguidos" y "Mejor resultado" (con sus premios) se celebran cuando la cuenta los trae, aunque se ganaran con la app cerrada o en otro dispositivo.
+- **Regla de no ventaja de las paletas** (test `cosmetics/palettes.test.ts`): el motor sigue asignando sus colores y el cliente los traduce por posición en `COLORS`. Las trampas rojas (`#ff2a2a`) solo caen en las posiciones `SAFE` (2, 3, 4, 5, 7, 8), así que en ellas cada paleta debe quedar dentro del rango de la Clásica en **contraste de luminancia** y en **distancia de tono** al rojo (±5°), su caso más difícil debe ser tan difícil como el de la Clásica (tono mínimo ≤ el de la Clásica + 8°; contraste mínimo ≤ el de la Clásica + 0,1) y la distancia de tono media debe estar cerca de la de la Clásica (±20°). El texto blanco debe leerse igual o mejor. Así ninguna paleta delata más las trampas, y ninguna las esconde más. Se mide sobre el **color efectivo bajo el número** (`effectiveFills`: en Cristal, Contorno y Esmerilado, la mezcla sobre el respaldo opaco `#12121a`; en Degradé, los dos extremos). El test no cuenta el brillo de Cristal (ver `pendientes.md`).
+- **Sonidos** (`game/sounds.ts`, `game/synth/`): todo se genera con código, sin archivos de audio. 8 bits, Suave y Marimba suenan en vivo como siempre (`8bits` tiene exactamente los valores de siempre: lo comprueba un test). Los otros 6 se renderizan una vez a memoria y se reutilizan (un paquete a la vez, máximo 12 voces).
 
 ---
 
@@ -210,6 +255,8 @@ El avance (`missionProgress`) se calcula con el resumen del día (`DayAgg`) y se
 10. **v9 (motor v4, 10 nov 2026)**: el usuario pidió una forma de **recuperar vidas**. Decidido con él: cada racha múltiplo de 25, si falta algún corazón, aparece un bloque con ♥ de 1 s; un toque devuelve una vida; si se escapa, no pasa nada. No afecta la racha y no ocupa cupo de bloques simultáneos. Se subió `RULES_VERSION` a 4 y las claves locales a `tb_best4`/`tb_hist4`.
 11. **v10 (motor v5, 11 nov 2026)**: el corazón de recuperación dura **2 s** en vez de 1 s (1 s era demasiado corto, pedido del usuario). Se subió `RULES_VERSION` a 5 y las claves locales a `tb_best5`/`tb_hist5`.
 
+12. **v11 (motor v6, 27 nov 2026, en la rama; sin desplegar)**: reinicio de registros (**reset A**) aprobado por el usuario junto con la nueva forma de entregar los premios. Cambian insignias, logros, experiencia, premios, retos y misiones; **las reglas de partida son las de la v5** (la prueba dorada no se regeneró). `RULES_VERSION` sube a 6 para que la API rechace a los clientes anteriores y sus datos no vuelvan; claves nuevas `tb_best6`, `tb_hist6`, `tb_stats2`, `tb_daily2`, `tb_miss2`, `tb_me2`, `tb_cele2`/`tb_cele2p`. Los datos del servidor se borran con un script manual (`despliegue.md`, sección 8), todavía sin ejecutar.
+
 Criterios que el usuario ha mostrado: quiere un juego **difícil y tenso**, que castigue el descuido; las trampas deben ser **sutiles**; prefiere ir ajustando números a mano a medida que juega.
 
 ---
@@ -233,7 +280,7 @@ Criterios que el usuario ha mostrado: quiere un juego **difícil y tenso**, que 
 - **Al empezar las restas casi todas son trampa**: con operandos 1–2, "1−1", "1−2" y "2−2" dan ≤ 0; entre 140 y 200 s cerca del 30 % de las operaciones son trampa. Opción si se siente injusto: que las restas partan después que las sumas.
 - **Calendario del reto diario sin probar** (*provisorio*): "Directo a las sumas" y "Directo a las multiplicaciones" parten con 10 s, hasta 6 bloques a la vez, trampas desde el primer segundo y castigo ×6/×7, así que pueden ser muy cortos. "Solo multiplicaciones y divisiones" era `only: 'mul'` sin `startAt` (275 s de "2×2" antes de que subieran los factores: fácil y largo); el 12 nov 2026 el usuario eligió combinarlo con `startAt: MUL_START`. Valores provisorios confirmados por el usuario el 12 nov 2026 para publicar; se ajustan con lo que pase.
 - La web pesa unos 2 MB de JS (≈600 KB comprimido) por React Native Web; se puede optimizar más adelante.
-- Las claves locales cambiaron (`rb_best*` → `tb_best1` → `tb_best2` → `tb_best3` → `tb_best4` → `tb_best5`) cada vez que cambiaron las reglas; los récords antiguos no se arrastran.
+- Las claves locales cambiaron (`rb_best*` → `tb_best1` → `tb_best2` → `tb_best3` → `tb_best4` → `tb_best5`) cada vez que cambiaron las reglas, y a `tb_best6` con el reset de la v6; los récords antiguos no se arrastran.
 
 **Ideas posibles**
 

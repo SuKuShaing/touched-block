@@ -11,3 +11,5 @@ expo-env.d.ts
 .playwright-mcp
 .wrangler/
 .claude/
+# APK de prueba y otros entregables locales
+entregas/

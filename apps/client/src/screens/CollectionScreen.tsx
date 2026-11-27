@@ -1,6 +1,6 @@
 import { useIsFocused, useRouter } from 'expo-router';
-import { memo, type ReactNode, useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { memo, type ReactElement, type ReactNode, useCallback, useState } from 'react';
+import { Animated, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ACHIEVEMENTS,
@@ -49,6 +49,7 @@ import { sounds } from '@/game/sounds';
 import { useMarkCollectionSeen } from '@/lib/collectionNews';
 import { achievementValues } from '@/lib/achievementValues';
 import { levelFor, xpOf } from '@/lib/level';
+import { LIST_ROWS, prizeListHeight } from '@/lib/prizeList';
 import { type Settings, updateSettings } from '@/lib/settings';
 import { useTabBarSpace } from '@/lib/tabBar';
 import { C } from '@/theme';
@@ -264,6 +265,74 @@ const ItemRow = memo(function ItemRow({
   );
 });
 
+/** La barra nativa de Android sale oscura sobre este fondo y no se ve: ahí se dibuja una propia. */
+const OWN_SCROLLBAR = Platform.OS === 'android';
+const THUMB_MIN_PX = 32;
+
+/**
+ * Las filas de un tipo de premio: unas cuatro a la vista y el resto con desplazamiento propio
+ * (`lib/prizeList.ts`). Al llegar a un extremo sigue desplazándose la pantalla: en Android lo hace
+ * `nestedScrollEnabled` y en la web, el navegador.
+ */
+function PrizeList({ rows }: { rows: ReactElement[] }) {
+  const { height: screenH } = useWindowDimensions();
+  const [heights, setHeights] = useState<readonly number[]>([]);
+  const measure = (i: number, h: number) =>
+    setHeights((prev) => {
+      if (prev[i] === h) return prev;
+      const next = prev.slice();
+      next[i] = h;
+      return next;
+    });
+  const maxHeight = prizeListHeight(rows.length, heights, screenH);
+  const [contentH, setContentH] = useState(0);
+  const [scrollY] = useState(() => new Animated.Value(0));
+  const viewH = maxHeight === undefined ? contentH : Math.min(maxHeight, contentH);
+  /** Lo que se puede desplazar. */
+  const range = contentH - viewH;
+  const thumbH = range > 0 ? Math.max(THUMB_MIN_PX, (viewH * viewH) / contentH) : 0;
+  return (
+    <View style={styles.list}>
+      <Animated.ScrollView
+        style={[styles.scroll, maxHeight === undefined ? null : { maxHeight }]}
+        nestedScrollEnabled
+        showsVerticalScrollIndicator={!OWN_SCROLLBAR}
+        indicatorStyle="white"
+        onContentSizeChange={(_w: number, h: number) => setContentH(h)}
+        onScroll={
+          OWN_SCROLLBAR
+            ? Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })
+            : undefined
+        }
+        scrollEventThrottle={16}
+      >
+        {rows.map((row, i) =>
+          // solo se miden las filas que deciden el alto
+          i <= LIST_ROWS ? (
+            <View key={row.key} onLayout={(e) => measure(i, e.nativeEvent.layout.height)}>
+              {row}
+            </View>
+          ) : (
+            row
+          ),
+        )}
+      </Animated.ScrollView>
+      {OWN_SCROLLBAR && range > 0 ? (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.thumb,
+            {
+              height: thumbH,
+              transform: [{ translateY: scrollY.interpolate({ inputRange: [0, range], outputRange: [0, viewH - thumbH], extrapolate: 'clamp' }) }],
+            },
+          ]}
+        />
+      ) : null}
+    </View>
+  );
+}
+
 function listed(item: CatalogItem): boolean {
   if (item.requires === 'daily') return SHOW_DAILY;
   if (item.requires === 'accounts') return features.accounts;
@@ -399,8 +468,8 @@ function TestGallery({ onOpen }: { onOpen: (prize: PrizeRef) => void }) {
 
 /**
  * `/coleccion` (pestaña): insignia y la siguiente, experiencia, logros, premios por tipo (tocar uno
- * desbloqueado lo activa) y la vista previa de lo equipado. Tocar la insignia o un logro lo muestra
- * en grande (`PrizeModal`). Las estadísticas son las de este dispositivo y, con sesión, el máximo
+ * desbloqueado lo activa; cada tarjeta se desplaza por dentro) y la vista previa de lo equipado.
+ * Tocar la insignia o un logro lo muestra en grande (`PrizeModal`). Las estadísticas son las de este dispositivo y, con sesión, el máximo
  * con las del servidor (`cosmetics/active.ts`). Sin sesión, un aviso invita a iniciarla para
  * guardar los logros. Sin API no hay barra de pestañas: se llega desde el Perfil y tiene botón
  * Volver. El APK de prueba (`config.unlockAll`) lo dice arriba y añade una galería de premios.
@@ -477,8 +546,8 @@ export function CollectionScreen() {
           const chosen = active[SETTING_KEY[type]];
           return (
             <Section key={type} title={TYPE_LABEL[type]}>
-              <View style={styles.list}>
-                {items.map((it, i) => (
+              <PrizeList
+                rows={items.map((it, i) => (
                   <ItemRow
                     key={it.id}
                     item={it}
@@ -489,7 +558,7 @@ export function CollectionScreen() {
                     onPick={pick}
                   />
                 ))}
-              </View>
+              />
             </Section>
           );
         })}
@@ -566,6 +635,12 @@ const styles = StyleSheet.create({
   },
   levelN: { color: C.accent, fontSize: 26, fontWeight: '800', fontVariant: ['tabular-nums'] },
   list: { backgroundColor: C.bg, borderRadius: 12, overflow: 'hidden' },
+  // en la web, una barra fina y visible sobre el fondo oscuro (en Android, `thumb`)
+  scroll: {
+    flexGrow: 0,
+    ...(Platform.OS === 'web' ? ({ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.3) transparent' } as unknown as ViewStyle) : null),
+  },
+  thumb: { position: 'absolute', top: 0, right: 2, width: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.32)' },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
