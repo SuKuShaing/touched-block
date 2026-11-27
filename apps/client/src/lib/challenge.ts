@@ -1,3 +1,4 @@
+import { runPlatform } from '@/platform/runPlatform';
 import { storage } from '@/platform/storage';
 import { type UnlockState, dailyVisible } from './daily';
 import { SITE_URL } from './shareText';
@@ -161,6 +162,19 @@ export type RunStartFailReason =
 /** ¿El reto ya no se puede jugar (no tiene sentido reintentar)? */
 export const isFatalChallengeReason = (r: RunStartFailReason) => r === 'challenge_not_found' || r === 'challenge_expired';
 
+/** ¿Es la app (Android o iOS) y no la web? Si no se sabe, web. */
+function isApp(): boolean {
+  const p = runPlatform();
+  return p === 'app_android' || p === 'app_ios';
+}
+
+/**
+ * Aviso de versión vieja: la web se arregla recargando; la app, instalando la versión nueva.
+ * `goal` completa la frase ("volver al ranking", "jugar el reto").
+ */
+export const outdatedText = (goal: string, app = isApp()) =>
+  `Hay una versión nueva del juego: ${app ? 'actualiza la app' : 'recarga la página'} para ${goal}.`;
+
 /** Mensaje para el jugador. `serverMessage` se usa solo en los errores sin texto propio. */
 export function startFailureText(mode: 'duel' | 'daily', reason: RunStartFailReason, serverMessage?: string): string {
   const what = mode === 'duel' ? 'El reto' : 'El reto diario';
@@ -169,7 +183,7 @@ export function startFailureText(mode: 'duel' | 'daily', reason: RunStartFailRea
     case 'offline':
       return `${what} necesita conexión.`;
     case 'outdated':
-      return 'Hay una versión nueva del juego: recarga la página para jugar el reto.';
+      return outdatedText('jugar el reto');
     case 'challenge_not_found':
       return 'Este reto no existe. Revisa el enlace.';
     case 'challenge_expired':

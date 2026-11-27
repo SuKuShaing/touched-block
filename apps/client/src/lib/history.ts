@@ -40,7 +40,7 @@ export interface RecordResult {
   best: number;
   isRecord: boolean;
   hist: HistEntry[];
-  /** Estadísticas del dispositivo antes y después de esta partida (`tb_stats1`). */
+  /** Estadísticas del dispositivo antes y después de esta partida (`tb_stats2`). */
   stats: { before: LocalStats; after: LocalStats };
 }
 
@@ -49,7 +49,7 @@ export interface RecordResult {
  * las estadísticas del dispositivo.
  */
 export function recordRun(r: GameResult, now = Date.now()): RecordResult {
-  // Primero las estadísticas: si `tb_stats1` todavía no existe, se inicializan con el historial y
+  // Primero las estadísticas: si `tb_stats2` todavía no existe, se inicializan con el historial y
   // el récord de ANTES de esta partida (si no, la contarían dos veces).
   const stats = recordStats(r, { normal: true });
   let best = loadBest();

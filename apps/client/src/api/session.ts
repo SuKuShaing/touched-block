@@ -7,7 +7,7 @@ import type { LoginResponse, Me } from './types';
  * del usuario quedan en el almacenamiento para seguir con la sesión al volver a abrir la web.
  */
 const RT_KEY = 'tb_rt1';
-const ME_KEY = 'tb_me1';
+const ME_KEY = 'tb_me2';
 
 export interface SessionState {
   /** `authed` si hay refresh token guardado (aunque el usuario aún no se haya cargado). */

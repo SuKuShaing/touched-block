@@ -127,7 +127,7 @@ describe('semana', () => {
   });
 });
 
-describe('tb_daily1', () => {
+describe('tb_daily2', () => {
   it('parte vacío y tolera datos rotos', async () => {
     const d = await load();
     expect(d.loadDailyLocal()).toEqual(d.EMPTY_DAILY);
@@ -384,5 +384,14 @@ describe('inicio', () => {
     expect(d.homeCard({ daily: true, dailyPlayable: false, install: false })).toBe('daily');
     expect(d.homeCard({ daily: false, dailyPlayable: false, install: true })).toBe('install');
     expect(d.homeCard({ daily: false, dailyPlayable: true, install: false })).toBeNull();
+  });
+});
+
+describe('reinicio de datos', () => {
+  it('lo guardado con la clave de antes no se lee', async () => {
+    mem.set('tb_daily1', JSON.stringify({ days: { '2026-11-12': { used: 1, runs: [] } }, played: ['2026-11-12'], rulesSeen: true, bestPct: 90 }));
+    const d = await load();
+    expect(d.DAILY_KEY).toBe('tb_daily2');
+    expect(d.loadDailyLocal()).toEqual(d.EMPTY_DAILY);
   });
 });

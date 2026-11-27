@@ -72,6 +72,8 @@ const KNOWN: readonly RunStartFailReason[] = ['challenge_not_found', 'challenge_
 function failureFrom(mode: 'duel' | 'daily', e: unknown): RunStartFailure {
   if (e instanceof ApiError) {
     if (e.status === 0) return failure(mode, e.code === 'no_api' ? 'off' : 'offline');
+    // la API ya usa otra versión de las reglas: se muestra el texto propio de esta plataforma
+    if (e.code === 'client_outdated') return failure(mode, 'outdated');
     const code = e.code as RunStartFailReason;
     if (KNOWN.includes(code)) return failure(mode, code);
     return failure(mode, 'error', e.message);

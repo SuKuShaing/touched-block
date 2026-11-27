@@ -17,7 +17,7 @@ export default defineConfig({
     ],
   },
   test: {
-    include: ['src/lib/**/*.test.ts', 'src/cosmetics/**/*.test.ts', 'src/game/**/*.test.ts'],
+    include: ['src/lib/**/*.test.ts', 'src/cosmetics/**/*.test.ts', 'src/game/**/*.test.ts', 'src/components/**/*.test.ts'],
     environment: 'node',
   },
 });

@@ -130,7 +130,7 @@ describe('premios del invitado', () => {
     expect(Object.keys(JSON.parse(mem.get(MISSIONS_KEY)!))).toEqual([MONDAY]);
   });
 
-  it('guestMissions junta el historial y el reto de tb_daily1', async () => {
+  it('guestMissions junta el historial y el reto de tb_daily2', async () => {
     const { guestMissions, daily } = await load();
     daily.markDailyStarted(MONDAY);
     daily.recordDailyFinish(MONDAY, { killed: 30, missed: 1, durationTicks: 3000, bestStreak: 12 });
@@ -138,6 +138,15 @@ describe('premios del invitado', () => {
     const agg: DayAgg = { runs: 2, killed: 60, bestStreak: 12, maxTicks: 3000, playedDaily: true, followedToday: false };
     const expected = missionsFor(MONDAY).map((m) => ({ ...m, ...missionProgress(m, agg), rewarded: false }));
     expect(views).toEqual(expected);
+  });
+});
+
+describe('reinicio de datos', () => {
+  it('los premios guardados con la clave de antes no cuentan', async () => {
+    mem.set('tb_miss1', JSON.stringify({ [MONDAY]: missionsFor(MONDAY).map((m) => m.id) }));
+    const { loadRewarded, MISSIONS_KEY } = await load();
+    expect(MISSIONS_KEY).toBe('tb_miss2');
+    expect(loadRewarded(MONDAY).size).toBe(0);
   });
 });
 
@@ -153,6 +162,21 @@ describe('pantalla final', () => {
     expect(newlyCompleted(before, null)).toEqual([]);
     // una misión que no estaba antes (otro día) no cuenta
     expect(newlyCompleted([v('x', false)], [v('y', true)])).toEqual([]);
+  });
+
+  it('una premiada que dejó de cumplirse sigue contando como cumplida', async () => {
+    const { isMissionDone, doneCount, progressLabel, newlyCompleted } = await load();
+    // la API, si se deja de seguir después de cobrar "Sigue a un jugador hoy"
+    const unfollowed: MissionView = { ...v('sigue', false), kind: 'follow', rewarded: true };
+    expect(isMissionDone(unfollowed)).toBe(true);
+    expect(isMissionDone(v('a', false))).toBe(false);
+    expect(progressLabel(unfollowed)).toBe('Lista');
+    expect(doneCount([unfollowed, v('b', false)])).toBe(1);
+    // ni al dejar de seguir ni al volver a seguir se anuncia otra vez
+    expect(newlyCompleted([v('sigue', true)], [unfollowed])).toEqual([]);
+    expect(newlyCompleted([unfollowed], [v('sigue', true)])).toEqual([]);
+    // cumplida y premiada entre las dos lecturas
+    expect(newlyCompleted([v('sigue', false)], [unfollowed]).map((m) => m.id)).toEqual(['sigue']);
   });
 
   it('textos del avance', async () => {

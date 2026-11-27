@@ -8,7 +8,10 @@ const secs = (s: number) => s * TICKS_PER_SECOND;
 describe('tierCells', () => {
   it('una celda por paso de insignia', () => {
     expect([...tierCells(0)]).toHaveLength(TIERS.length); // un punto de código por celda
-    expect(tierCells(secs(10))).toBe('🟫⬛⬛⬛⬛⬛⬛');
+    // sin llegar a Papel no hay insignia: todas las celdas vacías
+    expect(tierCells(secs(10))).toBe(CELL_MISSING.repeat(TIERS.length));
+    expect(tierCells(secs(TIERS[0].at) - 1)).toBe(CELL_MISSING.repeat(TIERS.length));
+    expect(tierCells(secs(TIERS[0].at))).toBe('🟫⬛⬛⬛⬛⬛⬛');
     expect(tierCells(secs(100))).toBe('🟫🟫🟫⬛⬛⬛⬛');
     expect(tierCells(secs(ADD_START))).toBe('🟫🟫🟫🟧⬛⬛⬛');
     expect(tierCells(secs(MUL_START))).toBe('🟫🟫🟫🟧⬜⬛⬛');
@@ -20,7 +23,7 @@ describe('tierCells', () => {
   it('con startAt cuenta la dificultad alcanzada', () => {
     expect(tierCells(secs(10), { startAt: ADD_START })).toBe('🟫🟫🟫🟧⬛⬛⬛');
     expect(tierCells(secs(MUL_START - ADD_START), { startAt: ADD_START })).toBe('🟫🟫🟫🟧⬜⬛⬛');
-    expect(tierCells(secs(10), { noRed: true })).toBe('🟫⬛⬛⬛⬛⬛⬛');
+    expect(tierCells(secs(30), { noRed: true })).toBe('🟫⬛⬛⬛⬛⬛⬛');
   });
 });
 
@@ -50,7 +53,7 @@ describe('dailyShareText', () => {
   it('pocos jugadores, singular y sin posición', () => {
     expect(
       dailyShareText({ number: 3, killed: 1, bestStreak: 1, durationTicks: secs(5), position: { rank: 2, total: 4, betterThanPct: 66 } }).text,
-    ).toBe('Touched Block · Reto #3\n1 bloque · racha 1\n🟫⬛⬛⬛⬛⬛⬛\n2.º de 4');
+    ).toBe('Touched Block · Reto #3\n1 bloque · racha 1\n⬛⬛⬛⬛⬛⬛⬛\n2.º de 4');
     expect(dailyShareText({ number: 3, killed: 9, bestStreak: 4, durationTicks: secs(5) }).text.split('\n')).toHaveLength(3);
   });
 });

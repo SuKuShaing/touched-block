@@ -11,17 +11,18 @@ import type { BackgroundSet } from './backgrounds/types';
 const REGISTRY: BackgroundSet = { ...setA, ...setB, ...animated };
 
 /**
- * Fondo del campo de juego (premio cosmético): `liso` (nada), `grilla`, `estrellas` o `aurora`.
- * Va como **primer hijo** del campo, detrás de los bloques:
+ * Fondo del campo de juego (premio cosmético): `liso` (nada), `grilla`, `estrellas` y `aurora`
+ * se dibujan aquí; los demás, en `backgrounds/` (`setA` y `setB` estáticos, `animated` con una
+ * animación lenta). Va como **primer hijo** del campo, detrás de los bloques:
  *
  *   <Animated.View style={styles.field} …>
  *     <FieldBackground />
  *     {bloques…}
  *
  * Sin `id` usa el fondo elegido en la Colección (validado contra lo desbloqueado); con `id` dibuja
- * ese (vistas previas). Es estático (sin animación por cuadro), no recibe toques
- * (`pointerEvents="none"`), no se parece a un bloque y está memorizado: no se vuelve a dibujar
- * cuando la partida avanza.
+ * ese (vistas previas). Un `id` desconocido no dibuja nada (se ve como `liso`). Ninguno recibe
+ * toques (`pointerEvents="none"`) ni se parece a un bloque, y está memorizado: no se vuelve a
+ * dibujar cuando la partida avanza. `thumb` y `paused` llegan a los de `backgrounds/`.
  */
 export const FieldBackground = memo(function FieldBackground({
   id,

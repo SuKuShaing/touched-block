@@ -105,19 +105,29 @@ try {
   }
 } catch {}
 
+/**
+ * El contexto en el que se puede sonar ahora (también para `synthAudio.web.ts`); null con el sonido
+ * apagado o mientras no haya nacido en un gesto.
+ */
+export function liveContext(): AudioContext | null {
+  if (!getSettings().sound) return null;
+  // El contexto solo se crea dentro de un gesto (onGesture): uno nacido aquí (pointerdown,
+  // requestAnimationFrame, un efecto) queda "suspended" para siempre en iOS. Hasta el primer
+  // gesto no suena nada; después de él, siempre hay contexto.
+  const c = ac;
+  if (!c || broken) return null;
+  if (c.state !== 'running') {
+    check = true;
+    c.resume().catch(() => {});
+  }
+  return c;
+}
+
 export const fx: Fx = {
   beep(f: number, d: number, type: Wave = 'square', v = 0.05) {
     try {
-      if (!getSettings().sound) return;
-      // El contexto solo se crea dentro de un gesto (onGesture): uno nacido aquí (pointerdown,
-      // requestAnimationFrame, un efecto) queda "suspended" para siempre en iOS. Hasta el primer
-      // gesto no suena nada; después de él, siempre hay contexto.
-      const c = ac;
-      if (!c || broken) return;
-      if (c.state !== 'running') {
-        check = true;
-        c.resume().catch(() => {});
-      }
+      const c = liveContext();
+      if (!c) return;
       const o = c.createOscillator();
       const g = c.createGain();
       o.type = type;

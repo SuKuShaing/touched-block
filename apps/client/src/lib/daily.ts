@@ -20,11 +20,11 @@ import { storage } from '@/platform/storage';
 /**
  * Reto diario en el cliente (plan de jugabilidad, fase 4): la fecha local del jugador (D7: el
  * reto cambia a la medianoche de cada uno), la cuenta regresiva, y lo que este dispositivo
- * recuerda en `tb_daily1`: intentos empezados (el invitado tiene 1, D8), partidas terminadas,
+ * recuerda en `tb_daily2`: intentos empezados (el invitado tiene 1, D8), partidas terminadas,
  * la partida de invitado por reclamar, si ya vio la hoja de reglas y el aviso de ayer, y las
  * fechas jugadas (racha del invitado). No depende de la versión de reglas.
  */
-export const DAILY_KEY = 'tb_daily1';
+export const DAILY_KEY = 'tb_daily2';
 
 /** Desde qué visita se presentan el reto diario y las misiones (la 1.ª es solo para jugar). */
 export const DAILY_FROM_VISIT = 2;
@@ -199,7 +199,7 @@ export function weekStrip(today: DateKey, played: readonly string[]): WeekDay[] 
   });
 }
 
-// ---------------------------------------------------------------- tb_daily1
+// ---------------------------------------------------------------- tb_daily2
 
 /** Una partida del reto terminada en este dispositivo. */
 export interface DailyRunLocal {
@@ -258,7 +258,7 @@ function parseDay(v: unknown): DailyDayLocal {
   return day;
 }
 
-/** Lee `tb_daily1` tolerando datos viejos o rotos. */
+/** Lee `tb_daily2` tolerando datos viejos o rotos. */
 export function parseDailyLocal(raw: string | null): DailyLocal {
   if (!raw) return { ...EMPTY_DAILY, days: {}, played: [] };
   try {
@@ -457,7 +457,7 @@ export interface DailyStatus extends DailyInfo {
 
 /**
  * Estado del reto de hoy para la tarjeta y la pantalla final. Con sesión manda el servidor
- * (intentos, mejor, racha); como invitado, `tb_daily1` (1 intento, D8). Los intentos que se
+ * (intentos, mejor, racha); como invitado, `tb_daily2` (1 intento, D8). Los intentos que se
  * empezaron en este dispositivo con una cuenta también cuentan para el invitado: cerrar sesión
  * no da intentos nuevos.
  */

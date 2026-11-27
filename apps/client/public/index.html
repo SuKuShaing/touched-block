@@ -19,6 +19,8 @@
       //   última actividad y estadísticas con el mayor; historial, logros celebrados, misiones
       //   premiadas y fechas del reto diario unidos; tutoriales y desbloqueo vistos si alguno los vio.
       //   Los ajustes, la sesión y el reto pendiente del sitio nuevo se conservan.
+      // - Las claves de antes del reinicio de datos (reglas v6: récord, historial, estadísticas,
+      //   misiones, reto diario, logros celebrados y copia del usuario) no tienen regla: no entran.
       // - Ida y vuelta (una sola vez por navegador, tb_mig1): quien entra primero aquí (los enlaces
       //   compartidos ya apuntan a este sitio) pasa por la web vieja, que lo devuelve a la misma
       //   dirección con sus datos (?volver=). La marca se guarda ANTES de salir: nunca hay bucle.
@@ -63,9 +65,9 @@
           var rt = d.tb_rt1;
           if (typeof rt === 'string' && /^[A-Za-z0-9_-]{20,200}$/.test(rt) && ls.getItem('tb_rt1') === null) {
             ls.setItem('tb_rt1', rt);
-            var me = d.tb_me1;
-            if (typeof me === 'string' && me.length <= 100000 && isObj(js(me))) ls.setItem('tb_me1', me);
-            else ls.removeItem('tb_me1');
+            var me = d.tb_me2;
+            if (typeof me === 'string' && me.length <= 100000 && isObj(js(me))) ls.setItem('tb_me2', me);
+            else ls.removeItem('tb_me2');
           }
           return true;
         }
@@ -127,7 +129,7 @@
           return isObj(g) && typeof g.k === 'number' && typeof g.m === 'number' && typeof g.d === 'number' ? g.d + ':' + g.k + ':' + g.m : null;
         }
         var REGLAS = {
-          tb_best5: mayor,
+          tb_best6: mayor,
           tb_visits1: mayor,
           tb_last1: mayor,
           tb_onb1: marca,
@@ -136,7 +138,7 @@
           tb_set1: siFalta,
           tb_reto1: siFalta,
           // estadísticas (lib/stats.ts): el mayor campo a campo, como su maxOf
-          tb_stats1: function (v, cur) {
+          tb_stats2: function (v, cur) {
             var a = obj(v);
             if (!a) return null;
             var c = obj(cur) || {};
@@ -146,7 +148,7 @@
             return JSON.stringify(out);
           },
           // historial: unión sin repetir, la más reciente primero, máx. HIST_MAX (30)
-          tb_hist5: function (v, cur) {
+          tb_hist6: function (v, cur) {
             var a = js(v);
             if (!Array.isArray(a)) return null;
             var h = union(arr(cur), a, partida).filter(function (g) {
@@ -158,7 +160,7 @@
             return JSON.stringify(h.slice(0, 30));
           },
           // logros ya celebrados (game/celebrationQueue.ts): unión, máx. 500
-          tb_cele1: function (v, cur) {
+          tb_cele2: function (v, cur) {
             var a = js(v);
             if (!Array.isArray(a)) return null;
             var s = function (x) {
@@ -167,7 +169,7 @@
             return JSON.stringify(union(arr(cur), a, s).slice(0, 500));
           },
           // misiones premiadas por fecha (lib/missions.ts): unión de ids por fecha (nunca se premia dos veces)
-          tb_miss1: function (v, cur) {
+          tb_miss2: function (v, cur) {
             var a = obj(v);
             if (!a) return null;
             var out = obj(cur) || {};
@@ -181,7 +183,7 @@
           },
           // reto diario (lib/daily.ts): fechas jugadas unidas; por día, intentos con el mayor (no
           // regala intentos) y partidas unidas; reclamo y "habrías quedado" del sitio nuevo si hay
-          tb_daily1: function (v, cur) {
+          tb_daily2: function (v, cur) {
             var a = obj(v);
             if (!a) return null;
             var c = obj(cur);

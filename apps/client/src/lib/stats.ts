@@ -3,11 +3,11 @@ import { storage } from '@/platform/storage';
 import { BEST_KEY, HIST_KEY } from './historyKeys';
 
 /**
- * Estadísticas de este dispositivo (clave `tb_stats1`). No dependen de la versión de reglas,
+ * Estadísticas de este dispositivo (clave `tb_stats2`). No dependen de la versión de reglas,
  * así que no se reinician si algún día cambian. Con sesión manda el servidor (`Me.stats`); para
  * la Colección de este dispositivo se usa el máximo de ambas (`mergeStats`).
  */
-export const STATS_KEY = 'tb_stats1';
+export const STATS_KEY = 'tb_stats2';
 
 export interface LocalStats {
   /** Duración de la partida más larga, en ticks (60 por segundo). Define la insignia. */
@@ -55,7 +55,7 @@ function read(): LocalStats {
   }
   try {
     const o: unknown = JSON.parse(raw);
-    if (!o || typeof o !== 'object' || Array.isArray(o)) throw new Error('tb_stats1 inválido');
+    if (!o || typeof o !== 'object' || Array.isArray(o)) throw new Error('tb_stats2 inválido');
     const r = o as Record<string, unknown>;
     return {
       bestTicks: num(r.bestTicks),

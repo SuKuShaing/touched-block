@@ -1,22 +1,33 @@
 import { getActiveCosmetics } from '@/cosmetics/active';
+import type { SoundId } from '@/cosmetics/ids';
 import { fx } from '@/platform/fx';
 import type { Wave } from '@/platform/fx.types';
+import { synthAudio } from '@/platform/synthAudio';
+import { isSynthPack } from './synth/packs';
+import { createSynthPlayer } from './synth/render';
 
 /**
- * Sonidos del juego por paquete (premio cosmético). Todos se generan con WebAudio (`fx.beep`),
- * sin archivos de audio. `fx` ya respeta los ajustes de sonido y vibración y nunca lanza.
+ * Sonidos del juego por paquete (premio cosmético). Todos se generan con WebAudio, sin archivos de
+ * audio, y respetan los ajustes de sonido y vibración. Nada de aquí lanza.
+ *
+ * - 8 bits, Suave y Marimba suenan en vivo con `fx.beep` (definidos aquí).
+ * - Los otros 6 (`game/synth/`) se renderizan una vez a memoria y se reutilizan; mientras no estén
+ *   listos, suenan en vivo con la misma voz.
  *
  * Uso (desde GameScreen):
  *   sounds.play('start')            // dentro del toque de "Jugar" (iOS solo habilita el audio en un gesto)
  *   sounds.play('hit', toquesDados) // toques dados al bloque (b.total − b.left)
  *   sounds.play('combo', ev.bonus)  // segundos de premio
  *   sounds.play('kill' | 'trap' | 'heal' | 'expire' | 'miss' | 'end' | 'milestone')
+ *   sounds.prepare()                // opcional: ya lo hacen play('start') y preview
  *
  * El paquete es el elegido en la Colección (`tb_set1.soundPack`, validado contra lo desbloqueado;
  * desconocido → `8bits`). La vibración es la misma en todos los paquetes.
  */
 export type SoundName = 'start' | 'hit' | 'kill' | 'trap' | 'heal' | 'expire' | 'miss' | 'combo' | 'end' | 'milestone';
-export type SoundPackId = '8bits' | 'suave' | 'marimba';
+export type SoundPackId = SoundId;
+/** Los paquetes que suenan en vivo con `fx.beep`. */
+type BeepPackId = '8bits' | 'suave' | 'marimba';
 
 type Pack = Record<SoundName, (arg: number) => void>;
 
@@ -86,8 +97,8 @@ const marimba: Pack = {
   milestone: () => arpeggio([523, 659, 784, 1047], 90, (f) => mallet(f, 0.18, 0.07)),
 };
 
-export const SOUND_PACKS: Record<SoundPackId, Pack> = { '8bits': bits8, suave, marimba };
-export const DEFAULT_SOUND_PACK: SoundPackId = '8bits';
+export const SOUND_PACKS: Record<BeepPackId, Pack> = { '8bits': bits8, suave, marimba };
+export const DEFAULT_SOUND_PACK: BeepPackId = '8bits';
 
 /** Vibración de cada sonido (ms; 0 = sin vibración). Igual en todos los paquetes. */
 export const BUZZ: Record<SoundName, number> = {
@@ -104,17 +115,38 @@ export const BUZZ: Record<SoundName, number> = {
 };
 
 function packOf(id: string | null | undefined): Pack {
-  return id && Object.prototype.hasOwnProperty.call(SOUND_PACKS, id) ? SOUND_PACKS[id as SoundPackId] : SOUND_PACKS[DEFAULT_SOUND_PACK];
+  return id && Object.prototype.hasOwnProperty.call(SOUND_PACKS, id) ? SOUND_PACKS[id as BeepPackId] : SOUND_PACKS[DEFAULT_SOUND_PACK];
+}
+
+const synth = createSynthPlayer(synthAudio);
+
+/** El sonido sin la vibración. Puede lanzar. */
+function emit(id: string, name: SoundName, arg: number) {
+  if (isSynthPack(id)) synth.play(id, name, arg);
+  else packOf(id)[name](arg);
 }
 
 export const sounds = {
+  /**
+   * Deja listo un paquete (el equipado si no se indica): renderiza los sintetizados y suelta de la
+   * memoria el anterior. Vuelve de inmediato.
+   */
+  prepare(packId?: string) {
+    try {
+      const id = packId ?? getActiveCosmetics().soundPack;
+      if (isSynthPack(id)) synth.prepare(id);
+      else synth.drop();
+    } catch {}
+  },
   /**
    * Toca un sonido con el paquete en uso (o con `packId`, para escucharlo en la Colección).
    * `arg`: toques dados al bloque en `hit`, segundos de premio en `combo`.
    */
   play(name: SoundName, arg = 0, packId?: string) {
     try {
-      packOf(packId ?? getActiveCosmetics().soundPack)[name](arg);
+      const id = packId ?? getActiveCosmetics().soundPack;
+      if (name === 'start') sounds.prepare(id);
+      emit(id, name, arg);
     } catch {}
     const ms = BUZZ[name];
     if (ms > 0) fx.buzz(ms);
@@ -122,11 +154,16 @@ export const sounds = {
   /** Muestra corta de un paquete (al elegirlo en la Colección): golpes, destruir y un combo. */
   preview(packId: string) {
     try {
-      const p = packOf(packId);
-      p.hit(1);
-      after(110, () => p.hit(2));
-      after(220, () => p.kill(0));
-      after(480, () => p.combo(1));
+      sounds.prepare(packId);
+      const one = (name: SoundName, arg: number) => {
+        try {
+          emit(packId, name, arg);
+        } catch {}
+      };
+      one('hit', 1);
+      after(110, () => one('hit', 2));
+      after(220, () => one('kill', 0));
+      after(480, () => one('combo', 1));
     } catch {}
   },
 };

@@ -21,8 +21,9 @@
       dirección con sus datos.
 
       El origen sukushaing.github.io lo comparten todos los proyectos del autor: se leen solo
-      las claves del juego, por nombre exacto. Si el juego agrega una clave local nueva, no hace
-      falta sumarla aquí: después de la mudanza los datos nuevos ya nacen en el sitio nuevo.
+      las claves del juego, por nombre exacto. Si se agrega o renombra una clave local (tb_*),
+      sumarla a CLAVES aquí y a REGLAS en el script tb-mudanza del sitio nuevo. Las claves de antes
+      del reinicio de datos (reglas v6) no están en la lista: esos datos no se llevan.
     -->
     <meta name="robots" content="noindex" />
     <!-- el sitio nuevo acepta la sesión solo si viene de este origen (document.referrer) -->
@@ -51,16 +52,16 @@
           'condiciones-del-servicio': 'https://touchedblock.app/terminos/',
         };
         // Claves locales del juego, en orden de prioridad (si no caben todas, se cortan las últimas).
-        // Lista completa en apps/client/src: api/session.ts (tb_rt1, tb_me1), lib/historyKeys.ts,
+        // Lista completa en apps/client/src: api/session.ts (tb_rt1, tb_me2), lib/historyKeys.ts,
         // lib/stats.ts, lib/onboarding.ts, lib/daily.ts, lib/settings.ts, lib/missions.ts,
         // lib/challenge.ts y game/celebrationQueue.ts. Debe coincidir con las reglas del script
         // tb-mudanza de apps/client/public/index.html.
         var CLAVES = [
-          'tb_rt1', 'tb_me1', // sesión (refresh token + copia del usuario)
-          'tb_best5', 'tb_stats1', 'tb_hist5', // récord, estadísticas (nivel/XP), historial
+          'tb_rt1', 'tb_me2', // sesión (refresh token + copia del usuario)
+          'tb_best6', 'tb_stats2', 'tb_hist6', // récord, estadísticas (nivel/XP), historial
           'tb_onb1', 'tb_onb_adv1', 'tb_visits1', 'tb_last1', // tutoriales vistos y visitas
-          'tb_unlock1', 'tb_set1', 'tb_miss1', 'tb_daily1', 'tb_reto1', // desbloqueo, ajustes, misiones, reto diario, reto pendiente
-          'tb_cele1', // logros ya celebrados (game/celebrationQueue.ts)
+          'tb_unlock1', 'tb_set1', 'tb_miss2', 'tb_daily2', 'tb_reto1', // desbloqueo, ajustes, misiones, reto diario, reto pendiente
+          'tb_cele2', // logros ya celebrados (game/celebrationQueue.ts)
         ];
         var MAX = 200000; // tope del JSON (el real ronda unos pocos KB)
 
