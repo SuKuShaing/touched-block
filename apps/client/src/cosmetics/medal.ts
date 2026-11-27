@@ -1,7 +1,7 @@
 import type { TierId } from '@tb/engine';
 
 /**
- * Dibujo vectorial de las medallas (insignias y logros), como un árbol SVG sin transformaciones
+ * Dibujo vectorial de las medallas de las insignias, como un árbol SVG sin transformaciones
  * ni filtros, para que se vea igual en las tres salidas:
  * - web: `<img>` con el SVG como data URI (`components/MedalImage.web.tsx`);
  * - app: los mismos nodos con react-native-svg (`components/MedalImage.native.tsx`);
@@ -28,8 +28,6 @@ export interface MedalSpec {
   tier: TierId;
   /** En `madera`: 1 = Papel, 2 = Cartón, 3 = Madera. En las demás, 1. */
   step: number;
-  /** Ya no cambia el dibujo: todas las medallas llevan estrella. */
-  emblem: 'tier' | 'star';
   small: boolean;
 }
 
@@ -671,7 +669,6 @@ function diamondMedal(spec: MedalSpec): SvgNode[] {
 // ---------------------------------------------------------------- salida
 
 const nodeCache = new Map<string, SvgNode>();
-// sin `emblem`: no cambia el dibujo
 const keyOf = (s: MedalSpec) => `${s.tier}.${s.step}.${s.small ? 1 : 0}`;
 
 /** Árbol SVG de la medalla (raíz `svg` con viewBox 0 0 100 100). Se guarda en caché. */

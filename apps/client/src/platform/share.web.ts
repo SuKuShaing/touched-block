@@ -71,7 +71,7 @@ function loadSvg(svg: () => string | null): Promise<HTMLImageElement | null> {
 function loadMedal(ref: TierRef | null | undefined): Promise<HTMLImageElement | null> {
   const t = tierStepOf(ref);
   if (!t) return Promise.resolve(null);
-  return loadSvg(() => medalSvg({ tier: t.tier, step: t.step, emblem: 'tier', small: false }, SHARE_BADGE.box));
+  return loadSvg(() => medalSvg({ tier: t.tier, step: t.step, small: false }, SHARE_BADGE.box));
 }
 
 /** La imagen grande de la tarjeta de un premio: la insignia o el icono del logro (los demás, nada). */
@@ -80,7 +80,7 @@ function loadPrizeArt(card: PrizeShareCard): Promise<HTMLImageElement | null> {
   return loadSvg(() => {
     if (card.kind === 'achievement') return achievementIconSvg(card.id, card.level, px);
     const t = card.kind === 'tier' ? TIERS[card.index] : undefined;
-    return t ? medalSvg({ tier: t.tier, step: t.step, emblem: 'tier', small: false }, px) : null;
+    return t ? medalSvg({ tier: t.tier, step: t.step, small: false }, px) : null;
   });
 }
 

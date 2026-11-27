@@ -1,18 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { TIERS, type TierId } from '@tb/engine';
+import { TIERS } from '@tb/engine';
 import { medalDataUri, medalNode, medalSvg, type MedalSpec, type SvgNode } from './medal';
 
 // fs de Node sin depender de @types/node (el cliente no los tiene); vitest corre en apps/client
 const fs = (await import(/* @vite-ignore */ 'node:' + 'fs')) as { readFileSync(path: string, enc: 'utf8'): string };
 
-const MATS: TierId[] = ['madera', 'bronce', 'plata', 'oro', 'diamante'];
-
-/** Todas las variantes que dibuja la app: cada insignia y cada logro, en grande y en chico. */
-const SPECS: MedalSpec[] = [];
-for (const small of [false, true]) {
-  for (const t of TIERS) SPECS.push({ tier: t.tier, step: t.step, emblem: 'tier', small });
-  for (const m of MATS) SPECS.push({ tier: m, step: 1, emblem: 'star', small });
-}
+/** Todas las variantes que dibuja la app: cada insignia, en grande y en chico. */
+const SPECS: MedalSpec[] = [false, true].flatMap((small) => TIERS.map((t) => ({ tier: t.tier, step: t.step, small })));
 
 function walk(n: SvgNode, f: (n: SvgNode) => void) {
   f(n);
@@ -37,7 +31,7 @@ function canonical(svg: string): string[] {
 }
 
 describe('medallas', () => {
-  it.each(SPECS.map((s) => [`${s.tier} ${s.step} ${s.emblem}${s.small ? ' chica' : ''}`, s]))('%s: SVG válido para web y app', (_, spec) => {
+  it.each(SPECS.map((s) => [`${s.tier} ${s.step}${s.small ? ' chica' : ''}`, s]))('%s: SVG válido para web y app', (_, spec) => {
     const root = medalNode(spec as MedalSpec);
     expect(root.a.viewBox).toBe('0 0 100 100');
     const ids = new Set<string>();
@@ -71,19 +65,19 @@ describe('medallas', () => {
     '%s: igual al diseño de referencia',
     (_, step, small) => {
       const reference = fs.readFileSync(`../../config_logros/insignias_nuevas/madera-${step}${small ? '-small' : ''}.svg`, 'utf8');
-      expect(canonical(medalSvg({ tier: 'madera', step, emblem: 'tier', small }, 120))).toEqual(canonical(reference));
+      expect(canonical(medalSvg({ tier: 'madera', step, small }, 120))).toEqual(canonical(reference));
     },
   );
 
   it('Papel, Cartón y Madera se distinguen, en grande y en chico', () => {
     for (const small of [false, true]) {
-      const svgs = NEW_DESIGNS.map(([, step]) => medalSvg({ tier: 'madera', step, emblem: 'tier', small }, 64));
+      const svgs = NEW_DESIGNS.map(([, step]) => medalSvg({ tier: 'madera', step, small }, 64));
       expect(new Set(svgs).size).toBe(3);
     }
   });
 
   it('el texto SVG lleva tamaño y espacio de nombres; el data URI se guarda en caché', () => {
-    const spec: MedalSpec = { tier: 'oro', step: 1, emblem: 'tier', small: false };
+    const spec: MedalSpec = { tier: 'oro', step: 1, small: false };
     const svg = medalSvg(spec, 150);
     expect(svg.startsWith('<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 100 100">')).toBe(true);
     expect(svg).toContain('stop-color=');

@@ -1,4 +1,4 @@
-import { useFocusEffect, useLocalSearchParams, useNavigation, useRootNavigationState, useRouter } from 'expo-router';
+import { useFocusEffect, useIsFocused, useLocalSearchParams, useNavigation, useRootNavigationState, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { type HostInstance, type LayoutChangeEvent, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -206,6 +206,7 @@ export function GameScreen() {
   // con sesión, GET /me al volver al inicio (si lo que hay ya está viejo): trae los invitados y el
   // porcentaje del reto, que cambian fuera de la partida y se celebran
   useMeRefresh();
+  const focused = useIsFocused();
   useFocusEffect(
     useCallback(() => {
       void qc.refetchQueries({ queryKey: ['me'], type: 'active', stale: true }, { cancelRefetch: false });
@@ -819,8 +820,8 @@ export function GameScreen() {
           <View pointerEvents="none" style={[styles.areaBorder, { left: a.ox - 1, top: a.oy - 1, width: a.w + 2, height: a.h + 2 }]} />
         ) : null}
         <View pointerEvents="none" style={[styles.area, { left: a.ox, top: a.oy, width: a.w, height: a.h }, a.letterbox && styles.areaInner]}>
-          {/* terminada la partida, los fondos animados se quedan quietos */}
-          <FieldBackground paused={!!s?.over} />
+          {/* terminada la partida o con otra pantalla encima, los fondos animados se quedan quietos */}
+          <FieldBackground paused={!!s?.over || !focused} />
           {s && !s.over
             ? s.blocks.map((b) => {
                 const r = rectToArea(a, b);
