@@ -6,7 +6,7 @@ import {
   BASE_LIVES,
   BOMB_MIN_PLAYED,
   type Block,
-  DAILY_CALENDAR,
+  DAILY_CYCLE,
   type GameConfig,
   type GameMods,
   type GameState,
@@ -317,7 +317,8 @@ describe('repetición (replay) con cada modificador', () => {
     { lives: MAX_LIVES_CAP },
     { noRed: true },
     { startAt: ADD_START, only: 'mul', lives: 2, noRed: true },
-    ...DAILY_CALENDAR.flatMap((d) => (d.mods ? [d.mods] : [])),
+    // el ciclo incluye los retos del calendario semanal
+    ...DAILY_CYCLE.flatMap((d) => (d.mods ? [d.mods] : [])),
   ];
   const cases = all.filter((m, i) => all.findIndex((x) => JSON.stringify(x) === JSON.stringify(m)) === i);
 

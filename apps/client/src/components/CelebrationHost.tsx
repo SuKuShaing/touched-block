@@ -20,7 +20,7 @@ export const CELEBRATION_CTX: PrizeContext = { accounts: features.accounts, dail
  * a que se vuelva al inicio o a la pantalla final. Toca la fanfarria al aparecer.
  *
  * También le pasa a `observeCelebrations` lo que el jugador tiene cada vez que cambia: así se
- * siembra `tb_cele1` la primera vez (sin celebrar lo que ya tenía), se celebra lo que llega tarde
+ * siembra `tb_cele2` la primera vez (sin celebrar lo que ya tenía), se celebra lo que llega tarde
  * por una partida de este dispositivo (un fondo por los bloques extra de una misión, el mejor
  * resultado de un reto como invitado) y se registra sin celebrar lo que llega de la cuenta.
  */
@@ -30,16 +30,18 @@ export function CelebrationHost({ blocked }: { blocked: boolean }) {
   const viewer = useViewer();
   const { stats } = useActiveCosmetics();
   const daily = useDailyLocal();
-  const dailyPct = viewer.user ? (viewer.user.stats?.bestDailyPct ?? null) : daily.bestPct;
 
   // solo los datos de este dispositivo (los de la cuenta pueden venir de otro, o llegar tarde)
   const localStats = useLocalStats();
-  const local = useMemo(() => catalogStatsFor(localStats, null, localStreakBest(daily)), [localStats, daily]);
+  const local = useMemo(
+    () => catalogStatsFor(localStats, null, { streakBest: localStreakBest(daily), bestPct: daily.bestPct }),
+    [localStats, daily],
+  );
 
   // ---- registro de lo que ya tiene, y lo que llega tarde por una partida ----
   useEffect(() => {
-    observeCelebrations({ viewer: viewer.key, local, localPct: daily.bestPct, owned: () => ownedKeys(stats, dailyPct) }, CELEBRATION_CTX);
-  }, [stats, dailyPct, viewer.key, local, daily.bestPct]);
+    observeCelebrations({ viewer: viewer.key, local, owned: () => ownedKeys(stats) }, CELEBRATION_CTX);
+  }, [stats, viewer.key, local]);
   // otra partida: lo que cambie desde ahora ya no es de la anterior
   useEffect(() => {
     if (blocked) disarmCelebrations();

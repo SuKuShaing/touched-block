@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import type { GameMods } from '@tb/engine';
+import { type GameMods, RULES_VERSION } from '@tb/engine';
 import request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { configureApp } from '../../src/app.setup';
@@ -43,7 +43,7 @@ export async function createTestApp() {
   /** Vacía todas las tablas. */
   async function reset() {
     await prisma.$executeRawUnsafe(
-      'TRUNCATE "Report", "Block", "MissionReward", "DailyEntry", "DailyChallenge", "ChallengeEntry", "Challenge", "UserStats", ' +
+      'TRUNCATE "DataReset", "Report", "Block","MissionReward", "DailyEntry", "DailyChallenge", "ChallengeEntry", "Challenge", "UserStats", ' +
         '"BestScore", "Follow", "Run", "RefreshToken", "AuthIdentity", "User" RESTART IDENTITY CASCADE',
     );
     app.get(CommonFieldService).invalidate();
@@ -67,10 +67,15 @@ export async function createTestApp() {
     await prisma.run.update({ where: { id: runId }, data: { startedAt: new Date(Date.now() - minutes * 60_000) } });
   }
 
-  /** Empieza una partida (POST /runs) y devuelve la respuesta; `body` se suma a `{ fieldW: 390, fieldH: 640 }`. */
+  /**
+   * Empieza una partida (POST /runs) y devuelve la respuesta; `body` se suma a
+   * `{ fieldW: 390, fieldH: 640 }`. Como el cliente, en `duel` y `daily` envía `rulesVersion`
+   * (`rulesVersion: undefined` en `body` imita a un cliente viejo).
+   */
   function startRun(user: TestUser | null, body: Record<string, unknown> = {}) {
     const auth = (r: request.Test) => (user ? r.set('Authorization', `Bearer ${user.token}`) : r);
-    return auth(http().post('/runs')).send({ fieldW: 390, fieldH: 640, ...body });
+    const versioned = body.mode === 'duel' || body.mode === 'daily' ? { rulesVersion: RULES_VERSION } : {};
+    return auth(http().post('/runs')).send({ fieldW: 390, fieldH: 640, ...versioned, ...body });
   }
 
   /** Juega con el bot una partida ya creada (con el campo, las vidas y los modificadores que devolvió el servidor) y la envía. */

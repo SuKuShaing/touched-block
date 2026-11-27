@@ -10,13 +10,14 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import { COLORS, type TierId } from '@tb/engine';
+import { COLORS } from '@tb/engine';
 import { type CatalogItem, SETTING_KEY } from '@/cosmetics/catalog';
 import { getPalette } from '@/cosmetics/palettes';
 import { type Celebration, celebrationTexts, stepText } from '@/game/celebrations';
 import { sounds } from '@/game/sounds';
 import { getSettings, updateSettings, useSettings } from '@/lib/settings';
 import { C } from '@/theme';
+import { AchievementIcon } from './AchievementIcon';
 import { Confetti } from './Confetti';
 import { FieldBackground } from './FieldBackground';
 import { Burst, type BurstEffect } from './Fx';
@@ -132,12 +133,7 @@ function PrizeVisual({ c, still }: { c: Celebration; still: boolean }) {
     case 'achievement':
       return (
         <View style={styles.big}>
-          <TierBadge
-            tier={{ tier: c.material.toLowerCase() as TierId, step: 1 }}
-            size="lg"
-            glyph={c.material === 'Diamante' ? undefined : '★'}
-            label={`Logro ${c.material}`}
-          />
+          <AchievementIcon id={c.id} level={c.level} size="lg" />
         </View>
       );
     case 'feature':

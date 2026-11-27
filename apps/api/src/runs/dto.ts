@@ -40,6 +40,13 @@ export class CreateRunDto {
    */
   @Allow()
   platform?: unknown;
+
+  /**
+   * Versión de reglas del cliente. La API solo la exige en `duel` y `daily` (si falta o no es la
+   * actual: 409 `client_outdated`); en `normal` se ignora.
+   */
+  @Allow()
+  rulesVersion?: unknown;
 }
 
 export class FinishRunDto {

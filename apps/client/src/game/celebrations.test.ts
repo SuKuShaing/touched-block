@@ -34,42 +34,52 @@ describe('qué se celebra al terminar una partida', () => {
   });
 
   it('primera partida: insignia primero, después el premio y el logro', () => {
-    const l = afterRun(EMPTY_CATALOG_STATS, stats({ runs: 1, bestTicks: secs(15), totalKilled: 8, bestStreak: 12 }));
-    expect(keys(l)).toEqual(['tier:0', 'item:sound:suave', 'ach:racha:1']);
+    const l = afterRun(EMPTY_CATALOG_STATS, stats({ runs: 1, bestTicks: secs(25), totalKilled: 8, bestStreak: 12 }));
+    expect(keys(l)).toEqual(['tier:0', 'item:sound:suave', 'item:sound:marimba', 'item:background:grilla', 'ach:racha:1']);
     expect(l[0]).toMatchObject({ kind: 'tier', first: true });
   });
 
-  it('subir a Bronce: la insignia, Neón y después los logros', () => {
-    const a = stats({ runs: 10, bestTicks: secs(ADD_START - 1), totalKilled: 95, bestStreak: 20 });
-    const b = stats({ runs: 11, bestTicks: secs(ADD_START), totalKilled: 130, bestStreak: 26 });
-    expect(keys(afterRun(a, b))).toEqual(['tier:3', 'item:palette:neon', 'item:effect:confeti', 'ach:racha:2', 'ach:bloques:1']);
+  it('una primera partida de menos de 20 s no da insignia', () => {
+    expect(keys(afterRun(EMPTY_CATALOG_STATS, stats({ runs: 1, bestTicks: secs(15), totalKilled: 4 })))).toEqual(['item:sound:suave']);
+  });
+
+  it('subir a Bronce: la insignia, los premios y después los logros', () => {
+    const a = stats({ runs: 11, bestTicks: secs(ADD_START - 1), totalKilled: 280, bestStreak: 20 });
+    const b = stats({ runs: 12, bestTicks: secs(ADD_START), totalKilled: 320, bestStreak: 26 });
+    expect(keys(afterRun(a, b))).toEqual(['tier:3', 'item:palette:pastel', 'item:sound:viento', 'item:effect:confeti', 'ach:racha:2']);
   });
 
   it('un logro que salta dos materiales se celebra una vez, con el más alto', () => {
     const l = afterRun(stats({ runs: 1, bestTicks: secs(10) }), stats({ runs: 2, bestTicks: secs(10), bestStreak: 30 }));
-    expect(keys(l)).toEqual(['item:effect:confeti', 'ach:racha:2']);
-    expect(celebrationTexts(l[1])).toMatchObject({ title: '¡Logro de Bronce!', name: 'Mejor racha', sub: 'Racha de 25.' });
+    expect(keys(l)).toEqual(['item:effect:confeti', 'item:background:grilla', 'ach:racha:2']);
+    expect(celebrationTexts(l[2])).toMatchObject({ title: '¡Logro de Cartón!', name: 'Máximo combo', sub: 'Racha de 25.' });
   });
 
   it('el reto del día y las misiones van al final', () => {
-    const a = stats({ runs: 2, bestTicks: secs(10), totalKilled: 60 });
-    const b = stats({ runs: 3, bestTicks: secs(NUM_STEP * 2 + 1), totalKilled: 110 });
-    expect(keys(afterRun(a, b, ALL, true))).toEqual(['tier:1', 'item:palette:pastel', 'ach:bloques:1', FEATURE_DAILY_KEY]);
+    const a = stats({ runs: 9, bestTicks: secs(10) });
+    const b = stats({ runs: 10, bestTicks: secs(NUM_STEP * 2 + 1) });
+    expect(keys(afterRun(a, b, ALL, true))).toEqual([
+      'tier:0',
+      'item:sound:marimba',
+      'item:effect:chispas',
+      'ach:partidas:1',
+      FEATURE_DAILY_KEY,
+    ]);
   });
 
   it('sin API no se celebra lo que necesita cuentas o el reto diario', () => {
     const a = stats({ runs: 5, dailyStreakBest: 2 });
     const b = stats({ runs: 6, dailyStreakBest: 7 });
-    expect(keys(afterRun(a, b, ALL))).toEqual(['item:palette:constancia', 'ach:diasReto:2']);
+    expect(keys(afterRun(a, b, ALL))).toEqual(['item:effect:emojis', 'item:background:puntos', 'ach:diasReto:2']);
     expect(afterRun(a, b, NONE)).toEqual([]);
   });
 });
 
 describe('sin repetir', () => {
-  const bronce = afterRun(stats({ runs: 10, bestTicks: secs(ADD_START - 1) }), stats({ runs: 11, bestTicks: secs(ADD_START) }));
+  const bronce = afterRun(stats({ runs: 11, bestTicks: secs(ADD_START - 1) }), stats({ runs: 12, bestTicks: secs(ADD_START) }));
 
   it('saca lo ya celebrado y marca también lo que deja atrás', () => {
-    const { show, mark } = pendingCelebrations(bronce, new Set(['item:palette:neon']));
+    const { show, mark } = pendingCelebrations(bronce, new Set(['item:sound:viento']));
     expect(keys(show)).toEqual(['tier:3']);
     // subir a Bronce cuenta todas las insignias anteriores
     expect(mark).toEqual(['tier:0', 'tier:1', 'tier:2', 'tier:3']);
@@ -77,17 +87,17 @@ describe('sin repetir', () => {
 
   it('dos veces lo mismo en la lista: una sola', () => {
     const { show } = pendingCelebrations([...bronce, ...bronce], new Set());
-    expect(keys(show)).toEqual(['tier:3', 'item:palette:neon']);
+    expect(keys(show)).toEqual(['tier:3', 'item:sound:viento']);
   });
 
   it('una insignia menor ya cubierta por una mayor no se celebra', () => {
     const seen = new Set(coveredKeys(bronce[0]));
-    const madera2: Celebration = { kind: 'tier', key: 'tier:1', tier: TIERS[1], first: false };
-    expect(pendingCelebrations([madera2], seen).show).toEqual([]);
+    const carton: Celebration = { kind: 'tier', key: 'tier:1', tier: TIERS[1], first: false };
+    expect(pendingCelebrations([carton], seen).show).toEqual([]);
   });
 
-  it('logro en Plata cubre Madera y Bronce', () => {
-    expect(coveredKeys({ kind: 'achievement', key: 'ach:racha:3', id: 'racha', level: 3, material: 'Plata' })).toEqual([
+  it('logro en Madera cubre Papel y Cartón', () => {
+    expect(coveredKeys({ kind: 'achievement', key: 'ach:racha:3', id: 'racha', level: 3, material: 'Madera' })).toEqual([
       'ach:racha:1',
       'ach:racha:2',
       'ach:racha:3',
@@ -95,26 +105,35 @@ describe('sin repetir', () => {
   });
 
   it('ownedKeys: lo que ya tiene (para sembrar el registro)', () => {
-    const k = ownedKeys(stats({ runs: 4, bestTicks: secs(ADD_START), bestStreak: 25, totalKilled: 120 }), 60);
+    const k = ownedKeys(stats({ runs: 10, bestTicks: secs(ADD_START), bestStreak: 25, bestDailyPct: 60 }));
     expect(k).toEqual(
-      expect.arrayContaining(['tier:0', 'tier:3', 'item:palette:neon', 'item:sound:suave', 'ach:racha:2', 'ach:bloques:1', 'ach:mejorReto:2']),
+      expect.arrayContaining([
+        'tier:0',
+        'tier:3',
+        'item:sound:viento',
+        'item:sound:suave',
+        'item:background:hexagonos',
+        'ach:racha:2',
+        'ach:partidas:1',
+        'ach:mejorReto:3',
+      ]),
     );
     expect(k).not.toContain('tier:4');
     expect(k).not.toContain('item:palette:clasica'); // lo de siempre no se celebra
-    expect(ownedKeys(EMPTY_CATALOG_STATS, null)).toEqual([]);
+    expect(ownedKeys(EMPTY_CATALOG_STATS)).toEqual([]);
   });
 
   it('lo sembrado no se vuelve a celebrar (cerrar sesión y volver a ganarlo)', () => {
-    const seen = new Set(ownedKeys(stats({ runs: 30, bestTicks: secs(ADD_START) }), null));
-    // solo con las del dispositivo (menos que la cuenta), una partida "vuelve a desbloquear" Neón
+    const seen = new Set(ownedKeys(stats({ runs: 30, bestTicks: secs(ADD_START) })));
+    // solo con las del dispositivo (menos que la cuenta), una partida "vuelve a desbloquear" Viento
     const again = afterRun(stats({ runs: 1, bestTicks: secs(10) }), stats({ runs: 2, bestTicks: secs(ADD_START) }));
-    expect(keys(again)).toContain('item:palette:neon');
+    expect(keys(again)).toContain('item:sound:viento');
     expect(pendingCelebrations(again, seen).show).toEqual([]);
   });
 });
 
 describe('fuera de la partida', () => {
-  const snap = (p: Partial<CatalogStats>, viewer = 'u1', dailyPct: number | null = null): Snapshot => ({ viewer, stats: stats(p), dailyPct });
+  const snap = (p: Partial<CatalogStats>, viewer = 'u1'): Snapshot => ({ viewer, stats: stats(p) });
 
   it('invitar a un amigo desbloquea Corazones', () => {
     const l = outsideCelebrations(snap({ runs: 5 }), snap({ runs: 5, invitedCount: 1 }), ALL);
@@ -123,18 +142,20 @@ describe('fuera de la partida', () => {
     expect(outsideCelebrations(snap({ runs: 5 }), snap({ runs: 5, invitedCount: 1 }), NONE)).toEqual([]);
   });
 
-  it('los bloques extra de una misión completan el nivel 5: Grilla', () => {
-    expect(keys(outsideCelebrations(snap({ totalKilled: 480 }), snap({ totalKilled: 480, bonusXp: 30 }), ALL))).toEqual(['item:background:grilla']);
+  it('los bloques extra de una misión completan el nivel 3: Pastel', () => {
+    expect(keys(outsideCelebrations(snap({ totalKilled: 280 }), snap({ totalKilled: 280, bonusXp: 30 }), ALL))).toEqual([
+      'item:palette:pastel',
+    ]);
   });
 
   it('mejor resultado en un reto diario', () => {
-    const l = outsideCelebrations(snap({}, 'u1', null), snap({}, 'u1', 0), ALL);
+    const l = outsideCelebrations(snap({ bestDailyPct: null }), snap({ bestDailyPct: 0 }), ALL);
     expect(keys(l)).toEqual(['ach:mejorReto:1']);
-    expect(keys(outsideCelebrations(snap({}, 'u1', 40), snap({}, 'u1', 80), ALL))).toEqual(['ach:mejorReto:3']);
+    expect(keys(outsideCelebrations(snap({ bestDailyPct: 40 }), snap({ bestDailyPct: 80 }), ALL))).toEqual(['ach:mejorReto:4']);
   });
 
   it('insignias y premios de partidas (otro dispositivo) no se celebran aquí', () => {
-    expect(outsideCelebrations(snap({ runs: 1 }), snap({ runs: 9, bestTicks: secs(ADD_START), bestStreak: 40 }), ALL)).toEqual([]);
+    expect(outsideCelebrations(snap({ runs: 1 }), snap({ runs: 90, bestTicks: secs(ADD_START), bestStreak: 40 }), ALL)).toEqual([]);
   });
 
   it('si cambió el jugador (inicio de sesión) o es la primera vez, nada', () => {
@@ -145,13 +166,13 @@ describe('fuera de la partida', () => {
 
 describe('desde la clave', () => {
   it('cada celebración se recupera igual desde su clave', () => {
-    const all = afterRun(stats({ runs: 2, bestTicks: secs(10) }), stats({ runs: 3, bestTicks: secs(ADD_START), bestStreak: 30, totalKilled: 600 }), ALL, true);
+    const all = afterRun(stats({ runs: 2, bestTicks: secs(25) }), stats({ runs: 3, bestTicks: secs(ADD_START), bestStreak: 30, totalKilled: 600 }), ALL, true);
     expect(all.length).toBeGreaterThan(5);
     for (const c of all) expect(celebrationFromKey(c.key)).toEqual(c);
     expect(celebrationFromKey('tier:0')).toMatchObject({ first: true });
   });
-  it('claves inválidas: null', () => {
-    for (const k of ['', 'tier:7', 'tier:-1', 'tier:1:x', 'item:palette:clasica', 'item:foo:neon', 'ach:racha:0', 'ach:nada:1', 'feature:otra']) {
+  it('claves inválidas (y las del logro que ya no existe): null', () => {
+    for (const k of ['', 'tier:7', 'tier:-1', 'tier:1:x', 'item:palette:clasica', 'item:foo:neon', 'ach:racha:0', 'ach:racha:8', 'ach:bloques:1', 'ach:nada:1', 'feature:otra']) {
       expect(celebrationFromKey(k)).toBeNull();
     }
   });
@@ -159,15 +180,20 @@ describe('desde la clave', () => {
 
 describe('textos', () => {
   it('insignia', () => {
-    const [first] = afterRun(EMPTY_CATALOG_STATS, stats({ runs: 1, bestTicks: secs(5) }));
-    expect(celebrationTexts(first)).toMatchObject({ kicker: 'Insignia nueva', title: '¡Tu primera insignia!', name: 'Madera I', sub: 'Terminaste tu primera partida.' });
-    const [bronce] = afterRun(stats({ runs: 3, bestTicks: secs(10) }), stats({ runs: 4, bestTicks: secs(ADD_START) }));
+    const [first] = afterRun(EMPTY_CATALOG_STATS, stats({ runs: 1, bestTicks: secs(25) }));
+    expect(celebrationTexts(first)).toMatchObject({ kicker: 'Insignia nueva', title: '¡Tu primera insignia!', name: 'Papel', sub: 'Llegaste al 4.' });
+    const [bronce] = afterRun(stats({ runs: 3, bestTicks: secs(25) }), stats({ runs: 4, bestTicks: secs(ADD_START) }));
     expect(celebrationTexts(bronce)).toMatchObject({ title: '¡Subiste de insignia!', name: 'Bronce', sub: 'Llegaste a las sumas y restas.' });
   });
 
   it('premio: tipo, nombre y por qué', () => {
     const l = afterRun(stats({ runs: 3, bestTicks: secs(ADD_START - 1) }), stats({ runs: 4, bestTicks: secs(ADD_START) }));
-    expect(celebrationTexts(l[1])).toMatchObject({ kicker: 'Paleta nueva', title: '¡Desbloqueaste!', name: 'Neón', sub: 'Por subir a Bronce' });
+    expect(celebrationTexts(l[1])).toMatchObject({ kicker: 'Sonido nuevo', title: '¡Desbloqueaste!', name: 'Viento', sub: 'Por subir a Bronce' });
+  });
+
+  it('premio de un logro: dice cuál', () => {
+    const l = afterRun(stats({ runs: 9 }), stats({ runs: 10 }));
+    expect(celebrationTexts(l[0])).toMatchObject({ name: 'Chispas', sub: 'Por el logro Partidas jugadas · Papel' });
   });
 
   it('reto del día', () => {

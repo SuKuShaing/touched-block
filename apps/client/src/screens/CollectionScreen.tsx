@@ -7,7 +7,6 @@ import {
   type Achievement,
   TICKS_PER_SECOND,
   TIERS,
-  type TierId,
   achievementById,
   achievementGoal,
   achievementLevel,
@@ -17,6 +16,7 @@ import {
 } from '@tb/engine';
 import { useMeRefresh, useViewer } from '@/api/hooks';
 import type { Me } from '@/api/types';
+import { AchievementIcon } from '@/components/AchievementIcon';
 import { FieldBackground } from '@/components/FieldBackground';
 import { SmallButton } from '@/components/form';
 import { BADGE_PX, TierBadge } from '@/components/TierBadge';
@@ -38,10 +38,10 @@ import {
   tierIndexOfStats,
 } from '@/cosmetics/catalog';
 import { getPalette } from '@/cosmetics/palettes';
-import { TIER_LOOK } from '@/cosmetics/tiers';
+import { MATERIAL_COLOR, tierColor } from '@/cosmetics/tiers';
 import { sounds } from '@/game/sounds';
 import { useMarkCollectionSeen } from '@/lib/collectionNews';
-import { useDailyLocal } from '@/lib/daily';
+import { achievementValues } from '@/lib/achievementValues';
 import { levelFor, xpOf } from '@/lib/level';
 import { type Settings, updateSettings } from '@/lib/settings';
 import { useTabBarSpace } from '@/lib/tabBar';
@@ -49,7 +49,7 @@ import { HEART } from '@/components/heart';
 import { C } from '@/theme';
 
 /**
- * La paleta Constancia y los logros del reto diario (fase 4) solo se muestran si se puede jugar
+ * Los logros del reto diario (fase 4) y sus premios solo se muestran si se puede jugar
  * el reto: necesita la API (sin ella el juego queda en modo solo invitado y local).
  */
 const SHOW_DAILY = features.accounts;
@@ -112,7 +112,7 @@ function TierCard({ stats, me }: { stats: CatalogStats; me: Me | null }) {
               {next.name} <Text style={styles.normal}>· {lowerFirst(tierGoal(next))}</Text>
             </Text>
           </View>
-          <Bar ratio={ratio} color={TIER_LOOK[next.tier].face} />
+          <Bar ratio={ratio} color={tierColor(next)} />
           <Text style={styles.small}>Te faltaron {fmtSeconds(next.at - best)} en tu mejor partida.</Text>
         </View>
       ) : null}
@@ -312,25 +312,6 @@ function listed(item: CatalogItem): boolean {
 
 // ---------------------------------------------------------------- logros
 
-/**
- * Valor de cada logro. `stats` ya trae la mejor racha de días como el máximo entre la cuenta y
- * este dispositivo (`catalogStatsFor`). El mejor porcentaje del reto es el de la cuenta con
- * sesión (lo guarda el servidor al cerrar cada día); como invitado, el de este dispositivo
- * ("habrías quedado", 0 si ese día hubo menos de 10 jugadores; null si nunca jugó).
- */
-function achievementValue(a: Achievement, stats: CatalogStats, me: Me | null, localDailyPct: number | null): number | null {
-  switch (a.id) {
-    case 'racha':
-      return stats.bestStreak;
-    case 'bloques':
-      return stats.totalKilled;
-    case 'diasReto':
-      return stats.dailyStreakBest;
-    case 'mejorReto':
-      return me ? (me.stats?.bestDailyPct ?? null) : localDailyPct;
-  }
-}
-
 function AchievementRow({ a, value, last }: { a: Achievement; value: number | null; last: boolean }) {
   const level = achievementLevel(a.id, value);
   const mat = achievementMaterial(level);
@@ -342,19 +323,13 @@ function AchievementRow({ a, value, last }: { a: Achievement; value: number | nu
   const pct = a.id === 'mejorReto';
   return (
     <View style={[styles.item, last && styles.itemLast]}>
-      {mat ? (
-        <TierBadge tier={{ tier: mat.toLowerCase() as TierId, step: 1 }} size="md" emblem="star" label={`Logro ${mat}`} />
-      ) : (
-        <View style={styles.medalBox}>
-          <EmptyMedal size={BADGE_PX.md} />
-        </View>
-      )}
+      <AchievementIcon id={a.id} level={level} size="md" />
       <View style={styles.itemText}>
         <Text style={styles.itemName}>
           {a.name}
           {mat ? <Text style={styles.matT}> · {mat}</Text> : null}
         </Text>
-        <Bar ratio={ratio} color={mat ? TIER_LOOK[mat.toLowerCase() as TierId].face : C.accent} />
+        <Bar ratio={ratio} color={mat ? MATERIAL_COLOR[mat] : C.accent} />
         <Text style={styles.small}>
           {next === null
             ? '¡Nivel máximo!'
@@ -381,7 +356,6 @@ export function CollectionScreen() {
   const active = useActiveCosmetics();
   const stats = active.stats;
   const me = viewer.loggedIn ? viewer.user : null;
-  const dailyLocal = useDailyLocal();
   const tabSpace = useTabBarSpace();
   useMarkCollectionSeen(useIsFocused());
 
@@ -396,6 +370,7 @@ export function CollectionScreen() {
   };
 
   const achievements = ACHIEVEMENTS.filter((a) => SHOW_DAILY || (a.id !== 'diasReto' && a.id !== 'mejorReto'));
+  const values = achievementValues(stats);
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
@@ -451,7 +426,7 @@ export function CollectionScreen() {
         <Section title="Logros">
           <View style={styles.list}>
             {achievements.map((a, i) => (
-              <AchievementRow key={a.id} a={a} value={achievementValue(a, stats, me, dailyLocal.bestPct)} last={i === achievements.length - 1} />
+              <AchievementRow key={a.id} a={a} value={values[a.id]} last={i === achievements.length - 1} />
             ))}
           </View>
         </Section>
@@ -544,6 +519,5 @@ const styles = StyleSheet.create({
   spark: { position: 'absolute', width: 3, height: 10, borderRadius: 2 },
   confetti: { position: 'absolute', width: 5, height: 9, borderRadius: 1 },
   square: { position: 'absolute', width: 8, height: 8, borderRadius: 2.5 },
-  medalBox: { width: BADGE_PX.md, height: BADGE_PX.md, alignItems: 'center', justifyContent: 'center' },
   foot: { color: C.text, opacity: 0.45, fontSize: 12, textAlign: 'center' },
 });

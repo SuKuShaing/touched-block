@@ -7,20 +7,20 @@ import type { PrizeContext } from './endPrize';
 /**
  * Cola de celebraciones por mostrar y registro de lo ya celebrado en este dispositivo.
  *
- * `tb_cele1` guarda las claves ya celebradas (`celebrations.ts`), un arreglo JSON de strings.
+ * `tb_cele2` guarda las claves ya celebradas (`celebrations.ts`), un arreglo JSON de strings.
  * La primera vez se siembra con lo que el jugador ya tiene (`seedCelebrated`), para que quien
- * ya jugaba no reciba de golpe todo lo que ganó antes. Es una clave nueva: no toca
- * `tb_best5` / `tb_hist5`. Si el almacenamiento falla, se sigue con lo que hay en memoria.
+ * ya jugaba no reciba de golpe todo lo que ganó antes. Si el almacenamiento falla, se sigue con
+ * lo que hay en memoria. La `tb_cele1` de antes del reinicio de datos ya no se lee.
  *
- * `tb_cele1p` guarda las claves de la cola que todavía no se ven: si se cierra la app (o se
+ * `tb_cele2p` guarda las claves de la cola que todavía no se ven: si se cierra la app (o se
  * recarga la web) justo después de la partida, se muestran al volver a abrirla.
  */
-export const CELEBRATED_KEY = 'tb_cele1';
-export const PENDING_KEY = 'tb_cele1p';
-/** Tope de claves guardadas (hoy son menos de 60 posibles: sobra). */
+export const CELEBRATED_KEY = 'tb_cele2';
+export const PENDING_KEY = 'tb_cele2p';
+/** Tope de claves guardadas (hoy son menos de 100 posibles: sobra). */
 const MAX_KEYS = 500;
 
-/** Lee `tb_cele1`: null si no existe o está dañado (entonces se siembra). */
+/** Lee `tb_cele2`: null si no existe o está dañado (entonces se siembra). */
 export function parseCelebrated(raw: string | null): Set<string> | null {
   if (!raw) return null;
   try {
@@ -156,19 +156,19 @@ export function disarmCelebrations() {
 }
 
 /**
- * Lo que tiene el jugador ahora (cada vez que cambia). Siembra `tb_cele1` la primera vez con todo
- * lo que ya tiene (`owned`), celebra lo que cambió en los datos de ESTE dispositivo (`local`,
- * `localPct`) solo dentro de la ventana después de una partida, y registra sin celebrar todo lo
+ * Lo que tiene el jugador ahora (cada vez que cambia). Siembra `tb_cele2` la primera vez con todo
+ * lo que ya tiene (`owned`), celebra lo que cambió en los datos de ESTE dispositivo (`local`)
+ * solo dentro de la ventana después de una partida, y registra sin celebrar todo lo
  * demás que tenga: estadísticas de la cuenta que llegan del servidor (GET /me, inicio de sesión,
  * otro dispositivo), datos migrados, cambios de cuenta. Devuelve cuántas celebraciones agregó.
  */
 export function observeCelebrations(
-  input: { viewer: string; local: CatalogStats; localPct: number | null; owned: () => readonly string[] },
+  input: { viewer: string; local: CatalogStats; owned: () => readonly string[] },
   ctx: PrizeContext,
   now = Date.now(),
 ): number {
   seedCelebrated(input.owned);
-  const snap: Snapshot = { viewer: input.viewer, stats: input.local, dailyPct: input.localPct };
+  const snap: Snapshot = { viewer: input.viewer, stats: input.local };
   const found = now < armedUntil ? outsideCelebrations(prevSnap, snap, ctx) : [];
   prevSnap = snap;
   const n = found.length ? offerCelebrations(found, 0, now) : 0;

@@ -1,7 +1,7 @@
 // Reto diario (plan de jugabilidad, fases 4.1 y 5.1): fechas, número del reto, intentos,
-// calendario de modificadores y racha de días. Funciones puras con aritmética entera (sin
+// calendario y ciclo de modificadores y racha de días. Funciones puras con aritmética entera (sin
 // `Date`), para que el cliente y el servidor den siempre lo mismo.
-import { ADD_START, BASE_LIVES, MUL_START } from './constants';
+import { ADD_START, BASE_LIVES, LIFE_STAGE_START, MUL_START } from './constants';
 import type { GameMods } from './game';
 
 /** Fecha de calendario 'AAAA-MM-DD' (la fecha local del jugador, decisión D7). */
@@ -97,7 +97,7 @@ export const DAILY_ATTEMPTS_ACCOUNT = 3;
 export const DAILY_ATTEMPTS_GUEST = 1;
 /** La racha de días tolera un día sin jugar por cada tantos jugados (provisorio). */
 export const DAILY_STREAK_GRACE_EVERY = 7;
-/** Vidas del día "Solo N vidas" del calendario (provisorio). */
+/** Vidas de los días "Solo 3 vidas" y "Multiplicaciones con 3 vidas" (provisorio). */
 export const DAILY_FEW_LIVES = 3;
 
 // ---- Calendario de modificadores (provisorio) ----
@@ -121,9 +121,33 @@ export const DAILY_CALENDAR: readonly Readonly<DailyMods>[] = [
   { mods: null, title: 'Partida normal' },
 ];
 
+/**
+ * Primer día (lunes) del ciclo de 15 retos. Antes rige DAILY_CALENDAR por día de la semana y
+ * esas fechas no deben cambiar: la API repite cada partida con los modificadores de su fecha.
+ * Si no se publica a tiempo, se corre junto con MISSIONS_POOL_FROM (missions.ts).
+ */
+export const DAILY_CYCLE_FROM: DateKey = '2026-12-07';
+
+/** Ciclo de retos desde DAILY_CYCLE_FROM: los 7 de la semana y 8 más, que se repiten. */
+export const DAILY_CYCLE: readonly Readonly<DailyMods>[] = [
+  ...DAILY_CALENDAR,
+  { mods: { lives: 4 }, title: 'Solo 4 vidas' },
+  { mods: { only: 'num' }, title: 'Solo números' },
+  { mods: { only: 'add' }, title: 'Solo sumas y restas' },
+  { mods: { startAt: ADD_START, noRed: true }, title: 'Sumas sin trampas rojas' },
+  { mods: { lives: 2 }, title: 'Solo 2 vidas' },
+  {
+    mods: { only: 'mul', startAt: MUL_START, lives: DAILY_FEW_LIVES },
+    title: `Multiplicaciones con ${DAILY_FEW_LIVES} vidas`,
+  },
+  { mods: { startAt: LIFE_STAGE_START }, title: 'Directo a la etapa final' },
+  { mods: { lives: 1 }, title: 'Una sola vida' },
+];
+
 /** Modificadores del reto de esa fecha (una copia: se puede guardar o modificar sin riesgo). */
 export function dailyModsFor(key: DateKey): DailyMods {
-  const day = DAILY_CALENDAR[weekdayOf(key)];
+  const since = dayIndex(key) - dayIndex(DAILY_CYCLE_FROM);
+  const day = since < 0 ? DAILY_CALENDAR[weekdayOf(key)] : DAILY_CYCLE[since % DAILY_CYCLE.length];
   return { mods: day.mods ? { ...day.mods } : null, title: day.title };
 }
 

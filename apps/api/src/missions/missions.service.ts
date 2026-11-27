@@ -28,16 +28,18 @@ export class MissionsService {
 
   /**
    * Resumen de las partidas válidas del usuario que terminaron en ese día local (`tz` = minutos
-   * al este de UTC). La mejor racha y la duración solo miran partidas sin modificadores.
+   * al este de UTC) y si ese día empezó a seguir a alguien. La mejor racha y la duración solo
+   * miran partidas sin modificadores.
    */
   async dayAgg(userId: string, date: DateKey, tz: number): Promise<DayAgg> {
     const start = localDayStart(date, tz);
     const end = new Date(start.getTime() + 86_400_000);
     const inDay = { userId, status: 'valid' as const, finishedAt: { gte: start, lt: end } };
-    const [all, plain, daily] = await Promise.all([
+    const [all, plain, daily, followedToday] = await Promise.all([
       this.prisma.run.aggregate({ where: inDay, _count: { _all: true }, _sum: { killed: true } }),
       this.prisma.run.aggregate({ where: { ...inDay, config: { equals: Prisma.DbNull } }, _max: { bestStreak: true, ticks: true } }),
       this.prisma.run.count({ where: { userId, status: 'valid', mode: 'daily', dailyDate: date } }),
+      this.followedBetween(userId, start, end),
     ]);
     return {
       runs: all._count._all,
@@ -45,7 +47,26 @@ export class MissionsService {
       bestStreak: plain._max.bestStreak ?? 0,
       maxTicks: plain._max.ticks ?? 0,
       playedDaily: daily > 0,
+      followedToday,
     };
+  }
+
+  /**
+   * ¿Empezó a seguir a alguien en ese lapso? Sin contar los seguimientos que crea una invitación
+   * (SocialService.setInviter): ni hacia quien lo invitó ni hacia alguien que él invitó.
+   */
+  private async followedBetween(userId: string, start: Date, end: Date): Promise<boolean> {
+    const me = await this.prisma.user.findUnique({ where: { id: userId }, select: { invitedById: true } });
+    const count = await this.prisma.follow.count({
+      where: {
+        followerId: userId,
+        createdAt: { gte: start, lt: end },
+        ...(me?.invitedById ? { followeeId: { not: me.invitedById } } : {}),
+        // con OR explícito: un "distinto de" solo descartaría a quienes no tienen invitador (NULL)
+        followee: { OR: [{ invitedById: null }, { invitedById: { not: userId } }] },
+      },
+    });
+    return count > 0;
   }
 
   /**

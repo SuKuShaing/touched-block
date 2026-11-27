@@ -46,12 +46,19 @@ export function endStats(
   local: { before: LocalStats; after: LocalStats },
   me: Me | null | undefined,
   run: RunSummary,
-  opts: { normal: boolean; countsOnAccount: boolean; dailyBestBefore?: number; dailyBestAfter?: number },
+  opts: {
+    normal: boolean;
+    countsOnAccount: boolean;
+    dailyBestBefore?: number;
+    dailyBestAfter?: number;
+    /** Mejor porcentaje del reto en este dispositivo (la partida no lo cambia: llega después). */
+    dailyPct?: number | null;
+  },
 ): EndStats {
   const meAfter = me?.stats && opts.countsOnAccount ? { ...me, stats: withRun(me.stats, run, opts.normal, 'totalRuns') } : me;
   return {
-    before: catalogStatsFor(local.before, me, opts.dailyBestBefore ?? 0),
-    after: catalogStatsFor(local.after, meAfter, opts.dailyBestAfter ?? 0),
+    before: catalogStatsFor(local.before, me, { streakBest: opts.dailyBestBefore, bestPct: opts.dailyPct }),
+    after: catalogStatsFor(local.after, meAfter, { streakBest: opts.dailyBestAfter, bestPct: opts.dailyPct }),
     prevBestTicks: Math.max(local.before.bestTicks, me?.stats?.bestTicks ?? 0),
   };
 }

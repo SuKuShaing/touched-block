@@ -22,13 +22,14 @@ const DAYS_KEPT = 7;
  * - partidas y bloques: todas las del día (historial normal más las del reto);
  * - mejor racha y duración: solo las partidas sin modificadores (las del reto cuentan si ese
  *   día no tiene modificador);
- * - `playedDaily`: terminó una partida del reto de esa fecha.
+ * - `playedDaily`: terminó una partida del reto de esa fecha;
+ * - `followedToday`: siempre false (seguir a un jugador requiere cuenta).
  * Las partidas normales cuentan por la hora en que terminaron (`d`, en el día local).
  */
 export function dayAggFrom(date: DateKey, hist: readonly HistEntry[], daily: readonly DailyRunLocal[]): DayAgg {
   const [from, to] = localDayRange(date);
   const plainDaily = dailyModsFor(date).mods === null;
-  const agg: DayAgg = { runs: 0, killed: 0, bestStreak: 0, maxTicks: 0, playedDaily: daily.length > 0 };
+  const agg: DayAgg = { runs: 0, killed: 0, bestStreak: 0, maxTicks: 0, playedDaily: daily.length > 0, followedToday: false };
   for (const g of hist) {
     if (!(g.d >= from && g.d < to)) continue;
     agg.runs++;

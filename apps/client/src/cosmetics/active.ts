@@ -14,15 +14,21 @@ import { type CatalogStats, type Selection, resolveSelection } from './catalog';
 
 /**
  * Estadísticas para el catálogo: `mergeStats` de las locales y las de `Me`, más invitados y reto
- * diario. La mejor racha de días del reto es el máximo entre la de la cuenta y la jugada en este
- * dispositivo (`tb_daily1`; así también la gana un invitado).
+ * diario (`daily`: lo de este dispositivo, `tb_daily1`). La mejor racha de días del reto es el
+ * máximo entre la de la cuenta y la del dispositivo (así también la gana un invitado). El mejor
+ * porcentaje es el de la cuenta si hay usuario (lo calcula el servidor); sin él, el del dispositivo.
  */
-export function catalogStatsFor(local: LocalStats, me: Me | null | undefined, localDailyStreakBest = 0): CatalogStats {
+export function catalogStatsFor(
+  local: LocalStats,
+  me: Me | null | undefined,
+  daily?: { streakBest?: number; bestPct?: number | null },
+): CatalogStats {
   const server = me?.stats ? { ...me.stats, runs: me.stats.totalRuns } : null;
   return {
     ...mergeStats(local, server),
     invitedCount: me?.invitedCount ?? 0,
-    dailyStreakBest: Math.max(me?.stats?.dailyStreakBest ?? 0, localDailyStreakBest),
+    dailyStreakBest: Math.max(me?.stats?.dailyStreakBest ?? 0, daily?.streakBest ?? 0),
+    bestDailyPct: me ? (me.stats?.bestDailyPct ?? null) : (daily?.bestPct ?? null),
   };
 }
 
@@ -39,7 +45,7 @@ export function getActiveCosmetics(): ActiveCosmetics {
   const user = session.get().user;
   const daily = loadDailyLocal();
   if (cache && cache.settings === settings && cache.local === local && cache.user === user && cache.daily === daily) return cache.value;
-  const stats = catalogStatsFor(local, user, localStreakBest(daily));
+  const stats = catalogStatsFor(local, user, { streakBest: localStreakBest(daily), bestPct: daily.bestPct });
   const value = { ...resolveSelection(settings, stats), stats };
   cache = { settings, local, user, daily, value };
   return value;

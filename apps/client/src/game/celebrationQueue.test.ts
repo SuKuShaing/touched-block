@@ -40,7 +40,15 @@ beforeEach(() => {
   resetCelebrationsForTests();
 });
 
-describe('registro tb_cele1', () => {
+describe('registro tb_cele2', () => {
+  it('usa las claves nuevas (las de antes del reinicio no se leen)', () => {
+    expect([CELEBRATED_KEY, PENDING_KEY]).toEqual(['tb_cele2', 'tb_cele2p']);
+    mem.set('tb_cele1', JSON.stringify(['item:palette:neon']));
+    mem.set('tb_cele1p', JSON.stringify(['tier:3']));
+    expect(getCelebrationQueue().items).toEqual([]);
+    expect(offerCelebrations([neon], 0, 0)).toBe(1);
+  });
+
   it('lee solo arreglos de textos; lo dañado vuelve a sembrarse', () => {
     expect(parseCelebrated(null)).toBeNull();
     expect(parseCelebrated('{')).toBeNull();
@@ -90,14 +98,14 @@ describe('cola', () => {
   });
 });
 
-describe('jugadores que ya tenían premios (sin tb_cele1)', () => {
+describe('jugadores que ya tenían premios (sin tb_cele2)', () => {
   const ALL = { accounts: true, daily: true };
   const st = (p: Partial<CatalogStats>): CatalogStats => ({ ...EMPTY_CATALOG_STATS, ...p });
   const secs = (n: number) => n * TICKS_PER_SECOND;
   const keys = () => getCelebrationQueue().items.map((c) => c.key);
   /** Lo que ve la app: datos del dispositivo (`local`) y el total con la cuenta (`all`). */
-  const observe = (viewer: string, local: CatalogStats, all: CatalogStats, now: number, localPct: number | null = null, pct = localPct) =>
-    observeCelebrations({ viewer, local, localPct, owned: () => ownedKeys(all, pct) }, ALL, now);
+  const observe = (viewer: string, local: CatalogStats, all: CatalogStats, now: number) =>
+    observeCelebrations({ viewer, local, owned: () => ownedKeys(all) }, ALL, now);
   const celebrationsOf = (before: CatalogStats, after: CatalogStats) =>
     runCelebrations({ prize: endPrize(before, after, ALL), before, after, unlockedFeature: false, ctx: ALL });
   const run = (before: CatalogStats, after: CatalogStats, now: number) => offerRunCelebrations(celebrationsOf(before, after), 900, now);
@@ -107,21 +115,21 @@ describe('jugadores que ya tenían premios (sin tb_cele1)', () => {
     expect(observe('guest', veteran, veteran, 0)).toBe(0);
     expect(keys()).toEqual([]);
     const seeded = JSON.parse(mem.get(CELEBRATED_KEY)!) as string[];
-    expect(seeded).toEqual(expect.arrayContaining(['tier:3', 'item:palette:neon', 'item:background:estrellas', 'ach:racha:3', 'ach:bloques:3']));
+    expect(seeded).toEqual(expect.arrayContaining(['tier:3', 'item:palette:neon', 'item:background:estrellas', 'ach:racha:3', 'ach:partidas:2']));
     // la siguiente partida sube a Plata: se celebra eso y nada de lo anterior
     const after = { ...veteran, runs: 81, bestTicks: secs(MUL_START), totalKilled: 3050 };
     expect(run(veteran, after, 1000)).toBeGreaterThan(0);
-    expect(keys()).toEqual(['tier:4', 'item:palette:retro', 'item:sound:marimba']);
+    expect(keys()).toEqual(['tier:4', 'item:sound:piano']);
   });
 
   it('las estadísticas de la cuenta que llegan después (GET /me, otro dispositivo) no se celebran', () => {
     const local = st({ runs: 2, bestTicks: secs(20), totalKilled: 40 });
-    observe('u1', local, local, 0); // al abrir: tb_me1 sin estadísticas todavía
-    const account = st({ runs: 200, bestTicks: secs(MUL_START), bestStreak: 120, totalKilled: 12000, invitedCount: 3, dailyStreakBest: 9 });
-    expect(observe('u1', local, account, 5000, null, 92)).toBe(0);
+    observe('u1', local, local, 0); // al abrir: tb_me2 sin estadísticas todavía
+    const account = st({ runs: 200, bestTicks: secs(MUL_START), bestStreak: 120, totalKilled: 12000, invitedCount: 3, dailyStreakBest: 9, bestDailyPct: 92 });
+    expect(observe('u1', local, account, 5000)).toBe(0);
     // ni siquiera dentro de la ventana después de una partida
     run(local, { ...local, runs: 3 }, 6000);
-    expect(observe('u1', { ...local, runs: 3 }, { ...account, runs: 201 }, 7000, null, 95)).toBe(0);
+    expect(observe('u1', { ...local, runs: 3 }, { ...account, runs: 201, bestDailyPct: 95 }, 7000)).toBe(0);
     expect(keys()).toEqual([]);
     // quedaron registradas: una partida que "las vuelve a ganar" (p. ej. tras cerrar sesión) no las repite
     expect(offerCelebrations(celebrationsOf(local, account), 0, 8000)).toBe(0);
@@ -129,33 +137,33 @@ describe('jugadores que ya tenían premios (sin tb_cele1)', () => {
 
   it('datos del dispositivo que cambian sin una partida (migración, otra pestaña): no se celebran', () => {
     observe('guest', EMPTY_CATALOG_STATS, EMPTY_CATALOG_STATS, 0);
-    const migrated = st({ runs: 30, bestTicks: secs(ADD_START), totalKilled: 2500, bonusXp: 200 });
-    expect(observe('guest', migrated, migrated, 1000, 80)).toBe(0);
+    const migrated = st({ runs: 30, bestTicks: secs(ADD_START), totalKilled: 2500, bonusXp: 200, bestDailyPct: 80 });
+    expect(observe('guest', migrated, migrated, 1000)).toBe(0);
     expect(keys()).toEqual([]);
   });
 
-  it('justo después de una partida: el fondo que completan los bloques extra de una misión, sí', () => {
-    const a = st({ runs: 9, bestTicks: secs(30), totalKilled: 470 });
+  it('justo después de una partida: la paleta que completan los bloques extra de una misión, sí', () => {
+    const a = st({ runs: 11, bestTicks: secs(30), totalKilled: 270 });
     observe('guest', a, a, 0);
-    const b = { ...a, runs: 10, totalKilled: 480 };
+    const b = { ...a, runs: 12, totalKilled: 280 };
     run(a, b, 1000);
     observe('guest', b, b, 1001);
     expect(keys()).toEqual([]);
-    const withBonus = { ...b, bonusXp: 30 }; // misión cumplida: nivel 5
+    const withBonus = { ...b, bonusXp: 30 }; // misión cumplida: nivel 3
     expect(observe('guest', withBonus, withBonus, 3000)).toBe(1);
-    expect(keys()).toEqual(['item:background:grilla']);
+    expect(keys()).toEqual(['item:palette:pastel']);
   });
 
   it('fuera de la ventana, o con otra partida en curso, no', () => {
-    const a = st({ runs: 9, totalKilled: 470 });
-    const bonus = { ...a, runs: 10, bonusXp: 40 };
+    const a = st({ runs: 11, totalKilled: 270 });
+    const bonus = { ...a, runs: 12, bonusXp: 40 };
     observe('guest', a, a, 0);
-    run(a, { ...a, runs: 10 }, 1000);
+    run(a, { ...a, runs: 12 }, 1000);
     expect(observe('guest', bonus, bonus, 1000 + AFTER_RUN_MS + 1)).toBe(0);
     resetCelebrationsForTests();
     mem.clear();
     observe('guest', a, a, 0);
-    run(a, { ...a, runs: 10 }, 1000);
+    run(a, { ...a, runs: 12 }, 1000);
     disarmCelebrations();
     expect(observe('guest', bonus, bonus, 2000)).toBe(0);
   });
@@ -173,7 +181,7 @@ describe('cola guardada', () => {
   });
 
   it('claves desconocidas o dañadas se ignoran', () => {
-    mem.set(PENDING_KEY, JSON.stringify(['tier:99', 'item:palette:nada', 'item:palette:clasica', 'ach:racha:9', 'x', 'tier:3']));
+    mem.set(PENDING_KEY, JSON.stringify(['tier:99', 'item:palette:nada', 'item:palette:clasica', 'ach:racha:9', 'ach:bloques:1', 'x', 'tier:3']));
     expect(getCelebrationQueue().items.map((c) => c.key)).toEqual(['tier:3']);
     resetCelebrationsForTests();
     mem.set(PENDING_KEY, '{');

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { RULES_VERSION, tierRefForTicks } from '@tb/engine';
+import { RULES_VERSION, TICKS_PER_SECOND, TIERS, tierRefForTicks } from '@tb/engine';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { backfillStreaks } from '../src/stats/backfill-streaks';
 import { StatsService } from '../src/stats/stats.service';
@@ -111,13 +111,19 @@ describe('estadísticas del jugador', () => {
   it('rankings y perfil público muestran la insignia', async () => {
     const u = await t.login('st-5', 'Insignia', 'CL');
     await t.playRun(u, { kills: 5 });
-    const row = await t.prisma.userStats.findUniqueOrThrow({ where: { userId: u.id } });
-    const tier = tierRefForTicks(row.bestTicks);
+    // la partida del bot es corta: se sube la mejor duración para que haya insignia que mostrar
+    await t.prisma.userStats.update({ where: { userId: u.id }, data: { bestTicks: TIERS[0].at * TICKS_PER_SECOND } });
+    const tier = tierRefForTicks(TIERS[0].at * TICKS_PER_SECOND);
+    expect(tier).toEqual({ tier: 'madera', step: 1 });
     const lb = await t.http().get('/leaderboards').query({ scope: 'world' }).set(bearer(u)).expect(200);
     const mine = lb.body.entries.find((e: { userId: string }) => e.userId === u.id);
     expect(mine.tier).toEqual(tier);
     expect(lb.body.me.tier).toEqual(tier);
-    for (const e of lb.body.entries) expect(e.tier).toMatchObject({ tier: expect.any(String), step: expect.any(Number) });
+    // quien no llegó a la primera insignia aparece sin ella
+    const rows = await t.prisma.userStats.findMany();
+    for (const e of lb.body.entries) {
+      expect(e.tier).toEqual(tierRefForTicks(rows.find((r) => r.userId === e.userId)!.bestTicks));
+    }
     const profile = await t.http().get(`/users/${u.username}`).expect(200);
     expect(profile.body.tier).toEqual(tier);
     // sin partidas: sin insignia

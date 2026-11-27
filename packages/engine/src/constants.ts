@@ -1,7 +1,8 @@
 // Constantes de balance. Si cambias alguna, actualiza también las tablas de
 // docs/reglas-y-balance.md y sube RULES_VERSION (las partidas con otra versión no se
 // comparan en los rankings).
-export const RULES_VERSION = 5;
+// v6: reinicio de registros aprobado por el usuario (reset A); las reglas de partida son las de v5.
+export const RULES_VERSION = 6;
 
 export const START_TIME = 10; // segundos iniciales
 export const BASE_LIVES = 5; // vidas de base

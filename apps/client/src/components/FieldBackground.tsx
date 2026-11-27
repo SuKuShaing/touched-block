@@ -1,6 +1,14 @@
 import { memo, useState } from 'react';
 import { type LayoutChangeEvent, StyleSheet, View } from 'react-native';
 import { useActiveBackground } from '@/cosmetics/active';
+import type { BackgroundId } from '@/cosmetics/ids';
+import { BACKGROUNDS as animated } from './backgrounds/animated';
+import { BACKGROUNDS as setA } from './backgrounds/setA';
+import { BACKGROUNDS as setB } from './backgrounds/setB';
+import type { BackgroundSet } from './backgrounds/types';
+
+/** Fondos de `backgrounds/`, por id. */
+const REGISTRY: BackgroundSet = { ...setA, ...setB, ...animated };
 
 /**
  * Fondo del campo de juego (premio cosmético): `liso` (nada), `grilla`, `estrellas` o `aurora`.
@@ -15,13 +23,27 @@ import { useActiveBackground } from '@/cosmetics/active';
  * (`pointerEvents="none"`), no se parece a un bloque y está memorizado: no se vuelve a dibujar
  * cuando la partida avanza.
  */
-export const FieldBackground = memo(function FieldBackground({ id, cell = 44 }: { id?: string; cell?: number }) {
+export const FieldBackground = memo(function FieldBackground({
+  id,
+  cell = 44,
+  thumb = false,
+  paused = false,
+}: {
+  id?: string;
+  cell?: number;
+  /** Miniatura: mosaicos más chicos y quieto. */
+  thumb?: boolean;
+  /** Detiene la animación de los fondos animados. */
+  paused?: boolean;
+}) {
   const active = useActiveBackground();
   const bg = id ?? active;
   if (bg === 'grilla') return <Grid cell={cell} />;
   if (bg === 'estrellas') return <Stars />;
   if (bg === 'aurora') return <Aurora />;
-  return null;
+  // los demás viven en `backgrounds/`; un id sin dibujo (o desconocido) no pinta nada
+  const Custom = REGISTRY[bg as BackgroundId];
+  return Custom ? <Custom cell={cell} thumb={thumb} paused={paused} /> : null;
 });
 
 // ---------------------------------------------------------------- grilla
