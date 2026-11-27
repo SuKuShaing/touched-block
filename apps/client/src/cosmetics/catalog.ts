@@ -203,7 +203,7 @@ export const CATALOG: readonly CatalogItem[] = [
   effect('ondas', 'Ondas', ach('diasReto', 3), 'Anillos que se expanden y gotas'),
   effect('rayos', 'Rayos', ach('racha', 4), 'Rayos en zigzag con un destello'),
   effect('monedas', 'Monedas', ach('partidas', 4), 'Monedas que giran y caen'),
-  effect('pixeles', 'Píxeles', ach('racha', 7), 'El bloque se rompe en píxeles que saltan a pasos, como en 8 bits'),
+  effect('pixeles', 'Píxeles', ach('racha', 7), 'El bloque se rompe en píxeles que saltan y caen, como en 8 bits'),
   effect('fugaces', 'Estrellas fugaces', ach('diasReto', 7), 'Estrellas con estela que cruzan el bloque en diagonal'),
   effect('fuegos', 'Fuegos artificiales', ach('mejorReto', 7), 'Un cohete sube y estalla en chispas'),
   effect('corazones', 'Corazones', invited(1)),

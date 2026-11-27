@@ -1670,3 +1670,12 @@ Interruptor en **Con cambios**: los 7 aparecen con "nuevo" en Efectos y Fondos y
 - **Qué:** las tarjetas Paletas, Sonidos, Efectos al destruir y Fondos del campo muestran 4 filas y la mitad de la 5.ª; el resto se desplaza dentro de la tarjeta, con barra visible (en Android una propia: la nativa salía oscura sobre el fondo y no se veía). Al llegar a un extremo se desplaza la pantalla. Insignia, Experiencia, Logros, Vista previa y la galería de prueba no cambian.
 - **Dónde:** `screens/CollectionScreen.tsx` (`PrizeList`) y `lib/prizeList.ts` (alto con las filas medidas, tope del 60 % de la pantalla; test en `lib/prizeList.test.ts`).
 - **Qué NO cambia:** premios, requisitos, orden, equipar, motor, API ni claves locales. La web de esta carpeta no se actualizó.
+
+## CAMBIO-028 · Efecto Píxeles fluido
+
+- **Estado:** pedido por el usuario y aplicado el 2026-11-27, tras probar la app en su teléfono.
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**.
+- **Pedido (textual):** "el único detalle es el efecto Pixeles, que no se ve fluido como los demás efectos, está lindo, pero no se ve fluido".
+- **Qué:** los píxeles ya no avanzan en 8 saltos de tiempo sobre una rejilla de 4 px (unos 12 cuadros por segundo, que en el teléfono se veía entrecortado): se mueven de forma continua con la misma trayectoria (salen, suben y caen con gravedad) y se apagan en un desvanecido corto (8 % de la animación) al 62,5 %, 75 % u 87,5 %. Se mantienen los 12 cuadrados de 13 px en tres tonos, la duración (640 ms) y la versión con movimiento reducido. Descripción del premio: "El bloque se rompe en píxeles que saltan y caen, como en 8 bits".
+- **Dónde:** `lib/fxShapes.ts` (`frameAt`, caso `pixel`; test en `lib/fxShapes.test.ts`) y `cosmetics/catalog.ts` (descripción).
+- **Qué NO cambia:** requisito (Máximo combo, escalón 7), motor, API ni claves locales. La web de esta carpeta (`preview.js`) sigue con la versión a pasos.

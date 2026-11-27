@@ -89,9 +89,8 @@ const TAU = Math.PI * 2;
 const FALL_DEG = 148;
 const FALL_COS = Math.cos((FALL_DEG * Math.PI) / 180);
 const FALL_SIN = Math.sin((FALL_DEG * Math.PI) / 180);
-/** Píxeles: saltos de tiempo y lado de la rejilla de posiciones (px). */
-const PIXEL_STEPS = 8;
-const PIXEL_GRID = 4;
+/** Píxeles: fracción de la animación que dura el apagado (rápido, pero sin cortar de golpe). */
+const PIXEL_FADE = 0.08;
 
 /** Salida suave (ease-out cuadrático). */
 function easeOut(p: number): number {
@@ -103,11 +102,6 @@ function easeOut(p: number): number {
 function ramp(p: number, a: number, b: number): number {
   'worklet';
   return Math.min(1, Math.max(0, (p - a) / (b - a)));
-}
-
-function snap(v: number): number {
-  'worklet';
-  return Math.round(v / PIXEL_GRID) * PIXEL_GRID;
 }
 
 function frame(x: number, y: number, r: number, s: number, sx: number, o: number): Frame {
@@ -166,9 +160,9 @@ export function frameAt(m: Motion, p: number): Frame {
       return frame(0, 0, 0, 0.5 + 1.1 * easeOut(p), 1, Math.min(1, p * 30) * (1 - p));
     case 'pixel': {
       if (m.soft) return frame(m.vx * p * 0.35, (m.vy * p + m.g * p * p) * 0.35, 0, 1, 1, 1 - ramp(p, 0.3, 1));
-      // a saltos: el tiempo avanza en pasos, la posición cae en una rejilla y se apaga de golpe
-      const q = Math.floor(p * PIXEL_STEPS) / PIXEL_STEPS;
-      return frame(snap(m.vx * q), snap(m.vy * q + m.g * q * q), 0, 1, 1, q < m.fin ? 1 : 0);
+      // movimiento continuo (antes iba a saltos de 8 pasos y se veía entrecortado en el teléfono);
+      // lo "8 bits" queda en los cuadrados sin bordes redondos y el apagado rápido al llegar a `fin`
+      return frame(m.vx * p, m.vy * p + m.g * p * p, 0, 1, 1, 1 - ramp(p, m.fin - PIXEL_FADE, m.fin));
     }
     case 'cola': {
       // la estela crece sin despegarse de la estrella
@@ -416,7 +410,7 @@ const MAKERS: Record<ShapeEffect, Maker> = {
     return pieces;
   },
 
-  // 12 píxeles (rejilla de 4×3, o 3×2) en tres tonos del color del bloque, que se separan a saltos
+  // 12 píxeles (rejilla de 4×3, o 3×2) en tres tonos del color del bloque, que saltan y caen
   pixeles: (color, soft, rand, range) => {
     const cols = soft ? 3 : 4;
     const rows = soft ? 2 : 3;
@@ -427,7 +421,7 @@ const MAKERS: Record<ShapeEffect, Maker> = {
       const vx = ox * range(2.6, 4.4) + range(-16, 16);
       const vy = oy * range(2, 3.4) - range(50, 90);
       const g = range(110, 160);
-      const fin = 0.625 + 0.125 * Math.floor(rand() * 3); // se apaga en el paso 5, 6 o 7 de 8
+      const fin = 0.625 + 0.125 * Math.floor(rand() * 3); // se apaga al 62,5 %, 75 % u 87,5 % de la animación
       return {
         w: 13,
         h: 13,

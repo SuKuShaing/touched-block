@@ -119,15 +119,21 @@ describe('fxShapes', () => {
     });
   });
 
-  it('los píxeles avanzan en 8 saltos sobre una rejilla de 4 px y se apagan de golpe', () => {
+  it('los píxeles se mueven de forma continua (sin saltos) y se apagan rápido antes del final', () => {
     for (const { motion } of makePieces('pixeles', COLOR, false, seeded(7))) {
-      expect(frameAt(motion, 0.26)).toEqual(frameAt(motion, 0.37));
-      for (let k = 0; k <= 80; k++) {
+      if (motion.kind !== 'pixel') throw new Error('se esperaba un píxel');
+      const a = frameAt(motion, 0.26);
+      const b = frameAt(motion, 0.27);
+      expect(a.x === b.x && a.y === b.y).toBe(false);
+      for (let k = 0; k < 80; k++) {
         const f = frameAt(motion, k / 80);
-        expect(Math.abs(f.x % 4)).toBe(0);
-        expect(Math.abs(f.y % 4)).toBe(0);
-        expect([0, 1]).toContain(f.o);
+        const g = frameAt(motion, (k + 1) / 80);
+        // a 60 fps, ningún fotograma salta más de unos pocos px
+        expect(Math.hypot(g.x - f.x, g.y - f.y)).toBeLessThan(8);
       }
+      expect(frameAt(motion, motion.fin - 0.1).o).toBe(1);
+      expect(frameAt(motion, motion.fin).o).toBe(0);
+      expect(frameAt(motion, 1).o).toBe(0);
     }
   });
 
