@@ -42,7 +42,7 @@ export function useDailyLeaderboard(date: DateKey, scope: Scope, country: string
 
 /**
  * Estado del reto de hoy para la tarjeta y la pantalla final: con sesión, lo de `GET /daily`;
- * como invitado, lo de `tb_daily1` (`dailyStatus` de `lib/daily.ts`). `overview` trae además el
+ * como invitado, lo de `tb_daily2` (`dailyStatus` de `lib/daily.ts`). `overview` trae además el
  * resumen de ayer.
  */
 export function useDailyStatus(date: DateKey, enabled = true): { status: DailyStatus; overview: DailyOverview | undefined; loading: boolean } {
@@ -109,7 +109,7 @@ const FINAL_CLAIM_ERRORS = new Set([
 
 /**
  * Al iniciar sesión, reclama las partidas del reto que se jugaron como invitado en la última
- * hora (`tb_daily1`). `exclude` es la partida que está reclamando la pantalla final, para no
+ * hora (`tb_daily2`). `exclude` es la partida que está reclamando la pantalla final, para no
  * pedirla dos veces. La API solo acepta el reclamo si la cuenta todavía no jugó el reto de esa
  * fecha: si ya lo jugó (`409 daily_attempts_exhausted`) no es un error, la partida se olvida sin
  * avisar. Si se reclama, un aviso breve lo cuenta.

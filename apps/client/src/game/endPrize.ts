@@ -12,7 +12,7 @@ import { type LocalStats, type RunSummary, withRun } from '@/lib/stats';
 export interface EndPrize {
   /** Insignia nueva (null si no subió). */
   tier: TierStep | null;
-  /** Es su primera insignia (primera partida terminada). */
+  /** Es su primera insignia (todavía no tenía ninguna). */
   firstTier: boolean;
   /** Premios que esta partida desbloqueó, en el orden del catálogo. */
   items: CatalogItem[];
@@ -37,8 +37,8 @@ export interface EndStats {
  *
  * Con sesión, el catálogo usa el máximo campo a campo entre el dispositivo y la cuenta
  * (`catalogStatsFor`). Si la cuenta tiene más (jugó en otro dispositivo), sumar la partida solo a
- * las locales dejaría "después" igual a "antes" y no se anunciaría lo desbloqueado (p. ej. un
- * fondo por nivel). Por eso, si la partida cuenta en la cuenta (`countsOnAccount`: partida del
+ * las locales dejaría "después" igual a "antes" y no se anunciaría lo desbloqueado (p. ej. una
+ * paleta por nivel). Por eso, si la partida cuenta en la cuenta (`countsOnAccount`: partida del
  * servidor con sesión), también se suma a `Me.stats` al calcular "después", con la misma regla
  * que aplicará el servidor (`withRun`). `me` es el usuario de ANTES de enviar la partida.
  */
@@ -87,8 +87,7 @@ export function joinNames(names: readonly string[]): string {
 }
 
 /** "Llegar a las sumas y restas" (motor) → "Llegaste a las sumas y restas". */
-const reachedText = (t: TierStep) =>
-  t.at <= 0 ? 'Terminaste tu primera partida' : t.goal.replace(/^Llegar\b/, 'Llegaste').replace(/^Terminar\b/, 'Terminaste');
+const reachedText = (t: TierStep) => t.goal.replace(/^Llegar\b/, 'Llegaste');
 
 /** Título y bajada de la tarjeta. */
 export function prizeTexts(p: EndPrize): { title: string; sub: string } {

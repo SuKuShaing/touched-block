@@ -2,16 +2,19 @@ import { Directory, File, Paths } from 'expo-file-system';
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { type HostInstance, PixelRatio, StyleSheet, Text, View } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
+import { TIERS } from '@tb/engine';
+import { AchievementIcon } from '@/components/AchievementIcon';
 import { TierBadge } from '@/components/TierBadge';
 import { SHARE_BADGE } from '@/cosmetics/medal';
 import { tierStepOf } from '@/cosmetics/tiers';
-import { finishCardJob, getCardJob, subscribeCardJob } from '@/lib/shareCardStore';
-import type { ResultCard } from '@/platform/share.types';
+import { finishCardJob, getCardJob, isPrizeCard, PRIZE_CARD, subscribeCardJob } from '@/lib/shareCardStore';
+import { prizeCardTexts } from '@/lib/shareText';
+import type { PrizeShareCard, ResultCard } from '@/platform/share.types';
 
 /**
- * Tarjeta de resultado en nativo: la misma de `platform/share.web.ts` (1080×1080, mismos colores,
- * posiciones y textos), pero con `View`/`Text` en vez de `<canvas>`. Se dibuja fuera de la
- * pantalla solo mientras hay una pedida (`lib/shareCardStore.ts`), se captura con
+ * Tarjetas de compartir en nativo (resultado y premio): las mismas de `platform/share.web.ts`
+ * (1080×1080, mismos colores, posiciones y textos), pero con `View`/`Text` en vez de `<canvas>`.
+ * Cada una se dibuja fuera de la pantalla solo mientras está pedida (`lib/shareCardStore.ts`), se captura con
  * react-native-view-shot y se deja en `cache/touched-block-<hash>.png` para compartirla.
  *
  * Las medidas se escriben en píxeles del canvas (0–1080) y se pasan a dp con `px()`, para que la
@@ -139,6 +142,40 @@ function Card({ card }: { card: ResultCard }) {
   );
 }
 
+/** Tarjeta de un premio: la misma que `drawPrize` de `platform/share.web.ts`. */
+function PrizeImage({ card }: { card: PrizeShareCard }) {
+  const texts = prizeCardTexts(card);
+  const at = card.kind === 'item' ? PRIZE_CARD.textOnly : PRIZE_CARD.withArt;
+  const { box, cy } = PRIZE_CARD.art;
+  const maxW = PRIZE_CARD.maxW;
+  const art = rect((W - box) / 2, cy - box / 2, box, box, 0);
+  return (
+    <View style={{ width: px(W), height: px(H), backgroundColor: '#12121a' }}>
+      {/* panel */}
+      <View style={[rect(60, 60, W - 120, H - 120, 48), { backgroundColor: '#1c1c28' }]} />
+
+      <Line text="Touched Block" {...PRIZE_CARD.brand} weight="800" maxW={maxW} />
+      {card.username ? <Line text={'@' + card.username} {...PRIZE_CARD.who} weight="600" color="#77ccff" maxW={maxW} /> : null}
+
+      {texts ? (
+        <>
+          <Line text={texts.kicker} {...at.kicker} weight="700" color={texts.color} maxW={maxW} />
+          {card.kind === 'tier' ? <TierBadge tier={TIERS[card.index]} size={px(box)} style={art} /> : null}
+          {card.kind === 'achievement' ? (
+            <View style={art}>
+              <AchievementIcon id={card.id} level={card.level} size={px(box)} />
+            </View>
+          ) : null}
+          <Line text={texts.title} {...at.title} weight="800" maxW={maxW} />
+          <Line text={texts.sub} {...at.sub} weight="600" opacity={0.85} maxW={maxW} />
+        </>
+      ) : null}
+
+      <Line text="touchedblock.app" {...PRIZE_CARD.footer} weight="500" opacity={0.6} maxW={maxW} />
+    </View>
+  );
+}
+
 /** Hash corto y determinista (djb2, base 36) para distinguir el archivo de cada tarjeta. */
 function shortHash(s: string): string {
   let h = 5381;
@@ -219,7 +256,7 @@ export function ShareCardHost() {
   return (
     <View pointerEvents="none" style={styles.offscreen} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       <View ref={ref} collapsable={false}>
-        <Card card={job.card} />
+        {isPrizeCard(job.card) ? <PrizeImage card={job.card} /> : <Card card={job.card} />}
       </View>
     </View>
   );

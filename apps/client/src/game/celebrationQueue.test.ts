@@ -103,9 +103,12 @@ describe('jugadores que ya tenían premios (sin tb_cele2)', () => {
   const st = (p: Partial<CatalogStats>): CatalogStats => ({ ...EMPTY_CATALOG_STATS, ...p });
   const secs = (n: number) => n * TICKS_PER_SECOND;
   const keys = () => getCelebrationQueue().items.map((c) => c.key);
-  /** Lo que ve la app: datos del dispositivo (`local`) y el total con la cuenta (`all`). */
+  /**
+   * Lo que ve la app: datos del dispositivo (`local`) y el total con la cuenta (`all`), que con
+   * sesión (cualquier `viewer` que no sea invitado) también va como `account`.
+   */
   const observe = (viewer: string, local: CatalogStats, all: CatalogStats, now: number) =>
-    observeCelebrations({ viewer, local, owned: () => ownedKeys(all) }, ALL, now);
+    observeCelebrations({ viewer, local, account: viewer === 'guest' ? null : all, owned: () => ownedKeys(all) }, ALL, now);
   const celebrationsOf = (before: CatalogStats, after: CatalogStats) =>
     runCelebrations({ prize: endPrize(before, after, ALL), before, after, unlockedFeature: false, ctx: ALL });
   const run = (before: CatalogStats, after: CatalogStats, now: number) => offerRunCelebrations(celebrationsOf(before, after), 900, now);
@@ -122,14 +125,14 @@ describe('jugadores que ya tenían premios (sin tb_cele2)', () => {
     expect(keys()).toEqual(['tier:4', 'item:sound:piano']);
   });
 
-  it('las estadísticas de la cuenta que llegan después (GET /me, otro dispositivo) no se celebran', () => {
+  it('de la cuenta que llega después (GET /me, otro dispositivo) no se celebra lo ganado jugando', () => {
     const local = st({ runs: 2, bestTicks: secs(20), totalKilled: 40 });
     observe('u1', local, local, 0); // al abrir: tb_me2 sin estadísticas todavía
-    const account = st({ runs: 200, bestTicks: secs(MUL_START), bestStreak: 120, totalKilled: 12000, invitedCount: 3, dailyStreakBest: 9, bestDailyPct: 92 });
+    const account = st({ runs: 200, bestTicks: secs(MUL_START), bestStreak: 120, totalKilled: 12000, dailyStreakBest: 9 });
     expect(observe('u1', local, account, 5000)).toBe(0);
     // ni siquiera dentro de la ventana después de una partida
     run(local, { ...local, runs: 3 }, 6000);
-    expect(observe('u1', { ...local, runs: 3 }, { ...account, runs: 201, bestDailyPct: 95 }, 7000)).toBe(0);
+    expect(observe('u1', { ...local, runs: 3 }, { ...account, runs: 201, totalKilled: 20000 }, 7000)).toBe(0);
     expect(keys()).toEqual([]);
     // quedaron registradas: una partida que "las vuelve a ganar" (p. ej. tras cerrar sesión) no las repite
     expect(offerCelebrations(celebrationsOf(local, account), 0, 8000)).toBe(0);
@@ -169,6 +172,77 @@ describe('jugadores que ya tenían premios (sin tb_cele2)', () => {
   });
 });
 
+describe('con sesión: premios por invitar y por el porcentaje del reto', () => {
+  const ALL = { accounts: true, daily: true };
+  const st = (p: Partial<CatalogStats>): CatalogStats => ({ ...EMPTY_CATALOG_STATS, ...p });
+  const keys = () => getCelebrationQueue().items.map((c) => c.key);
+  const observe = (viewer: string, all: CatalogStats, now: number, local = EMPTY_CATALOG_STATS) =>
+    observeCelebrations({ viewer, local, account: viewer === 'guest' ? null : all, owned: () => ownedKeys(all) }, ALL, now);
+  const seeAll = () => dropCelebrations(getCelebrationQueue().items.length);
+
+  it('la primera siembra es silenciosa, aunque la cuenta ya tenga premios', () => {
+    expect(observe('u1', st({ invitedCount: 3, bestDailyPct: 95 }), 0)).toBe(0);
+    expect(observe('u1', st({ invitedCount: 3, bestDailyPct: 95 }), 1000)).toBe(0);
+    expect(keys()).toEqual([]);
+  });
+
+  it('el 2.º invitado celebra Amistad una vez (sin partida de por medio)', () => {
+    observe('u1', st({ invitedCount: 1 }), 0);
+    expect(observe('u1', st({ invitedCount: 2 }), 5000)).toBe(1);
+    expect(keys()).toEqual(['item:palette:constancia']);
+    seeAll();
+    expect(observe('u1', st({ invitedCount: 2 }), 6000)).toBe(0);
+    resetCelebrationsForTests(); // se cierra y se abre la app
+    expect(observe('u1', st({ invitedCount: 2 }), 7000)).toBe(0);
+    expect(keys()).toEqual([]);
+  });
+
+  it('porcentaje que llega tarde: el logro y sus premios, una vez y solo lo nuevo', () => {
+    observe('u1', st({ runs: 4 }), 0);
+    expect(observe('u1', st({ runs: 4, bestDailyPct: 30 }), 5000)).toBe(3);
+    expect(keys()).toEqual(['item:effect:burbujas', 'item:background:rayas', 'ach:mejorReto:2']);
+    seeAll();
+    expect(observe('u1', st({ runs: 4, bestDailyPct: 60 }), 9000)).toBe(2);
+    expect(keys()).toEqual(['item:background:hexagonos', 'ach:mejorReto:3']);
+    seeAll();
+    expect(observe('u1', st({ runs: 4, bestDailyPct: 60 }), 10_000)).toBe(0);
+  });
+
+  it('invitado: el porcentaje del dispositivo, solo justo después de la partida', () => {
+    const a = st({ runs: 4 });
+    observe('guest', a, 0, a);
+    offerRunCelebrations([], 900, 1000);
+    const b = st({ runs: 4, bestDailyPct: 0 });
+    expect(observe('guest', b, 3000, b)).toBe(2);
+    expect(keys()).toEqual(['item:background:rayas', 'ach:mejorReto:1']);
+  });
+
+  it('cambio de cuenta: se celebra al entrar lo no visto en este dispositivo, sin repetir', () => {
+    observe('guest', st({}), 0); // dispositivo ya sembrado
+    expect(observe('u1', st({ invitedCount: 1 }), 1000)).toBe(1);
+    seeAll();
+    expect(observe('guest', st({}), 2000)).toBe(0);
+    expect(observe('u1', st({ invitedCount: 1 }), 3000)).toBe(0);
+    expect(observe('u2', st({ invitedCount: 3 }), 4000)).toBe(2);
+    expect(keys()).toEqual(['item:palette:constancia', 'item:background:bosque']);
+  });
+
+  it('mientras se mira el resultado de una partida, lo de la cuenta espera', () => {
+    observe('u1', st({}), 0);
+    offerRunCelebrations([], 900, 1000);
+    observe('u1', st({ invitedCount: 1 }), 1200);
+    expect(getCelebrationQueue().readyAt).toBe(1900);
+  });
+
+  it('lo que llegó durante la partida también espera al resultado', () => {
+    observe('u1', st({}), 0);
+    observe('u1', st({ invitedCount: 1 }), 1000);
+    offerRunCelebrations([], 900, 60_000);
+    expect(getCelebrationQueue().readyAt).toBe(60_900);
+    expect(keys()).toEqual(['item:effect:corazones']);
+  });
+});
+
 describe('cola guardada', () => {
   it('lo que no se alcanzó a ver vuelve al abrir la app, y se borra al verlo', () => {
     offerCelebrations([bronce, neon], 900, 1000);
@@ -178,6 +252,14 @@ describe('cola guardada', () => {
     expect(getCelebrationQueue().items).toEqual([bronce, neon]);
     dropCelebrations(2);
     expect(mem.has(PENDING_KEY)).toBe(false);
+  });
+
+  it('la primera insignia sigue siendo la primera al volver', () => {
+    offerCelebrations([{ kind: 'tier', key: 'tier:3', tier: TIERS[3], first: true }], 0, 0);
+    resetCelebrationsForTests();
+    expect(getCelebrationQueue().items[0]).toMatchObject({ key: 'tier:3', first: true });
+    // en el registro de lo celebrado va la clave de siempre
+    expect(JSON.parse(mem.get(CELEBRATED_KEY)!)).toContain('tier:3');
   });
 
   it('claves desconocidas o dañadas se ignoran', () => {

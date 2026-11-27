@@ -14,7 +14,7 @@ import { type CatalogStats, type Selection, resolveSelection } from './catalog';
 
 /**
  * Estadísticas para el catálogo: `mergeStats` de las locales y las de `Me`, más invitados y reto
- * diario (`daily`: lo de este dispositivo, `tb_daily1`). La mejor racha de días del reto es el
+ * diario (`daily`: lo de este dispositivo, `tb_daily2`). La mejor racha de días del reto es el
  * máximo entre la de la cuenta y la del dispositivo (así también la gana un invitado). El mejor
  * porcentaje es el de la cuenta si hay usuario (lo calcula el servidor); sin él, el del dispositivo.
  */

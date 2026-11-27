@@ -21,8 +21,9 @@ export const CELEBRATION_CTX: PrizeContext = { accounts: features.accounts, dail
  *
  * También le pasa a `observeCelebrations` lo que el jugador tiene cada vez que cambia: así se
  * siembra `tb_cele2` la primera vez (sin celebrar lo que ya tenía), se celebra lo que llega tarde
- * por una partida de este dispositivo (un fondo por los bloques extra de una misión, el mejor
- * resultado de un reto como invitado) y se registra sin celebrar lo que llega de la cuenta.
+ * por una partida de este dispositivo (una paleta por los bloques extra de una misión, el mejor
+ * resultado de un reto como invitado) y, con sesión, los premios por invitar y por el porcentaje
+ * del reto. Lo demás que llega de la cuenta se registra sin celebrar.
  */
 export function CelebrationHost({ blocked }: { blocked: boolean }) {
   const queue = useCelebrationQueue();
@@ -38,10 +39,13 @@ export function CelebrationHost({ blocked }: { blocked: boolean }) {
     [localStats, daily],
   );
 
-  // ---- registro de lo que ya tiene, y lo que llega tarde por una partida ----
+  // aparte, lo que tiene con la cuenta (solo cuando ya se cargó su usuario)
+  const account = viewer.user ? stats : null;
+
+  // ---- registro de lo que ya tiene, y lo que llega fuera de la partida ----
   useEffect(() => {
-    observeCelebrations({ viewer: viewer.key, local, owned: () => ownedKeys(stats) }, CELEBRATION_CTX);
-  }, [stats, viewer.key, local]);
+    observeCelebrations({ viewer: viewer.key, local, account, owned: () => ownedKeys(stats) }, CELEBRATION_CTX);
+  }, [stats, viewer.key, local, account]);
   // otra partida: lo que cambie desde ahora ya no es de la anterior
   useEffect(() => {
     if (blocked) disarmCelebrations();

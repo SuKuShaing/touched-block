@@ -15,18 +15,23 @@ import { type CatalogItem, SETTING_KEY } from '@/cosmetics/catalog';
 import { getPalette } from '@/cosmetics/palettes';
 import { type Celebration, celebrationTexts, stepText } from '@/game/celebrations';
 import { sounds } from '@/game/sounds';
+import { BURST_LIFETIME } from '@/lib/fxShapes';
 import { getSettings, updateSettings, useSettings } from '@/lib/settings';
+import { shareItemOf } from '@/lib/shareText';
 import { C } from '@/theme';
 import { AchievementIcon } from './AchievementIcon';
 import { Confetti } from './Confetti';
 import { FieldBackground } from './FieldBackground';
 import { Burst, type BurstEffect } from './Fx';
+import { PaletteSwatch } from './PaletteSwatch';
+import { ShareIcon, usePrizeShare } from './PrizeModal';
 import { TierBadge } from './TierBadge';
 
 /**
  * Ventana de celebración: lo que se ganó (insignia, premio, logro o el reto del día), con
  * confeti, rayos de luz detrás y una entrada con rebote. Varias a la vez se muestran de a una
  * ("1 de 3", "Siguiente"). Se cierra con "¡Genial!", tocando fuera o con "atrás" en Android.
+ * Insignias, logros y premios se pueden compartir sin cerrar ni avanzar.
  * Con "reducir movimiento" no hay confeti, rayos ni rebote (solo aparece).
  *
  * Es solo la vista: la cola, el sonido y cuándo se muestra están en `CelebrationHost`.
@@ -81,41 +86,76 @@ function Rays({ color, still }: { color: string; still: boolean }) {
 const DIGITS = [3, 7, 2, 5, 9, 4, 8, 1, 6];
 
 function PaletteView({ id }: { id: string }) {
-  const p = getPalette(id);
   return (
     <View style={styles.palette}>
-      {p.colors.map((c, i) => (
-        <View key={i} style={[styles.mini, { backgroundColor: c }]}>
-          {p.shine ? <View style={styles.gleam} /> : null}
+      {DIGITS.map((digit, i) => (
+        <PaletteSwatch key={i} paletteId={id} index={i} size={32} radius={7}>
           <Text style={styles.miniT} selectable={false}>
-            {DIGITS[i]}
+            {digit}
           </Text>
-        </View>
+        </PaletteSwatch>
       ))}
     </View>
   );
 }
 
+const EFFECT_W = 240;
+const BLOCK_PX = 30;
+/**
+ * Centro del bloque dentro de la caja del efecto según hacia dónde se abre cada uno (por defecto,
+ * al medio): así los que suben (fuegos, burbujas) o caen en diagonal (fugaces) no salen cortados.
+ */
+const EFFECT_ORIGIN: Partial<Record<BurstEffect, { x?: number; y: number }>> = {
+  burbujas: { y: 112 },
+  fuegos: { y: 108 },
+  emojis: { y: 85 },
+  monedas: { y: 82 },
+  pixeles: { y: 70 },
+  fugaces: { x: 135, y: 60 },
+};
+
 /** El efecto al destruir, en bucle (un bloque que estalla cada poco más de un segundo). */
 function EffectView({ id, still }: { id: string; still: boolean }) {
+  const effect = id as BurstEffect;
+  // cada estallido termina antes del siguiente
+  const every = Math.max(1200, (BURST_LIFETIME[effect] ?? 0) + 300);
   const [n, setN] = useState(0);
   useEffect(() => {
     if (still) return;
-    const t = setInterval(() => setN((v) => v + 1), 1200);
+    const t = setInterval(() => setN((v) => v + 1), every);
     return () => clearInterval(t);
-  }, [still]);
+  }, [still, every]);
+  const { x = EFFECT_W / 2, y = STAGE_H / 2 } = EFFECT_ORIGIN[effect] ?? {};
+  // el borde de la caja (1 px) corre el origen de sus hijos
+  const cx = x - 1;
+  const cy = y - 1;
   return (
-    <View style={styles.box}>
-      <View style={[styles.block, { backgroundColor: getPalette(null).colors[4] }]} />
-      {still ? null : <Burst key={n} x={70} y={50} color={COLORS[4]} count={14} effect={id as BurstEffect} />}
+    <View style={[styles.box, styles.fxBox]}>
+      <View style={[styles.block, { left: cx - BLOCK_PX / 2, top: cy - BLOCK_PX / 2, backgroundColor: getPalette(null).colors[4] }]} />
+      {still ? null : <Burst key={n} x={cx} y={cy} color={COLORS[4]} count={14} effect={effect} />}
     </View>
   );
 }
 
+const BG_W = 160;
+const BG_H = 108;
+
+/**
+ * El fondo como se ve en el campo (animado, si lo es) a media escala: se dibuja al doble del
+ * tamaño de la caja y se achica. `estrellas` va sin achicar (sus puntos casi desaparecerían).
+ */
 function BackgroundView({ id }: { id: string }) {
+  const k = id === 'estrellas' ? 1 : 0.5;
+  const w = BG_W / k;
+  const h = BG_H / k;
   return (
     <View style={[styles.box, styles.bgBox]}>
-      <FieldBackground id={id} cell={14} />
+      <View
+        pointerEvents="none"
+        style={{ position: 'absolute', width: w, height: h, left: (BG_W - w) / 2 - 1, top: (BG_H - h) / 2 - 1, transform: [{ scale: k }] }}
+      >
+        <FieldBackground id={id} cell={14 / k} />
+      </View>
       <View style={[styles.block, styles.bgBlockA, { backgroundColor: COLORS[3] }]} />
       <View style={[styles.block, styles.bgBlockB, { backgroundColor: COLORS[5] }]} />
     </View>
@@ -257,6 +297,8 @@ export function CelebrationModal({
   const c = items[index] ?? null;
   const last = index >= items.length - 1;
   const [cardW, setCardW] = useState<number | null>(null);
+  const shareItem = c ? shareItemOf(c) : null;
+  const { share: shareShown, notice } = usePrizeShare(shareItem);
   const shownAt = useRef(Date.now());
   useEffect(() => {
     shownAt.current = Date.now();
@@ -278,6 +320,10 @@ export function CelebrationModal({
   const dismiss = () => {
     if (ready()) onClose();
   };
+  // compartir no cierra la ventana ni pasa a la siguiente
+  const onShare = () => {
+    if (ready()) shareShown();
+  };
   const onCard = (e: LayoutChangeEvent) => setCardW(e.nativeEvent.layout.width);
 
   return (
@@ -286,14 +332,31 @@ export function CelebrationModal({
         <Pressable style={StyleSheet.absoluteFill} onPress={dismiss} accessibilityLabel="Cerrar" />
         <Animated.View style={[styles.card, { borderColor: rgba(accentOf(c), 0.45) }, cardStyle]} accessibilityViewIsModal accessibilityLiveRegion="polite" onLayout={onCard}>
           <Slide key={c.key} c={c} step={stepText(index, items.length)} still={reduced} />
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={last ? (items.length > 1 ? '¡Genial! Cerrar' : '¡Genial! Seguir jugando') : 'Siguiente premio'}
-            onPress={primary}
-            style={({ pressed }) => [styles.primary, { backgroundColor: accentOf(c) }, pressed && styles.pressed]}
-          >
-            <Text style={styles.primaryT}>{last ? '¡Genial!' : 'Siguiente'}</Text>
-          </Pressable>
+          <View style={styles.buttons}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={last ? (items.length > 1 ? '¡Genial! Cerrar' : '¡Genial! Seguir jugando') : 'Siguiente premio'}
+              onPress={primary}
+              style={({ pressed }) => [styles.primary, { backgroundColor: accentOf(c) }, pressed && styles.pressed]}
+            >
+              <Text style={styles.primaryT}>{last ? '¡Genial!' : 'Siguiente'}</Text>
+            </Pressable>
+            {shareItem ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Compartir"
+                onPress={onShare}
+                style={({ pressed }) => [styles.shareBtn, pressed && styles.pressed]}
+              >
+                <ShareIcon color={C.text} />
+              </Pressable>
+            ) : null}
+          </View>
+          {notice ? (
+            <Text style={styles.notice} accessibilityRole="alert" accessibilityLiveRegion="polite">
+              {notice}
+            </Text>
+          ) : null}
           {/* sale del centro del premio */}
           {!reduced && cardW !== null ? <Confetti key={`confeti-${c.key}`} x={cardW / 2} y={PAD_TOP + HEAD_H + STAGE_H / 2} /> : null}
         </Animated.View>
@@ -337,18 +400,20 @@ const styles = StyleSheet.create({
   ghostOn: { backgroundColor: 'transparent', borderWidth: 1, borderColor: C.good },
   ghostT: { color: C.text, fontWeight: '800', fontSize: 14 },
   ghostOnT: { color: C.good },
-  primary: { alignSelf: 'stretch', marginTop: 16, borderRadius: 14, paddingVertical: 13, alignItems: 'center', minHeight: 48, justifyContent: 'center' },
+  buttons: { alignSelf: 'stretch', flexDirection: 'row', gap: 10, marginTop: 16 },
+  primary: { flex: 1, borderRadius: 14, paddingVertical: 13, alignItems: 'center', minHeight: 48, justifyContent: 'center' },
+  shareBtn: { width: 52, minHeight: 48, borderRadius: 14, backgroundColor: C.barBg, alignItems: 'center', justifyContent: 'center' },
+  notice: { color: C.text, opacity: 0.85, fontSize: 13, fontWeight: '600', textAlign: 'center', marginTop: 8 },
   primaryT: { color: C.bg, fontWeight: '900', fontSize: 17 },
   pressed: { transform: [{ scale: 0.96 }], opacity: 0.85 },
   // vistas previas
   big: { transform: [{ scale: 1.6 }] },
   palette: { width: 108, flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  mini: { width: 32, height: 32, borderRadius: 7, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   miniT: { color: '#ffffff', fontSize: 15, fontWeight: '800' },
-  gleam: { position: 'absolute', top: 2, left: 3, width: 14, height: 5, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.45)' },
-  box: { width: 140, height: 100, borderRadius: 12, backgroundColor: C.bg, borderWidth: 1, borderColor: C.panelBorder, overflow: 'hidden' },
-  bgBox: { width: 160, height: 108 },
-  block: { position: 'absolute', width: 30, height: 30, borderRadius: 7, left: 55, top: 35 },
+  box: { borderRadius: 12, backgroundColor: C.bg, borderWidth: 1, borderColor: C.panelBorder, overflow: 'hidden' },
+  fxBox: { width: EFFECT_W, height: STAGE_H },
+  bgBox: { width: BG_W, height: BG_H },
+  block: { position: 'absolute', width: BLOCK_PX, height: BLOCK_PX, borderRadius: 7 },
   bgBlockA: { left: 28, top: 22 },
   bgBlockB: { left: 100, top: 58 },
   note: { width: 92, height: 92, borderRadius: 46, backgroundColor: C.bg, borderWidth: 2, borderColor: C.accent, alignItems: 'center', justifyContent: 'center' },

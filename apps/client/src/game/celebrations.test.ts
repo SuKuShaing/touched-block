@@ -5,12 +5,14 @@ import {
   type Celebration,
   FEATURE_DAILY_KEY,
   type Snapshot,
+  accountCelebrations,
   celebrationFromKey,
   celebrationTexts,
   coveredKeys,
   outsideCelebrations,
   ownedKeys,
   pendingCelebrations,
+  pendingKey,
   runCelebrations,
   stepText,
 } from './celebrations';
@@ -52,7 +54,7 @@ describe('qué se celebra al terminar una partida', () => {
   it('un logro que salta dos materiales se celebra una vez, con el más alto', () => {
     const l = afterRun(stats({ runs: 1, bestTicks: secs(10) }), stats({ runs: 2, bestTicks: secs(10), bestStreak: 30 }));
     expect(keys(l)).toEqual(['item:effect:confeti', 'item:background:grilla', 'ach:racha:2']);
-    expect(celebrationTexts(l[2])).toMatchObject({ title: '¡Logro de Cartón!', name: 'Máximo combo', sub: 'Racha de 25.' });
+    expect(celebrationTexts(l[2])).toMatchObject({ kicker: 'Logro nuevo', title: '¡Máximo combo · Cartón!', name: null, sub: 'Racha de 25.' });
   });
 
   it('el reto del día y las misiones van al final', () => {
@@ -148,10 +150,19 @@ describe('fuera de la partida', () => {
     ]);
   });
 
-  it('mejor resultado en un reto diario', () => {
+  it('mejor resultado en un reto diario: sus premios y el logro', () => {
     const l = outsideCelebrations(snap({ bestDailyPct: null }), snap({ bestDailyPct: 0 }), ALL);
-    expect(keys(l)).toEqual(['ach:mejorReto:1']);
-    expect(keys(outsideCelebrations(snap({ bestDailyPct: 40 }), snap({ bestDailyPct: 80 }), ALL))).toEqual(['ach:mejorReto:4']);
+    expect(keys(l)).toEqual(['item:background:rayas', 'ach:mejorReto:1']);
+    expect(keys(outsideCelebrations(snap({ bestDailyPct: 40 }), snap({ bestDailyPct: 80 }), ALL))).toEqual([
+      'item:background:hexagonos',
+      'item:background:topografia',
+      'ach:mejorReto:4',
+    ]);
+    expect(outsideCelebrations(snap({ bestDailyPct: null }), snap({ bestDailyPct: 0 }), NONE)).toEqual([]);
+  });
+
+  it('los premios de los otros logros solo salen con una partida', () => {
+    expect(outsideCelebrations(snap({}), snap({ bestStreak: 30, runs: 60, dailyStreakBest: 8 }), ALL)).toEqual([]);
   });
 
   it('insignias y premios de partidas (otro dispositivo) no se celebran aquí', () => {
@@ -171,10 +182,32 @@ describe('desde la clave', () => {
     for (const c of all) expect(celebrationFromKey(c.key)).toEqual(c);
     expect(celebrationFromKey('tier:0')).toMatchObject({ first: true });
   });
+  it('la primera insignia se recuerda aunque sea más alta que Papel', () => {
+    const [bronce] = afterRun(EMPTY_CATALOG_STATS, stats({ runs: 1, bestTicks: secs(ADD_START) }));
+    expect(bronce).toMatchObject({ key: 'tier:3', first: true });
+    expect(pendingKey(bronce)).toBe('tier:3:first');
+    expect(celebrationFromKey(pendingKey(bronce))).toEqual(bronce);
+    expect(celebrationFromKey('tier:3')).toMatchObject({ first: false });
+  });
   it('claves inválidas (y las del logro que ya no existe): null', () => {
-    for (const k of ['', 'tier:7', 'tier:-1', 'tier:1:x', 'item:palette:clasica', 'item:foo:neon', 'ach:racha:0', 'ach:racha:8', 'ach:bloques:1', 'ach:nada:1', 'feature:otra']) {
+    for (const k of ['', 'tier:7', 'tier:-1', 'tier:1:x', 'tier:1:first:x', 'item:palette:clasica', 'item:foo:neon', 'ach:racha:0', 'ach:racha:8', 'ach:bloques:1', 'ach:nada:1', 'feature:otra']) {
       expect(celebrationFromKey(k)).toBeNull();
     }
+  });
+});
+
+describe('con la cuenta', () => {
+  it('premios por invitar y por el porcentaje del reto que ya tiene, y nada más', () => {
+    const s = stats({ runs: 90, bestTicks: secs(ADD_START), bestStreak: 40, totalKilled: 9999, invitedCount: 2, bestDailyPct: 30 });
+    expect(keys(accountCelebrations(s, ALL))).toEqual([
+      'item:palette:constancia',
+      'item:effect:burbujas',
+      'item:effect:corazones',
+      'item:background:rayas',
+      'ach:mejorReto:2',
+    ]);
+    expect(accountCelebrations(stats({ runs: 5 }), ALL)).toEqual([]);
+    expect(accountCelebrations(s, NONE)).toEqual([]);
   });
 });
 

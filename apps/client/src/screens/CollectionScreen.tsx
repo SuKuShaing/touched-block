@@ -1,10 +1,12 @@
 import { useIsFocused, useRouter } from 'expo-router';
-import type { ReactNode } from 'react';
+import { memo, type ReactNode, useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ACHIEVEMENTS,
   type Achievement,
+  type AchievementId,
+  COLORS,
   TICKS_PER_SECOND,
   TIERS,
   achievementById,
@@ -17,10 +19,14 @@ import {
 import { useMeRefresh, useViewer } from '@/api/hooks';
 import type { Me } from '@/api/types';
 import { AchievementIcon } from '@/components/AchievementIcon';
+import { EffectIcon } from '@/components/EffectIcon';
 import { FieldBackground } from '@/components/FieldBackground';
 import { SmallButton } from '@/components/form';
+import { PaletteSwatch } from '@/components/PaletteSwatch';
+import { PreviewPanel } from '@/components/PreviewPanel';
+import { PrizeModal, type PrizeRef } from '@/components/PrizeModal';
 import { BADGE_PX, TierBadge } from '@/components/TierBadge';
-import { features } from '@/config';
+import { config, features } from '@/config';
 import { useActiveCosmetics } from '@/cosmetics/active';
 import {
   CATALOG,
@@ -37,15 +43,13 @@ import {
   tierGoal,
   tierIndexOfStats,
 } from '@/cosmetics/catalog';
-import { getPalette } from '@/cosmetics/palettes';
 import { MATERIAL_COLOR, tierColor } from '@/cosmetics/tiers';
 import { sounds } from '@/game/sounds';
 import { useMarkCollectionSeen } from '@/lib/collectionNews';
 import { achievementValues } from '@/lib/achievementValues';
-import { levelFor, xpOf } from '@/lib/level';
+import { levelFor, levelStart, xpOf } from '@/lib/level';
 import { type Settings, updateSettings } from '@/lib/settings';
 import { useTabBarSpace } from '@/lib/tabBar';
-import { HEART } from '@/components/heart';
 import { C } from '@/theme';
 
 /**
@@ -57,6 +61,15 @@ const SHOW_DAILY = features.accounts;
 const fmtInt = fmtCount;
 const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 const clamp01 = (v: number) => (Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 0);
+
+/** Lado de las miniaturas de las filas y de sus nueve muestras de paleta (3 × 3 con 3 px entre ellas). */
+const THUMB_PX = 44;
+const SWATCH_PX = 12.6;
+/** Lado del dibujo en la línea "Premio: …" de un logro y del icono del logro que pide un premio. */
+const MINI_PX = 22;
+const REQ_ICON_PX = 26;
+/** Medallas de la galería del APK de prueba. */
+const GALLERY_PX = 48;
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -84,26 +97,34 @@ function EmptyMedal({ size }: { size: number }) {
 
 // ---------------------------------------------------------------- insignia
 
-function TierCard({ stats, me }: { stats: CatalogStats; me: Me | null }) {
+function TierCard({ stats, me, onOpen }: { stats: CatalogStats; me: Me | null; onOpen: (prize: PrizeRef) => void }) {
   const idx = tierIndexOfStats(stats);
   const cur = idx >= 0 ? TIERS[idx] : null;
   const next = idx + 1 < TIERS.length ? TIERS[idx + 1] : null;
   const best = stats.bestTicks / TICKS_PER_SECOND;
   const from = cur ? cur.at : 0;
   const ratio = next ? (best - from) / Math.max(1, next.at - from) : 1;
+  const first = TIERS[0];
+  const name = cur ? `Insignia ${cur.name}` : 'Sin insignia';
+  const detail = cur ? `Tu partida más larga: ${fmtSeconds(best)}` : `${tierGoal(first)} para ganar ${first.name}.`;
   // con sesión, la insignia pública es la de la cuenta (las partidas de invitado sin guardar no cuentan)
   const serverIdx = me && me.tier !== undefined ? tierIndexOf(me.tier) : null;
 
   return (
     <Section title="Insignia">
-      <View style={styles.head}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${name}. ${detail.replace(/\.$/, '')}. Ver en grande`}
+        onPress={() => onOpen({ kind: 'tier', index: idx })}
+        style={({ pressed }) => [styles.head, pressed && styles.pressed]}
+      >
         {cur ? <TierBadge tier={cur} size="lg" /> : <EmptyMedal size={BADGE_PX.lg} />}
         <View style={styles.flex1}>
           <Text style={styles.big}>{cur ? cur.name : 'Sin insignia'}</Text>
-          <Text style={styles.muted}>{cur ? `Tu partida más larga: ${fmtSeconds(best)}` : 'Termina una partida para ganar Madera I.'}</Text>
+          <Text style={styles.muted}>{detail}</Text>
         </View>
-      </View>
-      {next && cur ? (
+      </Pressable>
+      {next ? (
         <View style={styles.stack}>
           <View style={styles.inline}>
             <Text style={styles.label}>Siguiente:</Text>
@@ -113,7 +134,9 @@ function TierCard({ stats, me }: { stats: CatalogStats; me: Me | null }) {
             </Text>
           </View>
           <Bar ratio={ratio} color={tierColor(next)} />
-          <Text style={styles.small}>Te faltaron {fmtSeconds(next.at - best)} en tu mejor partida.</Text>
+          <Text style={styles.small}>
+            {best > 0 ? `Te faltaron ${fmtSeconds(next.at - best)} en tu mejor partida.` : `Te faltan ${fmtSeconds(next.at)}.`}
+          </Text>
         </View>
       ) : null}
       {!next ? <Text style={[styles.label, styles.gold]}>¡Tienes la insignia más alta!</Text> : null}
@@ -127,13 +150,13 @@ function TierCard({ stats, me }: { stats: CatalogStats; me: Me | null }) {
   );
 }
 
-// ---------------------------------------------------------------- nivel
+// ---------------------------------------------------------------- experiencia
 
 function LevelCard({ stats }: { stats: CatalogStats }) {
   const lv = levelFor(xpOf(stats));
   const missing = lv.next - lv.xp;
   return (
-    <Section title="Nivel">
+    <Section title="Experiencia">
       <View style={styles.head}>
         <View style={styles.levelBubble}>
           <Text style={styles.levelN}>{lv.level}</Text>
@@ -155,25 +178,24 @@ function LevelCard({ stats }: { stats: CatalogStats }) {
 
 // ---------------------------------------------------------------- premios
 
-function Preview({ item, locked }: { item: CatalogItem; locked: boolean }) {
+/** Miniatura de un premio en su fila. Memorizada: son 55 y varias dibujan un SVG. */
+const Preview = memo(function Preview({ item, locked }: { item: CatalogItem; locked: boolean }) {
   const dim = locked ? styles.dim : null;
   switch (item.type) {
-    case 'palette': {
-      const p = getPalette(item.id);
+    case 'palette':
       return (
         <View style={[styles.swatches, dim]}>
-          {p.colors.map((c, i) => (
-            <View key={i} style={[styles.swatch, { backgroundColor: c }]}>
-              {p.shine ? <View style={styles.swatchGleam} /> : null}
-            </View>
+          {COLORS.map((c, i) => (
+            <PaletteSwatch key={c} paletteId={item.id} index={i} size={SWATCH_PX} radius={3} />
           ))}
         </View>
       );
-    }
     case 'sound':
       return (
-        <View style={[styles.preview, styles.round, dim]}>
-          <Text style={styles.note}>♪</Text>
+        <View style={[styles.preview, dim]}>
+          <Text style={styles.note} allowFontScaling={false}>
+            ♪
+          </Text>
         </View>
       );
     case 'effect':
@@ -185,80 +207,16 @@ function Preview({ item, locked }: { item: CatalogItem; locked: boolean }) {
     case 'background':
       return (
         <View style={[styles.preview, styles.bgPreview, dim]}>
-          <FieldBackground id={item.id} cell={9} />
+          {/* siempre quieto: hay una miniatura por cada fondo */}
+          <FieldBackground id={item.id} cell={9} thumb paused />
         </View>
       );
   }
-}
-
-/** Dibujo fijo de cada efecto al destruir. */
-function EffectIcon({ id }: { id: string }) {
-  const c = '#0091ff';
-  const at = (x: number, y: number) => ({ left: 17 + x, top: 17 + y });
-  if (id === 'corazones') {
-    return (
-      <>
-        <Text style={[styles.heart, at(-13, -14), { fontSize: 13 }]}>{HEART}</Text>
-        <Text style={[styles.heart, at(1, -9), { fontSize: 16 }]}>{HEART}</Text>
-        <Text style={[styles.heart, at(-10, 1), { fontSize: 11 }]}>{HEART}</Text>
-      </>
-    );
-  }
-  if (id === 'chispas') {
-    return (
-      <>
-        {[0, 60, 120, 180, 240, 300].map((deg, i) => {
-          const r = (deg * Math.PI) / 180;
-          return (
-            <View
-              key={deg}
-              style={[
-                styles.spark,
-                at(Math.cos(r) * 10 - 1.5, Math.sin(r) * 10 - 5),
-                { backgroundColor: i % 2 ? '#fff3b0' : c, transform: [{ rotate: `${deg + 90}deg` }] },
-              ]}
-            />
-          );
-        })}
-      </>
-    );
-  }
-  if (id === 'confeti') {
-    const cols = ['#e5484d', '#e5a50a', '#30a46c', '#0091ff', '#d6409f'];
-    const pos: [number, number, number][] = [
-      [-12, -12, 20],
-      [4, -13, -30],
-      [-3, -2, 60],
-      [8, 2, 15],
-      [-12, 4, -50],
-    ];
-    return (
-      <>
-        {pos.map(([x, y, rot], i) => (
-          <View key={i} style={[styles.confetti, at(x, y), { backgroundColor: cols[i], transform: [{ rotate: `${rot}deg` }] }]} />
-        ))}
-      </>
-    );
-  }
-  const pos: [number, number][] = [
-    [-12, -10],
-    [4, -12],
-    [-4, 0],
-    [6, 4],
-    [-13, 6],
-  ];
-  return (
-    <>
-      {pos.map(([x, y], i) => (
-        <View key={i} style={[styles.square, at(x, y), { backgroundColor: c, opacity: 1 - i * 0.12 }]} />
-      ))}
-    </>
-  );
-}
+});
 
 const TYPE_WORD: Record<CosmeticType, string> = { palette: 'Paleta', sound: 'Sonido', effect: 'Efecto', background: 'Fondo' };
 
-function ItemRow({
+const ItemRow = memo(function ItemRow({
   item,
   stats,
   selected,
@@ -292,6 +250,7 @@ function ItemRow({
         {req ? (
           <View style={styles.reqRow}>
             {item.req.kind === 'tier' ? <TierBadge tier={TIERS[item.req.index]} size="sm" /> : null}
+            {item.req.kind === 'achievement' ? <AchievementIcon id={item.req.id} level={item.req.level} size={REQ_ICON_PX} /> : null}
             <Text style={[styles.small, styles.flex1]}>{req}</Text>
           </View>
         ) : status ? (
@@ -302,7 +261,7 @@ function ItemRow({
       {selected ? <Text style={styles.check}>✓</Text> : null}
     </Pressable>
   );
-}
+});
 
 function listed(item: CatalogItem): boolean {
   if (item.requires === 'daily') return SHOW_DAILY;
@@ -312,7 +271,41 @@ function listed(item: CatalogItem): boolean {
 
 // ---------------------------------------------------------------- logros
 
-function AchievementRow({ a, value, last }: { a: Achievement; value: number | null; last: boolean }) {
+/** Premio (efecto o fondo) que entrega el escalón `level` (1 = Papel) de un logro, si se muestra. */
+function prizeOfStep(id: AchievementId, level: number): CatalogItem | undefined {
+  return CATALOG.find((i) => i.req.kind === 'achievement' && i.req.id === id && i.req.level === level && listed(i));
+}
+
+/** "Premio: …" del siguiente escalón, con el icono del efecto o la miniatura del fondo. */
+function PrizeLine({ item }: { item: CatalogItem }) {
+  return (
+    <View style={styles.prize}>
+      {item.type === 'effect' ? (
+        <EffectIcon id={item.id} size={MINI_PX} />
+      ) : (
+        <View style={styles.mini}>
+          {/* la miniatura de la fila a media escala */}
+          <View style={styles.miniScaled}>
+            <Preview item={item} locked={false} />
+          </View>
+        </View>
+      )}
+      <Text style={styles.prizeT}>Premio: {item.name}</Text>
+    </View>
+  );
+}
+
+function AchievementRow({
+  a,
+  value,
+  last,
+  onOpen,
+}: {
+  a: Achievement;
+  value: number | null;
+  last: boolean;
+  onOpen: (prize: PrizeRef) => void;
+}) {
   const level = achievementLevel(a.id, value);
   const mat = achievementMaterial(level);
   const next = achievementNext(a.id, value);
@@ -321,8 +314,18 @@ function AchievementRow({ a, value, last }: { a: Achievement; value: number | nu
   const v = value ?? 0;
   const ratio = next === null ? 1 : (v - prev) / Math.max(1, next - prev);
   const pct = a.id === 'mejorReto';
+  const detail =
+    next === null
+      ? '¡Nivel máximo!'
+      : `${achievementGoal(a.id, level + 1)}${value !== null ? ` · llevas ${fmtInt(v)}${pct ? ' %' : ''}` : ''}`;
+  const prize = next === null ? undefined : prizeOfStep(a.id, level + 1);
   return (
-    <View style={[styles.item, last && styles.itemLast]}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`Logro ${a.name}, ${mat ?? 'sin material'}. ${detail}${prize ? `. Premio: ${prize.name}` : ''}. Ver en grande`}
+      onPress={() => onOpen({ kind: 'achievement', id: a.id, level })}
+      style={({ pressed }) => [styles.item, last && styles.itemLast, pressed && styles.pressed]}
+    >
       <AchievementIcon id={a.id} level={level} size="md" />
       <View style={styles.itemText}>
         <Text style={styles.itemName}>
@@ -330,23 +333,90 @@ function AchievementRow({ a, value, last }: { a: Achievement; value: number | nu
           {mat ? <Text style={styles.matT}> · {mat}</Text> : null}
         </Text>
         <Bar ratio={ratio} color={mat ? MATERIAL_COLOR[mat] : C.accent} />
-        <Text style={styles.small}>
-          {next === null
-            ? '¡Nivel máximo!'
-            : `${achievementGoal(a.id, level + 1)}${value !== null ? ` · llevas ${fmtInt(v)}${pct ? ' %' : ''}` : ''}`}
-        </Text>
+        <Text style={styles.small}>{detail}</Text>
+        {prize ? <PrizeLine item={prize} /> : null}
       </View>
-    </View>
+    </Pressable>
+  );
+}
+
+// ---------------------------------------------------------------- galería (APK de prueba)
+
+const topOf = (id: AchievementId) => Math.max(...achievementById(id).thresholds);
+
+/** Estadísticas inventadas con todo al máximo: las usa la ventana al abrirse desde la galería. */
+const MAX_STATS: CatalogStats = {
+  bestTicks: TIERS[TIERS.length - 1].at * TICKS_PER_SECOND,
+  bestStreak: topOf('racha'),
+  totalKilled: levelStart(30),
+  runs: topOf('partidas'),
+  bonusXp: 0,
+  invitedCount: 3,
+  dailyStreakBest: topOf('diasReto'),
+  bestDailyPct: topOf('mejorReto'),
+};
+
+function GalleryCell({ caption, label, onPress, children }: { caption: string; label: string; onPress: () => void; children: ReactNode }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${label}. Ver en grande`}
+      onPress={onPress}
+      style={({ pressed }) => [styles.cell, pressed && styles.pressed]}
+    >
+      {children}
+      <Text style={styles.caption}>{caption}</Text>
+    </Pressable>
+  );
+}
+
+/** Todas las insignias y los materiales de cada logro (también vacíos), para verlos en grande y compartirlos. */
+function TestGallery({ onOpen }: { onOpen: (prize: PrizeRef) => void }) {
+  return (
+    <Section title="Galería de prueba">
+      <Text style={styles.small}>Solo en esta versión de prueba. Toca uno para verlo en grande y compartirlo.</Text>
+      <Text style={styles.itemName}>Insignias</Text>
+      <View style={styles.gallery}>
+        {TIERS.map((t) => (
+          <GalleryCell key={t.name} caption={t.name} label={`Insignia ${t.name}`} onPress={() => onOpen({ kind: 'tier', index: t.index })}>
+            <TierBadge tier={t} size={GALLERY_PX} />
+          </GalleryCell>
+        ))}
+      </View>
+      {ACHIEVEMENTS.map((a) => (
+        <View key={a.id} style={styles.stack}>
+          <Text style={styles.itemName}>{a.name}</Text>
+          <View style={styles.gallery}>
+            {/* 0 = vacío; 1 … 7 = Papel … Diamante */}
+            {[0, ...a.thresholds.map((_, i) => i + 1)].map((level) => {
+              const caption = achievementMaterial(level) ?? 'Vacío';
+              return (
+                <GalleryCell
+                  key={level}
+                  caption={caption}
+                  label={`Logro ${a.name}, ${caption}`}
+                  onPress={() => onOpen({ kind: 'achievement', id: a.id, level })}
+                >
+                  <AchievementIcon id={a.id} level={level} size={GALLERY_PX} />
+                </GalleryCell>
+              );
+            })}
+          </View>
+        </View>
+      ))}
+    </Section>
   );
 }
 
 // ---------------------------------------------------------------- pantalla
 
 /**
- * `/coleccion` (pestaña): insignia y la siguiente, nivel, premios por tipo (tocar uno desbloqueado
- * lo activa) y logros. Las estadísticas son las de este dispositivo y, con sesión, el máximo con
- * las del servidor (`cosmetics/active.ts`). Sin sesión, un aviso invita a iniciarla para guardar
- * los logros. Sin API no hay barra de pestañas: se llega desde el Perfil y tiene botón Volver.
+ * `/coleccion` (pestaña): insignia y la siguiente, experiencia, logros, premios por tipo (tocar uno
+ * desbloqueado lo activa) y la vista previa de lo equipado. Tocar la insignia o un logro lo muestra
+ * en grande (`PrizeModal`). Las estadísticas son las de este dispositivo y, con sesión, el máximo
+ * con las del servidor (`cosmetics/active.ts`). Sin sesión, un aviso invita a iniciarla para
+ * guardar los logros. Sin API no hay barra de pestañas: se llega desde el Perfil y tiene botón
+ * Volver. El APK de prueba (`config.unlockAll`) lo dice arriba y añade una galería de premios.
  */
 export function CollectionScreen() {
   const router = useRouter();
@@ -361,13 +431,18 @@ export function CollectionScreen() {
 
   const back = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
-  const pick = (item: CatalogItem) => {
+  const pick = useCallback((item: CatalogItem) => {
     const key = SETTING_KEY[item.type];
     const patch: Partial<Settings> = {};
     patch[key] = item.id;
     updateSettings(patch);
     if (item.type === 'sound') sounds.preview(item.id);
-  };
+  }, []);
+
+  // lo que se está viendo en grande; `demo` = abierto desde la galería de prueba
+  const [shown, setShown] = useState<{ prize: PrizeRef; demo: boolean } | null>(null);
+  const open = (prize: PrizeRef) => setShown({ prize, demo: false });
+  const openDemo = (prize: PrizeRef) => setShown({ prize, demo: true });
 
   const achievements = ACHIEVEMENTS.filter((a) => SHOW_DAILY || (a.id !== 'diasReto' && a.id !== 'mejorReto'));
   const values = achievementValues(stats);
@@ -388,6 +463,7 @@ export function CollectionScreen() {
           Colección
         </Text>
         <Text style={styles.intro}>Tus premios cambian cómo se ve y suena el juego, nunca las reglas.</Text>
+        {config.unlockAll ? <Text style={styles.testMode}>MODO PRUEBA</Text> : null}
 
         {features.accounts && !viewer.loggedIn ? (
           <View style={styles.guest}>
@@ -398,8 +474,16 @@ export function CollectionScreen() {
           </View>
         ) : null}
 
-        <TierCard stats={stats} me={me} />
+        <TierCard stats={stats} me={me} onOpen={open} />
         <LevelCard stats={stats} />
+
+        <Section title="Logros">
+          <View style={styles.list}>
+            {achievements.map((a, i) => (
+              <AchievementRow key={a.id} a={a} value={values[a.id]} last={i === achievements.length - 1} onOpen={open} />
+            ))}
+          </View>
+        </Section>
 
         {TYPE_ORDER.map((type) => {
           const items = CATALOG.filter((i) => i.type === type && listed(i));
@@ -423,16 +507,13 @@ export function CollectionScreen() {
           );
         })}
 
-        <Section title="Logros">
-          <View style={styles.list}>
-            {achievements.map((a, i) => (
-              <AchievementRow key={a.id} a={a} value={values[a.id]} last={i === achievements.length - 1} />
-            ))}
-          </View>
-        </Section>
+        <PreviewPanel />
+
+        {config.unlockAll ? <TestGallery onOpen={openDemo} /> : null}
 
         <Text style={styles.foot}>Lo que eliges se guarda en este dispositivo.</Text>
       </ScrollView>
+      <PrizeModal prize={shown?.prize ?? null} stats={shown?.demo ? MAX_STATS : stats} onClose={() => setShown(null)} />
     </View>
   );
 }
@@ -456,6 +537,17 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   title: { color: C.text, fontSize: 28, fontWeight: '800' },
+  testMode: {
+    color: C.gold,
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1,
+    borderWidth: 1,
+    borderColor: C.gold,
+    borderRadius: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+  },
   intro: { color: C.text, opacity: 0.7, fontSize: 14, textAlign: 'center', lineHeight: 20, maxWidth: 340, marginTop: -6 },
   section: { width: '100%', maxWidth: 480, backgroundColor: C.panel, borderRadius: 16, padding: 16, gap: 12 },
   sectionTitle: { color: C.text, opacity: 0.6, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.9 },
@@ -508,16 +600,45 @@ const styles = StyleSheet.create({
   onT: { color: C.accent, opacity: 1, fontWeight: '700' },
   check: { color: C.accent, fontSize: 20, fontWeight: '800' },
   dim: { opacity: 0.32 },
-  preview: { width: 36, height: 36, borderRadius: 8, backgroundColor: C.panel, overflow: 'hidden' },
-  round: { borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: C.barBg },
-  note: { color: C.text, fontSize: 18, fontWeight: '800' },
-  bgPreview: { borderWidth: 1, borderColor: C.panelBorder, backgroundColor: C.bg },
-  swatches: { width: 36, height: 36, flexDirection: 'row', flexWrap: 'wrap', gap: 2 },
-  swatch: { width: 10.6, height: 10.6, borderRadius: 3, overflow: 'hidden' },
-  swatchGleam: { position: 'absolute', top: 1.5, left: 1.5, width: 4, height: 2, borderRadius: 1, backgroundColor: 'rgba(255,255,255,0.6)' },
-  heart: { position: 'absolute', color: '#d6409f', fontWeight: '800' },
-  spark: { position: 'absolute', width: 3, height: 10, borderRadius: 2 },
-  confetti: { position: 'absolute', width: 5, height: 9, borderRadius: 1 },
-  square: { position: 'absolute', width: 8, height: 8, borderRadius: 2.5 },
+  preview: {
+    width: THUMB_PX,
+    height: THUMB_PX,
+    borderRadius: 12,
+    backgroundColor: C.bg,
+    borderWidth: 1,
+    borderColor: C.panelBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  note: { color: C.text, fontSize: 22, fontWeight: '800' },
+  bgPreview: { borderRadius: 10 },
+  swatches: { width: THUMB_PX, height: THUMB_PX, flexDirection: 'row', flexWrap: 'wrap', gap: 3 },
+  prize: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
+    gap: 6,
+    paddingVertical: 3,
+    paddingLeft: 4,
+    paddingRight: 8,
+    borderWidth: 1,
+    borderColor: C.panelBorder,
+    borderRadius: 8,
+  },
+  prizeT: { color: C.text, fontSize: 12, fontWeight: '700', flexShrink: 1 },
+  mini: { width: MINI_PX, height: MINI_PX, overflow: 'hidden' },
+  miniScaled: {
+    position: 'absolute',
+    width: THUMB_PX,
+    height: THUMB_PX,
+    left: (MINI_PX - THUMB_PX) / 2,
+    top: (MINI_PX - THUMB_PX) / 2,
+    transform: [{ scale: MINI_PX / THUMB_PX }],
+  },
+  gallery: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 12 },
+  cell: { width: '25%', alignItems: 'center', gap: 4 },
+  caption: { color: C.text, opacity: 0.6, fontSize: 12, textAlign: 'center' },
   foot: { color: C.text, opacity: 0.45, fontSize: 12, textAlign: 'center' },
 });
