@@ -1,87 +1,92 @@
-# Paletas sobre los fondos nuevos (CAMBIO-022)
+# Fondos nuevos y paletas (CAMBIO-022 y 026)
 
-Generado por `correr.sh` (`bash config_logros/herramientas/prueba-fondos/correr.sh`; no toca el juego ni `prueba-paletas`, solo importa su `reglas.ts`). Margen = lo que sobra (negativo = lo que falta). Para cada fondo se toma el peor caso entre sus colores de prueba (`prueba` de `FONDOS` en `coleccion.js`: el color principal y los extremos del degradé).
+Generado por `correr.sh` (`bash config_logros/herramientas/prueba-fondos/correr.sh`; no toca el juego ni `prueba-paletas`, solo importa su `reglas.ts`).
 
-Otras piezas: `barrido.spec.ts` (qué fondos dejan pasar a las tres translúcidas, escribe `barrido.json`), `ajustar.spec.ts` + `deseados.json` (cuánto oscurecer un color para que pase, escribe `ajustes.json`) y, para el muestreo del final, `muestrear.mjs` (lee una captura PNG de los campos sin bloques y un JSON con sus celdas) + `muestras.spec.ts`.
+## 1. Reglas de no ventaja (trampa roja #ff2a2a y texto blanco)
 
-## Opacas (control: no dependen del fondo)
+Se miden contra el color del bloque. Cristal, Contorno y Esmerilado se dibujan sobre un respaldo opaco `#12121a`, así que **ningún color de bloque depende del fondo**: el resultado vale para los 20 fondos. Margen = lo que sobra (negativo = lo que falta).
 
-Las 11 paletas opacas (clasica, contraste, pastel, neon, tenue, retro, boton, degrade, dorado, diamante, constancia) pasan todas las reglas. Su color es el mismo sobre cualquier fondo.
+| paleta | tono rango | tono difícil | tono media | rojo rango | rojo difícil | blanco | 9 distintos |
+|---|---|---|---|---|---|---|---|
+| clasica | pasa +5,000 | pasa +8,000 | pasa +20,0 | pasa +0,000 | pasa +0,100 | pasa +0,000 | pasa |
+| contraste | pasa +2,324 | pasa +10,7 | pasa +14,1 | pasa +0,031 | pasa +0,069 | pasa +0,171 | pasa |
+| pastel | pasa +0,107 | pasa +10,2 | pasa +19,9 | pasa +0,045 | pasa +0,055 | pasa +0,425 | pasa |
+| neon | pasa +0,918 | pasa +4,014 | pasa +19,7 | pasa +0,030 | pasa +0,026 | pasa +0,038 | pasa |
+| tenue | pasa +4,796 | pasa +7,609 | pasa +19,9 | pasa +0,045 | pasa +0,055 | pasa +0,901 | pasa |
+| cristal | pasa +4,268 | pasa +7,726 | pasa +16,2 | pasa +0,030 | pasa +0,070 | pasa +2,276 | pasa |
+| retro | pasa +5,955 | pasa +7,045 | pasa +6,287 | pasa +0,039 | pasa +0,052 | pasa +0,462 | pasa |
+| boton | pasa +7,729 | pasa +5,271 | pasa +15,3 | pasa +0,046 | pasa +0,034 | pasa +0,059 | pasa |
+| contorno | pasa +2,939 | pasa +4,583 | pasa +18,4 | pasa +0,023 | pasa +0,077 | pasa +2,248 | pasa |
+| degrade | pasa +7,452 | pasa +5,548 | pasa +12,8 | pasa +0,082 | pasa +0,018 | pasa +0,263 | pasa |
+| dorado | pasa +6,026 | pasa +6,974 | pasa +5,026 | pasa +0,051 | pasa +0,049 | pasa +0,215 | pasa |
+| esmerilado | pasa +5,391 | pasa +7,609 | pasa +15,0 | pasa +0,043 | pasa +0,057 | pasa +0,356 | pasa |
+| diamante | pasa +2,534 | pasa +10,5 | pasa +19,5 | pasa +0,019 | pasa +0,061 | pasa +0,669 | pasa |
+| constancia | pasa +1,127 | pasa +5,120 | pasa +19,8 | pasa +0,048 | pasa +0,052 | pasa +0,107 | pasa |
 
-## Translúcidas sobre cada fondo
+**14 de 14 paletas pasan todas las reglas.**
 
-| fondo | colores de prueba | paleta | tono rango | tono difícil | tono media | rojo rango | rojo difícil | blanco | 9 distintos |
-|---|---|---|---|---|---|---|---|---|---|
-| liso | #12121a | cristal | pasa +4,268 | pasa +7,726 | pasa +16,2 | pasa +0,030 | pasa +0,070 | pasa +2,276 | pasa  |
-| liso | #12121a | contorno | pasa +2,939 | pasa +4,583 | pasa +18,4 | pasa +0,023 | pasa +0,077 | pasa +2,248 | pasa  |
-| liso | #12121a | esmerilado | pasa +5,391 | pasa +7,609 | pasa +15,0 | pasa +0,043 | pasa +0,057 | pasa +0,356 | pasa  |
-| puntos | #12121a | cristal | pasa +4,268 | pasa +7,726 | pasa +16,2 | pasa +0,030 | pasa +0,070 | pasa +2,276 | pasa  |
-| puntos | #12121a | contorno | pasa +2,939 | pasa +4,583 | pasa +18,4 | pasa +0,023 | pasa +0,077 | pasa +2,248 | pasa  |
-| puntos | #12121a | esmerilado | pasa +5,391 | pasa +7,609 | pasa +15,0 | pasa +0,043 | pasa +0,057 | pasa +0,356 | pasa  |
-| rayas | #0f0f16 | cristal | pasa +4,268 | pasa +6,904 | pasa +16,5 | pasa +0,027 | pasa +0,052 | pasa +2,343 | pasa  |
-| rayas | #0f0f16 | contorno | pasa +3,427 | pasa +4,480 | pasa +18,3 | pasa +0,039 | pasa +0,061 | pasa +2,310 | pasa  |
-| rayas | #0f0f16 | esmerilado | pasa +7,534 | pasa +5,466 | pasa +15,2 | pasa +0,031 | pasa +0,069 | pasa +0,386 | pasa  |
-| hexagonos | #0b101a | cristal | pasa +2,979 | pasa +6,118 | pasa +14,2 | pasa +0,037 | pasa +0,049 | pasa +2,351 | pasa  |
-| hexagonos | #0b101a | contorno | pasa +2,381 | pasa +4,000 | pasa +17,2 | pasa +0,049 | pasa +0,051 | pasa +2,344 | pasa  |
-| hexagonos | #0b101a | esmerilado | pasa +6,169 | pasa +6,021 | pasa +13,8 | pasa +0,026 | pasa +0,074 | pasa +0,389 | pasa  |
-| circuito | #091314 | cristal | pasa +6,633 | pasa +3,142 | pasa +14,1 | pasa +0,029 | pasa +0,071 | pasa +2,271 | pasa  |
-| circuito | #091314 | contorno | pasa +4,624 | pasa +2,910 | pasa +17,0 | pasa +0,042 | pasa +0,058 | pasa +2,319 | pasa  |
-| circuito | #091314 | esmerilado | pasa +7,292 | pasa +3,323 | pasa +12,6 | pasa +0,033 | pasa +0,067 | pasa +0,375 | pasa  |
-| atardecer | #0e0f1e #0c0f1d #14101a #161018 | cristal | pasa +0,095 | pasa +7,230 | pasa +14,2 | pasa +0,030 | pasa +0,052 | pasa +2,312 | pasa  |
-| atardecer | #0e0f1e #0c0f1d #14101a #161018 | contorno | pasa +1,901 | pasa +4,451 | pasa +17,2 | pasa +0,025 | pasa +0,056 | pasa +2,256 | pasa  |
-| atardecer | #0e0f1e #0c0f1d #14101a #161018 | esmerilado | pasa +3,914 | pasa +6,620 | pasa +14,5 | pasa +0,031 | pasa +0,064 | pasa +0,374 | pasa  |
-| oceano | #07111c #08111e #06141c | cristal | pasa +0,964 | pasa +3,193 | pasa +11,8 | pasa +0,027 | pasa +0,060 | pasa +2,271 | pasa  |
-| oceano | #07111c #08111e #06141c | contorno | pasa +2,280 | pasa +2,466 | pasa +15,4 | pasa +0,034 | pasa +0,042 | pasa +2,290 | pasa  |
-| oceano | #07111c #08111e #06141c | esmerilado | pasa +5,754 | pasa +0,466 | pasa +11,6 | pasa +0,024 | pasa +0,065 | pasa +0,373 | pasa  |
-| bosque | #071315 #09121c #07140d | cristal | pasa +2,823 | pasa +1,973 | pasa +12,9 | pasa +0,030 | pasa +0,062 | pasa +2,276 | pasa  |
-| bosque | #071315 #09121c #07140d | contorno | pasa +2,313 | pasa +1,853 | pasa +16,3 | pasa +0,035 | pasa +0,054 | pasa +2,293 | pasa  |
-| bosque | #071315 #09121c #07140d | esmerilado | pasa +5,120 | pasa +0,811 | pasa +11,8 | pasa +0,029 | pasa +0,062 | pasa +0,368 | pasa  |
-| lluvia | #0c121a #0b1119 #0d131c | cristal | pasa +2,979 | pasa +5,248 | pasa +14,2 | pasa +0,021 | pasa +0,063 | pasa +2,239 | pasa  |
-| lluvia | #0c121a #0b1119 #0d131c | contorno | pasa +2,823 | pasa +3,899 | pasa +17,0 | pasa +0,032 | pasa +0,051 | pasa +2,282 | pasa  |
-| lluvia | #0c121a #0b1119 #0d131c | esmerilado | pasa +6,380 | pasa +6,021 | pasa +13,8 | pasa +0,026 | pasa +0,059 | pasa +0,363 | pasa  |
-| nieve | #0b121b #0a111a #0c131c | cristal | pasa +2,900 | pasa +5,248 | pasa +13,5 | pasa +0,023 | pasa +0,061 | pasa +2,247 | pasa  |
-| nieve | #0b121b #0a111a #0c131c | contorno | pasa +2,786 | pasa +3,548 | pasa +16,9 | pasa +0,032 | pasa +0,051 | pasa +2,282 | pasa  |
-| nieve | #0b121b #0a111a #0c131c | esmerilado | pasa +6,380 | pasa +6,021 | pasa +13,5 | pasa +0,026 | pasa +0,059 | pasa +0,363 | pasa  |
-| nebulosa | #0f0f1c #140e1c #0d0e1b #0f0c1c | cristal | pasa +0,166 | pasa +7,609 | pasa +14,8 | pasa +0,020 | pasa +0,028 | pasa +2,330 | pasa  |
-| nebulosa | #0f0f1c #140e1c #0d0e1b #0f0c1c | contorno | pasa +1,504 | pasa +4,794 | pasa +17,7 | pasa +0,039 | pasa +0,037 | pasa +2,308 | pasa  |
-| nebulosa | #0f0f1c #140e1c #0d0e1b #0f0c1c | esmerilado | pasa +3,249 | pasa +6,021 | pasa +14,8 | pasa +0,030 | pasa +0,062 | pasa +0,381 | pasa  |
-| luciernagas | #09150f #091310 | cristal | pasa +8,537 | pasa +1,973 | pasa +14,2 | pasa +0,018 | pasa +0,069 | pasa +2,230 | pasa  |
-| luciernagas | #09150f #091310 | contorno | pasa +5,561 | pasa +2,291 | pasa +17,0 | pasa +0,030 | pasa +0,058 | pasa +2,276 | pasa  |
-| luciernagas | #09150f #091310 | esmerilado | pasa +5,120 | pasa +0,811 | pasa +11,8 | pasa +0,032 | pasa +0,058 | pasa +0,355 | pasa  |
+## 2. Los bloques contra cada fondo
 
-**36 de 36 combinaciones pasan todas las reglas.**
+Esto **no es una regla del juego**: es una medida propia para comprobar que los bloques se recortan. Para cada fondo se compara cada una de las 14 × 9 casillas (color de relleno, sin contar bordes ni sombra) con lo dibujado (336 ventanas de 14 × 14 px de una captura del campo sin bloques, `muestras.json`; las animaciones quedan en un cuadro) y se anota el caso más justo. ΔE = diferencia de color CIEDE2000 (0 = iguales; sobre unas 10 se ven claramente distintos). Contraste = WCAG (1 = misma claridad).
 
-## Margen más justo de cada regla por paleta (entre todos los fondos)
+| fondo | ΔE mínimo | casilla y color de fondo | contraste mínimo | casilla y color de fondo | ventanas con ΔE < 10 | ventanas rojas |
+|---|---|---|---|---|---|---|
+| liso | 29,0 | cristal pos 5 #5d5d8d sobre #12121a | 2,49 | contorno pos 0 #943248 sobre #12121a | 0 / 336 | 0 / 336 |
+| grilla | 28,5 | cristal pos 5 #5d5d8d sobre #14141c | 2,45 | contorno pos 0 #943248 sobre #14141c | 0 / 336 | 0 / 336 |
+| estrellas | 27,7 | cristal pos 5 #5d5d8d sobre #17171f | 2,38 | contorno pos 0 #943248 sobre #17171f | 0 / 336 | 0 / 336 |
+| aurora | 18,9 | cristal pos 5 #5d5d8d sobre #212b45 | 1,74 | contorno pos 0 #943248 sobre #1d3536 | 0 / 336 | 0 / 336 |
+| puntos | 19,2 | cristal pos 8 #6d578d sobre #282152 | 1,96 | contorno pos 0 #943248 sobre #282152 | 0 / 336 | 0 / 336 |
+| rayas | 17,7 | retro pos 5 #6c4fa8 sobre #2f2060 | 1,88 | contorno pos 0 #943248 sobre #2f2060 | 0 / 336 | 0 / 336 |
+| hexagonos | 11,5 | diamante pos 4 #1658ca sobre #1b427d | 1,32 | contorno pos 0 #943248 sobre #1b427d | 0 / 336 | 0 / 336 |
+| circuito | 17,5 | cristal pos 7 #417b75 sobre #0d4c3b | 1,33 | contorno pos 0 #943248 sobre #0d4c3b | 0 / 336 | 0 / 336 |
+| atardecer | 5,1 | contorno pos 1 #94541d sobre #855825 | 1,00 | cristal pos 5 #5d5d8d sobre #855825 | 2 / 336 | 0 / 336 |
+| oceano | 9,2 | contorno pos 4 #286998 sobre #174f75 | 1,16 | contorno pos 0 #943248 sobre #174f75 | 1 / 336 | 0 / 336 |
+| bosque | 6,7 | cristal pos 4 #4c6f8d sobre #486474 | 1,01 | retro pos 5 #6c4fa8 sobre #486474 | 1 / 336 | 0 / 336 |
+| lluvia | 11,8 | cristal pos 5 #5d5d8d sobre #304669 | 1,27 | contorno pos 0 #943248 sobre #304669 | 0 / 336 | 0 / 336 |
+| nieve | 5,4 | cristal pos 4 #4c6f8d sobre #43648f | 1,00 | constancia pos 8 #5a4fd0 sobre #43648f | 9 / 336 | 0 / 336 |
+| nebulosa | 13,5 | retro pos 5 #6c4fa8 sobre #442381 | 1,56 | contorno pos 0 #943248 sobre #442381 | 0 / 336 | 0 / 336 |
+| luciernagas | 15,3 | contorno pos 3 #168759 sobre #3b602e | 1,02 | contorno pos 6 #942b6f sobre #3b602e | 0 / 336 | 0 / 336 |
+| topografia | 23,1 | cristal pos 2 #897440 sobre #3c3a1b | 1,54 | contorno pos 0 #943248 sobre #3b3b1a | 0 / 336 | 0 / 336 |
+| ciudad | 13,9 | retro pos 5 #6c4fa8 sobre #392b74 | 1,59 | contorno pos 0 #943248 sobre #392b74 | 0 / 336 | 0 / 336 |
+| cristales | 11,3 | retro pos 5 #6c4fa8 sobre #3e3483 | 1,01 | contorno pos 0 #943248 sobre #165c6d | 0 / 336 | 0 / 336 |
+| vitral | 12,0 | cristal pos 5 #5d5d8d sobre #2c446e | 1,30 | contorno pos 0 #943248 sobre #2c446e | 0 / 336 | 0 / 336 |
+| galaxia | 3,0 | contorno pos 5 #655d98 sobre #635599 | 1,00 | diamante pos 4 #1658ca sobre #635599 | 11 / 336 | 0 / 336 |
 
-| paleta | regla | margen | fondo |
-|---|---|---|---|
-| cristal | contraste rojo en rango Clásica | +0,018 | luciernagas (#09150f) |
-| cristal | caso más difícil de contraste | +0,028 | nebulosa (#0f0c1c) |
-| cristal | caso más difícil de tono | +1,973 | bosque (#07140d) |
-| cristal | texto blanco ≥ Clásica | +2,230 | luciernagas (#09150f) |
-| contorno | contraste rojo en rango Clásica | +0,023 | liso (#12121a) |
-| contorno | caso más difícil de contraste | +0,037 | nebulosa (#0f0c1c) |
-| contorno | caso más difícil de tono | +1,853 | bosque (#07140d) |
-| contorno | texto blanco ≥ Clásica | +2,248 | liso (#12121a) |
-| esmerilado | contraste rojo en rango Clásica | +0,024 | oceano (#07111c) |
-| esmerilado | caso más difícil de contraste | +0,057 | liso (#12121a) |
-| esmerilado | caso más difícil de tono | +0,466 | oceano (#06141c) |
-| esmerilado | texto blanco ≥ Clásica | +0,355 | luciernagas (#09150f) |
+"Ventanas con ΔE < 10" = trozos del fondo donde al menos una de las 126 casillas queda por debajo de 10. "Ventana roja" = tono a 15° o menos del rojo puro, saturación ≥ 0,35 y luminosidad ≥ 0,12.
 
-## Colores realmente dibujados (muestreo de una captura)
+## 3. El rojo de las trampas contra cada fondo
 
-Se toman 80 ventanas de 30 × 30 px por fondo (patrones, brillos y un cuadro de la animación incluidos) y se mide Cristal / Contorno / Esmerilado sobre el promedio de cada ventana. Cada celda es `ventanas que fallan / 80`.
+El número rojo siempre va **sobre el bloque**, nunca sobre el fondo; esto solo comprueba que ningún fondo sea parecido a ese rojo.
 
-| fondo | cristal | contorno | esmerilado |
-|---|---|---|---|
-| puntos | 0 / 80 | 0 / 80 | 0 / 80 |
-| rayas | 0 / 80 | 0 / 80 | 0 / 80 |
-| hexagonos | 0 / 80 | 0 / 80 | 0 / 80 |
-| circuito | 0 / 80 | 0 / 80 | 0 / 80 |
-| atardecer | 0 / 80 | 0 / 80 | 0 / 80 |
-| oceano | 0 / 80 | 0 / 80 | 0 / 80 |
-| bosque | 2 / 80 | 2 / 80 | 1 / 80 |
-| lluvia | 0 / 80 | 0 / 80 | 0 / 80 |
-| nieve | 0 / 80 | 0 / 80 | 0 / 80 |
-| nebulosa | 4 / 80 | 0 / 80 | 0 / 80 |
-| luciernagas | 3 / 80 | 4 / 80 | 0 / 80 |
+| fondo | ΔE mínimo con #ff2a2a | color de fondo | contraste mínimo | color de fondo |
+|---|---|---|---|---|
+| liso | 50,2 | #12121a | 4,98 | #12121a |
+| grilla | 49,9 | #14141c | 4,90 | #14141c |
+| estrellas | 49,3 | #17171f | 4,76 | #17171f |
+| aurora | 48,0 | #212533 | 3,48 | #1d3536 |
+| puntos | 49,8 | #282152 | 3,93 | #282152 |
+| rayas | 49,7 | #2f2060 | 3,75 | #2f2060 |
+| hexagonos | 49,9 | #1b427d | 2,65 | #1b427d |
+| circuito | 54,9 | #031d20 | 2,66 | #0d4c3b |
+| atardecer | 28,8 | #855825 | 1,64 | #855825 |
+| oceano | 51,5 | #174f75 | 2,33 | #174f75 |
+| bosque | 46,3 | #486474 | 1,68 | #486474 |
+| lluvia | 47,3 | #304669 | 2,55 | #304669 |
+| nieve | 45,8 | #43648f | 1,62 | #43648f |
+| nebulosa | 48,4 | #442381 | 3,11 | #442381 |
+| luciernagas | 53,1 | #102c2e | 1,94 | #3b602e |
+| topografia | 46,7 | #3c3a1b | 3,08 | #3b3b1a |
+| ciudad | 48,4 | #392b74 | 3,17 | #392b74 |
+| cristales | 47,7 | #3e3483 | 2,02 | #165c6d |
+| vitral | 40,5 | #504220 | 2,60 | #2c446e |
+| galaxia | 41,7 | #635599 | 1,71 | #635599 |
+
+## 4. Regla REDDISH
+
+`REDDISH` (#e5484d, #f76b15, #d6409f) es una lista de **colores de bloque** del motor: si al bloque le toca uno de ellos, una trampa roja usa la paleta `SAFE`. El motor no conoce el fondo del campo, así que ningún fondo la activa ni la desactiva.
+
+## Cómo repetir el muestreo
+
+Las secciones 2 y 3 usan `muestras.json`. Si cambia el dibujo de un fondo: captura a escala 1 los campos que cambiaron, sin bloques ni rótulos (unos 230 × 560 px cada uno), anota sus celdas (`[{ "id", "x", "y", "w", "h" }]`), corre `node muestrear.mjs <captura.png> <celdas.json>` y luego `correr.sh`.
+
+Control de la fórmula ΔE: negro–blanco 100,0, color consigo mismo 0,0, rojo–verde puros 86,6.

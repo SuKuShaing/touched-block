@@ -127,9 +127,16 @@
   z-index: 1;
 }
 
+/* CAMBIO-022 (alternativa A): Cristal, Contorno y Esmerilado, los tres estilos translúcidos, se dibujan sobre un respaldo
+   opaco #12121a (el color de la app) puesto debajo de su relleno. Así el color bajo el número es el mismo sobre cualquier fondo
+   (el que mide la regla de no ventaja) y sobre Liso se ven igual que antes. En `background`: brillo, relleno y, al final, el respaldo. */
+.vpCampo {
+  --respaldo: #12121a;
+}
+
 /* Cristal (CAMBIO-017): color al relleno + degradado blanco de arriba + borde claro + hilo de luz; sin blur */
 .vpCristal .vpBq {
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.38) 0%, rgba(255, 255, 255, 0) 55%), var(--relleno);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.38) 0%, rgba(255, 255, 255, 0) 55%), linear-gradient(var(--relleno), var(--relleno)), var(--respaldo);
   border: 1.5px solid rgba(255, 255, 255, 0.55);
   box-shadow: 0 5px 0 rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
@@ -140,13 +147,12 @@
 }
 
 /* Esmerilado (CAMBIO-019): vidrio esmerilado. Capa blanco-azulada con el tinte insinuado (--tinte, 70 %), brillo diagonal,
-   borde de 1 px claro, luz superior, sombra suave exterior, desenfoque del fondo (backdrop-filter, solo web) y grano. */
+   borde de 1 px claro, luz superior, sombra suave exterior y grano. Desde CAMBIO-022 va sobre el respaldo opaco, así que ya no
+   lleva `backdrop-filter`: con el respaldo no queda nada detrás que desenfocar (el aspecto lechoso lo dan la capa, el brillo y el grano). */
 .vpEsmerilado .vpBq {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.08) 60%), var(--tinte);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.08) 60%), linear-gradient(var(--tinte), var(--tinte)), var(--respaldo);
   border: 1px solid rgba(255, 255, 255, 0.45);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
 }
 
 .vpEsmerilado .vpBq::after {
@@ -172,7 +178,7 @@
 
 /* Contorno (CAMBIO-017): borde de 3 px del color pleno y relleno del mismo color al 55 % (--relleno; provisional); el número sigue blanco */
 .vpContorno .vpBq {
-  background: var(--relleno);
+  background: linear-gradient(var(--relleno), var(--relleno)) border-box, var(--respaldo);
   border: 3px solid var(--c);
 }
 
@@ -263,6 +269,19 @@
 
 .vpPunto {
   border-radius: 50%;
+}
+
+/* CAMBIO-026: píxel (cuadrado, sin esquinas redondeadas) y cabeza de una estrella fugaz (texto) */
+.vpPixel {
+  border-radius: 0;
+}
+
+.vpFugaz {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  font-family: Roboto, system-ui, sans-serif;
 }
 
 .vpSeleccion {

@@ -13,10 +13,12 @@
 //   - Fondos:        apps/client/src/components/FieldBackground.tsx (grilla de 44 px, 46 estrellas con la semilla
 //                    20261112, y las tres luces de la aurora). Los 11 fondos nuevos de CAMBIO-022 (solo con "Con cambios") no
 //                    se dibujan aquí: este archivo solo le pone al campo la clase `fx-<id>` y los dibuja extras-fondos.css.
-//   - Efectos:       apps/client/src/components/Fx.tsx (makeSpecs / Burst: 14 partículas por estallido). Los 6 efectos nuevos de
-//                    CAMBIO-023 (Burbujas, Emojis, Ondas, Monedas, Rayos, Fuegos artificiales; solo con "Con cambios") se definen
-//                    más abajo en `FX_NUEVOS`: cada pieza trae `f(p)` (p = tiempo lineal 0..1 → posición, giro, escala, opacidad), que
-//                    es la misma fórmula que correría un `useAnimatedStyle` de Reanimated; aquí se muestrea en fotogramas.
+//                    Lo mismo los 5 de CAMBIO-026.
+//   - Efectos:       apps/client/src/components/Fx.tsx (makeSpecs / Burst: 14 partículas por estallido). Los 8 efectos nuevos de
+//                    CAMBIO-023 (Burbujas, Emojis, Ondas, Monedas, Rayos, Fuegos artificiales) y 026 (Píxeles, Estrellas fugaces),
+//                    solo con "Con cambios", se definen más abajo en `FX_NUEVOS`: cada pieza trae `f(p)` (p = tiempo lineal 0..1 →
+//                    posición, giro, escala, opacidad), que es la misma fórmula que correría un `useAnimatedStyle` de Reanimated;
+//                    aquí se muestrea en fotogramas.
 //   - Sonidos:       apps/client/src/game/sounds.ts (paquetes 8 bits, Suave y Marimba) y
 //                    apps/client/src/platform/fx.web.ts (beep: oscilador + ganancia con rampa exponencial). Los 6 sonidos nuevos de
 //                    CAMBIO-024 (Electrónico, Futurista, Piano, Guitarra eléctrica, Palitos y Viento; solo con "Con cambios") no están
@@ -39,8 +41,8 @@
   function lista(clave) {
     if (clave === 'paleta') return PALETAS.filter((p) => conCambios || !p.nuevo);
     if (clave === 'sonido') return SONIDOS.filter((s) => conCambios || !s.nuevo); // CAMBIO-024: los 6 sonidos nuevos solo con cambios
-    if (clave === 'efecto') return EFECTOS.filter((e) => conCambios || !e.nuevo); // CAMBIO-023: los 6 efectos nuevos solo con cambios
-    return FONDOS.filter((f) => conCambios || !f.nuevo); // CAMBIO-022: los 11 fondos nuevos solo con cambios
+    if (clave === 'efecto') return EFECTOS.filter((e) => conCambios || !e.nuevo); // CAMBIO-023 y 026: los 8 efectos nuevos solo con cambios
+    return FONDOS.filter((f) => conCambios || !f.nuevo); // CAMBIO-022 y 026: los 16 fondos nuevos solo con cambios
   }
   const actual = (clave) => lista(clave).find((x) => x.id === sel[clave]) || lista(clave).find((x) => x.id === DEFECTO[clave]);
 
@@ -451,6 +453,73 @@
       if (!suaves) piezas.push(pieza({ w: 16, h: 16, oy: -SUBE, delay: 290, dur: 160, clase: 'vpPunto', css: 'background:#ffffff', f: (p) => val({ s: 0.5 + 1.1 * cuad(p), o: Math.min(1, p * 30) * (1 - p) }) }));
       return piezas;
     },
+    // CAMBIO-026. 12 píxeles cuadrados (rejilla de 4×3 sobre el bloque; o 6) que se separan "a pasos": el tiempo avanza en 8 saltos y la
+    // posición cae en una rejilla de 4 px, con gravedad; cada píxel se apaga de golpe en su paso (sin fundido). Tres tonos del color
+    // del bloque. `pasos` le dice a la web que no suavice entre fotogramas (en RN la misma f(p) ya sale a saltos).
+    pixeles(color, colores, suaves) {
+      const columnas = suaves ? 3 : 4;
+      const filas = suaves ? 2 : 3;
+      const tonos = [color, mezclarHex(color, [255, 255, 255], 0.55), mezclarHex(color, [0, 0, 0], 0.18)];
+      const rejilla = (v) => Math.round(v / 4) * 4;
+      return Array.from({ length: columnas * filas }, (_, i) => {
+        const ox = ((i % columnas) - (columnas - 1) / 2) * 15;
+        const oy = (Math.floor(i / columnas) - (filas - 1) / 2) * 15;
+        const vx = ox * rango(2.6, 4.4) + rango(-16, 16);
+        const vy = oy * rango(2, 3.4) - rango(50, 90);
+        const g = rango(110, 160);
+        const fin = 0.625 + 0.125 * Math.floor(azar() * 3); // se apaga en el paso 5, 6 o 7 de 8
+        return pieza({
+          w: 13, h: 13, ox, oy, dur: suaves ? 450 : 640, pasos: suaves ? 0 : 8, clase: 'vpPixel', css: `background:${tonos[(i + Math.floor(i / columnas)) % 3]}`,
+          f: (p) => {
+            if (suaves) return val({ x: vx * p * 0.35, y: (vy * p + g * p * p) * 0.35, o: 1 - tramo(p, 0.3, 1) });
+            const q = Math.floor(p * 8) / 8;
+            return val({ x: rejilla(vx * q), y: rejilla(vy * q + g * q * q), o: q < fin ? 1 : 0 });
+          },
+        });
+      });
+    },
+    // CAMBIO-026. 5 estrellas (o 2), cada una con su estela (2 nodos), que cruzan el bloque todas en la misma dirección, hacia abajo a
+    // la izquierda, una tras otra; y un destello central: 11 nodos. Es el único efecto que no sale en todas las direcciones.
+    fugaces(color, colores, suaves) {
+      const n = suaves ? 2 : 5;
+      const GRADOS = 148;
+      const cos = Math.cos((GRADOS * Math.PI) / 180);
+      const sen = Math.sin((GRADOS * Math.PI) / 180);
+      const orden = Array.from({ length: n }, (_, i) => [azar(), i]).sort((a, b) => a[0] - b[0]).map((x) => x[1]);
+      const piezas = [];
+      for (let i = 0; i < n; i++) {
+        const lado = (i - (n - 1) / 2) * 21 + rango(-5, 5); // separación perpendicular a la trayectoria
+        const atras = rango(25, 52); // nace un poco antes del bloque
+        const x0 = -cos * atras - sen * lado;
+        const y0 = -sen * atras + cos * lado;
+        const d = rango(115, 155) * (suaves ? 0.5 : 1);
+        const largo = Math.round(rango(48, 70));
+        const S = Math.round(rango(19, 25));
+        const delay = suaves ? 0 : orden[i] * 55 + rango(0, 20);
+        const dur = rango(400, 520) * (suaves ? 0.7 : 1);
+        const dorada = i % 2 === 0;
+        const tinte = dorada ? '#ffe27a' : mezclarHex(color, [255, 255, 255], 0.45);
+        const avance = (p) => (suaves ? p : 0.45 * p + 0.55 * p * p) * d; // acelera, como un meteoro
+        const luz = (p) => Math.min(1, p * 8) * (1 - tramo(p, 0.65, 1));
+        piezas.push(
+          pieza({
+            w: largo, h: 5, ox: x0 - (cos * largo) / 2, oy: y0 - (sen * largo) / 2, delay, dur, clase: 'vpTrazo',
+            css: `background:linear-gradient(90deg, ${rgba(tinte, 0)}, ${rgba(tinte, 0.95)})`,
+            f: (p) => {
+              const sx = suaves ? 1 : 0.25 + 0.75 * tramo(p, 0, 0.45); // la estela crece sin despegarse de la estrella
+              const corre = avance(p) + (largo / 2) * (1 - sx);
+              return val({ x: cos * corre, y: sen * corre, r: GRADOS, sx, o: luz(p) });
+            },
+          }),
+          pieza({
+            w: Math.round(S * 1.2), h: Math.round(S * 1.2), ox: x0, oy: y0, delay, dur, clase: 'vpFugaz', css: `font-size:${S}px;color:${dorada ? '#fff3b0' : '#ffffff'}`, texto: '★',
+            f: (p) => val({ x: cos * avance(p), y: sen * avance(p), r: suaves ? 0 : -150 * p, s: suaves ? 1 : 1 - 0.35 * p, o: luz(p) }),
+          }),
+        );
+      }
+      if (!suaves) piezas.push(pieza({ w: 30, h: 30, dur: 170, clase: 'vpPunto', css: 'background:#fff3b0', f: (p) => val({ s: 0.35 + 1.05 * cuad(p), o: (1 - p) * (1 - p) }) }));
+      return piezas;
+    },
   };
 
   /** Dibuja un estallido de FX_NUEVOS en (x, y) del campo. Cada pieza se quita sola al terminar (y por un temporizador de respaldo). */
@@ -464,10 +533,14 @@
       capaFx.appendChild(el);
       const quitar = () => el.remove();
       if (el.animate) {
-        const N = 20; // fotogramas por pieza: sobra para que el vaivén y el giro de las monedas se vean redondos
+        // fotogramas por pieza: 20 sobran para que el vaivén y el giro de las monedas se vean redondos; las piezas "a pasos"
+        // (Píxeles) usan un fotograma por paso y sin interpolar (step-end)
+        const N = pz.pasos || 20;
         const kf = Array.from({ length: N + 1 }, (_, k) => {
           const v = pz.f(k / N);
-          return { offset: k / N, opacity: v.o, transform: `translate(${v.x}px, ${v.y}px) rotate(${v.r}deg) scale(${v.sx * v.s}, ${v.s})` };
+          const cuadro = { offset: k / N, opacity: v.o, transform: `translate(${v.x}px, ${v.y}px) rotate(${v.r}deg) scale(${v.sx * v.s}, ${v.s})` };
+          if (pz.pasos) cuadro.easing = 'step-end';
+          return cuadro;
         });
         const an = el.animate(kf, { duration: pz.dur, delay: pz.delay, easing: 'linear', fill: 'both' });
         an.onfinish = quitar;
@@ -626,7 +699,7 @@
 
   function pintarLinea() {
     lineaSel.textContent = Object.keys(NOMBRES)
-      .map((k) => `${NOMBRES[k]}: ${actual(k).n}`)
+      .map((k) => `${NOMBRES[k]}: ${(conCambios && actual(k).nNuevo) || actual(k).n}`)
       .join(' · ');
   }
 

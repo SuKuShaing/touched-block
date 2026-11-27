@@ -170,6 +170,11 @@ h1 {
   color: var(--accent);
 }
 
+/* dos niveles con premio muy juntos: el segundo número va una línea más abajo */
+.nivel.premio.escalonado span {
+  top: 21px;
+}
+
 .nota {
   margin: 0.4rem 40px 0;
   font-size: 12px;
