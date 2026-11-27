@@ -314,9 +314,15 @@ La app usa el Client ID **web** (`EXPO_PUBLIC_GOOGLE_CLIENT_ID`) como `webClient
 cd apps/client
 pnpm exec expo prebuild -p android
 cd android
+# limpieza: nada de un build anterior (p. ej. el APK de prueba) puede quedar en el release
+./gradlew clean
+node -e "require('fs').rmSync(require('path').join(require('os').tmpdir(), 'metro-cache'), { recursive: true, force: true })"
 EXPO_PUBLIC_API_URL=https://api.touchedblock.app NODE_ENV=production ./gradlew app:assembleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a,x86_64
 # → app/build/outputs/apk/release/app-release.apk
 ```
+
+- Las `EXPO_PUBLIC_*` quedan incrustadas en el JavaScript. Antes de un release, abrir una terminal nueva (sin las variables del APK de prueba exportadas) y hacer siempre la limpieza de arriba. Además, `plugins/withReleaseSigning.js` declara esas variables, la del APK de prueba y los archivos `.env` como entradas de la tarea del bundle: si cambian, Gradle lo vuelve a generar.
+- Antes de repartirlo, comprobar que el paquete es `app.touchedblock`, que el bundle apunta a `https://api.touchedblock.app` (ni `localhost` ni `api.invalid`) y que al abrirlo no se ve "MODO PRUEBA".
 
 - Subir `android.versionCode` (y `version`) en `app.json` en cada APK que se reparta: Android no instala encima una versión con el mismo `versionCode`.
 - La API no necesita CORS para la app, porque las apps no envían `Origin`.

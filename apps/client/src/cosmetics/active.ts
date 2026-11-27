@@ -16,7 +16,8 @@ import { type CatalogStats, type Selection, resolveSelection } from './catalog';
  * Estadísticas para el catálogo: `mergeStats` de las locales y las de `Me`, más invitados y reto
  * diario (`daily`: lo de este dispositivo, `tb_daily2`). La mejor racha de días del reto es el
  * máximo entre la de la cuenta y la del dispositivo (así también la gana un invitado). El mejor
- * porcentaje es el de la cuenta si hay usuario (lo calcula el servidor); sin él, el del dispositivo.
+ * porcentaje es el de la cuenta si hay usuario (lo calcula el servidor, solo con días cerrados);
+ * sin él solo cuenta la participación (0): lo que ve un invitado al terminar es provisional.
  */
 export function catalogStatsFor(
   local: LocalStats,
@@ -28,7 +29,7 @@ export function catalogStatsFor(
     ...mergeStats(local, server),
     invitedCount: me?.invitedCount ?? 0,
     dailyStreakBest: Math.max(me?.stats?.dailyStreakBest ?? 0, daily?.streakBest ?? 0),
-    bestDailyPct: me ? (me.stats?.bestDailyPct ?? null) : (daily?.bestPct ?? null),
+    bestDailyPct: me ? (me.stats?.bestDailyPct ?? null) : daily?.bestPct == null ? null : 0,
   };
 }
 

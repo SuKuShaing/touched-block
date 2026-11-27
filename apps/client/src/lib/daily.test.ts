@@ -217,15 +217,22 @@ describe('tb_daily2', () => {
     expect(local.played).toEqual(['2026-10-01']);
   });
 
-  it('invitado: dónde habría quedado y su mejor porcentaje (0 con menos de 10 jugadores)', async () => {
+  it('invitado: dónde habría quedado (para la tarjeta); para los logros solo cuenta que participó', async () => {
     const d = await load();
+    expect(d.loadDailyLocal().bestPct).toBeNull();
     d.recordDailyGuestResult('2026-11-11', { rank: 2, total: 4, betterThanPct: 66 });
     expect(d.loadDailyLocal().bestPct).toBe(0);
-    d.recordDailyGuestResult('2026-11-12', { rank: 12, total: 81, betterThanPct: 86 });
-    expect(d.loadDailyLocal().bestPct).toBe(86);
-    expect(d.loadDailyLocal().days['2026-11-12'].would).toEqual({ rank: 12, total: 81, pct: 86 });
-    d.recordDailyGuestResult('2026-11-13', { rank: 40, total: 81, betterThanPct: 50 });
-    expect(d.loadDailyLocal().bestPct).toBe(86);
+    // el ranking sigue abierto: quien juega temprano sale con 100 %, y eso no vale para el logro
+    d.recordDailyGuestResult('2026-11-12', { rank: 1, total: 11, betterThanPct: 100 });
+    expect(d.loadDailyLocal().bestPct).toBe(0);
+    expect(d.loadDailyLocal().days['2026-11-12'].would).toEqual({ rank: 1, total: 11, pct: 100 });
+  });
+
+  it('último día con el ranking cerrado: a las 15:00 UTC del día siguiente, y nunca la fecha pedida', async () => {
+    const d = await load();
+    expect(d.lastClosedDaily('2026-11-14', Date.UTC(2026, 10, 13, 14, 59))).toBe('2026-11-11');
+    expect(d.lastClosedDaily('2026-11-14', Date.UTC(2026, 10, 13, 15, 0))).toBe('2026-11-12');
+    expect(d.lastClosedDaily('2026-11-12', Date.UTC(2026, 10, 20))).toBe('2026-11-11');
   });
 
   it('reglas vistas y aviso de ayer una vez por fecha', async () => {

@@ -269,6 +269,27 @@ describe('sounds', () => {
     expect(buzz).not.toHaveBeenCalled();
   });
 
+  it('restore: tras una muestra vuelve a preparar el equipado, una sola vez', async () => {
+    const p = wire();
+    sounds.restore(); // limpia las muestras de pruebas anteriores
+    active.soundPack = 'futurista';
+    sounds.prepare();
+    await vi.advanceTimersByTimeAsync(2000);
+    sounds.preview('palitos');
+    await vi.advanceTimersByTimeAsync(2000);
+    const renders = p.offline.length;
+    sounds.restore();
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(p.offline).toHaveLength(renders + 24);
+    const sources = p.live.count('Source');
+    sounds.play('hit', 2);
+    expect(p.live.count('Source')).toBe(sources + 1); // desde memoria
+    sounds.restore();
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(p.offline).toHaveLength(renders + 24);
+    sounds.prepare('8bits'); // suelta la memoria
+  });
+
   it('los 3 paquetes en vivo no renderizan nada', async () => {
     const p = wire();
     for (const id of Object.keys(SOUND_PACKS)) {

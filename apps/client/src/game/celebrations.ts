@@ -18,7 +18,6 @@ import {
   type Requirement,
   TYPE_ORDER,
   findItem,
-  isUnlocked,
   meets,
   tierIndexOfStats,
 } from '@/cosmetics/catalog';
@@ -147,6 +146,11 @@ export interface Snapshot {
 const fromServer = (r: Requirement) => r.kind === 'invited' || (r.kind === 'achievement' && r.id === 'mejorReto');
 /** Requisitos que pueden cumplirse fuera de una partida de este dispositivo. */
 const fromOutside = (r: Requirement) => r.kind === 'level' || fromServer(r);
+/**
+ * Lo que se celebra desde los datos de la cuenta: lo del servidor y los días seguidos de reto (el
+ * día que completa la racha puede jugarse en un equipo sin el historial: solo la cuenta lo sabe).
+ */
+const fromAccount = (r: Requirement) => fromServer(r) || (r.kind === 'achievement' && r.id === 'diasReto');
 
 /**
  * Lo que cambió entre dos momentos del mismo jugador que no se celebró al terminar la partida:
@@ -166,22 +170,35 @@ export function outsideCelebrations(prev: Snapshot | null, now: Snapshot, ctx: P
   const out: Celebration[] = [];
   for (const it of CATALOG) {
     if (!fromOutside(it.req) || !itemListed(it, ctx)) continue;
-    if (!isUnlocked(it, prev.stats) && isUnlocked(it, now.stats)) out.push(itemCelebration(it));
+    if (!meets(it.req, prev.stats) && meets(it.req, now.stats)) out.push(itemCelebration(it));
   }
   out.push(...achievementUps(achievementValues(prev.stats), achievementValues(now.stats), ctx, ['mejorReto']));
   return out;
 }
 
 /**
- * Con sesión: todo lo que la cuenta ya tiene de lo que se gana fuera de la partida (premios por
- * invitar, "Mejor resultado en un reto diario" y sus premios). La cola deja pasar solo lo que no
- * está en `tb_cele2`: así se celebra una vez aunque haya ocurrido con la app cerrada.
+ * Con sesión: todo lo que la cuenta ya tiene de lo que se celebra desde sus datos (premios por
+ * invitar, los logros "Días seguidos de reto diario" y "Mejor resultado en un reto diario" y sus
+ * premios). La cola deja pasar solo lo que no está en `tb_cele2`: así se celebra una vez aunque
+ * haya ocurrido con la app cerrada o en otro dispositivo.
  */
 export function accountCelebrations(stats: CatalogStats, ctx: PrizeContext): Celebration[] {
   // `meets` y no `isUnlocked`: el APK de prueba lo desbloquea todo, pero eso no es haberlo ganado
-  const out = CATALOG.filter((it) => fromServer(it.req) && itemListed(it, ctx) && meets(it.req, stats)).map(itemCelebration);
-  out.push(...achievementUps(achievementValues(EMPTY_CATALOG_STATS), achievementValues(stats), ctx, ['mejorReto']));
+  const out = CATALOG.filter((it) => fromAccount(it.req) && itemListed(it, ctx) && meets(it.req, stats)).map(itemCelebration);
+  out.push(...achievementUps(achievementValues(EMPTY_CATALOG_STATS), achievementValues(stats), ctx, ['diasReto', 'mejorReto']));
   return out;
+}
+
+/**
+ * Claves de la cuenta que la primera siembra de `tb_cele2` NO registra, para que se celebren una vez
+ * al entrar en un equipo nuevo (B19): premios por invitar y por el porcentaje del reto. Todo lo
+ * demás (también los días seguidos) se siembra en silencio.
+ */
+export function unseededAccountKeys(stats: CatalogStats, ctx: PrizeContext): Set<string> {
+  const held = accountCelebrations(stats, ctx).filter(
+    (c) => (c.kind === 'item' && fromServer(c.item.req)) || (c.kind === 'achievement' && c.id === 'mejorReto'),
+  );
+  return new Set(held.flatMap(coveredKeys));
 }
 
 /**
@@ -227,7 +244,8 @@ export function ownedKeys(s: CatalogStats): string[] {
   const keys: string[] = [];
   const t = tierIndexOfStats(s);
   for (let i = 0; i <= t; i++) keys.push(tierKey(i));
-  for (const it of CATALOG) if (it.req.kind !== 'always' && isUnlocked(it, s)) keys.push(itemKey(it));
+  // `meets`: con todo desbloqueado (APK de prueba) solo cuenta lo ganado, o nada se celebraría
+  for (const it of CATALOG) if (it.req.kind !== 'always' && meets(it.req, s)) keys.push(itemKey(it));
   const v = achievementValues(s);
   for (const a of ACHIEVEMENTS) {
     const l = achievementLevel(a.id, v[a.id]);

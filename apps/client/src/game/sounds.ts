@@ -120,6 +120,9 @@ function packOf(id: string | null | undefined): Pack {
 
 const synth = createSynthPlayer(synthAudio);
 
+/** Hubo una muestra: en memoria puede haber quedado un paquete que no es el equipado. */
+let sampled = false;
+
 /** El sonido sin la vibración. Puede lanzar. */
 function emit(id: string, name: SoundName, arg: number) {
   if (isSynthPack(id)) synth.play(id, name, arg);
@@ -154,6 +157,7 @@ export const sounds = {
   /** Muestra corta de un paquete (al elegirlo en la Colección): golpes, destruir y un combo. */
   preview(packId: string) {
     try {
+      sampled = true;
       sounds.prepare(packId);
       const one = (name: SoundName, arg: number) => {
         try {
@@ -165,5 +169,11 @@ export const sounds = {
       after(220, () => one('kill', 0));
       after(480, () => one('combo', 1));
     } catch {}
+  },
+  /** Tras escuchar muestras, vuelve a preparar el paquete equipado (sin muestras no hace nada). */
+  restore() {
+    if (!sampled) return;
+    sampled = false;
+    sounds.prepare();
   },
 };

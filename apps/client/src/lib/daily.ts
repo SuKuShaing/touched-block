@@ -49,6 +49,19 @@ const PLAYED_MAX = 400;
 
 const p2 = (n: number) => String(n).padStart(2, '0');
 
+/**
+ * Desde las 00:00 UTC de una fecha hasta que su ranking queda fijo (`dailyClosesAt` de la API: la
+ * medianoche en UTC−12 del día siguiente, más 3 h para terminar y reclamar partidas).
+ */
+const DAILY_CLOSES_AFTER_MS = 39 * 60 * 60 * 1000;
+
+/** El último día anterior a `date` cuyo ranking ya está cerrado en el instante `now`. */
+export function lastClosedDaily(date: DateKey, now: number): DateKey {
+  const closed = new Date(now - DAILY_CLOSES_AFTER_MS).toISOString().slice(0, 10);
+  const previous = addDays(date, -1);
+  return closed < previous ? closed : previous;
+}
+
 /** Fecha local del dispositivo como 'AAAA-MM-DD'. */
 export function localDateKey(now: Date = new Date()): DateKey {
   return `${String(now.getFullYear()).padStart(4, '0')}-${p2(now.getMonth() + 1)}-${p2(now.getDate())}`;
@@ -229,7 +242,10 @@ export interface DailyLocal {
   rulesSeen: boolean;
   /** Fecha del último "Ayer quedaste…" que se mostró. */
   yesterdaySeen: DateKey | null;
-  /** Invitado: mejor "mejor que el N %" (0 en días con menos de 10 jugadores), o null. */
+  /**
+   * Invitado, para los logros: 0 si participó en algún reto, null si nunca. Un invitado no conoce
+   * el porcentaje de un día cerrado (no está en el ranking), así que no suma ninguno.
+   */
   bestPct: number | null;
 }
 
@@ -357,12 +373,14 @@ export function recordDailyFinish(
   );
 }
 
-/** Invitado: guarda dónde habría quedado (y su mejor porcentaje para el logro). */
+/**
+ * Invitado: guarda dónde habría quedado (para la tarjeta y la pantalla final) y que participó.
+ * Ese porcentaje es provisional (el ranking del día sigue abierto: quien juega temprano saldría con
+ * 100 %), así que para el logro "Mejor resultado en un reto diario" solo cuenta la participación.
+ */
 export function recordDailyGuestResult(date: DateKey, r: { rank: number; total: number; betterThanPct: number }) {
   if (!isDateKey(date)) return;
-  const pct = r.total >= PCT_MIN_PLAYERS ? nat(r.betterThanPct) : 0;
-  const bestPct = Math.max(loadDailyLocal().bestPct ?? 0, pct);
-  updateDay(date, (day) => ({ ...day, would: { rank: nat(r.rank), total: nat(r.total), pct: nat(r.betterThanPct) } }), { bestPct });
+  updateDay(date, (day) => ({ ...day, would: { rank: nat(r.rank), total: nat(r.total), pct: nat(r.betterThanPct) } }), { bestPct: 0 });
 }
 
 /** La partida de invitado de esa fecha ya se reclamó (o ya no se puede): se olvida. */

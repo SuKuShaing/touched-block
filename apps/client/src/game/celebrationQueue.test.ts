@@ -128,7 +128,7 @@ describe('jugadores que ya tenían premios (sin tb_cele2)', () => {
   it('de la cuenta que llega después (GET /me, otro dispositivo) no se celebra lo ganado jugando', () => {
     const local = st({ runs: 2, bestTicks: secs(20), totalKilled: 40 });
     observe('u1', local, local, 0); // al abrir: tb_me2 sin estadísticas todavía
-    const account = st({ runs: 200, bestTicks: secs(MUL_START), bestStreak: 120, totalKilled: 12000, dailyStreakBest: 9 });
+    const account = st({ runs: 200, bestTicks: secs(MUL_START), bestStreak: 120, totalKilled: 12000 });
     expect(observe('u1', local, account, 5000)).toBe(0);
     // ni siquiera dentro de la ventana después de una partida
     run(local, { ...local, runs: 3 }, 6000);
@@ -172,7 +172,7 @@ describe('jugadores que ya tenían premios (sin tb_cele2)', () => {
   });
 });
 
-describe('con sesión: premios por invitar y por el porcentaje del reto', () => {
+describe('con sesión: premios por invitar, por los días seguidos y por el porcentaje del reto', () => {
   const ALL = { accounts: true, daily: true };
   const st = (p: Partial<CatalogStats>): CatalogStats => ({ ...EMPTY_CATALOG_STATS, ...p });
   const keys = () => getCelebrationQueue().items.map((c) => c.key);
@@ -180,14 +180,54 @@ describe('con sesión: premios por invitar y por el porcentaje del reto', () => 
     observeCelebrations({ viewer, local, account: viewer === 'guest' ? null : all, owned: () => ownedKeys(all) }, ALL, now);
   const seeAll = () => dropCelebrations(getCelebrationQueue().items.length);
 
-  it('la primera siembra es silenciosa, aunque la cuenta ya tenga premios', () => {
-    expect(observe('u1', st({ invitedCount: 3, bestDailyPct: 95 }), 0)).toBe(0);
-    expect(observe('u1', st({ invitedCount: 3, bestDailyPct: 95 }), 1000)).toBe(0);
+  it('equipo nuevo con la sesión ya iniciada (entró por /perfil): invitados y porcentaje se celebran una vez (B19)', () => {
+    const account = st({ runs: 40, bestTicks: 99_999, totalKilled: 5000, dailyStreakBest: 8, invitedCount: 1, bestDailyPct: 30 });
+    expect(observe('u1', account, 0)).toBe(4);
+    // lo demás (insignias, otros premios, días seguidos) se siembra en silencio
+    expect(keys()).toEqual(['item:effect:burbujas', 'item:effect:corazones', 'item:background:rayas', 'ach:mejorReto:2']);
+    expect(JSON.parse(mem.get(CELEBRATED_KEY)!)).toEqual(
+      expect.arrayContaining(['tier:0', 'ach:diasReto:2', 'item:background:puntos', 'ach:mejorReto:1', 'ach:mejorReto:2']),
+    );
+    seeAll();
+    resetCelebrationsForTests(); // se cierra y se abre la app
+    expect(observe('u1', account, 1000)).toBe(0);
     expect(keys()).toEqual([]);
+  });
+
+  it('la primera siembra sigue en silencio como invitado y con una cuenta sin esos premios', () => {
+    const guest = st({ runs: 40, bestDailyPct: 0, dailyStreakBest: 8 });
+    expect(observe('guest', guest, 0, guest)).toBe(0);
+    resetCelebrationsForTests();
+    mem.clear();
+    expect(observe('u1', st({ runs: 40, bestTicks: 99_999, dailyStreakBest: 30 }), 0)).toBe(0);
+    expect(keys()).toEqual([]);
+  });
+
+  it('3.er día seguido en un equipo sin ese historial: lo trae la cuenta y se celebra una vez', () => {
+    observe('u1', st({ runs: 4, dailyStreakBest: 2 }), 0);
+    // la partida: el dispositivo solo sabe de hoy y la cuenta todavía dice 2
+    const local = st({ runs: 1, dailyStreakBest: 1 });
+    offerRunCelebrations([], 900, 1000);
+    expect(observe('u1', st({ runs: 5, dailyStreakBest: 2 }), 1001, local)).toBe(0);
+    // responde el servidor
+    expect(observe('u1', st({ runs: 5, dailyStreakBest: 3 }), 1500, local)).toBe(2);
+    expect(keys()).toEqual(['item:effect:emojis', 'ach:diasReto:1']);
+    seeAll();
+    expect(observe('u1', st({ runs: 5, dailyStreakBest: 3 }), 2000, local)).toBe(0);
+  });
+
+  it('si la partida ya celebró los días seguidos, la cuenta no los repite', () => {
+    observe('u1', st({ runs: 4, dailyStreakBest: 2 }), 0);
+    const before = st({ runs: 4, dailyStreakBest: 2 });
+    const after = st({ runs: 5, dailyStreakBest: 3 });
+    const run = runCelebrations({ prize: endPrize(before, after, ALL), before, after, unlockedFeature: false, ctx: ALL });
+    expect(offerRunCelebrations(run, 900, 1000)).toBe(2);
+    expect(observe('u1', after, 1500)).toBe(0);
   });
 
   it('el 2.º invitado celebra Amistad una vez (sin partida de por medio)', () => {
     observe('u1', st({ invitedCount: 1 }), 0);
+    seeAll(); // el 1.º, al entrar en este equipo (B19)
     expect(observe('u1', st({ invitedCount: 2 }), 5000)).toBe(1);
     expect(keys()).toEqual(['item:palette:constancia']);
     seeAll();

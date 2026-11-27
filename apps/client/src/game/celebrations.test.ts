@@ -15,6 +15,7 @@ import {
   pendingKey,
   runCelebrations,
   stepText,
+  unseededAccountKeys,
 } from './celebrations';
 import { endPrize } from './endPrize';
 
@@ -208,6 +209,20 @@ describe('con la cuenta', () => {
     ]);
     expect(accountCelebrations(stats({ runs: 5 }), ALL)).toEqual([]);
     expect(accountCelebrations(s, NONE)).toEqual([]);
+  });
+
+  it('los días seguidos de reto de la cuenta: sus premios y el logro', () => {
+    const s = stats({ runs: 90, dailyStreakBest: 7 });
+    expect(keys(accountCelebrations(s, ALL))).toEqual(['item:effect:emojis', 'item:background:puntos', 'ach:diasReto:2']);
+    expect(accountCelebrations(s, NONE)).toEqual([]);
+  });
+
+  it('la primera siembra solo deja fuera los premios por invitar y por el porcentaje (B19)', () => {
+    const s = stats({ runs: 90, invitedCount: 1, dailyStreakBest: 7, bestDailyPct: 30 });
+    expect([...unseededAccountKeys(s, ALL)].sort()).toEqual(
+      ['ach:mejorReto:1', 'ach:mejorReto:2', 'item:background:rayas', 'item:effect:burbujas', 'item:effect:corazones'].sort(),
+    );
+    expect(unseededAccountKeys(s, NONE).size).toBe(0);
   });
 });
 

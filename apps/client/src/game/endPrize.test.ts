@@ -144,11 +144,11 @@ describe('endStats: con sesión en otro dispositivo (la cuenta tiene más que es
     expect(endPrize(s.before, s.after, ALL)?.tier?.name).toBe('Papel');
   });
 
-  it('porcentaje del reto: como invitado el del dispositivo; con sesión, el de la cuenta', () => {
+  it('porcentaje del reto: como invitado solo la participación (0); con sesión, el de la cuenta', () => {
     const runs = { before: local({}), after: local({ runs: 1 }) };
     const opts = { normal: true, countsOnAccount: true, dailyPct: 40 };
     const guest = endStats(runs, null, run, opts);
-    expect([guest.before.bestDailyPct, guest.after.bestDailyPct]).toEqual([40, 40]);
+    expect([guest.before.bestDailyPct, guest.after.bestDailyPct]).toEqual([0, 0]);
     const logged = endStats(runs, meWith(account({ bestDailyPct: 75 })), run, opts);
     expect([logged.before.bestDailyPct, logged.after.bestDailyPct]).toEqual([75, 75]);
     expect(endStats(runs, meWith(account({})), run, opts).after.bestDailyPct).toBeNull();

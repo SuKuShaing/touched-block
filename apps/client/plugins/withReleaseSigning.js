@@ -9,6 +9,10 @@
 // La huella SHA-1 de la clave está registrada en Google Cloud (cliente OAuth "Android release
 // APK"): si se cambia la clave, el login con Google deja de funcionar hasta registrar la nueva.
 //
+// Además declara como entradas de la tarea del bundle las variables EXPO_PUBLIC_*, TB_TEST_APK y los
+// archivos .env: quedan incrustadas en el JS y, sin esto, Gradle da la tarea por al día y un release
+// puede reutilizar el bundle del APK de prueba.
+//
 // APK de prueba: con la variable de entorno TB_TEST_APK=1 al compilar (la lee Gradle, no el
 // prebuild: el build.gradle generado es el mismo) no se lee ninguna clave, el release se firma con
 // la clave debug y su id pasa a ser "app.touchedblock.prueba", así se instala junto a la app real
@@ -59,6 +63,14 @@ android {
             buildTypes.release.signingConfig signingConfigs.tbRelease
         }
     }
+}
+
+// las EXPO_PUBLIC_* quedan dentro del bundle: si cambian (o cambia el modo), se vuelve a generar
+tasks.matching { it.name.startsWith("createBundle") && it.name.endsWith("JsAndAssets") }.configureEach { t ->
+    def tbEnv = new TreeMap(System.getenv().findAll { it.key.startsWith("EXPO_PUBLIC_") || it.key == "TB_TEST_APK" })
+    t.inputs.property("tbPublicEnv", tbEnv.toString())
+    t.inputs.files([".env", ".env.local", ".env.production", ".env.production.local"].collect { new File(rootDir.parentFile, it) })
+        .withPropertyName("tbDotEnv")
 }
 `;
 

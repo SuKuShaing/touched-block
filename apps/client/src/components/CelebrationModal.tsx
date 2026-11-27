@@ -294,6 +294,8 @@ export function CelebrationModal({
   onClose: () => void;
 }) {
   const reduced = useReducedMotion();
+  // al cerrarse, si se escuchó otro paquete, el equipado vuelve a quedar listo
+  useEffect(() => () => sounds.restore(), []);
   const c = items[index] ?? null;
   const last = index >= items.length - 1;
   const [cardW, setCardW] = useState<number | null>(null);

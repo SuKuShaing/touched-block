@@ -22,6 +22,7 @@ import { AchievementIcon } from '@/components/AchievementIcon';
 import { EffectIcon } from '@/components/EffectIcon';
 import { FieldBackground } from '@/components/FieldBackground';
 import { SmallButton } from '@/components/form';
+import { galleryStats } from '@/components/galleryStats';
 import { PaletteSwatch } from '@/components/PaletteSwatch';
 import { PreviewPanel } from '@/components/PreviewPanel';
 import { PrizeModal, type PrizeRef } from '@/components/PrizeModal';
@@ -47,7 +48,7 @@ import { MATERIAL_COLOR, tierColor } from '@/cosmetics/tiers';
 import { sounds } from '@/game/sounds';
 import { useMarkCollectionSeen } from '@/lib/collectionNews';
 import { achievementValues } from '@/lib/achievementValues';
-import { levelFor, levelStart, xpOf } from '@/lib/level';
+import { levelFor, xpOf } from '@/lib/level';
 import { type Settings, updateSettings } from '@/lib/settings';
 import { useTabBarSpace } from '@/lib/tabBar';
 import { C } from '@/theme';
@@ -342,20 +343,6 @@ function AchievementRow({
 
 // ---------------------------------------------------------------- galería (APK de prueba)
 
-const topOf = (id: AchievementId) => Math.max(...achievementById(id).thresholds);
-
-/** Estadísticas inventadas con todo al máximo: las usa la ventana al abrirse desde la galería. */
-const MAX_STATS: CatalogStats = {
-  bestTicks: TIERS[TIERS.length - 1].at * TICKS_PER_SECOND,
-  bestStreak: topOf('racha'),
-  totalKilled: levelStart(30),
-  runs: topOf('partidas'),
-  bonusXp: 0,
-  invitedCount: 3,
-  dailyStreakBest: topOf('diasReto'),
-  bestDailyPct: topOf('mejorReto'),
-};
-
 function GalleryCell({ caption, label, onPress, children }: { caption: string; label: string; onPress: () => void; children: ReactNode }) {
   return (
     <Pressable
@@ -513,7 +500,7 @@ export function CollectionScreen() {
 
         <Text style={styles.foot}>Lo que eliges se guarda en este dispositivo.</Text>
       </ScrollView>
-      <PrizeModal prize={shown?.prize ?? null} stats={shown?.demo ? MAX_STATS : stats} onClose={() => setShown(null)} />
+      <PrizeModal prize={shown?.prize ?? null} stats={shown?.demo ? galleryStats(shown.prize) : stats} onClose={() => setShown(null)} />
     </View>
   );
 }

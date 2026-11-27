@@ -21,9 +21,9 @@ export const CELEBRATION_CTX: PrizeContext = { accounts: features.accounts, dail
  *
  * También le pasa a `observeCelebrations` lo que el jugador tiene cada vez que cambia: así se
  * siembra `tb_cele2` la primera vez (sin celebrar lo que ya tenía), se celebra lo que llega tarde
- * por una partida de este dispositivo (una paleta por los bloques extra de una misión, el mejor
- * resultado de un reto como invitado) y, con sesión, los premios por invitar y por el porcentaje
- * del reto. Lo demás que llega de la cuenta se registra sin celebrar.
+ * por una partida de este dispositivo (una paleta por los bloques extra de una misión, la
+ * participación en un reto como invitado) y, con sesión, los premios por invitar, por los días
+ * seguidos y por el porcentaje del reto. Lo demás que llega de la cuenta se registra sin celebrar.
  */
 export function CelebrationHost({ blocked }: { blocked: boolean }) {
   const queue = useCelebrationQueue();

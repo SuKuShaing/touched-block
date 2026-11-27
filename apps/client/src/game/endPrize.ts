@@ -1,7 +1,7 @@
 import type { TierStep } from '@tb/engine';
 import type { Me } from '@/api/types';
 import { catalogStatsFor } from '@/cosmetics/active';
-import { type CatalogItem, type CatalogStats, type CosmeticType, newlyUnlocked, tierIndexOfStats, tierUp } from '@/cosmetics/catalog';
+import { CATALOG, type CatalogItem, type CatalogStats, type CosmeticType, meets, tierIndexOfStats, tierUp } from '@/cosmetics/catalog';
 import { type LocalStats, type RunSummary, withRun } from '@/lib/stats';
 
 /**
@@ -51,7 +51,7 @@ export function endStats(
     countsOnAccount: boolean;
     dailyBestBefore?: number;
     dailyBestAfter?: number;
-    /** Mejor porcentaje del reto en este dispositivo (la partida no lo cambia: llega después). */
+    /** `bestPct` de este dispositivo (como invitado solo dice si participó; ver `catalogStatsFor`). */
     dailyPct?: number | null;
   },
 ): EndStats {
@@ -66,7 +66,8 @@ export function endStats(
 /** Premio de una partida comparando las estadísticas de antes y de después, o null si no hubo. */
 export function endPrize(before: CatalogStats, after: CatalogStats, ctx: PrizeContext): EndPrize | null {
   const tier = tierUp(before, after);
-  const items = newlyUnlocked(before, after).filter(
+  // `meets` y no `isUnlocked`: el APK de prueba lo desbloquea todo, pero igual celebra lo que se gana
+  const items = CATALOG.filter((i) => !meets(i.req, before) && meets(i.req, after)).filter(
     (i) => !(i.requires === 'accounts' && !ctx.accounts) && !(i.requires === 'daily' && !ctx.daily),
   );
   if (!tier && !items.length) return null;

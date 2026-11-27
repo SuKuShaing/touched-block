@@ -9,6 +9,7 @@ import {
   outsideCelebrations,
   pendingCelebrations,
   pendingKey,
+  unseededAccountKeys,
 } from './celebrations';
 import type { PrizeContext } from './endPrize';
 
@@ -17,8 +18,9 @@ import type { PrizeContext } from './endPrize';
  *
  * `tb_cele2` guarda las claves ya celebradas (`celebrations.ts`), un arreglo JSON de strings.
  * La primera vez se siembra con lo que el jugador ya tiene (`seedCelebrated`), para que quien
- * ya jugaba no reciba de golpe todo lo que ganó antes. Si el almacenamiento falla, se sigue con
- * lo que hay en memoria. La `tb_cele1` de antes del reinicio de datos ya no se lee.
+ * ya jugaba no reciba de golpe todo lo que ganó antes (salvo, con sesión, los premios por invitar
+ * y por el porcentaje del reto: ver `observeCelebrations`). Si el almacenamiento falla, se sigue
+ * con lo que hay en memoria. La `tb_cele1` de antes del reinicio de datos ya no se lee.
  *
  * `tb_cele2p` guarda las claves de la cola que todavía no se ven: si se cierra la app (o se
  * recarga la web) justo después de la partida, se muestran al volver a abrirla.
@@ -173,11 +175,14 @@ export function disarmCelebrations() {
 
 /**
  * Lo que tiene el jugador ahora (cada vez que cambia). Siembra `tb_cele2` la primera vez con todo
- * lo que ya tiene (`owned`), en silencio. Después celebra:
+ * lo que ya tiene (`owned`), en silencio; si en ese momento ya hay cuenta (equipo nuevo en el que
+ * se inició sesión antes de llegar al juego), deja fuera de la siembra sus premios por invitar y
+ * por el porcentaje del reto, para celebrarlos (B19). Celebra:
  * - lo que cambió en los datos de ESTE dispositivo (`local`), solo dentro de la ventana después de
  *   una partida;
- * - con sesión (`account`: las estadísticas con las de la cuenta), los premios por invitar y por el
- *   porcentaje del reto que todavía no estén registrados, cuando sea que lleguen.
+ * - con sesión (`account`: las estadísticas con las de la cuenta), los premios por invitar, por los
+ *   días seguidos y por el porcentaje del reto que todavía no estén registrados, cuando sea que
+ *   lleguen.
  *
  * Todo lo demás que tenga se registra sin celebrar: partidas de otro dispositivo, datos migrados.
  * Devuelve cuántas celebraciones agregó.
@@ -187,7 +192,10 @@ export function observeCelebrations(
   ctx: PrizeContext,
   now = Date.now(),
 ): number {
-  seedCelebrated(input.owned);
+  seedCelebrated(() => {
+    const held = input.account ? unseededAccountKeys(input.account, ctx) : null;
+    return input.owned().filter((k) => !held?.has(k));
+  });
   const snap: Snapshot = { viewer: input.viewer, stats: input.local };
   const found = [
     ...(now < armedUntil ? outsideCelebrations(prevSnap, snap, ctx) : []),
