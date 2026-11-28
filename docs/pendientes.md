@@ -4,20 +4,21 @@ Estado al **27 nov 2026**.
 
 ## Premios, logros y reinicio de registros (reglas v6)
 
-**En la rama `feat/premios-y-logros`. Nada desplegado, ningún dato borrado y nada probado en un teléfono.** Producción sigue en la v5. Qué cambia y por qué: `historia-y-decisiones.md`; cambios pedidos: `../config_logros/cambios.md` (001 a 026).
+**Desplegado el 27 nov 2026** (28 nov en UTC): API `v0.7.0`, web desde `main` (`473ed49`) y reinicio `v6-2026` aplicado (9 cuentas conservadas, todo lo demás en 0). Detalle y conteos: `despliegue.md`, sección 8. Qué cambia y por qué: `historia-y-decisiones.md`; cambios pedidos: `../config_logros/cambios.md` (001 a 028).
 
-El usuario autorizó el despliegue y el reinicio (alcance A, **sin respaldo**: no se puede deshacer). Se ejecutan **después de su visto bueno en el celular** y de **mostrarle antes el conteo de producción**. Pasos: `despliegue.md`, sección 8.
+**Falta:**
 
-**Falta, en orden:**
+- **Probar el login con Google en el APK de release 0.4.0** en un teléfono (`entregas/touched-block-0.4.0.apk`; en el emulador ya abre, sin "MODO PRUEBA" y con el reto del servidor). Luego repartirlo y avisar a quienes tengan el 0.3.1 de que deben actualizar (el 0.3.1 ya no entra al ranking) y de que sus registros parten de cero.
+- **Aviso de BlurView en el teléfono**: logcat muestra `dimezisBlurViewSdk31Plus ... blurTarget not configured`, desde `TabBarBlur.tsx` (código sin cambios en esta entrega). En algunas pantallas el desenfoque del menú puede quedar sin efecto. Revisar si se ve mal.
+- Flujos con cuenta (misión de seguir, celebraciones desde la cuenta) comprobarlos ya en producción con una cuenta real.
 
-1. **Hecho (27 nov 2026):** APK de prueba (`entregas/touched-block-prueba.apk`, ignorado por git; paquete `app.touchedblock.prueba`, 0.4.0, firma debug) revisado en el emulador, ya con las tarjetas de premios con desplazamiento propio (CAMBIO-027). Se vieron partidas, celebraciones, compartir imagen, Colección, 14 paletas, 20 fondos, 12 efectos, 9 sonidos (solo registros, sin cierres) y las pestañas sin servidor. Memoria: 311 MB antes de cambiar sonidos, pico 375. El emulador no llega a 60 cuadros ni en la partida normal; con galaxia y fuegos artificiales apenas cambia. Sin comprobar: cómo suena, vibración, rendimiento real, jugar el reto diario.
-2. Prueba del usuario en su teléfono: sonidos de oído (volumen y parecido), vibración, fluidez (fondo animado con un efecto pesado en la etapa final; si es posible en un teléfono modesto), tiempo de render de los sonidos, paletas, fondos, efectos, vista previa, galería y compartir imagen hasta una red social. Las misiones nuevas se ven como invitado poniendo la fecha del teléfono en el 7 dic o después.
-3. Flujos con cuenta (misión de seguir, celebraciones desde la cuenta) en la app de desarrollo con API local; en el APK de prueba no se pueden probar.
-4. Visto bueno y respuesta a las decisiones abiertas.
-5. Despliegue **antes del 7 dic 2026** (si no, mover `DAILY_CYCLE_FROM` y `MISSIONS_POOL_FROM` al lunes siguiente). No se comprobaron el acceso al VPS para correr el script, ni los secretos de GitHub.
-6. Después: probar el login con Google en el APK 0.4.0, repartirlo y avisar a quienes tengan el 0.3.1 de que deben actualizar y de que sus registros parten de cero.
+**Hecho:**
 
-**Decisiones abiertas** (se aplicó el valor por defecto; conviene confirmarlas antes de publicar):
+1. **(27 nov 2026)** APK de prueba (`entregas/touched-block-prueba.apk`, ignorado por git; paquete `app.touchedblock.prueba`, 0.4.0, firma debug) revisado en el emulador, ya con las tarjetas de premios con desplazamiento propio (CAMBIO-027). Se vieron partidas, celebraciones, compartir imagen, Colección, 14 paletas, 20 fondos, 12 efectos, 9 sonidos (solo registros, sin cierres) y las pestañas sin servidor. Memoria: 311 MB antes de cambiar sonidos, pico 375. El emulador no llega a 60 cuadros ni en la partida normal; con galaxia y fuegos artificiales apenas cambia. Sin comprobar: cómo suena, vibración, rendimiento real, jugar el reto diario.
+2. **(27 nov 2026)** Prueba del usuario en su Motorola con el APK de prueba: "todo funciona muy bien". Lo único que pidió corregir fue el efecto Píxeles, que se veía a saltos (CAMBIO-028, `fe5b5c4`).
+3. **(27 nov 2026)** Visto bueno, conteo de producción mostrado, reinicio confirmado por escrito y despliegue (antes del 7 dic, así que `DAILY_CYCLE_FROM` y `MISSIONS_POOL_FROM` no se movieron).
+
+**Decisiones abiertas** (se aplicó el valor por defecto; siguen sin confirmar y se pueden ajustar ya publicadas):
 
 | Tema | Hoy en el código |
 |---|---|
@@ -37,7 +38,7 @@ Otras que quedaron sin respuesta, aplicadas con el valor por defecto: porcentaje
 **Riesgos anotados:**
 
 - El porcentaje del reto vale 0 los días con menos de 10 jugadores: sin ellos no se ganan los premios de 25 % a 99 %.
-- Tras el reinicio, un APK 0.3.1 sin actualizar sigue mostrando su Colección y su récord locales (solo en ese equipo).
+- Desde el reinicio, un APK 0.3.1 sin actualizar sigue mostrando su Colección y su récord locales (solo en ese equipo).
 - Fuera de alcance: respaldo y restauración de producción, iOS, Google Play, muestras grabadas, desenfoque real en Esmerilado, misión "Invita a alguien" y actualizar la recta de niveles de la maqueta.
 
 ## Estado

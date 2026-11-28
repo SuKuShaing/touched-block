@@ -12,12 +12,12 @@ Esta carpeta es la memoria del proyecto: qué se hizo, cómo funciona y, sobre t
 | [`reglas-y-balance.md`](reglas-y-balance.md) | Reglas del juego con sus valores exactos, progresión, trampas, combos y la historia de cada cambio de reglas (v1–v11), premios, logros, retos y misiones. Léelo antes de tocar el balance. |
 | [`arquitectura.md`](arquitectura.md) | Cómo está armado el monorepo: motor determinista, cliente Expo, API NestJS, flujo de una partida, almacenamiento local. |
 | [`api.md`](api.md) | Contrato exacto de cada endpoint de la API (cuerpos, respuestas, errores, límites). |
-| [`despliegue.md`](despliegue.md) | Cómo se publica la web (Cloudflare), la API (Dokploy) y el APK. Incluye Google Cloud, secretos y variables de GitHub, cómo volver atrás y el reinicio de registros de la v6 (sección 8, pendiente). |
+| [`despliegue.md`](despliegue.md) | Cómo se publica la web (Cloudflare), la API (Dokploy) y el APK. Incluye Google Cloud, secretos y variables de GitHub, cómo volver atrás y el reinicio de registros de la v6 (sección 8, aplicado el 28 nov 2026 UTC). |
 | [`desarrollo.md`](desarrollo.md) | Entorno de la máquina del usuario, comandos, cómo probar, problemas conocidos y cómo trabaja el usuario. |
 | [`pendientes.md`](pendientes.md) | Estado actual, tareas pendientes, riesgos e ideas. |
 | [`plan-jugabilidad.md`](plan-jugabilidad.md) | Plan por fases para que la gente vuelva y comparta: camino de etapas, insignias y premios, reto a un amigo, reto diario, misiones y logros. Incluye las decisiones del usuario y el estado de cada fase. |
 
-**Estado al 27 nov 2026**: la rama `feat/premios-y-logros` trae las reglas v6, los premios y logros nuevos y el reinicio de registros. **No está desplegada, no se borró ningún dato y no se probó en un teléfono** (ver `pendientes.md`). El detalle de cada cambio pedido está en `../config_logros/cambios.md` y el plan en `../config_logros/PLAN_IMPLEMENTACION.md`.
+**Estado al 27 nov 2026**: las reglas v6, los premios y logros nuevos están **en producción** (API `v0.7.0`, web desde `main`) y el reinicio de registros se aplicó (se conservaron las cuentas). El APK `0.4.0` está listo; falta probar su login con Google en un teléfono (ver `pendientes.md`). El detalle de cada cambio pedido está en `../config_logros/cambios.md` y el plan en `../config_logros/PLAN_IMPLEMENTACION.md`.
 
 ## Reglas para mantener esta documentación
 

@@ -326,7 +326,7 @@ EXPO_PUBLIC_API_URL=https://api.touchedblock.app NODE_ENV=production ./gradlew a
 - Las `EXPO_PUBLIC_*` quedan incrustadas en el JavaScript. Antes de un release, abrir una terminal nueva (sin las variables del APK de prueba exportadas) y hacer siempre la limpieza de arriba. Además, `plugins/withReleaseSigning.js` declara esas variables, la del APK de prueba y los archivos `.env` como entradas de la tarea del bundle: si cambian, Gradle lo vuelve a generar.
 - Antes de repartirlo, comprobar que el paquete es `app.touchedblock`, que el bundle apunta a `https://api.touchedblock.app` (ni `localhost` ni `api.invalid`) y que al abrirlo no se ve "MODO PRUEBA".
 
-- Versión en la rama `feat/premios-y-logros`: `0.4.0`, `versionCode` 6 (reglas v6). El APK definitivo **todavía no se generó para repartir**: va después del reset y de publicar la web (sección 8).
+- Versión actual: `0.4.0`, `versionCode` 6 (reglas v6). APK de release generado el 27 nov 2026 (`entregas/touched-block-0.4.0.apk`, ignorado por git): firma de release (SHA-1 `B5:7F:86…`), paquete `app.touchedblock`, bundle con `https://api.touchedblock.app`, probado en el emulador (sin "MODO PRUEBA", el reto diario carga del servidor). Falta probar el login con Google en un teléfono antes de repartirlo.
 - Subir `android.versionCode` (y `version`) en `app.json` en cada APK que se reparta: Android no instala encima una versión con el mismo `versionCode`.
 - La API no necesita CORS para la app, porque las apps no envían `Origin`.
 - Los APK anteriores a noviembre de 2026 apuntaban a `https://vps23906.cubepath.net`. Ese dominio se quitó de Dokploy el 24 nov 2026 (solo quedaba un APK, en un celular de prueba): esos APK ya no se conectan a la API.
@@ -708,7 +708,17 @@ La web se publica sola y puede llegar antes que la API: el menú "⋯" solo apar
 
 ## 8. Publicar premios, logros y reinicio de registros (reglas v6)
 
-**Estado al 27 nov 2026: nada de esto se ha hecho.** El código está en la rama `feat/premios-y-logros`; producción sigue en la v5, no se ha borrado ningún dato y no se probó en un teléfono. El usuario autorizó el despliegue y el reset (alcance A, **sin respaldo previo**: el borrado no se puede deshacer), a ejecutar **después de su visto bueno tras probar en el celular** y de mostrarle antes el conteo de producción.
+**Estado: hecho el 27 nov 2026 (hora de Chile; 28 nov en UTC).** El usuario probó el APK de prueba en su Motorola ("todo funciona muy bien"; solo se corrigió Píxeles, CAMBIO-028) y confirmó el reinicio por escrito tras ver el conteo.
+
+- Paso 1: tag `v0.7.0`, workflow bien; `/health` responde `rulesVersion: 6`, `version: v0.7.0`.
+- Paso 2 (solo lectura): 9 cuentas, 9 con partidas (2 activas en los últimos 7 días), 184 partidas, 64 filas de ranking, 3 resultados del reto diario, 2 desafíos (3 resultados), 26 premios de misión, 0 invitaciones.
+- Paso 3: reinicio `v6-2026` aplicado el **28 nov 2026 00:20:53 UTC** con la API detenida. Verificación: 9 cuentas y 0 en todo lo demás. API reanudada y sana.
+- Paso 4: `feat/premios-y-logros` mezclada a `main` (`473ed49`) y publicada (web, landing, redirección).
+- Paso 5: APK `0.4.0` generado y comprobado en el emulador (sección 5); falta probar el login con Google en un teléfono y repartirlo.
+
+**Cómo se corrió en el VPS**: sin SSH, con tareas temporales del servidor en Dokploy (*Schedules* de tipo `dokploy-server`, borradas después), cada una con `cd /etc/dokploy/compose/touched-block-bz408h/code/deploy` (ruta y `.env` comprobados) y los comandos de abajo con `-p touched-block-bz408h -f docker-compose.yml`. Funcionó; sirve para la próxima vez.
+
+El procedimiento queda como referencia (el script ya no se vuelve a aplicar: la marca `v6-2026` lo impide).
 
 ### Antes de empezar
 
@@ -747,7 +757,7 @@ Mezclar a `main` publica **solo** web, landing y redirección; la API se publica
 4. **Enseguida**, mezclar a `main` y hacer push (web, redirección y landing). Entre el paso 1 y este, la web publicada no entra al ranking: hacerlo seguido.
 5. **APK definitivo** `0.4.0` (sección 5, con su limpieza, sin las variables del APK de prueba): comprobar firma de release, paquete `app.touchedblock`, `https://api.touchedblock.app` en el bundle y que no se vea "MODO PRUEBA"; probar el login con Google, repartirlo y avisar a quienes tengan el `0.3.1`.
 
-**Sobre el comando.** `run` crea un contenedor aparte con la imagen de `API_TAG` y las variables del `.env` que Dokploy deja junto al compose; al pasarle el comando reemplaza el arranque (no corre migraciones ni levanta la API) y trabaja en `/app`. **`-p` y `-f` son obligatorios**: sin el nombre del proyecto, Compose crearía otro proyecto con una base **vacía** y la simulación saldría en cero sin haber tocado producción (por eso las cuentas deben coincidir con el paso 2). `--no-deps` evita que se toque `tb-db`, que ya está corriendo. Si la ruta o el proyecto no coinciden, parar y revisar. El procedimiento no se ha ejecutado en el VPS.
+**Sobre el comando.** `run` crea un contenedor aparte con la imagen de `API_TAG` y las variables del `.env` que Dokploy deja junto al compose; al pasarle el comando reemplaza el arranque (no corre migraciones ni levanta la API) y trabaja en `/app`. **`-p` y `-f` son obligatorios**: sin el nombre del proyecto, Compose crearía otro proyecto con una base **vacía** y la simulación saldría en cero sin haber tocado producción (por eso las cuentas deben coincidir con el paso 2). `--no-deps` evita que se toque `tb-db`, que ya está corriendo. Si la ruta o el proyecto no coinciden, parar y revisar. Ejecutado así en el VPS el 28 nov 2026 (UTC).
 
 ### El script de reinicio
 

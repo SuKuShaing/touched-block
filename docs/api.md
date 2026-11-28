@@ -1,6 +1,6 @@
 # API de Touched Block
 
-> **Versión descrita**: el código de la rama `feat/premios-y-logros` (reglas v6, API `v0.7.0` prevista). **Al 27 nov 2026 no está desplegada**: producción sigue con las reglas v5, sin `client_outdated`, sin `followedToday` y rechazando `rulesVersion` como campo desconocido. Publicación y reinicio de datos: `despliegue.md`, sección 8.
+> **Versión descrita**: API `v0.7.0` (reglas v6), en producción desde el 27 nov 2026. Publicación y reinicio de datos: `despliegue.md`, sección 8.
 
 NestJS + Prisma + PostgreSQL. Todas las peticiones y respuestas son JSON (`Content-Type: application/json`). Las fechas van en ISO 8601 UTC (`"2026-11-09T14:13:54.449Z"`). Los mensajes de error (`message`) vienen en español y se pueden mostrar tal cual al usuario.
 

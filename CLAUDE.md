@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 "Touched Block" (antes "Rompe el bloque"): juego táctil para celular, en español. Aparecen bloques con un número o una operación ("2+3", "8÷2"); hay que tocar cada uno tantas veces como su resultado antes de que desaparezca. Supervivencia contra el reloj, con vidas, combos y bloques trampa. Es una web (`https://web.touchedblock.app`, en Cloudflare; landing en `https://touchedblock.app`) con cuentas y rankings y, desde el 16 nov 2026, también una app Android (`app.touchedblock`, APK) con el mismo código; iOS más adelante.
 
-**Estado (27 nov 2026)**: la rama `feat/premios-y-logros` trae las reglas v6 (reinicio de registros aprobado), premios y logros nuevos. **Sin desplegar, sin datos borrados y sin probar en teléfono**: producción sigue en la v5. El despliegue y el reinicio se hacen solo tras el visto bueno del usuario en el celular y de mostrarle el conteo de producción (`docs/despliegue.md`, sección 8; `docs/pendientes.md`).
+**Estado (27 nov 2026)**: las reglas v6, premios y logros nuevos están **en producción** (API `v0.7.0`, web desde `main`). El reinicio de registros `v6-2026` se aplicó el 28 nov 2026 00:20 UTC (se conservaron las 9 cuentas; todo lo demás en 0); no se repite. El APK de release `0.4.0` (`versionCode` 6) está generado y listo para repartir; falta probar en un teléfono su login con Google (`docs/despliegue.md`, sección 8; `docs/pendientes.md`).
 
 La documentación completa está en `docs/` (índice en `docs/README.md`). Es la memoria del proyecto: qué se hizo y **por qué**.
 - `docs/historia-y-decisiones.md`: cronología y motivo de cada decisión técnica. Léelo al empezar.

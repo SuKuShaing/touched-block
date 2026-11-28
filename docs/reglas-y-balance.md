@@ -5,7 +5,7 @@ Qué es el juego, las reglas actuales con sus valores exactos y la historia de c
 - Idioma del juego y del usuario: **español**.
 - Plataforma: **web pensada para celular** (GitHub Pages), con cuentas y rankings. Después, si le va bien, app Android/iOS con el mismo código (Expo).
 - Nombre: **Touched Block** (antes "Rompe el bloque"; el nombre queda en inglés aunque el resto del texto sea en español).
-- Reglas del código: **v6 del motor** (`RULES_VERSION = 6`, rama `feat/premios-y-logros`). Las reglas de partida son las mismas de la v5; la versión sube por el reinicio de registros aprobado por el usuario (decisión 12 de la sección 3). **Al 27 nov 2026 no está desplegada**: producción sigue en la v5 y no se ha borrado ningún dato.
+- Reglas del código: **v6 del motor** (`RULES_VERSION = 6`). Las reglas de partida son las mismas de la v5; la versión sube por el reinicio de registros aprobado por el usuario (decisión 12 de la sección 3). **En producción desde el 27 nov 2026** (API `v0.7.0`; reinicio `v6-2026` aplicado el 28 nov en UTC).
 
 ---
 
@@ -90,7 +90,7 @@ Detalles importantes:
 
 ### Progreso, retos y metas (plan de jugabilidad)
 
-Lo agrega el [plan de jugabilidad](plan-jugabilidad.md) y lo amplían los cambios 001 a 026 de `config_logros/cambios.md` (27 nov 2026, sin desplegar). **Nada de esto cambia las reglas de una partida** (`game.ts` es el mismo). Todo vive en el motor (funciones puras, sin `Date` ni `Math.random`) para que el cliente y el servidor den lo mismo. Lo marcado *provisorio* lo confirmó el usuario tal cual el 12 nov 2026; se vuelve a medir con jugadores reales.
+Lo agrega el [plan de jugabilidad](plan-jugabilidad.md) y lo amplían los cambios 001 a 028 de `config_logros/cambios.md` (27 nov 2026, desplegados ese día). **Nada de esto cambia las reglas de una partida** (`game.ts` es el mismo). Todo vive en el motor (funciones puras, sin `Date` ni `Math.random`) para que el cliente y el servidor den lo mismo. Lo marcado *provisorio* lo confirmó el usuario tal cual el 12 nov 2026; se vuelve a medir con jugadores reales.
 
 **Prueba dorada** (`packages/engine/test/golden.test.ts` + `golden.json`): 20 semillas fijas × 2 campos (360×540 y 412×732) jugadas por un bot determinista de habilidad variable (partidas de unos 9 s a 470 s, varias pasan de 140 s, 275 s y 350 s). Compara destruidos, escapados, mejor racha, ticks, motivo del fin y una huella (FNV-1a) de todos los bloques generados (tick, id, texto, posición, tamaño, color, vida, trampa roja, corazón), y exige que `replay()` dé lo mismo. Los valores salieron del motor v5 **antes** de agregar los modificadores. Si falla, el cambio alteró las partidas normales: no se regenera salvo un cambio de reglas aprobado por el usuario (`GOLDEN_WRITE=1`, ver el comentario del archivo). El paso a la v6 **no** la regeneró.
 

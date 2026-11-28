@@ -444,9 +444,9 @@ El VPS es compartido con Learn-it y UltimaType. Su administrador cerró el puert
 - **`vps23906.cubepath.net` se quitó** el mismo día: es el nombre del proveedor, no puede pasar por Cloudflare y solo lo usaba un APK viejo en un celular de prueba (los jugadores usan la web). Así todos los dominios del VPS quedan detrás de Cloudflare y el administrador puede limitar 80/443 a las IP de Cloudflare (opción C de su nota).
 - **IP del jugador**: con Cloudflare delante, el `trust proxy` por defecto (`loopback, linklocal, uniquelocal`) haría que la API viera la IP del borde de Cloudflare y que todos compartieran el límite de 120 peticiones por minuto. Se agregaron los rangos de Cloudflare a `TRUST_PROXY` en `deploy/docker-compose.yml`: Express recorre el `X-Forwarded-For` desde la derecha saltando Traefik y Cloudflare, y se queda con la IP real. Sirve también para el acceso directo, porque ahí Traefik reescribe el `X-Forwarded-For` con la IP de la conexión. Se descartó `trust proxy = 2` porque fallaría con el acceso directo (tomaría un valor que el cliente puede inventar), y `CF-Connecting-IP` porque obliga a tocar código. Si Cloudflare cambia sus rangos, actualizar la lista (o sobrescribirla con la variable `TRUST_PROXY` en Dokploy).
 
-### Premios, logros y reinicio de registros: reglas v6 (20 a 27 nov 2026; sin desplegar)
+### Premios, logros y reinicio de registros: reglas v6 (20 a 27 nov 2026; desplegado el 27 nov)
 
-El usuario analizó insignias, logros, retos y premios en una réplica aparte (`config_logros/`), anotando 26 propuestas (CAMBIO-001 a 026), y el 27 nov pidió aplicarlas. Están en la rama `feat/premios-y-logros`. **Al cierre de esta nota nada está desplegado, no se ha borrado ningún dato y no se ha probado en un teléfono.** Valores en `reglas-y-balance.md`.
+El usuario analizó insignias, logros, retos y premios en una réplica aparte (`config_logros/`), anotando 26 propuestas (CAMBIO-001 a 026), y el 27 nov pidió aplicarlas. Se hicieron en la rama `feat/premios-y-logros` y se publicaron el mismo día (ver "Despliegue de la v6" más abajo). Valores en `reglas-y-balance.md`.
 
 **Qué cambia**: siete insignias (Papel, Cartón y Madera reemplazan a las tres maderas; ninguna bajo 20 s; Diamante a los bloques de 2 s), "Experiencia" con nivel desde 0, logros de siete materiales con iconos propios ("Partidas jugadas" reemplaza a "Bloques destruidos"), 55 premios, ciclo de 15 retos y 28 misiones desde el 7 dic, ver en grande y compartir premios y vista previa en la Colección.
 
@@ -456,7 +456,7 @@ El usuario analizó insignias, logros, retos y premios en una réplica aparte (`
 - **`RULES_VERSION` 6 sin cambiar reglas de partida**: es la forma de que la API rechace las partidas de los clientes viejos y sus datos no vuelvan. Claves locales de progreso nuevas por el mismo motivo; las viejas no se borran ni se leen, y la mudanza dejó de importarlas.
 - **El borrado es un script manual, no una migración**: las migraciones corren solas al arrancar el contenedor. Simulación por defecto, confirmación literal, una transacción y una marca (`DataReset`) para que no se repita. En el despliegue se corre con la API detenida, para que ninguna petición en curso reescriba datos viejos.
 - Trampas cerradas: el servidor recalcula el porcentaje desde `DailyEntry` (se borra); el cliente toma el máximo entre dispositivo y cuenta (claves nuevas y servidor en cero); las estadísticas locales se reconstruyen desde el historial (lee las claves nuevas); la web vieja podía reimportar datos.
-- **Sin respaldo previo**, por decisión del usuario (27 nov): el borrado no se puede deshacer. Se ejecutará después de su visto bueno en el celular y de mostrarle el conteo de producción.
+- **Sin respaldo previo**, por decisión del usuario (27 nov): el borrado no se puede deshacer. Se ejecutó después de su visto bueno en el celular y de mostrarle el conteo de producción.
 - **`409 client_outdated`**: un cliente viejo podría gastar su intento del reto en una partida que la API rechazaría después; ahora `duel` y `daily` exigen `rulesVersion` y se cortan antes de crear nada. Consecuencia: el APK 0.3.1 deja de entrar al ranking y hay que repartir el 0.4.0.
 
 **Fechas de retos y misiones**
@@ -486,6 +486,16 @@ El usuario analizó insignias, logros, retos y premios en una réplica aparte (`
 - Para probar en el teléfono sin publicar ni tocar la app real: id `.prueba`, firma debug, API `https://api.invalid` (producción es v5 y además recibiría datos de prueba; una API local exige USB o red) y todo desbloqueado. Como las `EXPO_PUBLIC_*` quedan dentro del bundle, Gradle las declara como entradas de la tarea y el release se limpia antes: sin eso podía reutilizar el bundle de prueba.
 
 **Valores por defecto adoptados** (sección B del plan; los marcados "por confirmar" están en `pendientes.md`): estrella sin numerales en Papel, Cartón y Madera; "Nivel 0" visible; "Máximo combo" en la pantalla final sin tocar misiones ni la franja; iconos de logros tal como se diseñaron; sin premio ganado se abre "Todavía no lo tienes" sin compartir; los premios cosméticos se comparten como tarjeta de texto; la misión "Invita a alguien" quedó fuera; Degradé en nivel 22 con 3,5 %; vista previa al final y solo con lo equipado; logro y premio en ventanas separadas; se reinicia "visto en Colección" y se conservan ajustes, selección y desbloqueo.
+
+**Píxeles continuo (CAMBIO-028, 27 nov)**
+
+- Única observación del usuario al probar el APK de prueba en su Motorola ("todo funciona muy bien"): el efecto Píxeles avanzaba en 8 pasos de tiempo sobre una grilla de 4 px y en el teléfono se veía a saltos. Ahora se mueve de forma continua (`fe5b5c4`).
+
+**Despliegue de la v6 (27 nov 2026; 28 nov en UTC)**
+
+- Orden de `despliegue.md`, sección 8: tag `v0.7.0` (`/health` con `rulesVersion: 6`), conteo de solo lectura mostrado al usuario (9 cuentas, 184 partidas, 64 filas de ranking, 26 premios de misión, entre otros), confirmación por escrito y reinicio `v6-2026` a las 00:20:53 UTC con la API detenida. Verificación: 9 cuentas y 0 en lo demás. Después, mezcla a `main` (`473ed49`).
+- **Sin SSH**: el script se corrió con tareas temporales del servidor en Dokploy (tipo `dokploy-server`), borradas al terminar. Es la misma vía que el cortafuegos y no exige abrir otro acceso al VPS.
+- APK de release `0.4.0` generado y probado en el emulador; se reparte después de probar en un teléfono su login con Google.
 
 ---
 
