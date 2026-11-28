@@ -7,8 +7,8 @@ import { levelFor, xpOf } from './level';
  * `collectionNews.ts`). "Cuánto hay" en la Colección: insignias, premios y niveles de logro
  * (`ownedKeys`, las mismas claves de las celebraciones) más el nivel del jugador.
  */
-export function collectionScore(stats: CatalogStats, dailyPct: number | null): number {
-  return ownedKeys(stats, dailyPct).length + levelFor(xpOf(stats)).level;
+export function collectionScore(stats: CatalogStats): number {
+  return ownedKeys(stats).length + levelFor(xpOf(stats)).level;
 }
 
 /** Hay novedad si lo actual supera lo último visto (y ya se sembró: -1 = sin medir). */

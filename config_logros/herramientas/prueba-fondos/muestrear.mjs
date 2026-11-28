@@ -1,10 +1,10 @@
 // Muestrea los colores REALMENTE dibujados de cada fondo (con sus patrones, brillos y animación congelada en un cuadro) a partir de una
-// captura de pantalla, para comprobar lo que de verdad queda bajo un bloque translúcido (no solo el color base).
+// captura de pantalla, para comprobar contra qué se recortan de verdad los bloques (no solo el color base).
 // Uso: node muestrear.mjs <captura.png> <celdas.json> [lado=14]
-//   captura.png  captura de la web con los campos de los fondos SIN bloques (ver README.md, "Muestreo")
+//   captura.png  captura de la web con los campos de los fondos a medir SIN bloques ni rótulos, a escala 1 (campos de unos 230 × 560 px)
 //   celdas.json  [{ "id": "oceano", "x": 6, "y": 6, "w": 290, "h": 200 }, ...] en píxeles CSS de la captura (escala 1)
-// Para cada celda toma una rejilla de 8 × 10 ventanas de `lado` × `lado` px, promedia cada una (lo que ve un bloque, no un píxel suelto)
-// y escribe muestras.json: { id: ["#rrggbb", ...] }.
+// Para cada celda toma una rejilla de 12 × 28 ventanas de `lado` × `lado` px, promedia cada una (lo que ve un bloque, no un píxel suelto)
+// y escribe muestras.json: { id: ["#rrggbb", ...] } (si ya existe, solo reemplaza los fondos de celdas.json).
 import fs from 'node:fs';
 import zlib from 'node:zlib';
 import path from 'node:path';
@@ -56,13 +56,15 @@ function leerPng(archivo) {
 const img = leerPng(png);
 const celdas = JSON.parse(fs.readFileSync(celdasJson, 'utf8'));
 const hex = (v) => '#' + v.map((n) => Math.round(n).toString(16).padStart(2, '0')).join('');
-const salida = {};
+// los fondos que no estén en celdas.json conservan su muestra anterior (sirve para medir solo los nuevos)
+const previo = path.join(aqui, 'muestras.json');
+const salida = fs.existsSync(previo) ? JSON.parse(fs.readFileSync(previo, 'utf8')) : {};
 for (const c of celdas) {
   const lista = [];
-  for (let j = 0; j < 10; j++) {
-    for (let i = 0; i < 8; i++) {
-      const cx = Math.round(c.x + ((i + 0.5) / 8) * c.w);
-      const cy = Math.round(c.y + ((j + 0.5) / 10) * c.h);
+  for (let j = 0; j < 28; j++) {
+    for (let i = 0; i < 12; i++) {
+      const cx = Math.round(c.x + ((i + 0.5) / 12) * c.w);
+      const cy = Math.round(c.y + ((j + 0.5) / 28) * c.h);
       const s = [0, 0, 0];
       let n = 0;
       for (let y = cy - lado / 2; y < cy + lado / 2; y++)

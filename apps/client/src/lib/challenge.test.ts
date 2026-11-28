@@ -26,6 +26,7 @@ import {
   rivalOf,
   savePendingChallenge,
   startFailureText,
+  outdatedText,
 } from './challenge';
 
 beforeEach(() => mem.clear());
@@ -138,6 +139,9 @@ describe('errores al empezar', () => {
     expect(startFailureText('daily', 'daily_attempts_exhausted')).toBe('Ya usaste tus intentos del reto de hoy.');
     expect(startFailureText('duel', 'error', 'Demasiadas peticiones.')).toBe('Demasiadas peticiones.');
     expect(startFailureText('duel', 'error')).toBe('No se pudo empezar el reto. Inténtalo de nuevo.');
+    expect(startFailureText('daily', 'outdated')).toBe('Hay una versión nueva del juego: recarga la página para jugar el reto.');
+    expect(outdatedText('volver al ranking', false)).toBe('Hay una versión nueva del juego: recarga la página para volver al ranking.');
+    expect(outdatedText('jugar el reto', true)).toBe('Hay una versión nueva del juego: actualiza la app para jugar el reto.');
   });
   it('un reto que no existe o venció no se reintenta', () => {
     expect(isFatalChallengeReason('challenge_expired')).toBe(true);

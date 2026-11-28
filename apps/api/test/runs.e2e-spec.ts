@@ -176,7 +176,7 @@ describe('plataforma de la partida (Run.platform)', () => {
     const u = await t.login('plat-1', 'Plat');
     const created = await t.startRun(u, { mode: 'duel', platform: 'app_ios' }).expect(201);
     expect(await platformOf(created.body.runId)).toBe('app_ios');
-    const joined = await start({ mode: 'duel', challenge: created.body.challengeCode, platform: 'web_desktop' }).expect(201);
+    const joined = await start({ mode: 'duel', challenge: created.body.challengeCode, platform: 'web_desktop', rulesVersion: RULES_VERSION }).expect(201);
     expect(await platformOf(joined.body.runId)).toBe('web_desktop');
     const date = new Date().toISOString().slice(0, 10);
     const daily = await t.startRun(u, { mode: 'daily', date, platform: 'web_mobile' }).expect(201);

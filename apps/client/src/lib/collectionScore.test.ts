@@ -3,10 +3,12 @@ import { EMPTY_CATALOG_STATS } from '@/cosmetics/catalog';
 import { collectionScore, hasCollectionNews, seenAfterViewing } from './collectionScore';
 
 describe('collectionScore', () => {
+  it('un jugador nuevo no tiene nada', () => expect(collectionScore(EMPTY_CATALOG_STATS)).toBe(0));
   it('crece al ganar cosas', () => {
-    const empty = collectionScore(EMPTY_CATALOG_STATS, null);
-    const more = collectionScore({ ...EMPTY_CATALOG_STATS, runs: 50, bestTicks: 60 * 120, totalKilled: 5000, bestStreak: 40 }, null);
-    expect(more).toBeGreaterThan(empty);
+    const some = { ...EMPTY_CATALOG_STATS, runs: 50, bestTicks: 60 * 120, totalKilled: 5000, bestStreak: 40 };
+    expect(collectionScore(some)).toBeGreaterThan(0);
+    // participar en un reto diario (aunque sea con 0 %) también suma: logro y premio
+    expect(collectionScore({ ...some, bestDailyPct: 0 })).toBe(collectionScore(some) + 2);
   });
 });
 

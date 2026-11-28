@@ -5,10 +5,13 @@ import {
   DAILY_ATTEMPTS_ACCOUNT,
   DAILY_ATTEMPTS_GUEST,
   DAILY_CALENDAR,
+  DAILY_CYCLE,
+  DAILY_CYCLE_FROM,
   DAILY_EPOCH,
   DAILY_FEW_LIVES,
   DAILY_LIVES,
   DAILY_STREAK_GRACE_EVERY,
+  LIFE_STAGE_START,
   MUL_START,
   addDays,
   dailyModsFor,
@@ -17,6 +20,7 @@ import {
   dateKeyFromIndex,
   dayIndex,
   isDateKey,
+  validateMods,
   weekdayOf,
 } from '../src';
 
@@ -122,6 +126,64 @@ describe('reto diario', () => {
     d.mods!.startAt = 0;
     expect(DAILY_CALENDAR[1].mods).toEqual({ startAt: ADD_START });
     expect(dailyModsFor('2026-11-17').mods).toEqual({ startAt: ADD_START });
+  });
+});
+
+describe('ciclo de 15 retos', () => {
+  const day = (n: number) => dailyModsFor(addDays(DAILY_CYCLE_FROM, n - 1));
+
+  it('parte un lunes y tiene los 15 retos en orden', () => {
+    expect(DAILY_CYCLE_FROM).toBe('2026-12-07');
+    expect(weekdayOf(DAILY_CYCLE_FROM)).toBe(0);
+    expect(Array.from({ length: 15 }, (_, i) => day(i + 1))).toEqual([
+      { mods: null, title: 'Partida normal' },
+      { mods: { startAt: ADD_START }, title: 'Directo a las sumas' },
+      { mods: { lives: 3 }, title: 'Solo 3 vidas' },
+      { mods: { only: 'mul', startAt: MUL_START }, title: 'Solo multiplicaciones y divisiones' },
+      { mods: { noRed: true }, title: 'Sin trampas rojas' },
+      { mods: { startAt: MUL_START }, title: 'Directo a las multiplicaciones' },
+      { mods: null, title: 'Partida normal' },
+      { mods: { lives: 4 }, title: 'Solo 4 vidas' },
+      { mods: { only: 'num' }, title: 'Solo números' },
+      { mods: { only: 'add' }, title: 'Solo sumas y restas' },
+      { mods: { startAt: ADD_START, noRed: true }, title: 'Sumas sin trampas rojas' },
+      { mods: { lives: 2 }, title: 'Solo 2 vidas' },
+      { mods: { only: 'mul', startAt: MUL_START, lives: 3 }, title: 'Multiplicaciones con 3 vidas' },
+      { mods: { startAt: LIFE_STAGE_START }, title: 'Directo a la etapa final' },
+      { mods: { lives: 1 }, title: 'Una sola vida' },
+    ]);
+  });
+
+  it('los días anteriores siguen con el calendario semanal', () => {
+    expect(dailyModsFor('2026-12-06')).toEqual(DAILY_CALENDAR[6]);
+    for (let i = 1; i <= 60; i++) {
+      const d = addDays(DAILY_CYCLE_FROM, -i);
+      expect(dailyModsFor(d), d).toEqual(DAILY_CALENDAR[weekdayOf(d)]);
+    }
+  });
+
+  it('termina y vuelve a empezar', () => {
+    expect(dailyModsFor('2026-12-07')).toEqual(DAILY_CYCLE[0]);
+    expect(dailyModsFor('2026-12-21')).toEqual(DAILY_CYCLE[14]);
+    expect(dailyModsFor('2026-12-22')).toEqual(DAILY_CYCLE[0]);
+    for (let i = 0; i < 400; i++) {
+      expect(dailyModsFor(addDays(DAILY_CYCLE_FROM, i))).toEqual(DAILY_CYCLE[i % 15]);
+    }
+  });
+
+  it('todos los modificadores son válidos', () => {
+    expect(DAILY_CYCLE).toHaveLength(15);
+    for (const d of DAILY_CYCLE) expect(() => validateMods(d.mods)).not.toThrow();
+  });
+
+  it('devuelve una copia', () => {
+    const d = dailyModsFor('2026-12-14');
+    d.mods!.lives = 8;
+    expect(dailyModsFor('2026-12-14').mods).toEqual({ lives: 4 });
+  });
+
+  it('rechaza fechas inválidas', () => {
+    expect(() => dailyModsFor('2026-12-32')).toThrow();
   });
 });
 

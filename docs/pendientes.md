@@ -1,6 +1,44 @@
 # Pendientes, riesgos e ideas
 
-Estado al **20 nov 2026**.
+Estado al **27 nov 2026**.
+
+## Premios, logros y reinicio de registros (reglas v6)
+
+**En la rama `feat/premios-y-logros`. Nada desplegado, ningún dato borrado y nada probado en un teléfono.** Producción sigue en la v5. Qué cambia y por qué: `historia-y-decisiones.md`; cambios pedidos: `../config_logros/cambios.md` (001 a 026).
+
+El usuario autorizó el despliegue y el reinicio (alcance A, **sin respaldo**: no se puede deshacer). Se ejecutan **después de su visto bueno en el celular** y de **mostrarle antes el conteo de producción**. Pasos: `despliegue.md`, sección 8.
+
+**Falta, en orden:**
+
+1. **Hecho (27 nov 2026):** APK de prueba (`entregas/touched-block-prueba.apk`, ignorado por git; paquete `app.touchedblock.prueba`, 0.4.0, firma debug) revisado en el emulador, ya con las tarjetas de premios con desplazamiento propio (CAMBIO-027). Se vieron partidas, celebraciones, compartir imagen, Colección, 14 paletas, 20 fondos, 12 efectos, 9 sonidos (solo registros, sin cierres) y las pestañas sin servidor. Memoria: 311 MB antes de cambiar sonidos, pico 375. El emulador no llega a 60 cuadros ni en la partida normal; con galaxia y fuegos artificiales apenas cambia. Sin comprobar: cómo suena, vibración, rendimiento real, jugar el reto diario.
+2. Prueba del usuario en su teléfono: sonidos de oído (volumen y parecido), vibración, fluidez (fondo animado con un efecto pesado en la etapa final; si es posible en un teléfono modesto), tiempo de render de los sonidos, paletas, fondos, efectos, vista previa, galería y compartir imagen hasta una red social. Las misiones nuevas se ven como invitado poniendo la fecha del teléfono en el 7 dic o después.
+3. Flujos con cuenta (misión de seguir, celebraciones desde la cuenta) en la app de desarrollo con API local; en el APK de prueba no se pueden probar.
+4. Visto bueno y respuesta a las decisiones abiertas.
+5. Despliegue **antes del 7 dic 2026** (si no, mover `DAILY_CYCLE_FROM` y `MISSIONS_POOL_FROM` al lunes siguiente). No se comprobaron el acceso al VPS para correr el script, ni los secretos de GitHub.
+6. Después: probar el login con Google en el APK 0.4.0, repartirlo y avisar a quienes tengan el 0.3.1 de que deben actualizar y de que sus registros parten de cero.
+
+**Decisiones abiertas** (se aplicó el valor por defecto; conviene confirmarlas antes de publicar):
+
+| Tema | Hoy en el código |
+|---|---|
+| Umbrales de logros (B4) | Combo 300 y 500, 365 días seguidos y 6.000 partidas pueden ser inalcanzables y tienen premio. Cambiarlos no pierde datos |
+| Fecha de retos y misiones (B7) | 7 dic 2026 |
+| Niveles de las paletas (B9) | 3 a 30, con salto de 25 a 30 |
+| 7 sonidos derivados (B12) | `start`, `trap`, `heal`, `expire`, `miss`, `end` y `milestone` de los 6 paquetes salen de la escala de cada uno; el usuario dijo que los definiría (`game/synth/events.ts`) |
+| Volumen y realismo de los sonidos (B13) | Síntesis sin muestras grabadas, volumen como antes; ajustar de oído |
+| Reparto 4 × 7 de efectos y fondos (B16) | El de `reglas-y-balance.md` |
+| Clientes viejos (B21) | El APK 0.3.1 deja de entrar al ranking y no puede jugar retos |
+| "Partidas jugadas" se puede inflar | Cuenta cualquier partida terminada: dejando morir partidas (unos segundos cada una) se suben el logro y sus premios (Chispas a Galaxia). Opciones a evaluar: exigir una duración o un mínimo de bloques |
+| Cristal y la trampa roja | La regla de no ventaja no cuenta el brillo: contándolo, el contraste del rojo en el color más difícil baja a 1,13/1,12, bajo el mínimo de la Clásica (≈ 1,16). Decidir si se atenúa el brillo o se mide con él |
+| Compartir el reto con menos de 20 s | Ya no hay insignia bajo 20 s, así que el texto compartido sale con los 7 cuadros negros |
+
+Otras que quedaron sin respuesta, aplicadas con el valor por defecto: porcentaje al pasar de invitado a cuenta (el de la cuenta); logro y premio en ventanas separadas.
+
+**Riesgos anotados:**
+
+- El porcentaje del reto vale 0 los días con menos de 10 jugadores: sin ellos no se ganan los premios de 25 % a 99 %.
+- Tras el reinicio, un APK 0.3.1 sin actualizar sigue mostrando su Colección y su récord locales (solo en ese equipo).
+- Fuera de alcance: respaldo y restauración de producción, iOS, Google Play, muestras grabadas, desenfoque real en Esmerilado, misión "Invita a alguien" y actualizar la recta de niveles de la maqueta.
 
 ## Estado
 

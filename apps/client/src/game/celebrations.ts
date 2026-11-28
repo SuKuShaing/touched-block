@@ -14,24 +14,26 @@ import {
   type CatalogItem,
   type CatalogStats,
   type CosmeticType,
+  EMPTY_CATALOG_STATS,
   type Requirement,
   TYPE_ORDER,
   findItem,
-  isUnlocked,
+  meets,
   tierIndexOfStats,
 } from '@/cosmetics/catalog';
+import { achievementValues } from '@/lib/achievementValues';
 import type { EndPrize, PrizeContext } from './endPrize';
 
 /**
  * Celebraciones (ventana con confeti y fanfarria) de lo que el jugador gana o desbloquea:
  *
- * - `tier`: insignia nueva (Madera I … Diamante). Se celebra antes que el resto (plan, 2.5).
+ * - `tier`: insignia nueva (Papel … Diamante). Se celebra antes que el resto (plan, 2.5).
  * - `item`: premio del catálogo (paleta, sonido, efecto o fondo del campo).
- * - `achievement`: logro que sube de material (Madera … Diamante).
+ * - `achievement`: logro que sube de material (Papel … Diamante).
  * - `feature`: el reto del día y las misiones, que se desbloquean una vez por dispositivo.
  *
  * Cada una tiene una clave (`tier:3`, `item:palette:neon`, `ach:racha:2`, `feature:daily`) que
- * se guarda en `tb_cele1` al anunciarla, para no celebrar lo mismo dos veces en este dispositivo
+ * se guarda en `tb_cele2` al anunciarla, para no celebrar lo mismo dos veces en este dispositivo
  * (p. ej. al cerrar sesión las estadísticas bajan y una partida podría "volver a desbloquear"
  * Neón). Todo aquí es puro; el almacenamiento y la cola viven en `celebrationQueue.ts`.
  */
@@ -46,15 +48,24 @@ export const itemKey = (i: Pick<CatalogItem, 'type' | 'id'>) => `item:${i.type}:
 export const achievementKey = (id: AchievementId, level: number) => `ach:${id}:${level}`;
 export const FEATURE_DAILY_KEY = 'feature:daily';
 
+const FIRST_MARK = 'first';
+
 /**
- * Celebración a partir de su clave (para recuperar las que quedaron sin ver al cerrar la app), o
- * null si la clave no es válida. "Tu primera insignia" no se guarda: se recupera para Madera I.
+ * Con qué se guarda en la cola por ver (`tb_cele2p`): su clave y, en la primera insignia, la marca
+ * `:first` (la primera puede ser una más alta que Papel).
+ */
+export const pendingKey = (c: Celebration) => (c.kind === 'tier' && c.first ? `${c.key}:${FIRST_MARK}` : c.key);
+
+/**
+ * Celebración a partir de lo que guarda `pendingKey` (para recuperar las que quedaron sin ver al
+ * cerrar la app), o null si no es válido. Papel siempre es la primera insignia.
  */
 export function celebrationFromKey(key: string): Celebration | null {
-  const [kind, a, b] = key.split(':');
+  const [kind, a, b, ...rest] = key.split(':');
   if (kind === 'tier') {
     const i = Number(a);
-    return Number.isInteger(i) && TIERS[i] && b === undefined ? tierCelebration(TIERS[i], i === 0) : null;
+    const ok = Number.isInteger(i) && TIERS[i] && (b === undefined || b === FIRST_MARK) && rest.length === 0;
+    return ok ? tierCelebration(TIERS[i], i === 0 || b === FIRST_MARK) : null;
   }
   if (kind === 'item') {
     const type = TYPE_ORDER.find((t) => t === a);
@@ -70,18 +81,13 @@ export function celebrationFromKey(key: string): Celebration | null {
   return key === FEATURE_DAILY_KEY ? { kind: 'feature', key, feature: 'daily' } : null;
 }
 
-/** Valores de los logros (los mismos que muestra la Colección). `dailyPct` null = nunca participó. */
-export function achievementValues(s: CatalogStats, dailyPct: number | null): Record<AchievementId, number | null> {
-  return { racha: s.bestStreak, bloques: s.totalKilled, diasReto: s.dailyStreakBest, mejorReto: dailyPct };
-}
-
 /** Logros del reto diario: solo si el reto existe (sin API el juego es solo invitado y local). */
 const achievementListed = (id: AchievementId, ctx: PrizeContext) => ctx.daily || (id !== 'diasReto' && id !== 'mejorReto');
 const itemListed = (i: CatalogItem, ctx: PrizeContext) => !(i.requires === 'accounts' && !ctx.accounts) && !(i.requires === 'daily' && !ctx.daily);
 
 /**
  * Logros que subieron entre dos momentos: uno por logro, con el material más alto alcanzado
- * (una racha de 30 en la primera partida es "Bronce", no "Madera" y después "Bronce").
+ * (una racha de 30 en la primera partida es "Cartón", no "Papel" y después "Cartón").
  */
 export function achievementUps(
   before: Record<AchievementId, number | null>,
@@ -121,7 +127,7 @@ export function runCelebrations(input: {
   if (prize?.tier) out.push(tierCelebration(prize.tier, prize.firstTier));
   for (const it of prize?.items ?? []) out.push(itemCelebration(it));
   // el mejor resultado en un reto diario llega después (respuesta del servidor): no cambia aquí
-  out.push(...achievementUps(achievementValues(before, null), achievementValues(after, null), ctx, ['racha', 'bloques', 'diasReto']));
+  out.push(...achievementUps(achievementValues(before), achievementValues(after), ctx, ['racha', 'partidas', 'diasReto']));
   if (input.unlockedFeature) out.push({ kind: 'feature', key: FEATURE_DAILY_KEY, feature: 'daily' });
   return out;
 }
@@ -131,41 +137,73 @@ export interface Snapshot {
   /** De quién son (`useViewer().key`): si cambia (inicio o cierre de sesión), no se compara. */
   viewer: string;
   stats: CatalogStats;
-  /** Mejor "mejor que el X %" en un reto diario (null si nunca participó). */
-  dailyPct: number | null;
 }
 
+/**
+ * Premios que pueden ganarse fuera de la partida y que sabe la cuenta o el servidor: los de invitar
+ * y los del logro "Mejor resultado en un reto diario".
+ */
+const fromServer = (r: Requirement) => r.kind === 'invited' || (r.kind === 'achievement' && r.id === 'mejorReto');
 /** Requisitos que pueden cumplirse fuera de una partida de este dispositivo. */
-const OUTSIDE_KINDS: ReadonlySet<Requirement['kind']> = new Set(['invited', 'level']);
+const fromOutside = (r: Requirement) => r.kind === 'level' || fromServer(r);
+/**
+ * Lo que se celebra desde los datos de la cuenta: lo del servidor y los días seguidos de reto (el
+ * día que completa la racha puede jugarse en un equipo sin el historial: solo la cuenta lo sabe).
+ */
+const fromAccount = (r: Requirement) => fromServer(r) || (r.kind === 'achievement' && r.id === 'diasReto');
 
 /**
  * Lo que cambió entre dos momentos del mismo jugador que no se celebró al terminar la partida:
- * - un fondo por nivel, cuando lo completan los bloques extra de una misión (llegan después de
+ * - una paleta por nivel, cuando la completan los bloques extra de una misión (llegan después de
  *   la partida, al calcular las misiones);
- * - el logro "Mejor resultado en un reto diario" (se conoce cuando el servidor responde);
- * - Corazones, si cambian los invitados.
+ * - el logro "Mejor resultado en un reto diario" y sus premios (se sabe cuando el servidor responde);
+ * - los premios por invitar, si cambian los invitados.
  *
  * Lo demás (insignias, otros premios, otros logros) solo cambia con una partida y se celebra al
  * terminarla (`runCelebrations`). Si cambió el jugador, no se celebra nada.
  *
  * Ojo: `celebrationQueue.observeCelebrations` solo la usa con datos de ESTE dispositivo y justo
- * después de una partida; los datos de la cuenta que llegan del servidor (que pueden venir de otro
- * dispositivo o estar atrasados) se registran sin celebrar.
+ * después de una partida; lo de la cuenta se celebra con `accountCelebrations`.
  */
 export function outsideCelebrations(prev: Snapshot | null, now: Snapshot, ctx: PrizeContext): Celebration[] {
   if (!prev || prev.viewer !== now.viewer) return [];
   const out: Celebration[] = [];
   for (const it of CATALOG) {
-    if (!OUTSIDE_KINDS.has(it.req.kind) || !itemListed(it, ctx)) continue;
-    if (!isUnlocked(it, prev.stats) && isUnlocked(it, now.stats)) out.push(itemCelebration(it));
+    if (!fromOutside(it.req) || !itemListed(it, ctx)) continue;
+    if (!meets(it.req, prev.stats) && meets(it.req, now.stats)) out.push(itemCelebration(it));
   }
-  out.push(...achievementUps(achievementValues(prev.stats, prev.dailyPct), achievementValues(now.stats, now.dailyPct), ctx, ['mejorReto']));
+  out.push(...achievementUps(achievementValues(prev.stats), achievementValues(now.stats), ctx, ['mejorReto']));
   return out;
 }
 
 /**
+ * Con sesión: todo lo que la cuenta ya tiene de lo que se celebra desde sus datos (premios por
+ * invitar, los logros "Días seguidos de reto diario" y "Mejor resultado en un reto diario" y sus
+ * premios). La cola deja pasar solo lo que no está en `tb_cele2`: así se celebra una vez aunque
+ * haya ocurrido con la app cerrada o en otro dispositivo.
+ */
+export function accountCelebrations(stats: CatalogStats, ctx: PrizeContext): Celebration[] {
+  // `meets` y no `isUnlocked`: el APK de prueba lo desbloquea todo, pero eso no es haberlo ganado
+  const out = CATALOG.filter((it) => fromAccount(it.req) && itemListed(it, ctx) && meets(it.req, stats)).map(itemCelebration);
+  out.push(...achievementUps(achievementValues(EMPTY_CATALOG_STATS), achievementValues(stats), ctx, ['diasReto', 'mejorReto']));
+  return out;
+}
+
+/**
+ * Claves de la cuenta que la primera siembra de `tb_cele2` NO registra, para que se celebren una vez
+ * al entrar en un equipo nuevo (B19): premios por invitar y por el porcentaje del reto. Todo lo
+ * demás (también los días seguidos) se siembra en silencio.
+ */
+export function unseededAccountKeys(stats: CatalogStats, ctx: PrizeContext): Set<string> {
+  const held = accountCelebrations(stats, ctx).filter(
+    (c) => (c.kind === 'item' && fromServer(c.item.req)) || (c.kind === 'achievement' && c.id === 'mejorReto'),
+  );
+  return new Set(held.flatMap(coveredKeys));
+}
+
+/**
  * Claves que quedan celebradas con una celebración: la suya y las que deja atrás (subir a
- * Bronce sin pasar por Madera III también cuenta Madera III; un logro en Bronce, también Madera).
+ * Bronce sin pasar por Madera también cuenta Madera; un logro en Bronce, también Madera).
  */
 export function coveredKeys(c: Celebration): string[] {
   switch (c.kind) {
@@ -198,16 +236,17 @@ export function pendingCelebrations(list: readonly Celebration[], seen: Readonly
 }
 
 /**
- * Todo lo que el jugador ya tiene, como claves: con esto se siembra `tb_cele1` la primera vez
+ * Todo lo que el jugador ya tiene, como claves: con esto se siembra `tb_cele2` la primera vez
  * (quien ya jugaba no recibe de golpe las celebraciones de todo lo que ganó antes) y se van
- * sumando, sin celebrarlos, los cambios que no se celebran (otro dispositivo, inicio de sesión).
+ * sumando, sin celebrarlos, los cambios que no se celebran (partidas de otro dispositivo).
  */
-export function ownedKeys(s: CatalogStats, dailyPct: number | null): string[] {
+export function ownedKeys(s: CatalogStats): string[] {
   const keys: string[] = [];
   const t = tierIndexOfStats(s);
   for (let i = 0; i <= t; i++) keys.push(tierKey(i));
-  for (const it of CATALOG) if (it.req.kind !== 'always' && isUnlocked(it, s)) keys.push(itemKey(it));
-  const v = achievementValues(s, dailyPct);
+  // `meets`: con todo desbloqueado (APK de prueba) solo cuenta lo ganado, o nada se celebraría
+  for (const it of CATALOG) if (it.req.kind !== 'always' && meets(it.req, s)) keys.push(itemKey(it));
+  const v = achievementValues(s);
   for (const a of ACHIEVEMENTS) {
     const l = achievementLevel(a.id, v[a.id]);
     for (let i = 1; i <= l; i++) keys.push(achievementKey(a.id, i));
@@ -241,20 +280,17 @@ export function reasonText(req: Requirement): string | null {
       return req.n === 1 ? 'Por terminar tu primera partida' : `Por terminar ${req.n} partidas`;
     case 'tier':
       return `Por subir a ${TIERS[req.index].name}`;
-    case 'streak':
-      return `Por hacer una racha de ${req.n}`;
     case 'level':
       return `Por llegar al nivel ${req.n}`;
     case 'invited':
       return req.n === 1 ? 'Porque un amigo se unió con tu invitación' : `Porque ${req.n} amigos se unieron con tu invitación`;
-    case 'dailyStreak':
-      return `Por jugar el reto diario ${req.n} días seguidos`;
+    case 'achievement':
+      return `Por el logro ${achievementById(req.id).name} · ${achievementMaterial(req.level)}`;
   }
 }
 
 /** "Llegar a las sumas y restas" (motor) → "Llegaste a las sumas y restas". */
-const reachedText = (t: TierStep) =>
-  t.at <= 0 ? 'Terminaste tu primera partida.' : `${t.goal.replace(/^Llegar\b/, 'Llegaste').replace(/^Terminar\b/, 'Terminaste')}.`;
+const reachedText = (t: TierStep) => `${t.goal.replace(/^Llegar\b/, 'Llegaste')}.`;
 
 export interface CelebrationTexts {
   /** Rótulo chico sobre el título ("Insignia nueva"). */
@@ -290,8 +326,8 @@ export function celebrationTexts(c: Celebration): CelebrationTexts {
       const a = achievementById(c.id);
       return {
         kicker: 'Logro nuevo',
-        title: `¡Logro de ${c.material}!`,
-        name: a.name,
+        title: `¡${a.name} · ${c.material}!`,
+        name: null,
         sub: `${achievementGoal(c.id, c.level)}.`,
         hint: 'Tus logros están en la Colección.',
       };

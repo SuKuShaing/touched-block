@@ -28,10 +28,13 @@ describe('countsForBest / tierOf', () => {
     expect(countsForBest('daily', null)).toBe(false);
   });
 
-  it('la insignia sale de la mejor duración; null sin partidas', () => {
+  it('la insignia sale de la mejor duración; null sin partidas o sin llegar a la primera', () => {
     expect(tierOf(null)).toBeNull();
     expect(tierOf({ bestTicks: 0, totalRuns: 0 })).toBeNull();
-    expect(tierOf({ bestTicks: 0, totalRuns: 1 })).toEqual({ tier: 'madera', step: 1 });
+    const first = TIERS[0].at * TICKS_PER_SECOND;
+    expect(tierOf({ bestTicks: 0, totalRuns: 1 })).toBeNull();
+    expect(tierOf({ bestTicks: first - 1, totalRuns: 1 })).toBeNull();
+    expect(tierOf({ bestTicks: first, totalRuns: 1 })).toEqual({ tier: 'madera', step: 1 });
     const bronce = TIERS.find((t) => t.tier === 'bronce')!;
     expect(tierOf({ bestTicks: bronce.at * TICKS_PER_SECOND, totalRuns: 4 })).toEqual({ tier: 'bronce', step: 1 });
     expect(tierOf({ bestTicks: bronce.at * TICKS_PER_SECOND - 1, totalRuns: 4 })).toEqual({ tier: 'madera', step: 3 });

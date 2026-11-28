@@ -45,7 +45,7 @@ export function PublicProfileScreen() {
     try {
       if (q.data.isFollowing) await unfollow(q.data.id);
       else await follow(q.data.id);
-      invalidate('profile', 'following', 'lb', 'me', 'search');
+      invalidate('profile', 'following', 'lb', 'me', 'search', 'missions');
     } catch (e) {
       toast(errorMessage(e));
     } finally {

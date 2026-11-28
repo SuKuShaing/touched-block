@@ -1,4 +1,4 @@
-import { useFocusEffect, useLocalSearchParams, useNavigation, useRootNavigationState, useRouter } from 'expo-router';
+import { useFocusEffect, useIsFocused, useLocalSearchParams, useNavigation, useRootNavigationState, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { type HostInstance, type LayoutChangeEvent, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -22,7 +22,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { isApiError, warmSession } from '@/api/client';
 import { type DailyRunResult, type MissionView, isAccountDaily } from '@/api/daily';
 import { useClaimPendingDaily, useDailyStatus, useTodayMissions } from '@/api/dailyHooks';
-import { useChallenge, useFetchFriendsWeek, useViewer } from '@/api/hooks';
+import { useChallenge, useFetchFriendsWeek, useMeRefresh, useViewer } from '@/api/hooks';
 import { session } from '@/api/session';
 import { Block } from '@/components/Block';
 import { ChallengeInvite, type InviteState } from '@/components/ChallengePanel';
@@ -41,7 +41,7 @@ import { StageTrack } from '@/components/StageTrack';
 import { TierBadge } from '@/components/TierBadge';
 import { GhostButton, HistoryList, Logo, MainButton, RecordPill, SoundToggle } from '@/components/ui';
 import { UnlockHint } from '@/components/UnlockHint';
-import { features } from '@/config';
+import { config, features } from '@/config';
 import { type CatalogItem, SETTING_KEY } from '@/cosmetics/catalog';
 import { tierStepOf } from '@/cosmetics/tiers';
 import { endTapReady } from '@/game/endGuard';
@@ -203,6 +203,15 @@ export function GameScreen() {
   const localStats = useLocalStats();
   const fetchFriendsWeek = useFetchFriendsWeek();
   const qc = useQueryClient();
+  // con sesión, GET /me al volver al inicio (si lo que hay ya está viejo): trae los invitados y el
+  // porcentaje del reto, que cambian fuera de la partida y se celebran
+  useMeRefresh();
+  const focused = useIsFocused();
+  useFocusEffect(
+    useCallback(() => {
+      void qc.refetchQueries({ queryKey: ['me'], type: 'active', stale: true }, { cancelRefetch: false });
+    }, [qc]),
+  );
   const params = useLocalSearchParams<{ reto?: string | string[]; diario?: string | string[] }>();
 
   const fieldRef = useRef<HostInstance>(null);
@@ -432,7 +441,7 @@ export function GameScreen() {
       finish.catch(() => {}); // el error se muestra en EndPanel
     }
     const id = ++runSeq.current;
-    // reto diario: la partida queda en tb_daily1 (racha y misiones del invitado, partida por reclamar)
+    // reto diario: la partida queda en tb_daily2 (racha y misiones del invitado, partida por reclamar)
     const rd = mode.kind === 'server' && mode.mode === 'daily' ? dailyRun.current : null;
     const dailyBestBefore = localStreakBest(loadDailyLocal());
     if (rd) recordDailyFinish(rd.date, r);
@@ -470,12 +479,13 @@ export function GameScreen() {
     }
     // premios: estadísticas antes y después (con sesión, el máximo con las de la cuenta, a la que
     // también se suma esta partida si cuenta en ella: jugada con sesión y semilla del servidor)
-    // (la racha de días del reto de este dispositivo cuenta para Constancia)
+    // (la racha de días y el porcentaje del reto de este dispositivo cuentan para sus premios)
     const es = endStats(stats, me, r, {
       normal,
       countsOnAccount: mode.kind === 'server' && !mode.claimToken,
       dailyBestBefore,
       dailyBestAfter,
+      dailyPct: loadDailyLocal().bestPct,
     });
     const prize = endPrize(es.before, es.after, { accounts: features.accounts, daily: features.accounts });
     // ¿los desbloqueó esta partida? Seguían bloqueados al empezar y es ella la que llega a las
@@ -810,7 +820,8 @@ export function GameScreen() {
           <View pointerEvents="none" style={[styles.areaBorder, { left: a.ox - 1, top: a.oy - 1, width: a.w + 2, height: a.h + 2 }]} />
         ) : null}
         <View pointerEvents="none" style={[styles.area, { left: a.ox, top: a.oy, width: a.w, height: a.h }, a.letterbox && styles.areaInner]}>
-          <FieldBackground />
+          {/* terminada la partida o con otra pantalla encima, los fondos animados se quedan quietos */}
+          <FieldBackground paused={!!s?.over || !focused} />
           {s && !s.over
             ? s.blocks.map((b) => {
                 const r = rectToArea(a, b);
@@ -849,7 +860,7 @@ export function GameScreen() {
                 </Text>
                 <Text style={styles.endText}>
                   Destruiste <Text style={styles.endBig}>{end.killed}</Text> bloques{'\n'}Bloques que se escaparon: {end.missed}
-                  {'\n'}Mejor racha: <Text style={styles.endStreak}>{end.bestStreak}</Text>
+                  {'\n'}Máximo combo: <Text style={styles.endStreak}>{end.bestStreak}</Text>
                 </Text>
                 {end.prize ? (
                   <PrizeCard key={`prize${end.id}`} prize={end.prize} onTry={tryPrize} />
@@ -892,6 +903,7 @@ export function GameScreen() {
             ) : (
               <>
                 <Logo />
+                {config.unlockAll ? <Text style={styles.testMode}>MODO PRUEBA</Text> : null}
                 {invite ? (
                   <ChallengeInvite invite={invite} onRetry={() => void inviteQ.refetch()} />
                 ) : (
@@ -960,6 +972,17 @@ const styles = StyleSheet.create({
     // Android recorta el número grande (40) que sobresale de la línea de 24: se le da aire arriba
     // sin mover nada (en la web sobresale sin recortarse)
     ...Platform.select({ native: { paddingTop: 14, marginTop: -14 } }),
+  },
+  testMode: {
+    color: C.gold,
+    fontSize: 13,
+    fontWeight: '900',
+    letterSpacing: 2,
+    borderWidth: 1,
+    borderColor: C.gold,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
   },
   endBig: { fontSize: 40, color: C.accent, fontWeight: '800' },
   endStreak: { color: C.gold, fontWeight: '800' },

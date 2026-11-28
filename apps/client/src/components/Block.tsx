@@ -2,8 +2,9 @@ import { memo, useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import { useActivePalette } from '@/cosmetics/active';
-import { getPalette, paletteColor } from '@/cosmetics/palettes';
+import { blockPaint, getPalette } from '@/cosmetics/palettes';
 import { APP_FONT } from '@/components/appFont';
+import { INSET_SHADOWS } from '@/components/PaletteSwatch';
 import { C } from '@/theme';
 
 export interface BlockProps {
@@ -14,7 +15,7 @@ export interface BlockProps {
   h: number;
   /** Lo que se escribe en el bloque: los toques que faltan, la operación ("2+3"), '' o '✕'. */
   label: string;
-  /** Color del motor; se dibuja traducido a la paleta elegida (`cosmetics/palettes.ts`). */
+  /** Color del motor; se dibuja con el color y el estilo de la paleta elegida (`cosmetics/palettes.ts`). */
   color: string;
   /** Paleta a usar en vez de la elegida en la Colección (vistas previas). */
   palette?: string;
@@ -85,15 +86,10 @@ export const Block = memo(function Block({ x, y, w, h, label, color, palette, re
   }));
 
   const fontSize = labelFontSize(label, w, h);
+  // el bloque que se apaga es gris liso en todas las paletas
+  const paint = gone ? blockPaint(null, C.gone) : blockPaint(pal, color, INSET_SHADOWS);
   return (
-    <Animated.View
-      pointerEvents="none"
-      style={[
-        styles.blk,
-        { left: x, top: y, width: w, height: h, backgroundColor: gone ? C.gone : paletteColor(color, pal) },
-        anim,
-      ]}
-    >
+    <Animated.View pointerEvents="none" style={[styles.blk, { left: x, top: y, width: w, height: h }, paint, anim]}>
       {shine ? (
         // brillo de la paleta Diamante: un reflejo fijo en la esquina, lejos del número (igual en
         // todos los bloques, trampas incluidas, para no delatar nada)
@@ -120,7 +116,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
-    boxShadow: '0 5px 0 rgba(0,0,0,0.35)',
   },
   num: {
     ...APP_FONT,

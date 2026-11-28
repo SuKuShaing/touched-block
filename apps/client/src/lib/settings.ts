@@ -28,8 +28,9 @@ export interface Settings {
   /**
    * Cuánto había en la Colección la última vez que se abrió (`lib/collectionNews.ts`): si ahora
    * hay más, la pestaña muestra el punto de novedad. -1 = todavía no se mide en este dispositivo.
+   * (Reemplaza a `collectionSeen`, de antes del reinicio de datos, que ya no se lee.)
    */
-  collectionSeen: number;
+  seenScore: number;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -41,7 +42,7 @@ export const DEFAULT_SETTINGS: Settings = {
   background: 'liso',
   installDismissed: false,
   silentTipSeen: false,
-  collectionSeen: -1,
+  seenScore: -1,
 };
 
 function read(): Settings {

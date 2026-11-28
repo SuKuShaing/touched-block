@@ -8,45 +8,69 @@
 // Gradle lo avisa. Si faltan solo algunas claves o el keystore no existe, el build falla.
 // La huella SHA-1 de la clave está registrada en Google Cloud (cliente OAuth "Android release
 // APK"): si se cambia la clave, el login con Google deja de funcionar hasta registrar la nueva.
+//
+// Además declara como entradas de la tarea del bundle las variables EXPO_PUBLIC_*, TB_TEST_APK y los
+// archivos .env: quedan incrustadas en el JS y, sin esto, Gradle da la tarea por al día y un release
+// puede reutilizar el bundle del APK de prueba.
+//
+// APK de prueba: con la variable de entorno TB_TEST_APK=1 al compilar (la lee Gradle, no el
+// prebuild: el build.gradle generado es el mismo) no se lee ninguna clave, el release se firma con
+// la clave debug y su id pasa a ser "app.touchedblock.prueba", así se instala junto a la app real
+// sin tocar sus datos. Sin la variable no cambia nada. Ese APK no se reparte.
 const { withAppBuildGradle } = require('expo/config-plugins');
 
 const MARK = '// tb: release-signing';
 const SIGNING = `
 ${MARK}
 android {
-    def tbProps = new Properties()
-    def tbPropsFile = new File(System.getProperty("user.home"), ".touched-block/keystore.properties")
-    if (tbPropsFile.exists()) tbPropsFile.withInputStream { tbProps.load(it) }
-    def tb = { String k -> System.getenv(k) ?: tbProps.getProperty(k) }
-    def tbKeys = ["TB_UPLOAD_STORE_FILE", "TB_UPLOAD_STORE_PASSWORD", "TB_UPLOAD_KEY_ALIAS", "TB_UPLOAD_KEY_PASSWORD"]
-    def tbMissing = tbKeys.findAll { !tb(it) }
-    if (tbMissing.size() > 0 && tbMissing.size() < tbKeys.size()) {
-        throw new GradleException("Firma de release incompleta: faltan \${tbMissing.join(', ')} (variables de entorno o ~/.touched-block/keystore.properties)")
-    }
-    def tbStore = tb("TB_UPLOAD_STORE_FILE") ? new File(tb("TB_UPLOAD_STORE_FILE")) : null
-    // una ruta relativa se toma desde ~/.touched-block (donde vive keystore.properties)
-    if (tbStore != null && !tbStore.isAbsolute()) tbStore = new File(tbPropsFile.parentFile, tb("TB_UPLOAD_STORE_FILE"))
-    if (tbStore != null && !tbStore.exists()) {
-        throw new GradleException("No existe el keystore de subida: \${tbStore}")
-    }
-    if (tbStore == null) {
-        gradle.taskGraph.whenReady { graph ->
-            if (graph.allTasks.any { it.name.toLowerCase().contains("release") }) {
-                logger.warn("AVISO: sin la clave de subida de Touched Block; el release queda firmado con la clave DEBUG (solo para probar: no actualiza el APK repartido y el login con Google falla).")
+    if (System.getenv("TB_TEST_APK") == "1") {
+        // APK de prueba: id propio y firma debug; no se leen las claves de subida
+        buildTypes.release.applicationIdSuffix ".prueba"
+        buildTypes.release.signingConfig signingConfigs.debug
+        logger.warn("AVISO: APK de PRUEBA (TB_TEST_APK=1): id con sufijo .prueba y firma DEBUG. No repartir.")
+    } else {
+        def tbProps = new Properties()
+        def tbPropsFile = new File(System.getProperty("user.home"), ".touched-block/keystore.properties")
+        if (tbPropsFile.exists()) tbPropsFile.withInputStream { tbProps.load(it) }
+        def tb = { String k -> System.getenv(k) ?: tbProps.getProperty(k) }
+        def tbKeys = ["TB_UPLOAD_STORE_FILE", "TB_UPLOAD_STORE_PASSWORD", "TB_UPLOAD_KEY_ALIAS", "TB_UPLOAD_KEY_PASSWORD"]
+        def tbMissing = tbKeys.findAll { !tb(it) }
+        if (tbMissing.size() > 0 && tbMissing.size() < tbKeys.size()) {
+            throw new GradleException("Firma de release incompleta: faltan \${tbMissing.join(', ')} (variables de entorno o ~/.touched-block/keystore.properties)")
+        }
+        def tbStore = tb("TB_UPLOAD_STORE_FILE") ? new File(tb("TB_UPLOAD_STORE_FILE")) : null
+        // una ruta relativa se toma desde ~/.touched-block (donde vive keystore.properties)
+        if (tbStore != null && !tbStore.isAbsolute()) tbStore = new File(tbPropsFile.parentFile, tb("TB_UPLOAD_STORE_FILE"))
+        if (tbStore != null && !tbStore.exists()) {
+            throw new GradleException("No existe el keystore de subida: \${tbStore}")
+        }
+        if (tbStore == null) {
+            gradle.taskGraph.whenReady { graph ->
+                if (graph.allTasks.any { it.name.toLowerCase().contains("release") }) {
+                    logger.warn("AVISO: sin la clave de subida de Touched Block; el release queda firmado con la clave DEBUG (solo para probar: no actualiza el APK repartido y el login con Google falla).")
+                }
             }
         }
-    }
-    if (tbStore != null) {
-        signingConfigs {
-            tbRelease {
-                storeFile tbStore
-                storePassword tb("TB_UPLOAD_STORE_PASSWORD")
-                keyAlias tb("TB_UPLOAD_KEY_ALIAS")
-                keyPassword tb("TB_UPLOAD_KEY_PASSWORD")
+        if (tbStore != null) {
+            signingConfigs {
+                tbRelease {
+                    storeFile tbStore
+                    storePassword tb("TB_UPLOAD_STORE_PASSWORD")
+                    keyAlias tb("TB_UPLOAD_KEY_ALIAS")
+                    keyPassword tb("TB_UPLOAD_KEY_PASSWORD")
+                }
             }
+            buildTypes.release.signingConfig signingConfigs.tbRelease
         }
-        buildTypes.release.signingConfig signingConfigs.tbRelease
     }
+}
+
+// las EXPO_PUBLIC_* quedan dentro del bundle: si cambian (o cambia el modo), se vuelve a generar
+tasks.matching { it.name.startsWith("createBundle") && it.name.endsWith("JsAndAssets") }.configureEach { t ->
+    def tbEnv = new TreeMap(System.getenv().findAll { it.key.startsWith("EXPO_PUBLIC_") || it.key == "TB_TEST_APK" })
+    t.inputs.property("tbPublicEnv", tbEnv.toString())
+    t.inputs.files([".env", ".env.local", ".env.production", ".env.production.local"].collect { new File(rootDir.parentFile, it) })
+        .withPropertyName("tbDotEnv")
 }
 `;
 

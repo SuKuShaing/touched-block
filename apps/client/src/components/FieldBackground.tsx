@@ -1,27 +1,51 @@
 import { memo, useState } from 'react';
 import { type LayoutChangeEvent, StyleSheet, View } from 'react-native';
 import { useActiveBackground } from '@/cosmetics/active';
+import type { BackgroundId } from '@/cosmetics/ids';
+import { BACKGROUNDS as animated } from './backgrounds/animated';
+import { BACKGROUNDS as setA } from './backgrounds/setA';
+import { BACKGROUNDS as setB } from './backgrounds/setB';
+import type { BackgroundSet } from './backgrounds/types';
+
+/** Fondos de `backgrounds/`, por id. */
+const REGISTRY: BackgroundSet = { ...setA, ...setB, ...animated };
 
 /**
- * Fondo del campo de juego (premio cosmético): `liso` (nada), `grilla`, `estrellas` o `aurora`.
- * Va como **primer hijo** del campo, detrás de los bloques:
+ * Fondo del campo de juego (premio cosmético): `liso` (nada), `grilla`, `estrellas` y `aurora`
+ * se dibujan aquí; los demás, en `backgrounds/` (`setA` y `setB` estáticos, `animated` con una
+ * animación lenta). Va como **primer hijo** del campo, detrás de los bloques:
  *
  *   <Animated.View style={styles.field} …>
  *     <FieldBackground />
  *     {bloques…}
  *
  * Sin `id` usa el fondo elegido en la Colección (validado contra lo desbloqueado); con `id` dibuja
- * ese (vistas previas). Es estático (sin animación por cuadro), no recibe toques
- * (`pointerEvents="none"`), no se parece a un bloque y está memorizado: no se vuelve a dibujar
- * cuando la partida avanza.
+ * ese (vistas previas). Un `id` desconocido no dibuja nada (se ve como `liso`). Ninguno recibe
+ * toques (`pointerEvents="none"`) ni se parece a un bloque, y está memorizado: no se vuelve a
+ * dibujar cuando la partida avanza. En miniatura (`thumb`), `estrellas` y `aurora` tienen su
+ * propio dibujo (el de la maqueta); `thumb` y `paused` llegan a los de `backgrounds/`.
  */
-export const FieldBackground = memo(function FieldBackground({ id, cell = 44 }: { id?: string; cell?: number }) {
+export const FieldBackground = memo(function FieldBackground({
+  id,
+  cell = 44,
+  thumb = false,
+  paused = false,
+}: {
+  id?: string;
+  cell?: number;
+  /** Miniatura: mosaicos más chicos y quieto. */
+  thumb?: boolean;
+  /** Detiene la animación de los fondos animados. */
+  paused?: boolean;
+}) {
   const active = useActiveBackground();
   const bg = id ?? active;
   if (bg === 'grilla') return <Grid cell={cell} />;
-  if (bg === 'estrellas') return <Stars />;
-  if (bg === 'aurora') return <Aurora />;
-  return null;
+  if (bg === 'estrellas') return <Stars stars={thumb ? THUMB_STARS : STARS} />;
+  if (bg === 'aurora') return <Aurora image={thumb ? THUMB_AURORA : AURORA} />;
+  // los demás viven en `backgrounds/`; un id sin dibujo (o desconocido) no pinta nada
+  const Custom = REGISTRY[bg as BackgroundId];
+  return Custom ? <Custom cell={cell} thumb={thumb} paused={paused} /> : null;
 });
 
 // ---------------------------------------------------------------- grilla
@@ -56,6 +80,8 @@ interface Star {
   y: number;
   s: number;
   o: number;
+  /** Color, si no es blanca. */
+  c?: string;
 }
 
 /** Posiciones fijas (pseudoaleatorias con semilla), en % del campo: se ven igual en cualquier tamaño. */
@@ -68,15 +94,25 @@ const STARS: Star[] = (() => {
   return Array.from({ length: 46 }, () => ({ x: rnd() * 100, y: rnd() * 100, s: 1.5 + rnd() * 1.8, o: 0.18 + rnd() * 0.45 }));
 })();
 
-function Stars() {
+/** Miniatura: pocas estrellas, en los lugares de la maqueta (`config_logros/coleccion.css`). */
+const THUMB_STARS: Star[] = [
+  { x: 20, y: 30, s: 2, o: 0.85 },
+  { x: 70, y: 60, s: 1.5, o: 0.75 },
+  { x: 45, y: 80, s: 2, o: 0.85, c: '#ccffee' },
+  { x: 85, y: 20, s: 1.5, o: 0.75 },
+  { x: 10, y: 75, s: 1.5, o: 0.75 },
+];
+
+function Stars({ stars }: { stars: Star[] }) {
   return (
     <View pointerEvents="none" style={styles.fill}>
-      {STARS.map((st, i) => (
+      {stars.map((st, i) => (
         <View
           key={i}
           style={[
             styles.star,
             { left: `${st.x}%`, top: `${st.y}%`, width: st.s, height: st.s, borderRadius: st.s / 2, opacity: st.o },
+            st.c ? { backgroundColor: st.c } : null,
           ]}
         />
       ))}
@@ -96,8 +132,14 @@ const AURORA = [
   'radial-gradient(90% 26% at 50% 18%, rgba(176,108,255,0.10), rgba(176,108,255,0) 100%)',
 ].join(', ');
 
-function Aurora() {
-  return <View pointerEvents="none" style={[styles.fill, { backgroundImage: AURORA }]} />;
+/** Miniatura: las luces abajo y más intensas, como en la maqueta (las del campo casi no se verían). */
+const THUMB_AURORA = [
+  'radial-gradient(ellipse at 30% 100%, rgba(95,224,138,0.55), rgba(95,224,138,0) 60%)',
+  'radial-gradient(ellipse at 75% 90%, rgba(130,90,255,0.5), rgba(130,90,255,0) 60%)',
+].join(', ');
+
+function Aurora({ image }: { image: string }) {
+  return <View pointerEvents="none" style={[styles.fill, { backgroundImage: image }]} />;
 }
 
 const styles = StyleSheet.create({

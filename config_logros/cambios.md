@@ -1,6 +1,6 @@
 # Cambios por hacer (config_logros)
 
-Lista de cambios **propuestos** (001 a 024) a logros, niveles, insignias, retos y premios. **Ninguno está aplicado en el juego.** No se toca el juego hasta que el usuario diga "aplica el cambio X" (ver `CLAUDE.md` de esta carpeta).
+Lista de cambios (001 a 027) a logros, niveles, insignias, retos y premios. **Al 2026-11-27 los 27 están aplicados en la rama `feat/premios-y-logros`, sin desplegar** (nada publicado, ningún dato borrado, sin probar en teléfono). Cada entrada conserva su texto original: su "Estado", sus "el juego no se tocó" y sus líneas de código son de cuando se escribió; el estado actual es la línea **"Estado en el juego"**. Donde una entrada contradiga a otra posterior, vale la resolución de `PLAN_IMPLEMENTACION.md` (secciones A y B). Un cambio nuevo sigue necesitando que el usuario diga "aplica el cambio X" (ver `CLAUDE.md` de esta carpeta).
 
 La web (`index.html`) tiene un interruptor arriba a la derecha: **Ahora** muestra cómo está hoy el juego y **Con cambios** muestra estos cambios (marcados en celeste, con la posición de hoy en gris). Los valores propuestos están en `CAMBIOS` de `script.js`; si se agrega o cambia una entrada aquí, hay que reflejarla allí.
 
@@ -18,7 +18,8 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 
 ## CAMBIO-001 · Madera I se gana al llegar al 4
 
-- **Estado:** propuesto (2026-11-20)
+- **Estado:** aprobado (propuesto 2026-11-20; el 2026-11-26 el usuario confirmó: "ese cambio irá"). Todavía no aplicado en el juego. De él depende el sonido Marimba por la insignia Papel (CAMBIO-025).
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**.
 - **Qué:** Madera I pasa de "Terminar una partida" (0 s) a **"Llegar al 4" (20 s)**.
 - **Por qué:** pedido del usuario. Queda alineada con la primera etapa de la escala (aparece el 4).
 - **Dónde:** `packages/engine/src/progress.ts` → `TIERS[0]`: `at: numAt(4)` (= 20) y `goal: 'Llegar al 4'`.
@@ -34,6 +35,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-002 · Madera II se gana al llegar al 6
 
 - **Estado:** propuesto (2026-11-20)
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**.
 - **Qué:** Madera II pasa de "Llegar al 5" (40 s) a **"Llegar al 6" (60 s)**.
 - **Por qué:** pedido del usuario.
 - **Dónde:** `packages/engine/src/progress.ts` → `TIERS[1]`: `at: numAt(6)` (= 60) y `goal: 'Llegar al 6'`.
@@ -46,6 +48,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-003 · Diamante se gana al llegar a los bloques de 2 s
 
 - **Estado:** propuesto (2026-11-20)
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**.
 - **Qué:** Diamante pasa de "Llegar a los bloques de 1 s" (440 s) a **"Llegar a los bloques de 2 s" (410 s)**.
 - **Por qué:** pedido del usuario. Hoy 440 s es la última etapa; en la práctica casi nadie llega.
 - **Dónde:** `packages/engine/src/progress.ts` → `DIAMOND_AT` pasa de `LIFE_STAGE_START + (LIFE_STAGE_FIRST − LIFE_STAGE_LAST) × LIFE_STAGE_STEP` (440) a `LIFE_STAGE_START + (LIFE_STAGE_FIRST − 2) × LIFE_STAGE_STEP` (410), y `goal: 'Llegar a los bloques de 2 s'`. Hoy el texto usa `LIFE_STAGE_LAST` (1); no dejar el número a mano.
@@ -66,6 +69,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-004 · El nivel 1 llega a los 50 bloques (la curva se corre un nivel)
 
 - **Estado:** propuesto (2026-11-20). El usuario vio la comparación y la aprobó como idea ("así me gusta"); falta que diga "aplica".
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**.
 - **Qué:** el nivel n deja de empezar en `25 · n · (n − 1)` bloques y pasa a empezar en **`25 · n · (n + 1)`**. De 0 a 49 bloques no hay nivel (nivel 0); el **nivel 1 llega a los 50**. Se mantiene el factor 25 y la forma de la curva (triangular: subir del nivel n al n+1 cuesta `50 · (n + 1)` bloques).
 - **Por qué:** pedido del usuario. Hoy "Nivel 1" se tiene con 0 bloques, así que no hay una primera meta; con el cambio, el primer nivel se gana al destruir 50 bloques.
 - **Contexto de la fórmula actual:** `LEVEL_FACTOR = 25` en `apps/client/src/lib/level.ts`; es un valor *provisorio* que el usuario confirmó tal cual el 12 nov 2026 (ver `docs/historia-y-decisiones.md`, línea ~210). No hay una razón de balance documentada para el 25. Cuentan los bloques destruidos en total **más** los bloques extra de las misiones (`totalKilled + bonusXp`).
@@ -102,6 +106,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-005 · Las tres maderas pasan a ser Papel, Cartón y Madera (dibujos nuevos)
 
 - **Estado:** propuesto (2026-11-20). Los **nombres nuevos** (Papel / Cartón / Madera) son una propuesta: el usuario debe confirmarlos antes de aplicar.
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**. Nombres Papel, Cartón y Madera (B1).
 - **Qué:** las tres primeras insignias dejan de ser "el mismo disco de madera con I, II o III" y pasan a ser tres materiales:
   - **Madera I → Papel**: disco de papel crema con el borde dentado (cortado con tijera de picos, como un pirotín), pliegues radiales finos en el borde, cara de **hoja de cuaderno** (renglones azules y margen rojo) y, al centro, el bloque del juego en **azul tinta** con la **esquina de arriba a la derecha doblada** y una estrella blanca. Sin clavos ni numeral.
   - **Madera II → Cartón**: disco kraft con el **canto corrugado** (la onda entre dos capas, como el borde de una caja cortada), fibras del kraft y canaletas muy suaves en la cara, y el bloque del juego en cartón oscuro con estrella kraft clara, **pegado con un trozo de cinta de embalar** arriba. Sin clavos ni numeral.
@@ -136,6 +141,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-006 · El cuadro de Logros va entre Nivel y Paletas en la Colección
 
 - **Estado:** propuesto (2026-11-20).
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**.
 - **Qué:** en la pestaña **Colección** del juego, el cuadro (sección) **"Logros"** pasa a mostrarse **justo debajo de "Nivel" y antes de "Paletas"**. Hoy está al final de la pantalla, después de Paletas, Sonidos, Efectos al destruir y Fondos del campo.
 - **Orden hoy (arriba → abajo):** Insignia · Nivel · Paletas · Sonidos · Efectos al destruir · Fondos del campo · Logros.
 - **Orden propuesto:** Insignia · Nivel (se llamaría Experiencia con CAMBIO-007) · **Logros** · Paletas · Sonidos · Efectos al destruir · Fondos del campo (y, al final, la Vista previa de CAMBIO-020).
@@ -151,6 +157,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-007 · El "Nivel" pasa a llamarse "Experiencia"
 
 - **Estado:** propuesto (2026-11-20).
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**.
 - **Qué:** el concepto que hoy se llama **Nivel** (se sube destruyendo bloques; más los bloques extra de las misiones) pasa a presentarse como **Experiencia**. En la Colección, el cuadro que hoy dice **"NIVEL"** pasa a decir **"EXPERIENCIA"**. Dentro del cuadro se sigue hablando de niveles: "Nivel 1", "Nivel 10".
 - **Decisiones del usuario (2026-11-20):**
   1. Se mantiene la palabra **"nivel"** (Nivel 1, Nivel 10); lo que cambia es que queda claro que es el nivel **de experiencia**.
@@ -182,6 +189,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-008 · El logro "Mejor racha" pasa a llamarse "Máximo combo"
 
 - **Estado:** propuesto (2026-11-20).
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**.
 - **Qué:** el logro que hoy se llama **"Mejor racha"** pasa a llamarse **"Máximo combo"**. Sus umbrales (10, 25, 50, 100, 200) y su cálculo no cambian.
 - **Qué es (para quien no vio la conversación):** es el **combo más largo en una sola partida**: bloques destruidos seguidos sin ningún error (se corta al tocar una trampa, fallar un toque —que cuesta una vida— o dejar escapar un bloque). El logro toma el **máximo** de todas las partidas (no la suma), y solo cuentan las partidas normales sin modificadores (`countsForBest`; el reto diario no suma). En el motor es `bestStreak` (`packages/engine/src/game.ts`); los combos del juego dan segundos extra a las rachas 3, 5, 10, 15 y 20 (ciclo de 20) y un corazón cada 25 (`COMBO_REWARDS`, `HEART_COMBO` en `constants.ts`).
 - **Por qué:** pedido del usuario. El juego ya llama "combo" a esa mecánica (tutorial, premio de segundos, "¡Combo!"); "racha" confunde con la **racha de días** del reto diario, que es otra cosa. Con el cambio, "racha" queda solo para los días seguidos.
@@ -202,6 +210,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-009 · "Bloques destruidos" se reemplaza por el logro "Partidas jugadas"
 
 - **Estado:** propuesto (2026-11-20).
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**.
 - **Qué:** el logro **"Bloques destruidos"** (hoy 100 / 500 / 2.000 / 10.000 / 50.000, de Madera a Diamante) se **elimina** y en su lugar se añade **"Partidas jugadas"**. Los otros logros quedan: Máximo combo (CAMBIO-008), Días seguidos de reto diario y Mejor resultado en un reto diario (estos dos el usuario los quiere conservar tal cual).
 - **Por qué se quita "Bloques destruidos":** pedido del usuario. La cantidad de bloques destruidos **ya se premia con el nivel** (de experiencia, ver CAMBIO-007): ambos salen de la misma cifra (`stats.totalKilled`), así que eran dos premios por lo mismo. `achievementValues` lo muestra: `bloques: s.totalKilled`, y el nivel usa `totalKilled + bonusXp` (`lib/level.ts`).
 - **Por qué "Partidas jugadas":** mide **constancia** (cuántas veces vuelve el jugador), algo que ni el nivel, ni las insignias (partida más larga), ni el combo premian. Funciona también como invitado y **no necesita cambios en la API**: la estadística ya existe (`CatalogStats.runs`; en la cuenta es `PlayerStats.totalRuns`; con sesión el cliente toma el máximo entre la del dispositivo y la del servidor). Cuenta **todas** las partidas terminadas (normales, de reto y duelos), igual que los bloques. Riesgo asumido: premia jugar mucho, incluso partidas cortas; como es solo cosmético y sin ventaja, se acepta.
@@ -232,6 +241,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-010 · Los logros pasan de 5 a 7 materiales (Papel y Cartón al principio)
 
 - **Estado:** propuesto (2026-11-20).
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**. Umbrales por confirmar (B4).
 - **Qué:** con las insignias nuevas **Papel** y **Cartón** (CAMBIO-005) los logros pasan a tener **siete** materiales, de menor a mayor: **Papel · Cartón · Madera · Bronce · Plata · Oro · Diamante** (hoy: Madera · Bronce · Plata · Oro · Diamante).
 - **Regla pedida por el usuario (sobre una captura de la tabla de Logros con flechas):** los **números de cada logro no se mueven de lugar**: los cinco umbrales de hoy pasan a ser los de los cinco primeros niveles, y los **materiales se corren dos lugares a la derecha** (Madera pasa al 3.er lugar, Bronce al 4.º, Plata al 5.º). Los dos primeros lugares (los umbrales más bajos) son de Papel y Cartón, y hay que **crear dos umbrales más altos** para Oro y Diamante.
 - **Tabla de umbrales propuesta** (los números en **negrita** son los nuevos; el resto son los de hoy, con otro material):
@@ -270,6 +280,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-011 · Cada logro tiene su propio icono, en los siete materiales (ya no usa las insignias)
 
 - **Estado:** propuesto (2026-11-20). Los diseños los hace el subagente de diseño contra este encargo; lo que entregue se anota abajo, en "Diseños entregados". **Rediseñado el 2026-11-24 por pedido del usuario:** los iconos pasaron de siluetas sueltas a **medallas hexagonales con el símbolo dentro**, y la copa se cambió por una diana con flecha (ver "Diseños entregados").
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**.
 - **Qué:** hoy un logro se dibuja con **la misma medalla redonda que las insignias** (`TierBadge` con `tier: material.toLowerCase()`, `step: 1` y una estrella): un logro "Plata" se ve como la insignia Plata. En su lugar, **cada logro tiene un icono propio**: una **medalla hexagonal** (la insignia es redonda, así que no se confunden) **con el símbolo del logro dentro**, y ese icono se dibuja en **los siete materiales** (Papel, Cartón, Madera, Bronce, Plata, Oro, Diamante; ver CAMBIO-010). El icono dice **qué logro es**; el material dice **hasta dónde llegó** el jugador.
 - **Por qué:** pruebas con usuarios. La insignia se gana por la **partida más larga**; los logros se ganan por **otras estadísticas**, pero se dibujan igual (mismo disco, mismos materiales, mismos colores), y los jugadores los confunden: no entienden que son dos progresos distintos.
 - **Los cuatro iconos (decisión del usuario, 2026-11-20):**
@@ -328,6 +339,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-012 · Ver en grande y compartir insignias, logros y premios ganados
 
 - **Estado:** propuesto (2026-11-20). Solo está anotado: todavía no se maquetó en la web de esta carpeta.
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**. Sin maqueta; con el comportamiento por defecto B6.
 - **Qué (cuatro piezas, todas con el mismo botón de compartir):**
   1. **Logro:** al tocar el **icono de un logro** en la Colección (la fila `AchievementRow`, con su icono de 38 px) se abre una **ventana (modal) que lo muestra en grande**, con su nombre, su material, su meta y el progreso, y un botón **Compartir**.
   2. **Insignia:** al tocar la **medalla de la tarjeta "Insignia"** de la Colección (`TierCard`, hoy a 74 px) se abre una ventana equivalente que la muestra en grande, con su nombre, la partida más larga que la dio y el botón **Compartir**.
@@ -360,6 +372,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-013 · 8 retos del día nuevos (ciclo de 15 días)
 
 - **Estado:** propuesto (2026-11-23), con las decisiones del usuario ya tomadas (ver abajo). Solo está anotado y maquetado en la web de esta carpeta (interruptor "Con cambios"); el juego no se tocó.
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**. Rige desde el 2026-12-07.
 - **Qué:** hoy el reto del día tiene **7 retos**, uno por día de la semana, y se repiten igual cada semana (lunes y domingo son los dos "Partida normal", así que solo hay 6 distintos). Se **agregan 8 retos nuevos** y el calendario deja de depender del día de la semana: pasa a ser un **ciclo de 15 días** que se cuenta desde un lunes fijo y, al terminar, **vuelve a empezar**. Los días 1 a 7 del ciclo son los 7 retos de hoy (en el mismo orden); los días 8 a 15 son los nuevos. En la web, junto al título "Retos" hay un contador que cambia entre "7 retos" (Ahora) y "15 retos" (Con cambios).
 - **El ciclo (día 1 = lunes 7 de diciembre de 2026):**
 
@@ -407,6 +420,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-014 · Misión "Sigue a un jugador hoy"
 
 - **Estado:** propuesto (2026-11-23), por decisión del usuario. Solo está anotado y maquetado en la web de esta carpeta (interruptor "Con cambios"); el juego no se tocó. La misión **"Invita a alguien" queda para más adelante** (no descartada): ver la sección "Pendiente para más adelante" al final de esta entrada. No está maquetada.
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**. Rige desde el 2026-12-07; "Invita a alguien" sigue pendiente.
 - **Qué:** se agrega al pool de misiones del día una misión nueva, **"Sigue a un jugador hoy"**: tipo nuevo "Seguir a un jugador" (`follow`), meta 1, premio **+20 bloques extra** para el nivel (como las misiones más fáciles). Se cumple al **empezar a seguir a alguien ese día**. **Solo se puede cumplir con cuenta** (un invitado no puede seguir a nadie), **pero se sortea y se ve igual para todos**: `missionsFor(fecha)` es idéntico para cualquiera. A un **invitado** se le muestra **bloqueada**, con el texto exacto **"Crea tu cuenta para desbloquearla"**, y al tocarla lo lleva a crear la cuenta (decisión del usuario, 2026-11-23; ver "Consecuencias de mostrarla bloqueada a invitados"). El pool pasa de 13 a 14 misiones (28 con CAMBIO-015); siguen saliendo 3 por día. En la web, la sección "Misiones" cambia el contador "Misiones posibles" de 13 (Ahora) a 28 (Con cambios) y muestra la fila nueva con borde celeste, la marca "nuevo" y un selector "Ver como: con cuenta | invitado" que solo cambia esa fila.
 - **Por qué:** pedido del usuario. Seguir a otros jugadores ya existe; una misión es una forma suave de empujar al jugador a usar el lado social (perfiles públicos, rankings). Premio chico para que no distorsione el nivel.
 - **Lo que ya existe (hechos verificados en el código):**
@@ -475,6 +489,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-015 · 14 misiones más (de 14 a 28 posibles)
 
 - **Estado:** propuesto (2026-11-23); decisiones cerradas por el usuario el 2026-11-24 (ver "Decisiones cerradas"). Solo está anotado y maquetado en la web de esta carpeta (interruptor "Con cambios"); el juego no se tocó. Va junto a **CAMBIO-014**: 13 de hoy + "Sigue a un jugador hoy" + estas 14 = **28 misiones posibles**.
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**. Rige desde el 2026-12-07.
 - **Qué:** se agregan 14 misiones al pool, solo con datos que `DayAgg` ya tiene (`runs`, `killed`, `bestStreak`, `maxTicks`; `packages/engine/src/missions.ts:99-110`). **No hay tipos nuevos, ni campos nuevos en `DayAgg`, ni cambios en la API o en el cliente**: son filas nuevas de `MISSION_POOL` y `missionProgress` ya las sabe calcular. Siguen saliendo 3 por día, de tipos distintos.
 - **Aclaración de lo pedido:** el usuario pidió sumar "7 más" para diluir la frecuencia de "Juega el reto del día". Se interpreta como **7 misiones más** (7 + 7 = 14 nuevas), no como retos del día (modificadores de partida): agregar retos de ese tipo no cambiaría cuántos días sale esa misión.
 - **Las 14, en el orden en que irían al final de `MISSION_POOL`** (el orden importa para el sorteo; van después de `sigue`):
@@ -533,6 +548,8 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-016 · Las paletas se ganan por el nivel del jugador, no por la insignia
 
 - **Estado:** propuesto (2026-11-24), por decisión del usuario. Maquetado en la web de esta carpeta (sección "Premios", panel "Paletas", interruptor "Con cambios"); el juego no se tocó. Los niveles son una propuesta que el usuario revisará.
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**. Niveles por confirmar (B9).
+- **Reemplazado por CAMBIO-025:** Constancia se gana invitando a un 2.º amigo; Marimba pasa a la insignia Papel, Chispas y los fondos a logros (las otras paletas siguen por nivel como aquí).
 - **Qué:** hoy cinco paletas se ganan por la **insignia** (la partida más larga): Pastel (Madera II), Neón (Bronce), Retro (Plata), Dorado (Oro) y Diamante (Diamante). Pasan a ganarse por el **nivel** (bloques destruidos + bloques extra de misiones, `lib/level.ts`), igual que ya hacen los fondos (Grilla 5, Estrellas 10, Aurora 20). Clásica y Alto contraste siguen "Desde el inicio"; **Constancia** (7 días seguidos de reto) no cambia (ver decisiones). Con CAMBIO-017 se suman dos paletas nuevas que también van por nivel.
 - **Por qué:** pedido del usuario. Las insignias miden **una** partida larga (habilidad); el nivel mide **todo lo jugado** (constancia). Además, así las paletas dejan de depender de qué insignia se mueva (CAMBIO-001, 002, 003, 005): esos cambios ya no tocan ningún premio salvo Chispas y Marimba.
 - **Niveles propuestos.** Se mantuvo el reparto pedido (progresivo, en el orden en que hoy se ganan y sin chocar con los fondos 5, 10 y 20). "Hoy" = fórmula `25·n·(n−1)` (`lib/level.ts:24-27`); "CAMBIO-004" = `25·n·(n+1)`, la que usa la web con el interruptor en "Con cambios". En la web aparece como "Llega al nivel N · desde X bloques" con la curva nueva.
@@ -577,6 +594,8 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-017 · Dos paletas nuevas: "Cristal" (vidrio) y "Contorno" (borde intenso, relleno translúcido; antes "solo el borde")
 
 - **Estado:** propuesto (2026-11-24), por decisión del usuario. Maquetado en la web de esta carpeta con el interruptor en "Con cambios" (marcadas "nuevo"); el juego no se tocó. Los colores son una propuesta. **Contorno es ahora provisional, con relleno translúcido al 55 %** (decisión del usuario, 2026-11-25, para ver cómo se ve y si se parece mucho a Tenue; ver "Contorno al 55 %" al final de este cambio). Prueba en Android: ver CAMBIO-021.
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**. Contorno con relleno 0,55; abierto el brillo de Cristal frente a la trampa roja (`../docs/pendientes.md`).
+- **Actualización (2026-11-26):** Cristal y Contorno se dibujan sobre un respaldo opaco `#12121a`, ver CAMBIO-022 (reemplaza lo que aquí se dice sobre depender del fondo).
 - **Qué:** se agregan dos paletas, **Cristal** (nivel 12) y **Contorno** (nivel 18), ganadas por nivel (CAMBIO-016). **No son solo nueve colores: son un estilo de dibujo del bloque.** Hasta hoy una paleta solo cambia el `backgroundColor` del bloque (`paletteColor`, `palettes.ts:95-99`; `Block.tsx:93`) y, en Diamante, suma un brillo (`shine`, `Block.tsx:97-104`). Estas dos cambian **cómo se pinta el bloque**:
   - **Campo nuevo `style` en la paleta** (`palettes.ts:27-33`, interfaz `Palette`): `'solid'` (por defecto; lo que hacen todas hoy) · `'glass'` (Cristal) · `'outline'` (Contorno). En la web es `estilo: 'plano' | 'cristal' | 'contorno'` (mismo significado) y `colores` (los 9 hex); ver el comentario de `PALETAS` en `coleccion.js`, que es el contrato que leerá la vista previa.
   - **Cristal** (`glass`): relleno translúcido (el color al **50 %** sobre el fondo oscuro), degradado blanco de arriba (blanco .38 → 0 a 55 % del alto, 160°), borde claro (1,5 px, blanco al 55 %) y un hilo de luz arriba (blanco al 50 %). El número sigue blanco.
@@ -603,7 +622,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
   - **Depende del fondo (dato nuevo).** Una paleta translúcida hereda lo que hay detrás: la regla solo se puede comprobar sobre el fondo **Liso**. Con el resplandor de Aurora arriba del campo (`FieldBackground.tsx:93-97`, hasta 16 % de verde o 15 % de azul) estimo (cálculo mío, no medido en el juego) que el contraste con el rojo baja a ~1,0–1,4 en Cristal y Contorno con relleno: las trampas **se esconden un poco más** en la franja de arriba, la dirección contraria a la ventaja. Grilla (rayas al 5 %) lo mueve poco (≥ 1,11). Se acepta o se sube el relleno de Cristal (decisión 3).
   - **Alto contraste (daltónicos).** Esa paleta sigue siendo un conjunto de colores (D9, `historia-y-decisiones.md:153`) y **no se puede combinar** con un estilo: el estilo va con la paleta. Cristal y Contorno **no** se pensaron para daltónicos (la identidad de cada color depende del tono, como en las demás), y el vidrio estrecha el rango de luminancias (en las posiciones SAFE, luminancia efectiva entre ~0,12 y 0,19), lo que los hace un poco menos distinguibles entre sí; el número sigue impreso, así que no se pierde información.
   - **Cómo se ven las trampas (regla del CLAUDE.md de la raíz).** El motor sigue eligiendo el color por posición: una trampa roja nunca cae en una posición rojiza (`REDDISH` → `SAFE`). Con `style` solo cambia el pintado: el texto de la trampa sigue siendo `#ff2a2a` con su sombra (`Block.tsx:131-136`) en **todos los estilos y también en los bloques que no son trampa** (el brillo de Diamante ya sigue ese principio: igual en todos, `Block.tsx:97-100`).
-- **"Vidrio falso" y no desenfoque real (recomendación).** Cristal se dibuja con un relleno translúcido, un degradado y un borde claro, **sin `BlurView`**. Motivo en una frase: el blur real en Android exige un `BlurTargetView` y una pasada de desenfoque **por bloque** (hasta 6 a la vez más los que se apagan) que es un costo extra (cuánto, se medirá más adelante, sin alarma: el usuario dice que la versión actual va muy bien en celulares lentos), mientras que el degradado y el borde son una sola `View` que se ve igual en web y app. Verificado en el repo: `expo-blur` ya está (`package.json`, `~58.0.6`) pero se usa solo en la barra de pestañas (`TabBarBlur.tsx:1-11`, donde en Android hay que envolver cada pantalla en un `BlurTargetView`); **no** está `expo-linear-gradient`, pero no hace falta: el juego ya usa `backgroundImage: 'linear-gradient(...)'` en `FieldBackground.tsx:89-100` y `CelebrationModal.tsx:63-70` (react-native-web y React Native ≥ 0.80; el cliente usa 0.88.1).
+- **"Vidrio falso" y no desenfoque real (decidido: sin blur real, 2026-11-26).** Cristal se dibuja con un relleno translúcido, un degradado y un borde claro, **sin `BlurView`**. Motivo en una frase: el blur real en Android exige un `BlurTargetView` y una pasada de desenfoque **por bloque** (hasta 6 a la vez más los que se apagan) que es un costo extra (cuánto, se medirá más adelante, sin alarma: el usuario dice que la versión actual va muy bien en celulares lentos), mientras que el degradado y el borde son una sola `View` que se ve igual en web y app. Verificado en el repo: `expo-blur` ya está (`package.json`, `~58.0.6`) pero se usa solo en la barra de pestañas (`TabBarBlur.tsx:1-11`, donde en Android hay que envolver cada pantalla en un `BlurTargetView`); **no** está `expo-linear-gradient`, pero no hace falta: el juego ya usa `backgroundImage: 'linear-gradient(...)'` en `FieldBackground.tsx:89-100` y `CelebrationModal.tsx:63-70` (react-native-web y React Native ≥ 0.80; el cliente usa 0.88.1).
 - **Dónde implementarlo (cliente):**
   - `apps/client/src/cosmetics/palettes.ts`: `PaletteId` suma `'cristal' | 'contorno'` (`:25`); `Palette` suma `style?: 'solid' | 'glass' | 'outline'` (`:27-33`, por defecto `'solid'`) y, si se quiere, `fill?: number` (el relleno 0–1: Cristal 0,5, Contorno 0 ó 0,55 según la decisión); entradas nuevas en `PALETTES` (`:37-79`) con los hex de arriba; `getPalette` y `paletteColor` no cambian (siguen traduciendo por posición). Actualizar el comentario de cabecera (`:3-24`): la regla se mide sobre el **color efectivo**.
   - `apps/client/src/components/Block.tsx`: hoy `backgroundColor` fijo (`:93`) y un `shine` opcional (`:52, 97-104`). Con `style`: **solid** igual que hoy; **glass** = `backgroundColor` con el color al `fill`, `borderWidth` 1,5 con `rgba(255,255,255,.55)`, una `View` interior absoluta con `backgroundImage` (degradado blanco) y otra con el hilo de luz; **outline** = fondo transparente (o color al `fill`) y `borderWidth` 3 con el color. Cuidar: `overflow: 'hidden'` y `borderRadius: 16` (`:116-124`) recortan bien el degradado; el `boxShadow: '0 5px 0 rgba(0,0,0,.35)'` (`:123`) es de sombra exterior y no debería verse a través del bloque (no verificado en Android); la barra de vida (`:137-143`) y el texto no cambian; el bloque apagado (`gone`, `C.gone`) se dibuja con el mismo estilo (gris) y el corazón de recuperación (`#ff4d8d`, fuera de `COLORS`) conserva su color. Con el borde, el contenido se achica en el grosor del borde (tamaño `border-box`): comprobar que el número de las operaciones (bloques rectangulares 1,7:1) sigue cabiendo (`labelFontSize`, `:37-42`).
@@ -620,7 +639,7 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
   - **Onboarding:** las demos (`onboarding/demos.tsx`) usan `Block` con la paleta activa, así que mostrarán el estilo elegido.
 - **Decisiones que el usuario debe confirmar:**
   1. **Contorno: ¿sin relleno o con relleno al 55 %?** **PROVISIONAL (2026-11-25): relleno translúcido al 55 %**, para ver cómo se ve y si se parece mucho a Tenue. No se descarta volver al contorno puro (B) ni quitar la paleta (C). Detalle, motivo y opciones descartadas por ahora: ver "Contorno al 55 %" al final de este cambio.
-  2. **Vidrio falso (recomendado) vs blur real.** Con blur real el vidrio se vería más "de verdad" en web y iOS, pero en Android suma una pasada por bloque y podría verse distinto a la web (se verá en la prueba de CAMBIO-021). Mi recomendación: vidrio falso.
+  2. ~~Vidrio falso vs blur real~~ **CERRADA: vidrio falso (decidido: sin blur real, 2026-11-26**; además, con el respaldo opaco de CAMBIO-022 no hay nada detrás que desenfocar).
   3. **Cristal al 50 %.** El margen de la regla es de ~0,03 y con Aurora las trampas se esconden un poco más. Si se prefiere más margen hay que subir el relleno y oscurecer los tintes; se vería menos "vidrio" y más "plástico".
   4. **Niveles 12 y 18** y los **colores** (tabla de arriba): a revisar a la vista en la web y, mejor, en el juego.
   5. **Cristal se ve apagado en la muestra** (al 50 % sobre el fondo oscuro los tintes claros pierden fuerza; ver la captura): es el precio de cumplir la regla. Si se quiere más vivo, la salida es otra regla (p. ej. medirla sobre el color pleno) y no es mi decisión.
@@ -657,13 +676,14 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 
 - **Cómo se hizo (2026-11-25):** se ejecutó el `palettes.test.ts` real del juego sobre una copia en `config_logros/herramientas/prueba-paletas/`, **sin alterar el juego** (`bash config_logros/herramientas/prueba-paletas/correr.sh`; informe en `RESULTADOS.md` de esa carpeta). **Solo se midió sobre fondo Liso** (`#12121a`).
 - **Cristal: pasa con el color efectivo** (50 % sobre el fondo); margen más justo **+0,030** (rango de contraste del rojo). **Contorno 55 %: pasa con el efectivo**; margen más justo **+0,023** (con 0 de relleno **falla**: ver arriba). **Los hex crudos de Cristal y Contorno fallan** (son tintes claros pensados para mezclarse con el fondo): Cristal en rango de contraste (2,760 contra 1,156–1,730, pos. 3), caso difícil (1,702) y blanco (1,355); Contorno en rango (2,341, pos. 2), caso difícil (1,521) y blanco (1,597). No hay un ajuste mínimo del hex.
-- **Nota para quien implemente.** Hoy la prueba mide **un solo color por bloque** (`PALETTES[id].colors`). Hay dos caminos: **(1)** adaptar `palettes.test.ts` para medir el color efectivo cuando el estilo no es sólido; **(2)** guardar en el catálogo el **color efectivo ya mezclado** como color base (`colors`) y que el estilo solo agregue brillo y borde encima, con lo que la prueba actual pasa **sin tocarla**. **Recomiendo el (2)**, porque es viable en el código de hoy: `Block.tsx:93` pinta `backgroundColor = paletteColor(color, pal)`, que devuelve `PALETTES[id].colors[i]` (`palettes.ts:94-99`), y la prueba lee ese mismo arreglo (`palettes.test.ts:73-78`, `:102-131`); `Palette` (`palettes.ts:27-33`) solo necesita un campo para el color del borde de Contorno (`accents?: readonly string[]`; Tenue usa el color del motor, que ya recibe `Block`, y Cristal el borde blanco). Además, medir lo que de verdad se pinta hace que la regla valga también sobre Grilla y Aurora, que con el relleno translúcido no se probaron. **Contras a revisar:** las partículas usan `getPalette(palette).colors` (`Fx.tsx:113`) y saldrían oscuras en Contorno (usar `accents`); el relleno deja de ser translúcido (el fondo ya no asoma); el (2) **no sirve para Esmerilado**, que necesita su capa translúcida para el desenfoque, pero ahí la prueba ya pasa en crudo con el ajuste de `#19c4be` (CAMBIO-019). Si el (2) no convence, queda el (1).
+- **Nota para quien implemente.** Hoy la prueba mide **un solo color por bloque** (`PALETTES[id].colors`). Hay dos caminos: **(1)** adaptar `palettes.test.ts` para medir el color efectivo cuando el estilo no es sólido; **(2)** guardar en el catálogo el **color efectivo ya mezclado** como color base (`colors`) y que el estilo solo agregue brillo y borde encima, con lo que la prueba actual pasa **sin tocarla**. **Recomiendo el (2)**, porque es viable en el código de hoy: `Block.tsx:93` pinta `backgroundColor = paletteColor(color, pal)`, que devuelve `PALETTES[id].colors[i]` (`palettes.ts:94-99`), y la prueba lee ese mismo arreglo (`palettes.test.ts:73-78`, `:102-131`); `Palette` (`palettes.ts:27-33`) solo necesita un campo para el color del borde de Contorno (`accents?: readonly string[]`; Tenue usa el color del motor, que ya recibe `Block`, y Cristal el borde blanco). Además, medir lo que de verdad se pinta hace que la regla valga también sobre Grilla y Aurora, que con el relleno translúcido no se probaron. **Contras a revisar:** las partículas usan `getPalette(palette).colors` (`Fx.tsx:113`) y saldrían oscuras en Contorno (usar `accents`); el relleno deja de ser translúcido (el fondo ya no asoma); el (2) **no sirve para Esmerilado**, que lleva su capa translúcida sobre un respaldo opaco (**decidido: sin blur real, 2026-11-26**), pero ahí la prueba ya pasa en crudo con el ajuste de `#19c4be` (CAMBIO-019). Si el (2) no convence, queda el (1).
 
 ---
 
 ## CAMBIO-018 · Paleta "Degradé": un degradé sutil entre dos tonos del mismo color
 
 - **Estado:** propuesto (2026-11-24), por decisión del usuario. Maquetado en la web de esta carpeta (panel "Paletas" y "Vista previa", interruptor "Con cambios"); el juego no se tocó. **Nombre propuesto: "Degradé"**; alternativa en una línea: **"Satén"** (un acabado suave, sin la palabra técnica). Nivel y colores: a confirmar.
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**.
 - **Qué:** una paleta nueva donde cada bloque lleva un degradé vertical **muy sutil entre dos tonos de su propio color** (un poco más claro arriba, un poco más oscuro abajo). Es un **tercer estilo de dibujo del bloque**, después de `'glass'` y `'outline'` (CAMBIO-017): **`style: 'gradient'`** en el juego (`Palette.style`, `palettes.ts:27-33`) y `estilo: 'degrade'` en la web. El relleno es **opaco** (a diferencia de Cristal), sin borde y sin brillo; el número sigue blanco y la trampa roja `#ff2a2a`.
 - **Por qué:** pedido del usuario. Da profundidad sin cambiar la identidad del color y sin parecerse a Cristal (translúcido, con borde y brillo) ni a Diamante (reflejo blanco diagonal del 45 % y dos destellos, `Block.tsx:97-104`, `coleccion.css .vpPaleta.brillo`).
 - **El degradé, con exactitud.**
@@ -733,20 +753,22 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
 ## CAMBIO-019 · Tres paletas más (Esmerilado, Tenue y Botón)
 
 - **Estado:** propuesto (2026-11-24), por decisión del usuario. Maquetado en la web de esta carpeta (panel "Paletas" y "Vista previa", interruptor "Con cambios"); el juego no se tocó. Con CAMBIO-017 y 018 quedan **14 paletas** (las 8 de hoy + 6 nuevas: Tenue, Cristal, Botón, Contorno, Degradé, Esmerilado). Comparte con CAMBIO-017 y 018 la infraestructura del campo `style` del bloque; se implementa junto o después.
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**. Esmerilado sin desenfoque.
+- **Actualización (2026-11-26):** Esmerilado se dibuja sobre un respaldo opaco `#12121a`, ver CAMBIO-022 (alternativa A; **decidido: sin blur real, 2026-11-26**: Esmerilado queda como está en la web).
 - **Qué:** tres paletas que cambian **cómo se dibuja el bloque**, no solo los colores. Valores nuevos de `Palette.style` (`palettes.ts:27-33`): `'frosted'` (Esmerilado), `'soft'` (Tenue) e `'inset'` (Botón); en la web, `estilo: 'esmerilado' | 'tenue' | 'boton'` (contrato en el comentario de `PALETAS`, `coleccion.js`). Todas van **por nivel** (CAMBIO-016).
 - **Cómo se midió la regla de no ventaja (igual que CAMBIO-017 y 018).** Con una copia mía de las funciones de `palettes.ts` (`hue`, `hueDistance`, `luminance`, `contrastRatio`) y de los umbrales de `palettes.test.ts:102-131` (**no se corrió vitest**), sobre el **color efectivo que queda bajo el número**, no sobre el hex. Referencia de la Clásica: el rojo `#ff2a2a` contrasta 1,156–1,730 con sus colores SAFE (posiciones 2, 3, 4, 5, 7 y 8), caso más difícil ≤ 1,256; blanco ≥ 2,161; tono 42,5–173,1° (media 119,5°); distancia ΔE (CIELAB) mínima entre sus colores: 11,7. Fondo base: `#12121a` (`theme.ts:3`).
 
-### 019-A · Esmerilado (`'frosted'`): vidrio esmerilado de verdad (glassmorphism)
+### 019-A · Esmerilado (`'frosted'`): vidrio esmerilado (glassmorfismo sin desenfoque real)
 
 - **Nombre propuesto: "Esmerilado"** (alternativa: "Glassmorfismo"; en una frase, el primero lo entiende cualquiera y el segundo es el término técnico).
-- **Qué es:** un cristal **lechoso blanco-azulado** (frosted glass) con el color de cada bloque **apenas insinuado**, desenfoque del fondo, borde fino de 1 px claro con luz arriba, sombra suave exterior y grano. En la web usa `backdrop-filter: blur(10px)`.
-- **En qué se diferencia de Cristal (CAMBIO-017):** Cristal es una **gema coloreada** (el color al 50 % sobre el fondo oscuro, se ve más oscuro y saturado, borde blanco de 1,5 px, sin blur ni grano); Esmerilado es **claro, lechoso y casi gris-azulado** (70 % de blanco-azulado, el color solo se insinúa), con desenfoque y grano. Las capturas lado a lado (misma paleta de posiciones sobre Aurora) se ven claramente distintas.
+- **Qué es:** un cristal **lechoso blanco-azulado** (frosted glass) con el color de cada bloque **apenas insinuado**, borde fino de 1 px claro con luz arriba, sombra suave exterior y grano (**decidido: sin blur real, 2026-11-26**).
+- **En qué se diferencia de Cristal (CAMBIO-017):** Cristal es una **gema coloreada** (el color al 50 % sobre el fondo oscuro, se ve más oscuro y saturado, borde blanco de 1,5 px, sin blur ni grano); Esmerilado es **claro, lechoso y casi gris-azulado** (70 % de blanco-azulado, el color solo se insinúa), con grano. Las capturas lado a lado (misma paleta de posiciones sobre Aurora) se ven claramente distintas.
 - **Fórmula exacta:**
   - Tinte base de cada bloque (`colores`, los 9 hex que identifican a cada uno): `#f4282e #c74710 #d59a0a #2ebf6e #4893f4 #7e66d6 #f91395 #19c4be #8534db` (familias de la Clásica: rojo, naranja, amarillo, verde, azul, violeta, rosa, verde azulado, morado).
   - Capa de vidrio: `tintado = mezcla(#dde8ff, tinte, 35 % de tinte)` → `#e5a5b6 #d5b0ab #dacda9 #a0dacc #a9cafb #bcbbf1 #e79dda #98dbe8 #bea9f2`, pintada como `rgba(tintado, 0,70)`.
   - Brillo: degradado diagonal `linear-gradient(135deg, rgba(255,255,255,.30) 0%, rgba(255,255,255,.08) 60%)` encima (en el centro del bloque, donde va el número, vale ≈ .117).
   - Borde: 1 px `rgba(255,255,255,.45)`; luz superior `inset 0 1px 0 rgba(255,255,255,.6)`; sombra exterior suave `0 8px 24px rgba(0,0,0,.35)` (reemplaza la dura `0 5px 0` de `Block.tsx:123`).
-  - Web: `backdrop-filter: blur(10px)` y una capa de grano (ruido SVG al 22 %). El número sigue blanco.
+  - Web: todo sobre el respaldo opaco `#12121a`, más una capa de grano (ruido SVG al 22 %). El número sigue blanco. **Decidido: sin blur real, 2026-11-26.**
 - **Ajuste de 2026-11-25:** posición 7 de `#1cc7c2` a `#19c4be` para pasar `palettes.test.ts` con el color crudo (ΔE 1,2, imperceptible). Efecto en la capa y el color efectivo de esa posición: tintado `#99dcea` → `#98dbe8`, efectivo sobre Liso `#82aab6` → `#81aab4` (ΔE 1,2 entre ambos efectivos); en la comprobación de abajo cambian solo el tono de esa posición (166° → 168°, dentro del tope de 178,1°), la media (124,0° → 124,4°) y el blanco mínimo (2,51 → 2,52); el contraste con el rojo de esa posición sigue en 1,49 (1,491 → 1,485) y la ΔE mínima entre los 9 sigue en 8,2 (recalculado con mi copia de las fórmulas). Los números de Grilla, Aurora y Estrellas (más abajo) no se recalcularon: el cambio es de centésimas.
 - **Colores efectivos sobre Liso** (capa + brillo del centro sobre `#12121a`): `#b08995 #a7908e #a9a18d #85a9a3 #8ba0c0 #9796ba #b183ab #81aab4 #988bba`.
 - **Comprobación (Liso, estricta) y márgenes:**
@@ -760,17 +782,9 @@ Estados: `propuesto` · `aprobado` (el usuario dijo que sí) · `aplicado` (ya e
   | Blanco ≥ 2,161 en los 9 | mín. 2,52 ✓ (margen 0,36) |
   | Distancia ΔE entre los 9 colores efectivos | mín. **8,2** (la de la Clásica: 11,7): **es la más baja de todas las paletas**, el precio de "color apenas insinuado". Se distinguen, pero menos. |
 
-  - **Sobre los otros fondos** (la capa es translúcida, así que hereda un poco del fondo): *Grilla* (línea blanca al 5 %): cumple todo (el caso más difícil sube a 1,25, aún ≤ 1,256). *Aurora*: el rango del rojo se cumple en los 9 (1,30–1,63), pero el caso más difícil sube a **1,30 con el resplandor verde** y **1,27 con el azul** (+0,04 y +0,015 sobre el 1,256 de la regla), y con el verde el tono más difícil pasa de 43° a **58°** (> 50,5°): las trampas se ven un poco **más** que en la Clásica en esa franja; es una desviación chica y solo arriba del campo (estimación mía con los colores máximos de `FieldBackground.tsx:93-97`; no medida en el juego). *Estrellas*: una estrella blanca detrás (1–3 px) subiría el contraste hasta ~2,0 en ese punto; con el desenfoque (web y `BlurView` en la app) se suaviza y solo asoma al 30 %. Frente a Cristal (que en Aurora llega a 1,02, ver CAMBIO-017) **Esmerilado es mucho más estable**, porque el 70 % de opacidad deja pasar poco fondo.
-- **En el juego: desenfoque real con `BlurView`, como la barra de pestañas (corregido el 2026-11-25).** Mi versión anterior de este punto decía que React Native "no tiene `backdropFilter`" y recomendaba vidrio falso; el usuario señaló que la barra de pestañas ya desenfoca, y tenía razón: la vía no es un estilo de RN sino el componente `expo-blur`, que ya está en el juego. Verificado en el repo:
-  - **Versión:** `expo-blur` 58.0.6 (`apps/client/node_modules/expo-blur/CHANGELOG.md:3`), con Expo SDK 58. La documentación de Expo dice que el desenfoque es estable en Android desde el SDK 55.
-  - **Cómo lo hace la barra** (`apps/client/src/components/TabBarBlur.tsx`): `TabBarBackground` (`:53-69`) pone dentro de una vista redondeada con `overflow: 'hidden'` (`:56`) un `<BlurView intensity={40} tint="dark" blurMethod="dimezisBlurViewSdk31Plus" blurTarget={target ?? undefined}>` (`:58-64`) y encima un velo de color (`:66`, `VEIL`, `:47`: `rgba(18,18,26,0.6)` en Android, `rgba(28,28,40,0.55)` en el resto, porque el tinte gris del desenfoque nativo de Android dejaba la barra más clara que el fondo). Con la barra escondida durante la partida (`off`, `:57`) **no dibuja el desenfoque** para no gastar nada.
-  - **Android necesita un objetivo:** el `BlurView` desenfoca lo que esté dentro de un `BlurTargetView` al que apunte `blurTarget`. Por eso cada pantalla de las pestañas va envuelta en `BlurScreen` (`:29-40`, un `BlurTargetView`) y la que está a la vista se registra como objetivo (`:31-33`, `setTarget`); el layout lo aplica con `screenLayout` en `apps/client/src/app/(tabs)/_layout.tsx:39`. En la web y en iOS el `BlurView` desenfoca lo de atrás sin más (`TabBarBlur.tsx:8-10`; la versión web usa `backdropFilter`, `expo-blur/src/BlurView.web.tsx:38-39,66`).
-  - **Propiedades** (`expo-blur/src/BlurView.types.ts`): `intensity` 1–100 (50 por defecto), `tint`, `blurReductionFactor` (4 por defecto: en Android la intensidad se divide por eso), `blurMethod` (`'none' | 'dimezisBlurView' | 'dimezisBlurViewSdk31Plus'`; con `'none'` dibuja solo una vista semitransparente; `dimezisBlurView` "puede bajar el rendimiento en Android 11 o menor"; `dimezisBlurViewSdk31Plus` solo desenfoca desde Android 12 y en versiones anteriores cae a `'none'`) y `blurTarget`. Un `borderRadius` en el estilo se pasa al nativo y se recorta (`BlurView.tsx:150-160`, `overflow: 'hidden'`). La documentación de Expo dice que un mismo `BlurTargetView` puede servir a varios `BlurView` mientras queden dentro de sus límites. El desenfoque eficiente usa `RenderNode`, que existe desde Android 12 (SDK 31); antes usa `RenderScript`, mucho menos eficiente.
-  - **Cómo se aplicaría a un bloque** (`Block.tsx`, hoy una `Animated.View` con `overflow: 'hidden'` y `borderRadius: 16`, `:116-124`): dentro de cada bloque, **un `BlurView`** con `StyleSheet.absoluteFill` (hereda el recorte redondeado), `tint` claro e `intensity` moderada, **encima la capa blanco-azulada al 70 %** con el tinte (la fórmula de arriba), el brillo diagonal, el borde de 1 px claro y la luz superior; el número queda encima de todo. En Android el `FieldBackground` y todo lo que haya detrás irían dentro de un `BlurTargetView` (el campo de `GameScreen.tsx:812-813`, donde hoy el fondo es el primer hijo y los bloques vienen después) y cada `BlurView` recibiría su `ref` por `blurTarget`; los bloques tendrían que quedar **fuera** del objetivo (si no, un bloque se desenfocaría a sí mismo). Consecuencia: el desenfoque solo toma lo que hay en el objetivo (el fondo del campo), no otros bloques que se superpongan.
-  - **Rendimiento: se medirá más adelante, sin alarma** (el usuario dice, el 2026-11-25, que la versión actual va muy bien en celulares lentos y no espera problemas). Solo el dato técnico: a la vez puede haber hasta **6 bloques normales** (`maxConcFor`, `constants.ts:118`: `min(3 + floor(t/30), 6)`) **más** los bloques corazón **más** los que se están apagando (el "fantasma", `Fx.tsx:246-247`, dura 320 ms): en la práctica hasta ~8 `BlurView` vivos al mismo tiempo, cada uno con su pasada de desenfoque, **sobre un campo que cambia cada cuadro** (cada toque anima el bloque, `Block.tsx:67-76`, y el reloj, las partículas y los textos se redibujan) y con bloques que aparecen con escala y giro (`:53-58`). En Android 12 o mayor es la vía eficiente (no medí cuánto cuesta en un teléfono modesto); en Android 11 o menor, `dimezisBlurViewSdk31Plus` simplemente no desenfoca (cae a una capa semitransparente), y `dimezisBlurView` sí lo haría pero con el costo del `RenderScript`.
-  - **Mitigaciones sin descartar el blur:** (1) intensidad moderada (p. ej. 20–30, menos que el 40 de la barra) y `blurReductionFactor` por defecto; (2) con 70 % de opacidad de la capa solo asoma el 30 % del fondo, así que no hace falta un desenfoque fuerte para que se note el vidrio; (3) `blurMethod="dimezisBlurViewSdk31Plus"` como la barra, para que en Android 11 o menor no se pague el `RenderScript` (ahí el bloque queda con el **vidrio falso**: la misma capa translúcida, brillo y borde, **sin** `BlurView`, que ya es la propuesta del bloque Tenue/Botón: un solo `View`); (4) un **respaldo por dispositivo**: si la medición muestra bajadas de cuadros, usar el vidrio falso en teléfonos modestos o con un ajuste "Reducir efectos"; (5) en la vista previa de la Colección (CAMBIO-020) no hay apuro por esto: son 9 bloques quietos casi todo el tiempo; (6) **medir antes de entregar**: FPS en el emulador `Pixel_Mi_Device` y, sobre todo, en un Android modesto real, con 6 bloques, un corazón y los efectos de destrucción a la vez.
-  - **Conclusión para el cliente: implementar con `BlurView` como la barra de pestañas, con respaldo de vidrio falso si el rendimiento no alcanza.** No se declara ni inviable ni seguro: se probará y medirá más adelante en un teléfono real, sin alarma (ver "Decisiones" y CAMBIO-021). **Prueba en Android: ver CAMBIO-021.**
-  - **El grano** (ruido) **no se hace en la app**: no hay una forma barata y verificada de dibujarlo (`backgroundImage` solo admite degradados; no probé `feTurbulence` en `react-native-svg`). Sin grano la diferencia con la web es pequeña. En la web del juego (react-native-web 0.21.4), el `BlurView` de `expo-blur` ya usa `backdropFilter` (`BlurView.web.tsx`), así que la web queda cubierta con el mismo componente. Esto reemplaza mi nota anterior de que en el juego "casi no se nota el blur": con el 30 % de fondo visible el desenfoque sigue siendo sutil, pero con el blur real el vidrio se ve igual en web y app.
+  - **Sobre los otros fondos:** ya no aplica. Desde CAMBIO-022 el bloque lleva un respaldo opaco `#12121a` y su color no depende del fondo (**decidido: sin blur real, 2026-11-26**).
+- **Cómo se hace en el juego (decidido: sin blur real, 2026-11-26; reemplaza el plan anterior de desenfoque):** "vidrio falso". Dentro del bloque, un respaldo opaco `#12121a` (CAMBIO-022, alternativa A); encima la capa blanco-azulada al 70 % con el tinte (la fórmula de arriba), el brillo diagonal, el borde de 1 px claro, la luz superior y la sombra exterior; el número queda sobre todo. No hace falta ningún componente nuevo ni envolver el campo, el costo es el de un bloque con degradado y borde, y se ve igual en web y app. Forma de escribirlo: CAMBIO-022, "Dónde implementarlo", punto 7.
+- **El grano** (ruido) **no se hace en la app**: no hay una forma barata y verificada de dibujarlo (`backgroundImage` solo admite degradados; no probé `feTurbulence` en `react-native-svg`). Sin grano la diferencia con la web es pequeña.
 - **Nivel propuesto: 27** (el pedido). **18.900 bloques** con la curva de CAMBIO-004 (17.550 hoy). Es la más "premium" (la más difícil de dibujar y la más vistosa): va después de Dorado (25: 16.250; 2.650 de diferencia) y antes de Diamante (30: 23.250; 4.350).
 
 ### 019-B · Tenue (`'soft'`): los colores de la Clásica atenuados, con borde intenso
@@ -825,7 +839,7 @@ Reparto con todo lo propuesto (nivel de CAMBIO-004): Pastel 3 (300) · *Grilla 5
 ### Dónde implementarlo (cliente)
 
 - `apps/client/src/cosmetics/palettes.ts`: `PaletteId` suma `'esmerilado' | 'tenue' | 'boton'` (`:25`); `Palette.style` suma `'frosted' | 'soft' | 'inset'` (`:27-33`); para `'soft'`, el borde **no necesita campo**: es el color original del motor (el de la Clásica). Entradas nuevas en `PALETTES` (`:37-79`) con los hex de arriba; para `'frosted'`, constantes `FROSTED_BASE = '#dde8ff'`, `FROSTED_TINT = 0.35`, `FROSTED_ALPHA = 0.70` y una función que devuelva el `tintado` de un tinte. Actualizar el comentario de cabecera (`:3-24`): la regla se mide sobre el color efectivo.
-- `apps/client/src/components/Block.tsx`: hoy `backgroundColor` fijo (`:93`) y `boxShadow` en `styles.blk` (`:123`). Con `style`: **frosted** = un `BlurView` de `expo-blur` (como `TabBarBlur.tsx:58-64`) como primer hijo, `backgroundColor: rgba(tintado, .70)`, `backgroundImage` con el brillo, `borderWidth: 1` claro y `boxShadow` suave; en Android, el campo dentro de un `BlurTargetView`; con vidrio falso (sin `BlurView`) de respaldo si el rendimiento no alcanza (ver 019-A); **soft** = `backgroundColor` del relleno atenuado, `borderWidth: 5` y `borderColor` = el color del motor (`color`, la prop de `:17`; así una trampa que cayó en un color SAFE tiene el borde SAFE); **inset** = `boxShadow` con las dos sombras `inset` (en cadena con la exterior). `overflow: 'hidden'` y `borderRadius: 16` (`:116-124`) siguen. Con borde el contenido se achica por `border-box`: comprobar el número de las operaciones (`labelFontSize`, `:37-42`). El número, la barra de vida (`:137-143`) y la sombra de la trampa (`:131-136`) no cambian.
+- `apps/client/src/components/Block.tsx`: hoy `backgroundColor` fijo (`:93`) y `boxShadow` en `styles.blk` (`:123`). Con `style`: **frosted** = respaldo opaco `#12121a`, encima `rgba(tintado, .70)` y el brillo, `borderWidth: 1` claro y `boxShadow` suave (**decidido: sin blur real, 2026-11-26**); **soft** = `backgroundColor` del relleno atenuado, `borderWidth: 5` y `borderColor` = el color del motor (`color`, la prop de `:17`; así una trampa que cayó en un color SAFE tiene el borde SAFE); **inset** = `boxShadow` con las dos sombras `inset` (en cadena con la exterior). `overflow: 'hidden'` y `borderRadius: 16` (`:116-124`) siguen. Con borde el contenido se achica por `border-box`: comprobar el número de las operaciones (`labelFontSize`, `:37-42`). El número, la barra de vida (`:137-143`) y la sombra de la trampa (`:131-136`) no cambian.
 - `apps/client/src/cosmetics/catalog.ts`: tres ítems nuevos en el orden de nivel (Clásica, Alto contraste, Pastel, Neón, **Tenue**, Cristal, Retro, **Botón**, Contorno, Degradé, Dorado, **Esmerilado**, Diamante, Constancia): `{ kind: 'level', n: 9 | 16 | 27 }`. `catalog.test.ts:38-41` fallará hasta que existan en los dos lados.
 - `apps/client/src/cosmetics/palettes.test.ts`: los `it.each(PALETTE_IDS)` (`:73-78`, `:102-131`) miden el hex crudo: Tenue y Botón **pasan** tal cual (el relleno/base es el color bajo el número), pero **Esmerilado fallaría** (los tintes crudos no son lo que se ve): hay que medir su **color efectivo** (`tintado` al 70 % sobre `C.bg` + el brillo del centro). Tests de `getPalette('esmerilado').style === 'frosted'`, etc. (análogo de `:152`).
 - Vistas de la paleta que hoy pintan cuadrados lisos y quedarían sin el estilo: `CollectionScreen.tsx:158-172` (`Preview`), `CelebrationModal.tsx:82-90` (`PaletteView`), `PrizeCard.tsx:11-14`; un solo componente de muestra que lea `style`.
@@ -833,7 +847,7 @@ Reparto con todo lo propuesto (nivel de CAMBIO-004): Pastel 3 (300) · *Grilla 5
 
 ### Qué más afecta
 
-- **Rendimiento en Android.** *Tenue*: solo un borde, no suma nada. *Botón*: dos sombras interiores por bloque (`InsetBoxShadowDrawable`, desde Android 10); no medido, pero es el estilo que más depende del dibujo nativo; el fallback es un degradado. *Esmerilado*: un degradado, un borde y una sombra exterior grande (`0 8px 24px`) por bloque; si pesara en la práctica, bajarla a una sombra corta (`0 5px 0`, como las demás). Esmerilado, además, con `BlurView` suma una pasada de desenfoque nativa **por bloque** (hasta ~8 vivos a la vez; ver 019-A, mitigaciones y respaldo de vidrio falso). Nada medido aún en el emulador `Pixel_Mi_Device`: se medirá más adelante, sin alarma (el usuario dice que la versión actual va muy bien en celulares lentos). **Prueba en Android: ver CAMBIO-021.**
+- **Rendimiento en Android.** *Tenue*: solo un borde, no suma nada. *Botón*: dos sombras interiores por bloque (`InsetBoxShadowDrawable`, desde Android 10); no medido, pero es el estilo que más depende del dibujo nativo; el fallback es un degradado. *Esmerilado*: un degradado, un borde y una sombra exterior grande (`0 8px 24px`) por bloque; si pesara en la práctica, bajarla a una sombra corta (`0 5px 0`, como las demás). Esmerilado no desenfoca, así que no suma ninguna pasada nativa (**decidido: sin blur real, 2026-11-26**). Nada medido aún en el emulador `Pixel_Mi_Device`: se medirá más adelante, sin alarma (el usuario dice que la versión actual va muy bien en celulares lentos). **Prueba en Android: ver CAMBIO-021.**
 - **Selección guardada y respaldo.** Igual que CAMBIO-016: `tb_set1` (`settings.ts:17, 38`) guarda el id sin borrarlo; `resolveSelection` (`catalog.ts:283-291`) usa la Clásica sin avisar si la paleta no está desbloqueada. Un cliente viejo que reciba uno de los tres ids lo trata como Clásica (`isPaletteId`, `palettes.ts:85-92`).
 - **Tarjeta de compartir:** `share.web.ts` y `ShareCardHost.native.tsx` no usan paletas (solo `Block`, `Fx`, `CollectionScreen`, `CelebrationModal` y `PrizeCard`), no cambian. Las partículas de `Fx.tsx:110-113` usan los colores de la paleta lisos (opcional).
 - **Onboarding:** las demos (`onboarding/demos.tsx`) usan `Block` con la paleta activa y mostrarán el estilo.
@@ -846,7 +860,7 @@ Reparto con todo lo propuesto (nivel de CAMBIO-004): Pastel 3 (300) · *Grilla 5
 3. **Tenue:** ~~¿se acepta que se parezca a Pastel y a Contorno con relleno?~~ **CERRADA (2026-11-25): que se parezca a Pastel o a Contorno "no importa"** (ya no es una pregunta abierta). Sigue abierto: ¿se acepta que sus trampas queden todas en ~1,21 de contraste (algo más difíciles que el promedio de la Clásica)? Alternativa: más luminancia (≈ 0,40) en las posiciones 0, 1 y 6, que nunca llevan trampa. Borde: **5 px** (cerrado el 2026-11-25).
 4. **Niveles** 9 · 16 · 27 (o 8 · 17 · 27 si se prefiere más aire respecto de Estrellas y Retro).
 5. **Botón:** ¿en relieve (propuesto) o hundido? ¿Se acepta que en Android 9 o menor salga sin relieve, o se prefiere el fallback con degradado?
-6. **Esmerilado en la app (corregido el 2026-11-25):** ya no es "blur o no": se implementa con `BlurView` como la barra de pestañas, **con respaldo de vidrio falso si el rendimiento no alcanza** (sin grano). El usuario dice (2026-11-25) que la versión actual va muy bien en celulares lentos y no espera problemas: **se probará y medirá más adelante, sin alarma** (en el emulador y un teléfono real, ver CAMBIO-021); si algún día no alcanza, el respaldo es vidrio falso en esos teléfonos.
+6. ~~Esmerilado en la app: ¿con desenfoque real o sin él?~~ **CERRADA (2026-11-26), decidido: sin blur real.** El usuario: "como está ahora" (alternativa A de CAMBIO-022: respaldo opaco, vidrio falso; en la app, sin grano).
 7. **Los 9 colores de cada una** (a verlos en el juego).
 
 ### Qué NO cambia
@@ -855,7 +869,7 @@ Reparto con todo lo propuesto (nivel de CAMBIO-004): Pastel 3 (300) · *Grilla 5
 
 ### Cómo verlo en esta carpeta
 
-Sección "Premios", panel "Paletas". Con "Ahora", 8 paletas, como hoy. Con "Con cambios", **14**: las seis nuevas (Tenue, Cristal, Botón, Contorno, Degradé, Esmerilado) llevan la marca "nuevo", su nivel con la curva nueva y su muestra 3×3 dibujada con su estilo. Al hacer clic en una fila, el panel "Vista previa" (debajo de Paletas) dibuja los bloques con ese estilo; toca un bloque para destruirlo y cambia el fondo (Liso, Grilla, Estrellas, Aurora). El desenfoque de Esmerilado se ve mejor sobre Grilla y Estrellas.
+Sección "Premios", panel "Paletas". Con "Ahora", 8 paletas, como hoy. Con "Con cambios", **14**: las seis nuevas (Tenue, Cristal, Botón, Contorno, Degradé, Esmerilado) llevan la marca "nuevo", su nivel con la curva nueva y su muestra 3×3 dibujada con su estilo. Al hacer clic en una fila, el panel "Vista previa" (debajo de Paletas) dibuja los bloques con ese estilo; toca un bloque para destruirlo y cambia el fondo (Liso, Grilla, Estrellas, Aurora). Esmerilado se ve igual sobre cualquier fondo (**decidido: sin blur real, 2026-11-26**).
 
 ### Resultado de la prueba real (`palettes.test.ts`)
 
@@ -869,6 +883,7 @@ Sección "Premios", panel "Paletas". Con "Ahora", 8 paletas, como hoy. Con "Con 
 ## CAMBIO-020 · Vista previa interactiva dentro del juego (pestaña Colección)
 
 - **Estado:** propuesto (2026-11-25), pedido del usuario. La web de esta carpeta ya tiene ese panel ("Vista previa", `preview.js` y `preview.css`) como maqueta; **el juego no se tocó**. Depende de CAMBIO-006 (orden de las tarjetas) y de CAMBIO-017/018/019 (los estilos nuevos de bloque; sin ellos la vista previa solo mostraría paletas lisas).
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**.
 - **Qué:** el panel interactivo de la web (un campo de 3×3 bloques que se tocan y se destruyen, con la paleta, el fondo, el efecto y el sonido que se elijan) existe también **dentro del juego, en la pestaña Colección, al final de las tarjetas de premios, justo después de "Fondos del campo"**. **Orden final de la pantalla** (con CAMBIO-006 y CAMBIO-007; confirmado por el usuario el 2026-11-25): **Insignia → Experiencia → Logros → Paletas → Sonidos → Efectos → Fondos del campo → Vista previa.** La tarjeta **Insignia** ya existe y va primera: `TierCard` es lo primero que se dibuja (`CollectionScreen.tsx:426`; su `Section title="Insignia"`, `:98`), antes de `LevelCard` (`:427`, "Nivel" hoy, "Experiencia" con CAMBIO-007).
 - **Por qué:** hoy cada premio se ve como un dibujito fijo (`CollectionScreen.tsx:158-192`, `Preview`) y el sonido solo suena al elegirlo (`sounds.preview`, `:395`); no se puede ver cómo queda un bloque real, con su efecto y su fondo, ni oírlo al tocar. Con estilos de bloque nuevos (cristal, degradé, esmerilado, relieve), un cuadradito de color ya no basta para decidir.
 
@@ -884,7 +899,7 @@ Sección "Premios", panel "Paletas". Con "Ahora", 8 paletas, como hoy. Con "Con 
 
 ### Qué se reutiliza tal cual (para que se vea y suene igual que en la partida)
 
-`Block`, `FxLayer` + `useFxList` (con `Burst`), `FieldBackground` y `sounds.play`. No se copia dibujo ni síntesis (la web de esta carpeta sí los copia porque es una maqueta aparte; el juego no debe tener dos versiones). Cuando lleguen los estilos de CAMBIO-017/018/019, la vista previa los muestra sin más, porque están en el mismo `Block`. Regla de la raíz: **web y app deben verse y jugarse igual**; con el mismo componente se cumple por construcción, pero hay que revisarlo en las dos (lo único que puede salir distinto por plataforma es el desenfoque de Esmerilado, CAMBIO-019).
+`Block`, `FxLayer` + `useFxList` (con `Burst`), `FieldBackground` y `sounds.play`. No se copia dibujo ni síntesis (la web de esta carpeta sí los copia porque es una maqueta aparte; el juego no debe tener dos versiones). Cuando lleguen los estilos de CAMBIO-017/018/019, la vista previa los muestra sin más, porque están en el mismo `Block`. Regla de la raíz: **web y app deben verse y jugarse igual**; con el mismo componente se cumple por construcción, pero hay que revisarlo en las dos (en Esmerilado la diferencia prevista entre plataformas es el grano, que la app no dibuja; CAMBIO-019, **decidido: sin blur real, 2026-11-26**).
 
 ### Qué hay que parametrizar (hoy solo usan lo equipado)
 
@@ -908,7 +923,7 @@ Sección "Premios", panel "Paletas". Con "Ahora", 8 paletas, como hoy. Con "Con 
 ### Rendimiento
 
 - **9 bloques + un fondo estático + partículas de a una**, casi siempre quietos (solo se animan al tocarlos o al reaparecer): mucho menos exigente que la partida. `FieldBackground` es estático y memorizado (`FieldBackground.tsx:18`).
-- **Con Esmerilado equipado hay hasta 9 `BlurView` a la vez** (uno por bloque, CAMBIO-019; dato técnico): en Android el campo con su fondo tendría que ir dentro de un `BlurTargetView`. Están quietos casi todo el tiempo. Se medirá más adelante, sin alarma (el usuario dice, el 2026-11-25, que la versión actual va muy bien en celulares lentos); el respaldo, si hiciera falta, es el vidrio falso (se decide una vez, para el bloque y para la vista previa).
+- **Esmerilado equipado no cuesta más que las demás paletas con degradado:** son capas sobre un respaldo opaco (CAMBIO-019, **decidido: sin blur real, 2026-11-26**).
 - Los temporizadores de reaparición y los efectos se limpian al salir de la pantalla (el hook de efectos ya lo hace: `Fx.tsx:206-212`; los de reaparición, a hacer igual) y el panel no corre nada si la pestaña no está a la vista (`useIsFocused()`, que la pantalla ya importa, `:1`).
 
 ### Pruebas
@@ -928,7 +943,7 @@ Sección "Premios", panel "Paletas". Con "Ahora", 8 paletas, como hoy. Con "Con 
 
 **Siguen abiertas:**
 1. **Trampa en la vista previa:** ¿mostrar un bloque trampa (recomendado, para ver la trampa roja en cada paleta) o solo bloques normales?
-2. **Desenfoque de Esmerilado** en la vista previa: mismo criterio que en la partida (se ve en la prueba de CAMBIO-021).
+2. ~~Desenfoque de Esmerilado en la vista previa~~ **CERRADA: decidido: sin blur real, 2026-11-26** (la vista previa usa el mismo bloque que la partida).
 
 **Prueba en Android: ver CAMBIO-021.** Con el APK de prueba (todo desbloqueado) la vista previa sí puede mostrar todos los premios, porque ahí el equipar no tiene candados; en el APK real, solo lo desbloqueado.
 
@@ -945,8 +960,9 @@ Sección "Premios": panel "Vista previa" (bajo Paletas). Elige una paleta, un so
 ## CAMBIO-021 · Probar las paletas y la vista previa en Android con un APK de prueba, antes del APK final
 
 - **Estado:** propuesto (2026-11-25), pedido del usuario. **Es solo un plan para después de implementar CAMBIO-016 a 020; hoy no se toca nada del juego.**
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**. Aplicado el modo de prueba (compilación `.prueba` y desbloqueo); el resultado de la prueba del APK se anota en `../docs/pendientes.md`.
 - **Qué:** una vez implementados los cambios de paletas (016 a 019) y la vista previa (020), generar un **APK de prueba** para ver cómo se ven **todos los colores y estilos nuevos en Android** (emulador `Pixel_Mi_Device` y teléfono real), con **todo desbloqueado** (sin candados), solo para mirar. Cuando todo se vea bien, se genera el **APK definitivo**. Quedan **dos APK: uno de prueba y uno real.**
-- **Por qué:** la web no basta para dar por buenos los estilos. Ya pasó con el menú: en la web se veía bien y en el APK dejaba una "sombra rara" (el desenfoque nativo de Android suma un tinte gris); se resolvió probándolo en el emulador y con el aviso del usuario (`docs/historia-y-decisiones.md:327-328`: el velo de Android usa el color del fondo). Puede repetirse con **Esmerilado** (`BlurView`), **Botón** (sombras interiores `inset`, que exigen Android 10 o mayor: `InsetBoxShadowDrawable.kt:30`, CAMBIO-019), **Cristal**, **Degradé**, **Tenue** (borde de 5 px) y **Contorno**. Y el build que se reparte (release, con el JS empaquetado) puede fallar de formas que no se ven al desarrollar: el primer build del APK 0.3.0 se cerraba al abrir por un problema de resolución de módulos del bundle (`docs/historia-y-decisiones.md:336-338`). Por eso el APK de prueba debe ser un build **release** (con el JS dentro), no solo el cliente de desarrollo.
+- **Por qué:** la web no basta para dar por buenos los estilos. Ya pasó con el menú: en la web se veía bien y en el APK dejaba una "sombra rara" (el desenfoque nativo de Android suma un tinte gris); se resolvió probándolo en el emulador y con el aviso del usuario (`docs/historia-y-decisiones.md:327-328`: el velo de Android usa el color del fondo). Puede repetirse con **Esmerilado** (capas translúcidas sobre un respaldo opaco; **decidido: sin blur real, 2026-11-26**), **Botón** (sombras interiores `inset`, que exigen Android 10 o mayor: `InsetBoxShadowDrawable.kt:30`, CAMBIO-019), **Cristal**, **Degradé**, **Tenue** (borde de 5 px) y **Contorno**. Y el build que se reparte (release, con el JS empaquetado) puede fallar de formas que no se ven al desarrollar: el primer build del APK 0.3.0 se cerraba al abrir por un problema de resolución de módulos del bundle (`docs/historia-y-decisiones.md:336-338`). Por eso el APK de prueba debe ser un build **release** (con el JS dentro), no solo el cliente de desarrollo.
 
 ### Cómo se compila hoy (leído en los docs, con ruta y línea)
 
@@ -967,7 +983,7 @@ Sección "Premios": panel "Vista previa" (bajo Paletas). Elige una paleta, un so
 ### Qué revisar en el emulador y el teléfono (lista corta)
 
 1. **Cada paleta nueva** (Tenue, Cristal, Botón, Contorno, Degradé, Esmerilado) **sobre los 4 fondos** (Liso, Grilla, Estrellas, Aurora).
-2. **Blur de Esmerilado:** sombras raras, bordes cortados o más claros que en la web (el caso del menú), que el `BlurView` quede recortado por el borde redondeado y que siga bien al animarse el bloque.
+2. **Esmerilado (vidrio falso; decidido: sin blur real, 2026-11-26):** que se vea como en la web, sin sombras raras ni bordes cortados o más claros, con las capas recortadas por el borde redondeado y bien al animarse el bloque.
 3. **Sombras interiores de Botón** (relieve visible; en Android 9 o menor no hay `inset`).
 4. **Borde de Tenue de 5 px:** que se vea grueso sin comerse el color ni el número (bloque de 66 px y operaciones).
 5. **La trampa roja se distingue en todas las paletas** (los números salen de la regla de no ventaja, pero hay que verlo en pantalla).
@@ -991,7 +1007,10 @@ No hay nada que ver en la web: es un plan. La web de esta carpeta ya muestra tod
 ## CAMBIO-022 · 11 fondos del campo nuevos (de 4 a 15)
 
 - **Estado:** propuesto (2026-11-25), pedido del usuario: "los fondos de campo: quiero 11 más para tener un total de 15". Maquetado en la web de esta carpeta con el interruptor en "Con cambios" (marcados "nuevo"); **el juego no se tocó**. Prueba en Android: ver CAMBIO-021.
-- **Qué:** a Liso (inicio), Grilla (nivel 5), Estrellas (10) y Aurora (20) se suman **11 fondos nuevos**, repartidos entre los niveles 2 y 40, todos **oscuros y de bajo contraste** (el dibujo va al 5 – 18 % de opacidad), ocho estáticos y tres con una animación lenta. En "Fondos del campo" la lista pasa a estar **ordenada por nivel** (con "Ahora" siguen los 4 de hoy). El campo de la "Vista previa" (CAMBIO-020) dibuja el fondo elegido.
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**. Los requisitos son los de CAMBIO-025/026.
+- **Reemplazado por CAMBIO-025:** los niveles de los 15 fondos y el orden por nivel (columnas "Nivel" y "Desde", decisión 2): ahora se ganan por logros y Bosque nocturno por invitar a un 3.er amigo; los dibujos no cambian.
+- **Ampliado por CAMBIO-026:** 5 fondos más (con "Con cambios" son 20).
+- **Qué:** a Liso (inicio), Grilla (nivel 5), Estrellas (10) y Aurora (20) se suman **11 fondos nuevos**, repartidos entre los niveles 2 y 40, todos **de color pero oscuros** (repintados más vivos el 2026-11-26, ver decisión 1), ocho estáticos y tres con una animación lenta. En "Fondos del campo" la lista pasa a estar **ordenada por nivel** (con "Ahora" siguen los 4 de hoy). El campo de la "Vista previa" (CAMBIO-020) dibuja el fondo elegido.
 - **Por qué:** pedido del usuario; más premios por nivel a lo largo de toda la progresión (hoy el último fondo es el nivel 20 y entre el 10 y el 20 no hay ninguno).
 
 ### Los 11 fondos
@@ -1000,21 +1019,21 @@ Nivel por jugador (la curva de CAMBIO-004, `25·n·(n+1)`; entre paréntesis la 
 
 | id | Nombre | Frase de la fila | Color base | Tipo | Nivel | Desde (con CAMBIO-004) |
 |---|---|---|---|---|---|---|
-| `puntos` | Puntos | Puntitos blancos muy tenues sobre el fondo de siempre | `#12121a` | estático | 2 | 150 bloques (50) |
-| `rayas` | Rayas | Rayas diagonales azuladas casi invisibles | `#0f0f16` | estático | 4 | 500 (300) |
-| `hexagonos` | Hexágonos | Panal de líneas finas sobre azul pizarra | `#0b101a` | estático | 6 | 1.050 (750) |
-| `circuito` | Circuito | Pistas de placa electrónica verde azulado | `#091314` | estático | 8 | 1.800 (1.400) |
-| `atardecer` | Atardecer | Del azul noche al morado, con un resplandor anaranjado abajo | `#0e0f1e` (arriba `#0c0f1d`, abajo `#161018`) | estático | 11 | 3.300 (2.750) |
-| `oceano` | Océano | Aguas profundas con luz arriba y burbujas | `#07111c` (`#08111e` → `#06141c`) | estático | 14 | 5.250 (4.550) |
-| `bosque` | Bosque nocturno | Pinos en silueta bajo la luna | `#071315` (`#09121c` → `#07140d`) | estático | 17 | 7.650 (6.800) |
-| `lluvia` | Lluvia | Lluvia suave que cae despacio | `#0c121a` (`#0b1119` → `#0d131c`) | **animado** (1 capa) | 21 | 11.550 (10.500) |
-| `nieve` | Nieve | Copos que bajan en dos capas | `#0b121b` (`#0a111a` → `#0c131c`) | **animado** (2 capas) | 26 | 17.550 (16.250) |
-| `nebulosa` | Nebulosa | Nubes de gas moradas y turquesa con estrellitas | `#0f0f1c` | estático | 32 | 26.400 (24.800) |
-| `luciernagas` | Luciérnagas | Luces que laten entre el pasto | `#09150f` (`#091310` → `#09150f`) | **animado** (2 grupos) | 40 | 41.000 (39.000) |
+| `puntos` | Puntos | Puntos violetas y celestes sobre azul índigo | `#141436` (`#1a1742` → `#11142f`) | estático | 2 | 150 bloques (50) |
+| `rayas` | Rayas | Rayas diagonales violetas, del morado al azul | `#1b1445` (`#26164f` → `#0d1c3f`) | estático | 4 | 500 (300) |
+| `hexagonos` | Hexágonos | Panal de líneas celestes sobre azul | `#0b1f46` (`#0c2550` → `#0a1634`) | estático | 6 | 1.050 (750) |
+| `circuito` | Circuito | Pistas de placa electrónica sobre verde azulado | `#042723` (`#07382c` → `#031c20`) | estático | 8 | 1.800 (1.400) |
+| `atardecer` | Atardecer | Del azul índigo al ámbar, con el sol tras los montes | `#43205a` (`#171a4a` → `#4a2a48` → `#53321a` → `#3d2410`) | estático | 11 | 3.300 (2.750) |
+| `oceano` | Océano | Agua azul con rayos de luz y burbujas | `#073055` (`#09385f` → `#041c38`) | estático | 14 | 5.250 (4.550) |
+| `bosque` | Bosque nocturno | Pinos verdes bajo la luna | `#0b3739` (`#0b2740` → `#0b3a28` → `#082a1a`) | estático | 17 | 7.650 (6.800) |
+| `lluvia` | Lluvia | Lluvia azul acero que cae (animado) | `#152a47` (`#1c3050` → `#0d1c32`) | **animado** (1 capa) | 21 | 11.550 (10.500) |
+| `nieve` | Nieve | Copos que bajan sobre lomas nevadas (animado) | `#172f54` (`#12244a` → `#1e3a5e`) | **animado** (2 capas) | 26 | 17.550 (16.250) |
+| `nebulosa` | Nebulosa | Nubes de gas violetas, turquesas y magentas | `#1c0f42` (`#150c36` → `#100a2e`) | estático | 32 | 26.400 (24.800) |
+| `luciernagas` | Luciérnagas | Luces que laten sobre el pasto (animado) | `#0a2e27` (`#08202e` → `#0c3520` → `#0a2c17`) | **animado** (2 grupos) | 40 | 41.000 (39.000) |
 
-- **"Color base"** es el color dominante del campo (el que queda bajo los bloques), **ya ajustado** para la prueba de paletas (ver abajo). Entre paréntesis, los extremos del degradé.
+- **"Color base"** es un color dominante del campo (colores del 2026-11-26). Entre paréntesis, otros tramos del degradé. Ya no condicionan el color de los bloques (ver decisión 1).
 - Cada fila de la tabla de Premios lleva el requisito "Llega al nivel N · desde X bloques" **sin "Hoy:"** (no existen hoy); los 4 fondos de siempre conservan su "Hoy: …" tachado (los mueve CAMBIO-004).
-- **La miniatura de la fila está realzada** (más brillo y contraste que el campo real): los fondos reales son casi negros a propósito y a 44 px no se reconocerían. Ver decisión 3.
+- **La miniatura de la fila** es el mismo dibujo a media escala (en Lluvia, Nieve y Luciérnagas, un cuadro quieto con las gotas, copos o luces más juntos). Ver decisión 3.
 
 ### Cómo se haría en React Native (todo con lo ya instalado)
 
@@ -1026,17 +1045,19 @@ Hay en `apps/client/package.json`: `react-native` 0.88.1, `react-native-svg` 15.
 
 | Fondo | En RN | Nodos |
 |---|---|---|
-| Puntos | `Svg` + `Pattern` 22×22 con un `Circle` r 1,3 blanco al 11 % | 1 Svg |
-| Rayas | `View` `#0f0f16` + `Svg` + `Pattern` 22×22 girado 45° con un `Rect` de 9 px azul claro al 5 % | 1 View + 1 Svg |
-| Hexágonos | `View` + `Svg` + `Pattern` 44,8×78,4 (`viewBox` 28×49) con el `Path` del panal, azul al 8,5 % | 1 View + 1 Svg |
-| Circuito | `View` + `Svg` + `Pattern` 96×96 (`viewBox` 80×80) con 1 `Path` (pistas) y 5 `Circle` (pastillas), verde azulado al 13 % | 1 View + 1 Svg |
-| Atardecer | un `View` con `backgroundImage`: `radial-gradient` anaranjado al 5 % abajo + `linear-gradient` de 4 paradas | 1 View |
-| Océano | `View` con `backgroundImage` (`radial` de luz arriba al 5 % + `linear` de 3 paradas) + `Svg` con 6 `Circle` de borde (burbujas) | 1 View + 1 Svg |
-| Bosque nocturno | `View` con `backgroundImage` (luna `radial` + `linear`) + `Svg` pegado abajo con un `Pattern` 120×70 de 3 pinos (`#0b1a13`) | 1 View + 1 Svg |
-| **Lluvia** | `View` con `backgroundImage` + **1 `Animated.View`** (alto + 150) con `Svg`/`Pattern` 100×150 de 4 rayitas; `translateY` 0 → 150 en 1,4 s, lineal | 1 View + 1 animado |
-| **Nieve** | `View` con `backgroundImage` + **2 `Animated.View`** con `Pattern` 160×200 (11 s) y 110×140 (17 s) | 1 View + 2 animados |
-| Nebulosa | `View` con `backgroundImage` (3 `radial-gradient` de colores casi neutros) + `Svg` con 12 `Circle` (estrellitas) | 1 View + 1 Svg |
-| **Luciérnagas** | `View` con `backgroundImage` + **2 `Animated.View`**, cada uno con un `Svg` de 5 `Circle` y su `RadialGradient` de halo; `opacity` 0,05 ↔ 1 y `translate` (0,0) ↔ (10,−14), con 6 y 8 s y desfase | 1 View + 2 animados |
+| Puntos | `View` con `linear` + `Svg` con 2 `Pattern`: 66×66 (`Circle` r 3 violeta al 55 %) y 22×22 (r 1,9 celeste al 40 %) | 1 View + 1 Svg |
+| Rayas | `View` con `linear` a 160° + `Svg` + `Pattern` 26×26 girado 45° con un `Rect` de 11 px `#a078ff` al 13 % | 1 View + 1 Svg |
+| Hexágonos | `View` (`radial` azul arriba al 22 % + `linear`) + `Svg` + `Pattern` 44,8×78,4 (`viewBox` 28×49) con el `Path` del panal, `#66b8ff` al 20 % | 1 View + 1 Svg |
+| Circuito | `View` con `linear` + `Svg` + `Pattern` 96×96 (`viewBox` 80×80) con 1 `Path` (pistas `#3dffc0` al 26 %) y 5 `Circle` (pastillas al 24 %, borde 45 %) | 1 View + 1 Svg |
+| Atardecer | `View` con `linear` de 7 paradas + `Svg` pegado abajo: sol (`Circle` r 17 al 60 % con halo `RadialGradient` hasta 90 px) y `Pattern` 200×50 de montes (`#3a1638`, `#1d0b24`) | 1 View + 1 Svg |
+| Océano | `View` con `backgroundImage` (rayos `linear` a 105° al 5 – 6,5 %, `radial` arriba al 10 % y abajo turquesa al 14 %, `linear` de 4 paradas) + `Svg` con 6 `Circle` de borde (burbujas) | 1 View + 1 Svg |
+| Bosque nocturno | `View` con `linear` + `Svg`: luna (`Circle` r 8 con halo) y 2 `Pattern` pegados abajo: pinos lejanos 90×60 (`#145036`) y cercanos 120×70 (`#03130b`) | 1 View + 1 Svg |
+| **Lluvia** | `View` con `backgroundImage` + **1 `Animated.View`** (alto + 150) con `Svg`/`Pattern` 100×150 de 4 rayitas (`#a9d4ff` al 42 %); `translateY` 0 → 150 en 1,4 s, lineal | 1 View + 1 animado |
+| **Nieve** | `View` con `linear` + `Svg` pegado abajo (`Pattern` 200×34 de dos lomas `#2f4e77` y `#3d5f8c` con cresta clara de 1 px) + **2 `Animated.View`** con `Pattern` 160×200 (11 s) y 110×140 (17 s) | 1 View + 1 Svg + 2 animados |
+| Nebulosa | `View` con `backgroundImage` (3 `radial`: violeta al 40 %, turquesa al 26 %, magenta al 24 %, + `linear`) + `Svg` con 12 `Circle` (estrellitas) | 1 View + 1 Svg |
+| **Luciérnagas** | `View` (`radial` verde abajo + `linear`) + `Svg` con `Pattern` 80×36 de pasto (`#02140a`) + **2 `Animated.View`**, cada uno con un `Svg` de 5 `Circle` y su `RadialGradient` de halo; `opacity` 0,05 ↔ 1 y `translate` (0,0) ↔ (10,−14), con 6 y 8 s y desfase | 1 View + 1 Svg + 2 animados |
+
+Los valores exactos (paradas y posiciones) están en `extras-fondos.css`.
 
 Todos los nodos son pocos (máx. 4 por fondo); como máximo **3 fondos animados** (Lluvia, Nieve, Luciérnagas) y ninguno recalcula nada mientras se juega.
 
@@ -1046,10 +1067,13 @@ Todos los nodos son pocos (máx. 4 por fondo); como máximo **3 fondos animados*
 2. `apps/client/src/components/FieldBackground.tsx`: una rama por fondo (`if (bg === 'puntos') return <Dots />` …), cada una un componente chico memorizado. Actualizar el comentario de la cabecera (hoy dice "`liso`, `grilla`, `estrellas` o `aurora`" y "es estático (sin animación por cuadro)": con Lluvia, Nieve y Luciérnagas ya no es del todo cierto).
 3. Tarjeta de la Colección (`CollectionScreen.tsx`): la miniatura de la fila usa hoy `FieldBackground` en chico (`:188`); ver decisión 3.
 4. Vista previa de CAMBIO-020: no necesita nada especial (usa `FieldBackground id=…`).
-5. Tests: `catalog.test.ts` (ids y niveles de los fondos nuevos; que un fondo nuevo bloqueado caiga en `liso`); `palettes.test.ts` si se adopta la opción A de abajo.
+5. Tests: `catalog.test.ts` (ids y niveles de los fondos nuevos; que un fondo nuevo bloqueado caiga en `liso`); `palettes.test.ts`: en Cristal, Contorno y Esmerilado medir el color efectivo sobre el respaldo `#12121a`.
 6. Documentación del juego: anotar el motivo en `docs/historia-y-decisiones.md` (no son reglas, así que `docs/reglas-y-balance.md` no cambia).
+7. **`apps/client/src/components/Block.tsx` (decisión 1, alternativa A):** en `glass`, `outline` y `frosted`, el `backgroundColor` del bloque es **opaco**. Dos formas equivalentes: (a) `backgroundColor: '#12121a'` (el respaldo) y encima, en `backgroundImage`, el brillo **sobre** un degradado plano con el relleno (`linear-gradient(relleno, relleno)`); o (b), más simple, `backgroundColor` = el relleno **ya mezclado** con `#12121a` (color opaco precalculado) y solo el brillo en `backgroundImage`. Contorno no lleva brillo. Bordes, sombras y número no cambian. **Esmerilado no lleva `BlurView` ni `BlurTargetView` (decidido: sin blur real, 2026-11-26).** El respaldo va dentro del bloque, así que escala y se apaga con él.
 
 ### Prueba de paletas sobre cada fondo (resultado)
+
+**Resultado vigente (2026-11-26, con el respaldo opaco y los colores nuevos):** las **14 paletas pasan las 7 comprobaciones** y el resultado ya no depende del fondo (Cristal, Contorno y Esmerilado quedan con los mismos márgenes que sobre Liso: contraste del rojo en rango +0,030 / +0,023 / +0,043). Medida propia, no regla del juego (336 ventanas por fondo contra las 14 × 9 casillas, sin contar bordes ni sombra): ninguna ventana "roja" en ningún fondo; el rojo `#ff2a2a` queda lejos de todos (ΔE2000 mínimo 28,8, en el sol del atardecer); solo **13 ventanas** tienen alguna casilla con ΔE < 10, todas en puntos claros (Nieve 9, las lomas y copos; Atardecer 2, el sol; Océano 1; Bosque 1, la luna). Detalle en `herramientas/prueba-fondos/RESULTADOS-FONDOS.md`. **Lo que sigue en esta sección es el análisis del 2026-11-25 (fondos casi negros, sin respaldo): queda como historial y ya no describe la web.**
 
 **Hallazgo importante (cambia lo que se pidió medir):** la regla de no ventaja (`palettes.test.ts`) compara la trampa roja `#ff2a2a` y el texto blanco contra el **color del bloque**, no contra el fondo del campo. Con paletas **opacas** (las 8 de hoy más Tenue, Degradé y Botón) el fondo no entra: sus 11 casos pasan sobre cualquier fondo. Solo **Cristal (50 %), Contorno (55 %) y Esmerilado (70 % + brillo)** dejan pasar lo que hay detrás, así que su color efectivo —el que mide la regla— **sí depende del fondo**. Se recalculó ese color efectivo para cada color de cada fondo con las funciones reales del juego (`herramientas/prueba-fondos/`, que reutiliza `reglas.ts` de `prueba-paletas`; no toca el juego ni esa carpeta).
 
@@ -1066,11 +1090,11 @@ Todos los nodos son pocos (máx. 4 por fondo); como máximo **3 fondos animados*
 | Luciérnagas | pasa | pasa | pasa | 3 / 4 / 0 (las luces) |
 
 - **Muestreo real:** además del color base se midió lo realmente dibujado (patrones, brillos y un cuadro de la animación) con una captura de la web: 80 ventanas de 30 × 30 px por fondo, con las mismas reglas. **Hay 5 fondos × paleta con algunas ventanas que no pasan (menos del 5 %)**, y son siempre un detalle puntual: la luna del bosque, las estrellitas de la nebulosa y las luces de las luciérnagas. Un bloque translúcido justo encima de una de ellas cambia unas décimas de contraste; no se puede resolver sin apagar el detalle. Ver decisión 1.
-- **Lo que NO se midió:** una captura es un cuadro; Lluvia, Nieve y Luciérnagas se mueven. Tampoco se midió el desenfoque real de Esmerilado (en el juego, `BlurView`).
+- **Lo que NO se midió:** una captura es un cuadro; Lluvia, Nieve y Luciérnagas se mueven. (Esmerilado no desenfoca: decidido: sin blur real, 2026-11-26.)
 
 ### Regla `REDDISH`
 
-`REDDISH` (`['#e5484d', '#f76b15', '#d6409f']`, `packages/engine/src/constants.ts:96`) habla del **color del bloque** (`COLORS`): si ese color es rojizo, la trampa roja usa uno de `SAFE`. El motor **no lee el fondo del campo**, así que ningún fondo activa esa regla ni puede cambiarla. Aun así, ninguno de los 11 es rojizo: los tonos base están en 150°–285° (verde, turquesa, azul, índigo; solo el pie del atardecer, `#161018`, tira a ciruela, 285°, casi negro).
+`REDDISH` (`['#e5484d', '#f76b15', '#d6409f']`, `packages/engine/src/constants.ts:96`) habla del **color del bloque** (`COLORS`): si ese color es rojizo, la trampa roja usa uno de `SAFE`. El motor **no lee el fondo del campo**, así que ningún fondo activa esa regla ni puede cambiarla. Además, ninguno tiene zonas rojas (medido el 2026-11-26): dominan verdes, azules y violetas; el único cálido es el pie del Atardecer, que pasa de un malva apagado a un ámbar oscuro sin franja roja.
 
 ### Rendimiento
 
@@ -1080,9 +1104,9 @@ Todos los nodos son pocos (máx. 4 por fondo); como máximo **3 fondos animados*
 
 ### Decisiones que el usuario debe confirmar
 
-1. **Cómo tratar Cristal, Contorno y Esmerilado sobre fondos.** Hoy (así está maquetado) **los fondos son casi negros para que las tres paletas translúcidas sigan pasando la prueba** sin tocarlas; el costo es que escenas como Atardecer, Océano o Bosque se ven muy sutiles. **Alternativa recomendada (A):** que esas tres paletas se dibujen sobre un **respaldo opaco `#12121a`** (su color efectivo se precalcula, y sobre el Liso se ven idénticas a hoy): así su color **no depende del fondo**, la prueba no cambia nunca y los fondos pueden ser más vivos (Océano azul de verdad, Atardecer naranja). Lo que se pierde: ver el fondo a través del cristal; con fondos de bajo contraste casi no se nota. Cambia `Block.tsx` (un `backgroundColor` opaco bajo el degradado del Cristal) y la receta de CAMBIO-017/019. Si se aprueba A, se vuelven a pintar los 11 fondos con colores más vivos (una iteración).
+1. **Cómo tratar Cristal, Contorno y Esmerilado sobre fondos. Cerrada: alternativa A aprobada por el usuario (2026-11-26).** Las tres se dibujan sobre un **respaldo opaco `#12121a`** (sobre Liso se ven como antes; su color **no depende del fondo**) y los 11 fondos nuevos se repintaron más vivos. Hecho en la web; para el juego, ver "Dónde implementarlo", punto 7. Lo que se pierde: ver el fondo a través del bloque. **Esmerilado: cerrado (2026-11-26), decidido: sin blur real** (el usuario: "como está ahora"; lo había pedido con desenfoque en CAMBIO-019). Lo que implica: con un respaldo opaco no queda nada que desenfocar, así que se quitó el `backdrop-filter` y quedan la capa lechosa, el brillo, el borde, la luz superior, la sombra y el grano (sobre Liso, mismos colores; sigue distinto de Cristal, pero es "vidrio falso"). Se midió la salida intermedia (respaldo semitransparente + desenfoque, aproximado con ventanas de 14 px de los 15 fondos, 5.040 en total): sin respaldo fallan la regla 3.703 ventanas; al 80 %, 61; al 85 %, 4; **al 90 %, ninguna**, pero entonces del fondo solo llega cerca del 3 % al color final (0,10 × 0,30), prácticamente invisible. No hay un punto que cumpla la regla y deje ver el vidrio, así que queda sin desenfoque y **no** se hace una excepción a la regla de no ventaja. Nota: la muestra 3×3 de la fila (`coleccion.css`, `.vpPaleta.esmerilado i`) conserva un `backdrop-filter` de 4 px que solo toca el panel; se dejó para no cambiar su aspecto y no se lleva al juego.
 2. **Niveles.** La propuesta es la de la tabla (2, 4, 6, 8, 11, 14, 17, 21, 26, 32, 40). El 40 equivale a 41.000 bloques con CAMBIO-004: Luciérnagas sería el premio más lejano. ¿Se quiere otra escala (más pegada, o hasta el 30)?
-3. **Miniatura de la fila.** En la web está realzada. En el juego la miniatura usa `FieldBackground`, es decir, se vería tan oscura como el campo (casi un cuadro negro para Atardecer u Océano). ¿Añadir una prop `thumb` que suba el contraste, o aceptar que la miniatura sea fiel?
+3. **Miniatura de la fila.** En la web es el dibujo a media escala. En el juego la miniatura usa `FieldBackground`; con los colores nuevos se reconoce, pero los mosaicos grandes se ven recortados a 44 px. ¿Añadir una prop `thumb` que los achique, o aceptar la miniatura tal cual?
 4. **¿Tres animados es demasiado?** Alternativa: Lluvia y Nieve estáticos (un cuadro congelado) y solo Luciérnagas animado, o ninguno.
 
 ### Qué más afecta
@@ -1109,6 +1133,9 @@ Sección "Premios", panel **Fondos del campo**: con "Ahora" salen los 4 de hoy; 
 ## CAMBIO-023 · 6 efectos al destruir nuevos (de 4 a 10): Burbujas, Emojis, Ondas, Monedas, Rayos y Fuegos artificiales
 
 - **Estado:** propuesto (2026-11-25), pedido del usuario: "los efectos al destruir: quiero 6 más, para tener un total de 10; añade uno que sean emojis, burbujas". Maquetado en la web de esta carpeta con el interruptor en "Con cambios" (marcados "nuevo", con su requisito) y en la **Vista previa** (al destruir un bloque con el efecto elegido se ve el efecto). Con "Ahora" siguen los 4 de hoy. **El juego no se tocó.** Prueba en Android: ver CAMBIO-021.
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**. Los requisitos son los de CAMBIO-025/026.
+- **Reemplazado por CAMBIO-025:** los requisitos y su orden (columnas "Requisito" y "En el juego", decisión 2) y los de Chispas y Confeti: se ganan por logros (Corazones no cambia); el dibujo de los efectos no cambia.
+- **Ampliado por CAMBIO-026:** 2 efectos más (con "Con cambios" son 12).
 - **Qué:** a Clásico (✹, siempre), Chispas (✦), Confeti (▰) y Corazones (♥) se suman **seis efectos**: los dos que pidió el usuario (**Emojis** y **Burbujas**) y cuatro a criterio (**Ondas, Monedas, Rayos, Fuegos artificiales**), elegidos para que se distingan por el movimiento y no solo por la forma: unos suben (Burbujas), otros caen con gravedad (Monedas), uno es un abanico con rebote (Emojis), uno no tiene partículas que vuelen sino anillos (Ondas), uno es instantáneo y parpadea (Rayos) y uno tiene dos tiempos (Fuegos). Se desbloquean por motivos distintos (partidas, nivel, reto diario, racha) y de fácil a difícil.
 - **Por qué:** pedido del usuario; más premios a lo largo de la progresión (hoy el último efecto se gana con una racha de 25 o invitando a un amigo y no hay nada que perseguir a largo plazo).
 
@@ -1197,7 +1224,7 @@ Nada nuevo: la selección vive en `tb_set1` (`effect`) y `resolveSelection` (`ca
 2. **Requisitos y orden** (10 partidas · nivel 13 · 14 días de reto · 150 partidas · racha de 100 · nivel 35): ¿bien de fácil a difícil? Ondas exige el reto diario (como Constancia), así que depende de que el reto exista.
 3. **"Reducir movimiento" en la app** para los 6 nuevos (y, de paso, los 4 de hoy, que hoy no lo respetan).
 4. **Emojis:** ¿se aceptan los de cada sistema (distintos entre Android, iOS y web) o se prefieren imágenes propias? ¿La lista de 8 es la que quieres?
-5. **Fuegos artificiales** sube 46 px desde el bloque: en la fila de arriba del campo las chispas pueden quedar **cortadas por el borde**. ¿Se acepta, o se hace que la altura de la estela dependa del lugar del bloque?
+5. **Fuegos artificiales** sube 46 px desde el bloque: en la fila de arriba del campo las chispas pueden quedar **cortadas por el borde**. ¿Se acepta, o se hace que la altura de la estela dependa del lugar del bloque? **Cerrada: el usuario los dio por perfectos como están (2026-11-26).**
 6. **Parpadeo de Rayos:** ¿se deja un apagado (más "eléctrico") o se quita?
 
 ### Cómo verlo en esta carpeta
@@ -1209,6 +1236,8 @@ Sección "Premios", interruptor en **Con cambios**: "Efectos al destruir" pasa d
 ## CAMBIO-024 · 6 sonidos nuevos (de 3 a 9): Electrónico, Futurista, Piano, Guitarra eléctrica, Palitos y Viento
 
 - **Estado:** propuesto (2026-11-24), pedido del usuario: "los sonidos, quiero más… añade un sonido electrónico; ¿de instrumentos puedes añadir? piano, guitarra eléctrica, unos palitos que se chocan, unos instrumentos de viento… añade el sonido electrónico, y uno futurista". Maquetado en la web de esta carpeta con el interruptor en "Con cambios" (marcados "nuevo", con su requisito y una frase) y en la **Vista previa** (al tocar un bloque suena el sonido elegido; al destruirlo, el de destruir). Con "Ahora" siguen los 3 de hoy, idénticos (verificado: Marimba sigue creando los mismos 14 osciladores). **El juego no se tocó.**
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**. Híbrido en web y app; requisitos de CAMBIO-025; los otros 7 sonidos son derivados y están por definir (B12).
+- **Reemplazado por CAMBIO-025:** los requisitos y su orden por dificultad (columnas "Requisito" y "En el juego", decisiones 3 y 6) y el de Marimba: un sonido por insignia, de Papel (Marimba) a Diamante (Futurista). La forma de implementarlos quedó decidida más abajo ("Decisión cerrada: método híbrido").
 - **Qué:** a 8 bits (siempre), Suave (1.ª partida) y Marimba (insignia Plata) se suman **seis sonidos**, cada uno con `hit(n)` (toque; la altura sube con los toques dados, tope 12), `kill()` (destruir) y `combo(b)` (subida por combo: 2 a 5 notas según los segundos de premio), igual que los paquetes de hoy.
 - **Por qué:** pedido del usuario; más premios a lo largo de la progresión y un tipo de premio que se oye (y se nota al jugar).
 - **Honestidad sobre lo que se puede producir:** son **sintetizadores que imitan al instrumento**, no grabaciones. Con osciladores, filtros y ruido se logra un timbre **reconocible** (tipo "piano", "guitarra distorsionada", "flauta"), no uno que se confunda con el instrumento real. Si el usuario quiere realismo, la vía es usar **muestras grabadas** (bancos con licencia libre o grabarlas): queda **fuera de este cambio** (ver "Alternativa" más abajo). Nadie escuchó estos sonidos durante el trabajo: todo lo de abajo son **mediciones** del audio renderizado, no impresiones de oído. **Hay que escucharlos** (en el navegador, y sobre todo en el emulador y en un teléfono real: CAMBIO-021).
@@ -1263,6 +1292,42 @@ Referencia: los 3 paquetes de hoy, copiados de `sounds.ts` con el `beep` de `fx.
 - **Verificado en la librería instalada** (`node_modules/.pnpm/…/react-native-audio-api/src/core/BaseAudioContext.ts:108-215`): existen `createOscillator`, `createGain`, `createBiquadFilter`, `createWaveShaper` (con `oversample`), `createBufferSource`, `createBuffer` (con `getChannelData`/`copyToChannel`), `createPeriodicWave`, `createDelay`, `createConvolver`, `createStereoPanner`, y `AudioParam` con `setTargetAtTime`, `cancelScheduledValues`, `exponentialRampToValueAtTime`, etc. **No existe `createDynamicsCompressor`** (por eso el limitador es un `WaveShaper`). `sonidos.js` usa **solo** `Oscillator` (+ `PeriodicWave`), `Gain`, `BiquadFilter`, `WaveShaper`, `BufferSource` y `createBuffer`: todos están en la librería nativa.
 - **Conclusión de implementación: tiempo real, sin WAV ni archivos.** Los 6 se pueden implementar **con el mismo esquema** que hoy (un grafo de Web Audio por nota, en web y nativo, mismo código). `fx.beep` **no alcanza** (solo oscilador + ganancia): hace falta un módulo nuevo (p. ej. `platform/synth.ts`, o ampliar `Fx` en `fx.types.ts`) que reciba el `AudioContext` de `fx.web.ts`/`fx.native.ts` (hoy privado: `context()`/`ac`) y programe las notas con el reloj del contexto. `sonidos.js` de esta carpeta es esa lógica, sin dependencias de la página: se portaría casi línea por línea a TypeScript. Solo la **Guitarra** genera un búfer en JS (Karplus-Strong, perezosamente por nota); no es un WAV: es un `AudioBuffer` en memoria.
 - **Por qué no pre-renderizar WAV:** no hace falta (el tiempo real cubre todo), y obligaría a empaquetar assets y a una librería de reproducción de archivos que hoy no está. Si el rendimiento en teléfonos lentos lo pidiera, la alternativa es pre-renderizar con un `OfflineAudioContext` **al arrancar** (RNAA tiene `OfflineAudioContext.ts`) y reproducir `AudioBuffer`s.
+
+### Decisión cerrada (2026-11-26): método híbrido
+
+**Decidido por el usuario:** los **6 sonidos nuevos se generan una vez con código** (al elegir el sonido o al empezar la partida), **se guardan en memoria (`AudioBuffer`) y se reutilizan**. **Sin archivos de audio.** Los 3 de hoy siguen en vivo (`fx.beep`). Esto reemplaza, solo para los 6 nuevos, la "Conclusión de implementación: tiempo real" de arriba y el "Por qué no pre-renderizar WAV" (sigue sin haber WAV).
+
+**Verificado en la librería nativa instalada** (`apps/client/node_modules/react-native-audio-api`, `package.json:3` = 1.0.0):
+
+| Pieza | Dónde |
+|---|---|
+| `createBuffer` (y `getChannelData` / `copyToChannel`) | `src/core/BaseAudioContext.ts:187-193`; `src/core/AudioBuffer.ts:40` y `:87` |
+| `createBufferSource` | `src/core/BaseAudioContext.ts:140-148` |
+| `OfflineAudioContext` y `startRendering()` | `src/core/OfflineAudioContext.ts:14` y `:102-117`; exportado en `src/api.ts:26` |
+| Lado nativo | `common/cpp/audioapi/AudioAPIModuleInstaller.h:38-49` (instala `createOfflineAudioContext`); `common/cpp/audioapi/core/OfflineAudioContext.cpp:155` (`startRendering`) y `:96-105` (renderiza en un hilo propio) |
+
+**Vía recomendada: renderizar con `OfflineAudioContext`** (no escribir el `Float32Array` a mano). `sonidos.js` ya acepta un `OfflineAudioContext` (así se midió en `herramientas/prueba-sonidos/`), así que se reutilizan las mismas voces; generar las muestras a mano obligaría a reimplementar filtros, saturación y ondas periódicas, y habría dos síntesis que mantener iguales. Forma:
+
+1. Por cada evento del paquete elegido: `new OfflineAudioContext(1, ceil((duración + 0,005) · sr), sr)` con `sr` = el `sampleRate` del contexto real; programar las notas desde `t0 = 0`, `startRendering()` y guardar el `AudioBuffer`.
+2. Eventos con las voces de hoy: `hit` n = 0…12 (13), `kill` (1) y `combo` con premio 1, 2 y 3 o más (3, 4 y 5 notas) = **17 búferes por paquete**, más los otros 7 sonidos cuando se diseñen.
+3. Al sonar: `createBufferSource()` → un bus **permanente** (ganancia → limitador `WaveShaper`) → `destination`, con el mismo tope de 12 voces. Renderizar **sin** el limitador (que queda en vivo), para no aplicarlo dos veces ni perderlo al sumarse varias notas.
+4. Cuándo: al elegir el sonido (antes de la muestra de la Colección) y, para el equipado, al abrir o empezar la partida. Si un búfer aún no está listo, sonar ese evento en vivo con la misma voz (sin silencio). Un solo paquete en memoria: al cambiar de sonido se sueltan los anteriores.
+5. La Guitarra genera sus cuerdas Karplus-Strong en JS (en el hilo de la interfaz): conviene que esa generación quede dentro del paso 1, nunca en el primer toque.
+
+**Memoria** (calculada con las duraciones de `sonidos.js`; `Float32`, mono, 4 bytes por muestra; sin los 7 sonidos que faltan):
+
+| Paquete | Segundos | 44,1 kHz | 48 kHz |
+|---|---|---|---|
+| Palitos | 2,6 | 0,46 MB | 0,50 MB |
+| Electrónico | 3,8 | 0,68 MB | 0,74 MB |
+| Viento | 4,3 | 0,75 MB | 0,82 MB |
+| Futurista | 4,3 | 0,75 MB | 0,82 MB |
+| Guitarra eléctrica | 4,4 | 0,77 MB | 0,84 MB |
+| Piano | 5,2 | 0,92 MB | 1,00 MB |
+
+O sea, **≈ 0,5 – 1 MB por paquete** (los 6 a la vez serían 4,3 – 4,7 MB). Los ≈ 1 MB de cuerdas de la Guitarra de la tabla de abajo pasan a ser intermedios y se pueden soltar al terminar de renderizar.
+
+**No probado:** nada de esto se ejecutó en un teléfono ni en el emulador (solo se leyó la librería): falta medir cuánto tarda renderizar en un Android modesto, que el render nativo suene igual que el del navegador (`PeriodicWave`, `WaveShaper` con `oversample`, filtros) y la latencia al tocar rápido. Diferencia conocida frente al vivo: cada evento queda con el mismo tramo de ruido en cada repetición. **La web de esta carpeta no cambia:** sigue sintetizando en vivo (`sonidos.js` no se tocó).
 
 ### Costo estimado (medido en el navegador de escritorio; en teléfono hay que medirlo)
 
@@ -1328,3 +1393,289 @@ Me baso en que cada uno usa la receta clásica de su instrumento y en que las me
 ### Cómo verlo en esta carpeta
 
 Sección "Premios", interruptor en **Con cambios**: "Sonidos" pasa de 3 a 9 filas (los 6 nuevos con "nuevo", su requisito y una frase, y un pie explicativo). **Clic en una fila** para elegirla: suena una muestra corta (toque, toque, destruir, combo); luego **toca bloques** del panel "Vista previa": cada toque suena (más agudo cuanto más toques) y el último, el de destruir. Con **Ahora** quedan los 3 de siempre, idénticos. Para escucharlos aparte: `config_logros/sonidos_muestras/*.wav`. Para repetir la medición: servir `config_logros` por HTTP, abrir `herramientas/prueba-sonidos/medir.html` y ejecutar `await TBMedir.correr(false)` en la consola (resultados guardados en `herramientas/prueba-sonidos/resultados.json`). En el navegador el contexto de audio nace en el primer clic (política de autoplay de los navegadores).
+
+---
+
+## CAMBIO-025 · Nueva forma de entregar los premios
+
+- **Estado:** propuesto (2026-11-26). Las reglas de entrega son **decisión del usuario** (2026-11-26); el reparto de los 21 efectos y fondos entre los escalones de logro es **mi propuesta, por confirmar**. Maquetado en la web de esta carpeta (interruptor "Con cambios"); **el juego no se tocó**.
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**. Incluye el reset A como código (script manual **sin ejecutar**) y las celebraciones desde la cuenta; el reparto vigente es el de CAMBIO-026.
+- **Actualización (2026-11-26):** decisiones del usuario más abajo (**reset aprobado, alcance A: todo**; la paleta "Constancia" pasa a llamarse **"Amistad"**; celebraciones aprobadas; los premios del porcentaje se quedan; CAMBIO-001 se aplicará). **Ampliado por CAMBIO-026:** los 7 escalones vacíos ya tienen premio.
+- **Qué:**
+  1. Los **6 sonidos nuevos** se generan una vez con código y se reutilizan desde memoria (detalle en CAMBIO-024).
+  2. La paleta **Constancia** pasa a ganarse **invitando a un 2.º amigo** (hoy: reto diario 7 días seguidos). **Corazones** se queda (1.er amigo).
+  3. El fondo **Bosque nocturno** se gana **invitando a un 3.er amigo**.
+  4. **Un sonido por insignia**, desde Marimba: Papel → Diamante (escalón 1 de cada una). 8 bits y Suave no cambian. El orden de la lista de `coleccion.js` ya era Marimba, Palitos, Electrónico, Viento, Piano, Guitarra, Futurista: no se reordenó.
+  5. **Efectos y fondos se ganan por los logros**, salvo Clásico y Liso (inicio), Corazones y Bosque nocturno (invitar). **Dejan de ganarse por nivel**; las paletas siguen por nivel (CAMBIO-016).
+- **Depende de:** CAMBIO-001 y 005 (insignia Papel a los 20 s), 009 y 010 (logro "Partidas jugadas" y siete materiales), 022, 023 y 024 (los premios nuevos). CAMBIO-003 define el texto de Diamante (2 s).
+
+### Premio → requisito
+
+| Premio | Tipo | Requisito propuesto | Hoy |
+|---|---|---|---|
+| 8 bits | sonido | Desde el inicio | igual |
+| Suave | sonido | Termina tu primera partida | igual |
+| Marimba | sonido | Insignia Papel (llega al 4) | Insignia Plata |
+| Palitos | sonido | Insignia Cartón (llega al 6) | no existe |
+| Electrónico | sonido | Insignia Madera (llega al 8) | no existe |
+| Viento | sonido | Insignia Bronce (sumas y restas) | no existe |
+| Piano | sonido | Insignia Plata (multiplicaciones y divisiones) | no existe |
+| Guitarra eléctrica | sonido | Insignia Oro (etapa final) | no existe |
+| Futurista | sonido | Insignia Diamante (bloques de 2 s) | no existe |
+| Clásico | efecto | Desde el inicio | igual |
+| Chispas | efecto | Partidas jugadas · Papel (10) | Insignia Madera III (llega al 8) |
+| Emojis | efecto | Días seguidos de reto · Papel (3) | no existe |
+| Confeti | efecto | Máximo combo · Cartón (racha de 25) | Racha de 25 |
+| Burbujas | efecto | Mejor resultado en reto · Cartón (25 %) | no existe |
+| Ondas | efecto | Días seguidos de reto · Madera (14) | no existe |
+| Rayos | efecto | Máximo combo · Bronce (100) | no existe |
+| Monedas | efecto | Partidas jugadas · Bronce (500) | no existe |
+| Fuegos artificiales | efecto | Mejor resultado en reto · Diamante (99 %) | no existe |
+| Corazones | efecto | Invita a 1 amigo (cuenta) | igual |
+| Liso | fondo | Desde el inicio | igual |
+| Grilla | fondo | Máximo combo · Papel (10) | Nivel 5 |
+| Rayas | fondo | Mejor resultado en reto · Papel (participar) | no existe |
+| Estrellas | fondo | Partidas jugadas · Cartón (50) | Nivel 10 |
+| Puntos | fondo | Días seguidos de reto · Cartón (7) | no existe |
+| Circuito | fondo | Máximo combo · Madera (50) | no existe |
+| Aurora | fondo | Partidas jugadas · Madera (150) | Nivel 20 |
+| Hexágonos | fondo | Mejor resultado en reto · Madera (50 %) | no existe |
+| Atardecer | fondo | Días seguidos de reto · Bronce (30) | no existe |
+| Océano | fondo | Máximo combo · Plata (200) | no existe |
+| Lluvia | fondo | Mejor resultado en reto · Plata (90 %) | no existe |
+| Nebulosa | fondo | Máximo combo · Oro (300) | no existe |
+| Nieve | fondo | Partidas jugadas · Oro (3.000) | no existe |
+| Luciérnagas | fondo | Días seguidos de reto · Oro (200) | no existe |
+| Bosque nocturno | fondo | Invita a un 3.er amigo (cuenta) | no existe |
+| Constancia | paleta | Invita a un 2.º amigo (cuenta) | Reto diario 7 días seguidos |
+
+### Reparto por logro (21 premios en 28 escalones)
+
+**Reemplazado/ampliado por CAMBIO-026:** la distribución vigente es la de CAMBIO-026 (28 premios en 28 escalones); esta tabla queda como la propuesta anterior.
+
+(E = efecto, F = fondo; entre paréntesis, el umbral de CAMBIO-010.)
+
+| Logro | Papel | Cartón | Madera | Bronce | Plata | Oro | Diamante | Premios |
+|---|---|---|---|---|---|---|---|---|
+| Máximo combo | Grilla F (10) | Confeti E (25) | Circuito F (50) | Rayos E (100) | Océano F (200) | Nebulosa F (300) | — (500) | 6 |
+| Partidas jugadas | Chispas E (10) | Estrellas F (50) | Aurora F (150) | Monedas E (500) | — (1.500) | Nieve F (3.000) | — (6.000) | 5 |
+| Días seguidos de reto | Emojis E (3) | Puntos F (7) | Ondas E (14) | Atardecer F (30) | — (100) | Luciérnagas F (200) | — (365) | 5 |
+| Mejor resultado en un reto (%) | Rayas F (0) | Burbujas E (25) | Hexágonos F (50) | — (75) | Lluvia F (90) | — (95) | Fuegos E (99) | 5 |
+
+**Sin premio (7):** Máximo combo Diamante; Partidas Plata y Diamante; Días de reto Plata y Diamante; Mejor resultado Bronce y Oro. **Reemplazado/ampliado por CAMBIO-026:** los 7 tienen premio.
+
+**Criterio:** cada Papel da algo y los clásicos quedan de Papel a Madera, en el logro que menos le quita a quien ya los tiene; lo vistoso (Nebulosa, Nieve, Luciérnagas, Fuegos) va en Oro y Diamante, y los Diamante casi inalcanzables quedan vacíos para no esconder un premio donde nadie llega. (**Reemplazado/ampliado por CAMBIO-026** en lo de los vacíos.)
+
+**Ojo con la dificultad (leído del código, sin datos de jugadores):**
+- **Mejor resultado en un reto diario:** un día con **menos de 10 jugadores** vale 0 (`apps/api/src/daily/daily.service.ts:30` y `:329-333`). Si los días no llegan a 10, **Burbujas, Hexágonos, Lluvia y Fuegos no se pueden ganar** (Rayas sí: basta participar). Con 10 jugadores, 90 % y 99 % exigen quedar 1.º (`betterThanPct`, `:65-67`); 50 %, entre los 5 primeros; 25 %, entre los 7 primeros. Antes de aplicar, mirar cuántos juegan cada día. **Cerrada (2026-11-26): se quedan como están** (ver "Decisiones del usuario").
+- **Máximo combo 300** puede ser inalcanzable en la práctica (duda ya anotada en CAMBIO-010): Nebulosa depende de eso.
+- **Nieve** (3.000 partidas) y **Luciérnagas** (200 días seguidos, con el perdón de 1 por cada 7) son metas de muchos meses.
+- 10 de los 21 premios dependen del reto diario (sin la API quedan ocultos). Con CAMBIO-026 son 14 de 28.
+
+### ¿Se puede calcular todo con lo que ya existe?
+
+**Sí, sin tocar la API ni la base de datos**, con un solo campo que falta en las estadísticas del catálogo.
+
+| Dato | Para | De dónde sale hoy |
+|---|---|---|
+| `bestStreak` | Máximo combo | `CatalogStats` (`apps/client/src/cosmetics/catalog.ts:17`); solo partidas normales (`lib/stats.ts:138`) |
+| `runs` | Partidas jugadas (**sí: partidas jugadas = `runs`**, de cualquier modo) | `catalog.ts:19-20`; con sesión, `totalRuns` (`cosmetics/active.ts:21`; API `stats.service.ts:80`). Es el **máximo** entre dispositivo y cuenta, no la suma (`lib/stats.ts:163-172`) |
+| `dailyStreakBest` | Días seguidos de reto | `catalog.ts:25-26`, `active.ts:25` |
+| `bestDailyPct` | Mejor resultado en un reto | **No está en `CatalogStats`**: existe en `Me.stats.bestDailyPct` (`api/types.ts:19`) y en `DailyLocal.bestPct` (`lib/daily.ts:233`). Hay que agregarlo |
+| `invitedCount` | Corazones, Constancia, Bosque | `catalog.ts:23-24`, `active.ts:24` |
+| `bestTicks` | Sonidos por insignia | `catalog.ts:15-16` y `tierIndexOfStats` (`:173-175`) |
+| `totalKilled` + `bonusXp` | Paletas por nivel | `catalog.ts:195-196` |
+
+**Cuidado:** en dispositivos anteriores a `tb_stats1`, `runs` se reconstruyó desde el historial, que guarda como máximo 30 partidas (`lib/stats.ts:27-47`): un invitado veterano puede figurar con menos partidas de las que jugó.
+
+### Dónde implementarlo (cliente; líneas leídas el 2026-11-26)
+
+1. **Motor** `packages/engine/src/achievements.ts` (`:6`, `:23`, `:26-31`, `:43`): primero CAMBIO-009 y 010 (id `partidas`, siete materiales).
+2. **`cosmetics/catalog.ts`**: `CatalogStats` (`:14-37`) suma `bestDailyPct`; `Requirement` (`:39-52`) suma `{ kind: 'achievement', id, level }`; `goalOf` (`:111-128`) arma el texto con `achievementById` / `achievementGoal` (nada de umbrales a mano); `meets` (`:185-202`) usa `achievementLevel(id, valor) >= level`; `missingText` (`:235-268`) según la estadística; `CATALOG` (`:135-159`) con los requisitos de la tabla y el orden nuevo. `requires: 'daily'` en los de los dos logros del reto; **`'accounts'` en Constancia** (hoy `'daily'`, `:144`) y Bosque. `achievementValues` hoy vive en `game/celebrations.ts:74-76`, que importa el catálogo: moverlo a un módulo puro para no crear un ciclo.
+3. **`cosmetics/active.ts:20-27`** (`catalogStatsFor`) y **`game/endPrize.ts:45-57`** (`endStats`) + `screens/GameScreen.tsx:437-439` y `:474-479`: pasar el porcentaje. Regla de hoy: con sesión el de la cuenta, de invitado el del dispositivo (`screens/CollectionScreen.tsx:329-330`, `components/CelebrationHost.tsx:33`). Con esa regla, un invitado **pierde sus premios de porcentaje al iniciar sesión** hasta que el servidor calcule el suyo (decisión 4).
+4. **`screens/CollectionScreen.tsx`**: `ItemRow` (`:261-305`) dibuja el icono hexagonal del logro (CAMBIO-011) donde hoy dibuja la insignia (`:294`); "necesitas una cuenta" ya sale (`:277`); `listed` (`:307-311`) ya oculta lo que no existe; `achievementValue` (`:321-332`). Opcional: "Premio: …" en la tarjeta de Logros (`:334-366`, `:451-457`), como en la tabla de esta web.
+5. **Celebraciones** (`game/celebrations.ts`): `reasonText` (`:236-253`) suma el caso de logro; `OUTSIDE_KINDS` (`:139`) debe incluirlo; `runCelebrations` (`:112-127`) mostraría dos ventanas por un mismo escalón (el logro y su premio): decidir si se juntan. `ownedKeys` (`:205-216`) y `lib/collectionScore.ts:10-12` (el punto de novedad) cambian de cuenta.
+   - **Dos huecos vistos al leer (no ejecutados):** (a) `CelebrationHost.tsx:37` arma la foto local con `me = null`, así que `invitedCount` siempre es 0 ahí: **los premios por invitar (hoy Corazones) no se celebrarían**, solo se registran (`celebrationQueue.ts:165-177`); (b) con sesión, `bestDailyPct` llega del servidor y se registra sin celebrar: **los premios de porcentaje no se anunciarían a quien tiene cuenta**. **Decidido (2026-11-26): se arreglan los dos** (ver "Celebraciones por invitar y por porcentaje").
+6. **Sonidos por insignia:** el tipo `tier` ya existe; solo cambian los índices. **Requiere el arreglo de CAMBIO-001** (`tierIndexForTicks` y `catalog.ts:173-175` deben dar "sin insignia" bajo 20 s); si no, Marimba se ganaría con cualquier partida, igual que Suave. **Dependencia cerrada (2026-11-26):** CAMBIO-001 se aplicará.
+7. **Pruebas:** `cosmetics/catalog.test.ts` (`:74-89`, `:130-146`, `:164-180`), `game/celebrations.test.ts` (`:119-127`), `game/endPrize.test.ts` (premios por insignia y por nivel). Docs: `docs/reglas-y-balance.md` (tabla de premios), `docs/plan-jugabilidad.md`, `docs/arquitectura.md` y el motivo en `docs/historia-y-decisiones.md`.
+
+### Invitados sin cuenta
+
+- **Invitar exige cuenta** (de quien invita y de quien responde "¿Quién te invitó?", una sola vez: `apps/api/src/social/social.service.ts:16-39`): un invitado ve Corazones, Constancia y Bosque bloqueados con "necesitas una cuenta". Sin API ni cuentas se ocultan.
+- Tres amigos = los tres premios de invitar, y coincide con el tope de corazones (5 + 3 = 8).
+- El conteo se calcula (`users.service.ts:97`): si un invitado **borra su cuenta** (`:170`), baja, y quien lo invitó perdería el premio.
+- Los **logros del reto** funcionan también sin cuenta (datos del dispositivo), pero dependen de que el reto exista; el porcentaje de un invitado es el "habrías quedado".
+
+### No quitar lo ya ganado (análisis previo al reset)
+
+**Actualización (2026-11-26):** el usuario respondió con un **reset aprobado** (ver "Decisiones del usuario"). Lo que sigue sirve para elegir el alcance.
+
+Hoy nada se guarda como "ganado": todo se recalcula (`catalog.ts:4-6`). Al publicar, quien no cumpla el requisito nuevo **deja de tener** el premio.
+
+| Premio | Hoy → propuesto | ¿Quién lo perdería? (sin datos reales) |
+|---|---|---|
+| **Constancia** | 7 días de reto → 2 invitados | **El riesgo principal:** todos los que la tienen y no invitaron a 2 (incluidos todos los invitados sin cuenta) |
+| **Aurora** | nivel 20 (9.500 bloques) → 150 partidas | Quien tiene los bloques con menos de 150 partidas (más de 63 por partida de promedio): verosímil |
+| **Estrellas** | nivel 10 (2.250) → 50 partidas | Quien los tiene con menos de 50 partidas (más de 45 de promedio): verosímil |
+| Chispas | insignia a los 100 s → 10 partidas | Quien llegó a 100 s con menos de 10 partidas: pocos |
+| Grilla | nivel 5 (500) → combo 10 | Casi nadie (500 bloques sin 10 seguidos en una partida normal) |
+| Confeti | racha 25 → combo 25 | Nadie (misma cifra) |
+| Marimba | Plata (275 s) → Papel (20 s) | Nadie: quien tiene Plata ya pasó los 20 s. La ganan muchos más |
+| Corazones | sin cambio | Nadie |
+| Paletas por insignia | → nivel | Ver CAMBIO-016 |
+
+- **Selección guardada:** `tb_set1` no se borra; `resolveSelection` (`catalog.ts:283-291`, usado en `active.ts:36-46`) usa el valor por defecto (Clásica, 8 bits, Clásico, Liso) **sin avisar**, y el premio vuelve solo si se recupera. Como su clave `item:<tipo>:<id>` ya está en `tb_cele1`, al recuperarlo no se celebraría de nuevo.
+- **Opciones (ninguna definitiva):** (A) aceptar la pérdida; (B) para los premios que ya existen, "requisito nuevo **o** el de hoy" (nadie pierde, sin guardar nada, pero la vía vieja queda abierta también para jugadores nuevos); (C) guardar una vez, al actualizar, lo ya desbloqueado (clave nueva; no viaja entre dispositivos sin cambiar la API y rompe el "nada se guarda como ganado"); (D) mover Estrellas, Aurora o Constancia a metas más bajas (reduce el problema, no lo elimina). Antes de elegir, contar en la base cuántas cuentas perderían cada uno.
+
+### Qué NO cambia
+
+El motor de juego y sus reglas (los cambios de `achievements.ts` son los de CAMBIO-008 a 010), el replay, la API, la base de datos, `RULES_VERSION`, rankings, récords, historial y las claves `tb_*` (`tb_best5`, `tb_hist5`, `tb_stats1`, `tb_set1`, `tb_cele1`). Ningún premio da ventaja. Dibujos, sonidos y colores de los premios tampoco cambian. (El **reset aprobado** es aparte: lo que borre depende del alcance, ver abajo.)
+
+### Frases de cambios anteriores que quedan obsoletas
+
+Además de las marcadas "Reemplazado por CAMBIO-025" (016, 022, 023 y 024): los efectos sobre los fondos por nivel de CAMBIO-004 (incluida su alternativa 4 / 9 / 19), "Ningún premio del catálogo depende de este logro" de CAMBIO-009 y 010, y las menciones a Chispas con la insignia Madera (CAMBIO-005).
+
+### Decisiones del usuario (2026-11-26)
+
+1. **Premios del porcentaje del reto: se quedan donde están. CERRADA.** El usuario: "ya tenemos base de jugadores y tendremos más, no te preocupes". La regla de menos de 10 jugadores no cambia y ningún premio se mueve (con CAMBIO-026 se suman Topografía en Bronce, 75 %, y Vitral en Oro, 95 %: con 10 jugadores exigen quedar entre los 3 primeros y 1.º).
+2. **Lo ya ganado: reset aprobado por el usuario (alcance por confirmar).** El usuario: "Haremos un reset; ahora solo tenemos testers, hartos pero testers que saben de este cambio." Reemplaza las opciones A–D de "No quitar lo ya ganado" como respuesta de fondo. Es la aprobación que pide el `CLAUDE.md` de la raíz para un reinicio, pero **no dice qué se borra**: antes de ejecutar nada hay que confirmar el alcance.
+3. **Celebraciones: agregarlas. CERRADA.** El usuario: "agrégalo". Los premios por invitar (Corazones, Constancia, Bosque nocturno) y los del porcentaje del reto (con cuenta) deben mostrar la ventana de celebración.
+4. **Marimba / CAMBIO-001: CERRADA.** El usuario: "ese cambio irá". CAMBIO-001 se aplicará, así que Marimba exige de verdad la insignia Papel (20 s).
+
+### Reset: qué se borra con cada alcance posible
+
+Leído del código el 2026-11-26, solo lectura (no se ejecutó nada ni se miró la base). Los alcances A, B y C son ejemplos para elegir; **ninguno está decidido**.
+
+- **A, todo:** las cuentas se conservan; partidas, rankings, estadísticas, nivel, logros e invitaciones vuelven a cero.
+- **B, solo lo que da premios:** estadísticas de cuenta y de dispositivo y reto diario (y, si se quiere, invitaciones); rankings y récord se quedan.
+- **C, subir `RULES_VERSION`** (y pasar a `tb_best6`/`tb_hist6`): el procedimiento de la raíz y de `docs/desarrollo.md:96-101`. **Verificado: no reinicia nivel, logros, insignias, racha, porcentaje ni invitaciones**, así que casi todos los premios se quedan.
+
+| Dato (dónde) | Qué premios o cosas dependen | A | B | C |
+|---|---|---|---|---|
+| Rankings y récord de cuenta: `BestScore` por `rulesVersion` (`apps/api/prisma/schema.prisma:254-275`; `leaderboards.service.ts:28`; `best-scores.service.ts:26`; `users.service.ts:197-206`) | Ningún premio | se borra | se queda | reinicia (lo viejo queda guardado, sin mostrarse) |
+| Partidas del servidor: `Run` (`runs.service.ts:355`) | Historial; intentos del reto (`daily.service.ts:139-141`) | se borra | se queda | el historial deja de mostrar las viejas |
+| Desafíos (`challenges.service.ts:43-44`, `:74`) | Ningún premio | se borra | se queda | los de la versión anterior dejan de servir |
+| `UserStats`: `bestTicks`, `bestStreak`, `totalKilled`, `totalRuns`, `bonusXp`, `bestDailyPct` (`schema.prisma:233-252`; `stats.service.ts:68-84`) | Insignia y sonidos, paletas por nivel, logros de combo, partidas y porcentaje | a cero | a cero | **se queda** |
+| Reto diario: `DailyEntry` (`schema.prisma:163-185`; racha en `stats.service.ts:136-143`) | Logro y premios de días seguidos | se borra | se borra | **se queda** |
+| Invitaciones: `User.invitedById` (`users.service.ts:97-98`; `social.service.ts:16-45`) | Corazones, Constancia, Bosque y los corazones extra | a cero (y podrán volver a responder "¿Quién te invitó?") | a elegir; borrarlas quita vidas extra | **se queda** |
+| Misiones: `MissionReward` (`schema.prisma:289-303`; `missions.service.ts:55-73`) | Evita cobrar dos veces; su XP ya está en `bonusXp` | se borra | se queda | se queda |
+| Cuentas, sesiones, seguidos y bloqueos | Acceso | se quedan | se quedan | se quedan |
+| `tb_best5`, `tb_hist5` (`lib/historyKeys.ts:6-7`) | Récord e historial del dispositivo | claves nuevas | se quedan (ver trampa 3) | claves nuevas |
+| `tb_stats1` (`lib/stats.ts:6-10`; no depende de la versión) | Premios del dispositivo | clave nueva | clave nueva | **se queda** |
+| `tb_daily1` (`lib/daily.ts:25`, `:232-233`) | Racha y porcentaje de invitado | clave nueva | clave nueva | se queda |
+| `tb_cele1`, `tb_cele1p` (`game/celebrationQueue.ts:18-19`) | Celebraciones ya vistas | clave nueva | clave nueva | se queda |
+| `tb_set1` (selección), `tb_me1` (copia de la cuenta, `api/session.ts:9-10`), `tb_miss1` (`lib/missions.ts:15`) | Comodidad y copias | `tb_set1` puede quedarse; las copias, limpiarlas | igual | se quedan |
+| **Premios después** | | nadie conserva ninguno ganado | nadie, salvo los de invitar si no se borran | **se conservan** (solo se reinician rankings, récord e historial) |
+
+**Trampas a resolver si se elige A o B** (todas leídas, ninguna probada):
+
+1. El servidor vuelve a calcular `bestDailyPct` desde `DailyEntry` de los últimos 7 días (`daily.service.ts:319-335`, llamado en `:270`): si no se borra `DailyEntry`, el porcentaje revive.
+2. El cliente usa el **máximo** entre dispositivo y cuenta (`lib/stats.ts:163-172`, `cosmetics/active.ts:20-27`): hay que reiniciar los dos lados.
+3. Si falta `tb_stats1`, se reconstruye desde el historial y el récord (`lib/stats.ts:27-73`): renombrar solo esa clave **revive** datos. En B (que conserva `tb_best5`) hay que quitar esa reconstrucción.
+4. En B desaparece la insignia que acompaña al récord en los rankings (sale de `bestTicks`).
+5. Toda clave `tb_*` nueva se suma a `CLAVES` de la web vieja (`deploy/gh-pages-redirect/index.html:58-63` y `404.html`) y a `REGLAS` del script (`apps/client/public/index.html:129-226`), con sus pruebas (`lib/mudanza.test.ts`).
+6. Los APK instalados conservan sus datos locales y siguen mostrando sus premios; sin subir `RULES_VERSION`, sus partidas siguen entrando y vuelven a sumar. Si se sube, el servidor las rechaza (`runs/run-verification.ts:95`; el cliente avisa en `game/rankedRun.ts:117`).
+7. No vi ninguna herramienta de reinicio en la API (los borrados de `apps/api/src` son limpiezas, moderación y borrar cuenta): A o B se harían con una migración o SQL, **con respaldo previo**.
+
+**Frases de cambios anteriores:** varios dicen "no sube `RULES_VERSION` ni toca rankings, récords o claves `tb_*`". Siguen siendo ciertas para cada cambio por sí solo (ninguno lo exige) y no se reescriben; **si el reset usa `RULES_VERSION` o claves nuevas, quedan superadas** por esta decisión (vale también para "Qué NO cambia" de esta entrada y de CAMBIO-026).
+
+### Celebraciones por invitar y por porcentaje (decidido; dónde implementarlo)
+
+Líneas leídas el 2026-11-26; nada ejecutado.
+
+- **Hoy:** la ventana la muestra `components/CelebrationHost.tsx`, montado solo en `screens/GameScreen.tsx:934`. Al terminar una partida se ofrece `runCelebrations` (`GameScreen.tsx:487`; `game/celebrations.ts:112-127`), que no incluye invitados ni porcentaje. Lo de fuera de la partida sale de `outsideCelebrations` (`celebrations.ts:139` y `:155-164`) vía `observeCelebrations` (`celebrationQueue.ts:165-177`), que solo celebra datos del dispositivo en los 2 min tras una partida (`:143`) y **registra en silencio** lo de la cuenta (`:175`). Además la foto local se arma sin cuenta (`CelebrationHost.tsx:37`): invitados siempre 0.
+- **Propuesta:** en `observeCelebrations`, antes de `:175`, con sesión, ofrecer (`offerCelebrations`, `:124-133`) lo que el jugador tiene y **no está en `tb_cele1`** de estos grupos: premios por invitar y el logro "Mejor resultado en un reto" con sus premios. Comparar con lo guardado, no con la foto anterior, hace que salga aunque ocurriera con la app cerrada. La primera siembra (`:170`) sigue en silencio. Efecto a aceptar: al entrar con la cuenta en un dispositivo ya sembrado se celebrarían una vez los ya ganados en otro.
+- **Que llegue a tiempo:** `useMeRefresh` (`api/hooks.ts:20-23`) solo se usa en la Colección (`CollectionScreen.tsx:380`) y el Perfil (`ProfileScreen.tsx:700`); llamarlo también al volver al inicio del juego.
+- **Textos:** `reasonText` (`celebrations.ts:236-253`) suma el caso de logro (punto 5 de "Dónde implementarlo"). **Pruebas:** `game/celebrations.test.ts:119-142` y `game/celebrationQueue.test.ts`.
+
+### Decisión abierta
+
+- **Alcance del reset: CERRADO (2026-11-27): opción A, todo.** Las cuentas se conservan; partidas, rankings, récords, historial, estadísticas, nivel, logros, insignias, reto diario, misiones, desafíos e invitaciones vuelven a cero (en el servidor y en los dispositivos). Las trampas de abajo deben quedar resueltas al implementarlo. **Borrar datos de producción exige una confirmación expresa en el momento de desplegar.**
+- **Nombre de la paleta "Constancia": CERRADO (2026-11-27): pasa a llamarse "Amistad"** (ya no premia volver cada día, premia invitar). Cambia solo el nombre visible; el id interno `constancia` se mantiene para no perder la selección guardada ni las claves de celebración.
+
+Cerradas el 2026-11-26: qué pasa con lo ya ganado (reset), premios del porcentaje y celebrar los premios por invitar y por porcentaje.
+
+**Sin respuesta del usuario (no se dan por cerradas; la propuesta sigue tal cual):** confirmar el reparto 4 × 7 (con CAMBIO-026); porcentaje al pasar de invitado a cuenta (¿el de la cuenta, como hoy, o el mayor?); si logro y premio salen en una sola ventana; revisar con datos si alguien llega a combo 300.
+
+### Cómo verlo en esta carpeta
+
+Interruptor en **Con cambios**: los paneles Sonidos, Efectos, Fondos y Paletas muestran el requisito nuevo (con la insignia o la medalla hexagonal del logro en miniatura) y el de hoy tachado; efectos y fondos van ordenados de Papel a Diamante, con los de invitar al final. La tabla **Logros** muestra "Premio: …" bajo cada escalón que entrega algo. La recta de bloques marca los niveles de las paletas (hasta el 30). Datos en `coleccion.js` (`reqNuevo`, tipos `logro` e `invitados`; los textos salen de `LOGROS`). La vista previa sigue permitiendo elegir todo. Con **Ahora** la página queda como antes.
+
+---
+
+## CAMBIO-026 · 5 fondos y 2 efectos más: los 28 escalones de logro con premio
+
+- **Estado:** propuesto (2026-11-26). Pedido del usuario: crear 2 efectos al destruir y 5 fondos y repartirlos entre los 7 escalones sin premio. Los dibujos y el reparto son **mi propuesta**. Maquetado en la web de esta carpeta; **el juego no se tocó**.
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**. Reparto por confirmar (B16).
+- **Qué:** con "Con cambios" hay **20 fondos** (antes 15) y **12 efectos** (antes 10); "Ahora" sigue en 4 y 4. Amplía CAMBIO-022, 023 y 025.
+
+### Los premios nuevos
+
+| id | Nombre | Descripción | Cómo en React Native (solo lo ya instalado) | Escalón que lo entrega |
+|---|---|---|---|---|
+| `topografia` (fondo) | Topografía | Curvas de nivel doradas sobre verde oliva | `View` con degradado y un `Svg` con `Pattern` de 200×200 (un mismo trazo cerrado repetido y escalado). Estático. No verifiqué `vectorEffect` en `react-native-svg`: si no sirve, calcular los trazos ya escalados | Mejor resultado en un reto · Bronce (75 %) |
+| `ciudad` (fondo) | Ciudad nocturna | Rascacielos con ventanas encendidas | `View` con degradado y un `Svg` con dos `Pattern` (lejos 200×150, cerca 240×112) y círculos de estrellas. Estático | Partidas jugadas · Plata (1.500) |
+| `cristales` (fondo) | Cristales | Cuarzos turquesas y violetas | `View` con degradados y un `Svg` (`Pattern` de prismas 220×130, un grupo en el techo 120×76 y destellos). Estático | Días seguidos de reto · Plata (100) |
+| `vitral` (fondo) | Vitral | Vidrios de colores con uniones de plomo | `View` base, `Svg` con `Pattern` (dibujo de 150 con `Use`, a 196 px) y un `View` con degradados encima. Estático | Mejor resultado en un reto · Oro (95 %) |
+| `galaxia` (fondo) | Galaxia | Galaxia espiral que gira muy lento (**animado**) | `View` con degradado y **un** `Animated.View` con un `Svg` (trazos, `strokeDasharray`, `RadialGradient`); un valor compartido, 90 s por vuelta, quieta con `useReducedMotion` | Partidas jugadas · Diamante (6.000) |
+| `pixeles` (efecto) | Píxeles | El bloque se rompe en píxeles que saltan a pasos, como en 8 bits | 12 `Animated.View` cuadrados de 13 px (4×3, 3 tonos del color del bloque); 640 ms en 8 pasos de tiempo, posición en rejilla de 4 px, gravedad, se apagan de golpe. Movimiento reducido: 6, 450 ms, desvanecido suave | Máximo combo · Diamante (500) |
+| `fugaces` (efecto) | Estrellas fugaces | Estrellas con estela que cruzan el bloque en diagonal | 5 estrellas (estela `View` de 48–70×5 con `linear-gradient` + `Text` ★ U+2605 de 19–25 px) y un destello: 11 nodos; dirección 148°, 115–155 px, escalonadas ~55 ms, 400–520 ms (total ≤ 760 ms). Movimiento reducido: 2 estrellas (4 nodos), sin destello ni giro, la mitad del recorrido | Días seguidos de reto · Diamante (365) |
+
+Sin librerías nuevas (`react-native-svg` 15.16, `react-native-reanimated` 4.7.1 y `backgroundImage` ya se usan). Con Galaxia son **4** los fondos animados (Lluvia, Nieve, Luciérnagas, Galaxia).
+
+### Distribución completa (reemplaza la tabla de reparto de CAMBIO-025)
+
+(E = efecto, F = fondo; entre paréntesis, el umbral; en **negrita**, lo nuevo.)
+
+| Logro | Papel | Cartón | Madera | Bronce | Plata | Oro | Diamante |
+|---|---|---|---|---|---|---|---|
+| Máximo combo | Grilla F (10) | Confeti E (25) | Circuito F (50) | Rayos E (100) | Océano F (200) | Nebulosa F (300) | **Píxeles E** (500) |
+| Partidas jugadas | Chispas E (10) | Estrellas F (50) | Aurora F (150) | Monedas E (500) | **Ciudad nocturna F** (1.500) | Nieve F (3.000) | **Galaxia F** (6.000) |
+| Días seguidos de reto | Emojis E (3) | Puntos F (7) | Ondas E (14) | Atardecer F (30) | **Cristales F** (100) | Luciérnagas F (200) | **Estrellas fugaces E** (365) |
+| Mejor resultado en un reto (%) | Rayas F (0) | Burbujas E (25) | Hexágonos F (50) | **Topografía F** (75) | Lluvia F (90) | **Vitral F** (95) | Fuegos E (99) |
+
+**Criterio:** los 2 efectos van a los dos Diamante de hazaña más dura (500 de combo y 365 días), lo más vistoso a los otros huecos altos (Galaxia, animada, en Diamante; Vitral en Oro; Ciudad y Cristales en Plata) y lo más calmado (Topografía) al Bronce. Son 28 premios en 28 escalones (10 efectos y 18 fondos), cada uno una vez. **14 dependen del reto diario** (antes 10 de 21). CAMBIO-025 prefería dejar vacíos los Diamante casi inalcanzables; el usuario pidió llenarlos.
+
+### Legibilidad (medida en la web, con la herramienta de CAMBIO-022)
+
+14 de 14 paletas pasan las reglas sobre los 20 fondos (`herramientas/prueba-fondos/RESULTADOS-FONDOS.md`). Ninguna de las 336 ventanas muestreadas por fondo se confunde con la trampa roja `#ff2a2a`. Ventanas parecidas a algún color de bloque (ΔE < 10): 0 en Topografía, Ciudad, Cristales y Vitral; **11 de 336 en Galaxia** (la franja de los brazos, mínima ΔE 3,0), después de atenuarla. Con Contorno y Cristal el contraste del borde contra el fondo baja en puntos sueltos; las tres paletas translúcidas van sobre respaldo opaco. Es una captura (Galaxia gira) y no se midió en el APK.
+
+### Dónde implementarlo (nada aplicado)
+
+1. `cosmetics/catalog.ts`: los 7 premios con el requisito de logro de CAMBIO-025 (`{ kind: 'achievement', id, level }`).
+2. `components/FieldBackground.tsx`: los 5 fondos.
+3. `components/Fx.tsx`: ids `pixeles` y `fugaces` en `BurstEffect`; la vida de la partícula hoy es fija (750 ms para `burst`) y debe poder ser por efecto (Estrellas fugaces llega a 760 ms).
+4. `screens/CollectionScreen.tsx`: sus miniaturas e iconos de efecto.
+5. Pruebas del catálogo y de las celebraciones; `docs/reglas-y-balance.md` (premios), `docs/arquitectura.md` y el motivo en `docs/historia-y-decisiones.md`. Revisar en web y APK (CAMBIO-021).
+
+### Qué más afecta
+
+Peso de la web (dibujos SVG en línea, sin imágenes), batería con un fondo animado más (Galaxia, una sola capa) y el contador de la Colección (más premios). Los de Diamante pueden no verse nunca en la práctica (500 de combo, 365 días seguidos, 6.000 partidas).
+
+### Qué NO cambia
+
+Motor, reglas, replay, API, base de datos, `RULES_VERSION`, rankings, récords, historial y claves `tb_*` (el reset de CAMBIO-025 es una decisión aparte). Ningún premio da ventaja. Los 15 fondos y 10 efectos anteriores no cambian de dibujo ni de escalón.
+
+### Cómo verlo en esta carpeta
+
+Interruptor en **Con cambios**: los 7 aparecen con "nuevo" en Efectos y Fondos y como "Premio: …" en la tabla **Logros** (28 de 28). Clic en la fila y tocar bloques en "Vista previa". Datos en `coleccion.js`; fondos en `extras-fondos.css`; efectos en `preview.js` (`FX_NUEVOS`: `pixeles`, `fugaces`) y `preview.css`.
+
+---
+
+## CAMBIO-027 · Tarjetas de premios de la Colección más cortas, con desplazamiento propio
+
+- **Estado:** pedido por el usuario y aplicado el 2026-11-27, mirando el emulador.
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**.
+- **Pedido (textual):** "las cards que contienen las paletas de colores, los fondos, efectos y sonidos, están muy grandes, puesto que hay muchos, hagamos la card más chica y que sean visibles unos 4 items y dentro de la card haya un scroll para ver el resto de premios de cada card, para que no quede tan larga esa pantalla".
+- **Qué:** las tarjetas Paletas, Sonidos, Efectos al destruir y Fondos del campo muestran 4 filas y la mitad de la 5.ª; el resto se desplaza dentro de la tarjeta, con barra visible (en Android una propia: la nativa salía oscura sobre el fondo y no se veía). Al llegar a un extremo se desplaza la pantalla. Insignia, Experiencia, Logros, Vista previa y la galería de prueba no cambian.
+- **Dónde:** `screens/CollectionScreen.tsx` (`PrizeList`) y `lib/prizeList.ts` (alto con las filas medidas, tope del 60 % de la pantalla; test en `lib/prizeList.test.ts`).
+- **Qué NO cambia:** premios, requisitos, orden, equipar, motor, API ni claves locales. La web de esta carpeta no se actualizó.
+
+## CAMBIO-028 · Efecto Píxeles fluido
+
+- **Estado:** pedido por el usuario y aplicado el 2026-11-27, tras probar la app en su teléfono.
+- **Estado en el juego (2026-11-27):** aplicado en la rama `feat/premios-y-logros`, **sin desplegar**.
+- **Pedido (textual):** "el único detalle es el efecto Pixeles, que no se ve fluido como los demás efectos, está lindo, pero no se ve fluido".
+- **Qué:** los píxeles ya no avanzan en 8 saltos de tiempo sobre una rejilla de 4 px (unos 12 cuadros por segundo, que en el teléfono se veía entrecortado): se mueven de forma continua con la misma trayectoria (salen, suben y caen con gravedad) y se apagan en un desvanecido corto (8 % de la animación) al 62,5 %, 75 % u 87,5 %. Se mantienen los 12 cuadrados de 13 px en tres tonos, la duración (640 ms) y la versión con movimiento reducido. Descripción del premio: "El bloque se rompe en píxeles que saltan y caen, como en 8 bits".
+- **Dónde:** `lib/fxShapes.ts` (`frameAt`, caso `pixel`; test en `lib/fxShapes.test.ts`) y `cosmetics/catalog.ts` (descripción).
+- **Qué NO cambia:** requisito (Máximo combo, escalón 7), motor, API ni claves locales. La web de esta carpeta (`preview.js`) sigue con la versión a pasos.

@@ -2,20 +2,19 @@ import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import type { CatalogItem } from '@/cosmetics/catalog';
-import { getPalette } from '@/cosmetics/palettes';
 import { type EndPrize, prizeTexts } from '@/game/endPrize';
 import { C } from '@/theme';
 import { SmallButton } from './form';
+import { PaletteSwatch } from './PaletteSwatch';
 import { TierBadge } from './TierBadge';
 
 /** Ícono chico del premio: cuatro colores de la paleta, o un símbolo según el tipo. */
 function ItemIcon({ item }: { item: CatalogItem }) {
   if (item.type === 'palette') {
-    const cols = getPalette(item.id).colors;
     return (
       <View style={[styles.icon, styles.swatches]}>
-        {[cols[2], cols[4], cols[0], cols[6]].map((c, i) => (
-          <View key={i} style={[styles.swatch, { backgroundColor: c }]} />
+        {[2, 4, 0, 6].map((i) => (
+          <PaletteSwatch key={i} paletteId={item.id} index={i} size={12} radius={3} />
         ))}
       </View>
     );
@@ -93,6 +92,5 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   swatches: { flexDirection: 'row', flexWrap: 'wrap', padding: 3, gap: 2 },
-  swatch: { width: 12, height: 12, borderRadius: 3 },
   glyph: { color: C.accent, fontSize: 18, fontWeight: '800', lineHeight: 22 },
 });

@@ -46,7 +46,7 @@ describe('dayAggFrom', () => {
       h(addDays(MONDAY, 1), 0, 99, 99_999, 99),
       { k: 7, m: 1, d: at(MONDAY, 12) }, // entrada antigua sin t ni s
     ];
-    expect(dayAggFrom(MONDAY, hist, [])).toEqual({ runs: 3, killed: 37, bestStreak: 9, maxTicks: 1800, playedDaily: false });
+    expect(dayAggFrom(MONDAY, hist, [])).toEqual({ runs: 3, killed: 37, bestStreak: 9, maxTicks: 1800, playedDaily: false, followedToday: false });
   });
 
   it('el reto sin modificador cuenta para todo', async () => {
@@ -56,7 +56,7 @@ describe('dayAggFrom', () => {
       killed: 45,
       bestStreak: 30,
       maxTicks: 9000,
-      playedDaily: true,
+      playedDaily: true, followedToday: false,
     });
   });
 
@@ -68,7 +68,7 @@ describe('dayAggFrom', () => {
       killed: 45,
       bestStreak: 2,
       maxTicks: 300,
-      playedDaily: true,
+      playedDaily: true, followedToday: false,
     });
   });
 });
@@ -76,7 +76,7 @@ describe('dayAggFrom', () => {
 describe('missionViews', () => {
   it('las tres del motor con su avance', async () => {
     const { missionViews } = await load();
-    const agg: DayAgg = { runs: 5, killed: 200, bestStreak: 30, maxTicks: 400 * TICKS_PER_SECOND, playedDaily: true };
+    const agg: DayAgg = { runs: 5, killed: 200, bestStreak: 30, maxTicks: 400 * TICKS_PER_SECOND, playedDaily: true, followedToday: false };
     const views = missionViews(MONDAY, agg, new Set());
     const ms = missionsFor(MONDAY);
     expect(views.map((v) => v.id)).toEqual(ms.map((m) => m.id));
@@ -89,7 +89,7 @@ describe('missionViews', () => {
   it('marca las premiadas', async () => {
     const { missionViews } = await load();
     const ms = missionsFor(MONDAY);
-    const views = missionViews(MONDAY, { runs: 0, killed: 0, bestStreak: 0, maxTicks: 0, playedDaily: false }, new Set([ms[1].id]));
+    const views = missionViews(MONDAY, { runs: 0, killed: 0, bestStreak: 0, maxTicks: 0, playedDaily: false, followedToday: false }, new Set([ms[1].id]));
     expect(views.map((v) => v.rewarded)).toEqual([false, true, false]);
     expect(views.every((v) => !v.done)).toBe(true);
   });
@@ -98,7 +98,7 @@ describe('missionViews', () => {
 describe('premios del invitado', () => {
   it('suma los bloques una sola vez por misión y fecha', async () => {
     const { missionViews, rewardMissions, loadRewarded, stats } = await load();
-    const agg: DayAgg = { runs: 9, killed: 999, bestStreak: 99, maxTicks: 999_999, playedDaily: true };
+    const agg: DayAgg = { runs: 9, killed: 999, bestStreak: 99, maxTicks: 999_999, playedDaily: true, followedToday: false };
     const views = missionViews(MONDAY, agg, loadRewarded(MONDAY));
     const total = views.reduce((a, v) => a + v.reward, 0);
     const before = stats.loadStats().bonusXp;
@@ -116,28 +116,37 @@ describe('premios del invitado', () => {
 
   it('solo premia las cumplidas', async () => {
     const { missionViews, rewardMissions, stats } = await load();
-    const views = missionViews(MONDAY, { runs: 0, killed: 0, bestStreak: 0, maxTicks: 0, playedDaily: false });
+    const views = missionViews(MONDAY, { runs: 0, killed: 0, bestStreak: 0, maxTicks: 0, playedDaily: false, followedToday: false });
     expect(rewardMissions(MONDAY, views)).toEqual([]);
     expect(stats.loadStats().bonusXp).toBe(0);
   });
 
   it('olvida las fechas viejas', async () => {
     const { missionViews, rewardMissions, MISSIONS_KEY } = await load();
-    const full: DayAgg = { runs: 9, killed: 999, bestStreak: 99, maxTicks: 999_999, playedDaily: true };
+    const full: DayAgg = { runs: 9, killed: 999, bestStreak: 99, maxTicks: 999_999, playedDaily: true, followedToday: false };
     const old = addDays(MONDAY, -30);
     rewardMissions(old, missionViews(old, full));
     rewardMissions(MONDAY, missionViews(MONDAY, full));
     expect(Object.keys(JSON.parse(mem.get(MISSIONS_KEY)!))).toEqual([MONDAY]);
   });
 
-  it('guestMissions junta el historial y el reto de tb_daily1', async () => {
+  it('guestMissions junta el historial y el reto de tb_daily2', async () => {
     const { guestMissions, daily } = await load();
     daily.markDailyStarted(MONDAY);
     daily.recordDailyFinish(MONDAY, { killed: 30, missed: 1, durationTicks: 3000, bestStreak: 12 });
     const views = guestMissions(MONDAY, [h(MONDAY, 9, 30, 600, 3)], daily.loadDailyLocal());
-    const agg: DayAgg = { runs: 2, killed: 60, bestStreak: 12, maxTicks: 3000, playedDaily: true };
+    const agg: DayAgg = { runs: 2, killed: 60, bestStreak: 12, maxTicks: 3000, playedDaily: true, followedToday: false };
     const expected = missionsFor(MONDAY).map((m) => ({ ...m, ...missionProgress(m, agg), rewarded: false }));
     expect(views).toEqual(expected);
+  });
+});
+
+describe('reinicio de datos', () => {
+  it('los premios guardados con la clave de antes no cuentan', async () => {
+    mem.set('tb_miss1', JSON.stringify({ [MONDAY]: missionsFor(MONDAY).map((m) => m.id) }));
+    const { loadRewarded, MISSIONS_KEY } = await load();
+    expect(MISSIONS_KEY).toBe('tb_miss2');
+    expect(loadRewarded(MONDAY).size).toBe(0);
   });
 });
 
@@ -153,6 +162,21 @@ describe('pantalla final', () => {
     expect(newlyCompleted(before, null)).toEqual([]);
     // una misión que no estaba antes (otro día) no cuenta
     expect(newlyCompleted([v('x', false)], [v('y', true)])).toEqual([]);
+  });
+
+  it('una premiada que dejó de cumplirse sigue contando como cumplida', async () => {
+    const { isMissionDone, doneCount, progressLabel, newlyCompleted } = await load();
+    // la API, si se deja de seguir después de cobrar "Sigue a un jugador hoy"
+    const unfollowed: MissionView = { ...v('sigue', false), kind: 'follow', rewarded: true };
+    expect(isMissionDone(unfollowed)).toBe(true);
+    expect(isMissionDone(v('a', false))).toBe(false);
+    expect(progressLabel(unfollowed)).toBe('Lista');
+    expect(doneCount([unfollowed, v('b', false)])).toBe(1);
+    // ni al dejar de seguir ni al volver a seguir se anuncia otra vez
+    expect(newlyCompleted([v('sigue', true)], [unfollowed])).toEqual([]);
+    expect(newlyCompleted([unfollowed], [v('sigue', true)])).toEqual([]);
+    // cumplida y premiada entre las dos lecturas
+    expect(newlyCompleted([v('sigue', false)], [unfollowed]).map((m) => m.id)).toEqual(['sigue']);
   });
 
   it('textos del avance', async () => {

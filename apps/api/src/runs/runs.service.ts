@@ -41,6 +41,7 @@ export const DAILY_STARTED_RUN_TTL_MS = 72 * 60 * 60 * 1000;
 export const CHALLENGE_LIVES = BASE_LIVES;
 
 const runNotFound = () => notFound('Partida no encontrada.', 'run_not_found');
+const clientOutdated = () => conflict('Actualiza Touched Block para jugar el reto.', 'client_outdated');
 const ticksToMs = (ticks: number) => Math.round((ticks * 1000) / TICKS_PER_SECOND);
 /** Semilla de 31 bits: cabe en un INTEGER de Postgres y el motor la usa igual (seed | 0). */
 const newSeed = () => randomSeed() & 0x7fffffff;
@@ -88,6 +89,9 @@ export class RunsService {
     const mode = dto.mode ?? 'normal';
     if (dto.challenge !== undefined && mode !== 'duel') throw modeFieldError('challenge');
     if (dto.date !== undefined && mode !== 'daily') throw modeFieldError('date');
+    // un cliente con otras reglas no podría enviar el resultado: se corta antes de crear un reto o
+    // gastar un intento (en las partidas normales juega igual, en local)
+    if (mode !== 'normal' && dto.rulesVersion !== RULES_VERSION) throw clientOutdated();
     const platform = resolvePlatform(dto.platform, userAgent);
     if (mode === 'duel') {
       return dto.challenge === undefined ? this.createDuel(userId, dto, platform) : this.joinDuel(userId, dto.challenge, platform);

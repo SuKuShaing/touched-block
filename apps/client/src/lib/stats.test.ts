@@ -20,11 +20,11 @@ const run = (killed: number, durationTicks: number, bestStreak = 0) => ({ killed
 
 beforeEach(() => mem.clear());
 
-describe('tb_stats1', () => {
+describe('tb_stats2', () => {
   it('si está dañado se reconstruye desde el historial, no desde cero', async () => {
-    mem.set('tb_hist5', JSON.stringify([{ k: 30, m: 1, d: 1, t: 9000, s: 12 }]));
+    mem.set('tb_hist6', JSON.stringify([{ k: 30, m: 1, d: 1, t: 9000, s: 12 }]));
     for (const bad of ['{roto', 'null', '42', '[]']) {
-      mem.set('tb_stats1', bad);
+      mem.set('tb_stats2', bad);
       const { loadStats } = await load();
       expect(loadStats()).toMatchObject({ bestTicks: 9000, bestStreak: 12, totalKilled: 30, runs: 1 });
     }
@@ -34,10 +34,10 @@ describe('tb_stats1', () => {
     const { loadStats, recordStats } = await load();
     expect(loadStats().bestTicks).toBe(0); // esta pestaña leyó antes
     // la otra pestaña llegó a Oro y guardó
-    mem.set('tb_stats1', JSON.stringify({ bestTicks: 21600, bestStreak: 40, totalKilled: 500, runs: 20, bonusXp: 30 }));
+    mem.set('tb_stats2', JSON.stringify({ bestTicks: 21600, bestStreak: 40, totalKilled: 500, runs: 20, bonusXp: 30 }));
     const { after } = recordStats(run(5, 600, 3));
     expect(after).toEqual({ bestTicks: 21600, bestStreak: 40, totalKilled: 505, runs: 21, bonusXp: 30 });
-    expect(JSON.parse(mem.get('tb_stats1')!)).toEqual(after);
+    expect(JSON.parse(mem.get('tb_stats2')!)).toEqual(after);
   });
 
   it('con el almacenamiento bloqueado se acumula en memoria durante la sesión', async () => {
@@ -60,6 +60,29 @@ describe('tb_stats1', () => {
     const { recordStats } = await load();
     const { after } = recordStats(run(50, 30000, 40), { normal: false });
     expect(after).toMatchObject({ bestTicks: 0, bestStreak: 0, totalKilled: 50, runs: 1 });
+  });
+});
+
+describe('reinicio de datos', () => {
+  it('lo guardado con las claves de antes no se lee ni se borra', async () => {
+    const old = {
+      tb_best5: '120',
+      tb_hist5: JSON.stringify([{ k: 120, m: 0, d: 1, t: 30000, s: 50 }]),
+      tb_stats1: JSON.stringify({ bestTicks: 30000, bestStreak: 50, totalKilled: 1500, runs: 64, bonusXp: 120 }),
+    };
+    for (const [k, v] of Object.entries(old)) mem.set(k, v);
+    const { EMPTY_STATS, loadStats, recordStats } = await load();
+    expect(loadStats()).toEqual(EMPTY_STATS);
+    expect(recordStats(run(5, 600, 3)).after).toEqual({ bestTicks: 600, bestStreak: 3, totalKilled: 5, runs: 1, bonusXp: 0 });
+    for (const [k, v] of Object.entries(old)) expect(mem.get(k)).toBe(v);
+  });
+
+  it('la copia vieja del usuario no se usa: la sesión sigue y el perfil se vuelve a pedir', async () => {
+    mem.set('tb_rt1', 'token-de-refresco');
+    mem.set('tb_me1', JSON.stringify({ id: 'u1', username: 'jugador' }));
+    vi.resetModules();
+    const { session } = await import('@/api/session');
+    expect(session.get()).toEqual({ status: 'authed', user: null });
   });
 });
 

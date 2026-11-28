@@ -470,7 +470,7 @@ function Follows({ me }: { me: Me }) {
       if (isF) await unfollow(u.id);
       else await follow(u.id);
       search.setResults((rs) => rs.map((r) => (r.id === u.id ? { ...r, isFollowing: !isF } : r)));
-      invalidate('following', 'lb', 'profile', 'me');
+      invalidate('following', 'lb', 'profile', 'me', 'missions');
     } catch (e) {
       toast(errorMessage(e));
     } finally {

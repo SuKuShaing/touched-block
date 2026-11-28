@@ -12,7 +12,8 @@
     "scripts/backfill-streaks.mjs",
     "scripts/moderation.mjs",
     "scripts/check-usernames.mjs",
-    "scripts/telegram-test.mjs"
+    "scripts/telegram-test.mjs",
+    "scripts/reset-progress.mjs"
   ],
   "scripts": {
     "build": "prisma generate && tsc -p tsconfig.build.json",

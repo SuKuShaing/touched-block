@@ -11,26 +11,20 @@ export type BadgeSize = 'sm' | 'md' | 'lg';
 export const BADGE_PX: Record<BadgeSize, number> = { sm: 22, md: 38, lg: 74 };
 
 /**
- * Insignia (Madera I–III, Bronce, Plata, Oro, Diamante) o medalla de logro, dibujada en vectores
+ * Insignia (Papel, Cartón, Madera, Bronce, Plata, Oro o Diamante), dibujada en vectores
  * (`cosmetics/medal.ts`): igual en la web y en la app, y nítida en cualquier tamaño. Tamaños: `sm`
  * para filas de ranking, `md`, `lg`, o un número de píxeles (la tarjeta de compartir). Con `tier`
- * null o inválido no dibuja nada.
+ * null o inválido no dibuja nada. Las medallas de los logros son otras (`AchievementIcon`).
  */
 export const TierBadge = memo(function TierBadge({
   tier,
   size = 'md',
   style,
-  emblem,
-  glyph,
   label,
 }: {
   tier: TierRef | null | undefined;
   size?: BadgeSize | number;
   style?: StyleProp<ViewStyle>;
-  /** 'star': estrella en el centro también en Madera (los logros, que usan los mismos materiales). */
-  emblem?: 'tier' | 'star';
-  /** Compatibilidad: cualquier `glyph` (antes '★') equivale a `emblem="star"`. */
-  glyph?: string;
   /** Otra etiqueta accesible (por defecto "Insignia Bronce"). */
   label?: string;
 }) {
@@ -39,7 +33,7 @@ export const TierBadge = memo(function TierBadge({
   const px = typeof size === 'number' ? size : BADGE_PX[size];
   return (
     <View accessible accessibilityRole="image" accessibilityLabel={label ?? `Insignia ${t.name}`} style={[{ width: px, height: px }, style]}>
-      <MedalImage spec={{ tier: t.tier, step: t.step, emblem: emblem ?? (glyph ? 'star' : 'tier'), small: px < SMALL_MEDAL_PX }} size={px} />
+      <MedalImage spec={{ tier: t.tier, step: t.step, small: px < SMALL_MEDAL_PX }} size={px} />
     </View>
   );
 });

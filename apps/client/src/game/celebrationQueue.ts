@@ -1,26 +1,36 @@
 import { useSyncExternalStore } from 'react';
 import { storage } from '@/platform/storage';
 import type { CatalogStats } from '@/cosmetics/catalog';
-import { type Celebration, type Snapshot, celebrationFromKey, outsideCelebrations, pendingCelebrations } from './celebrations';
+import {
+  type Celebration,
+  type Snapshot,
+  accountCelebrations,
+  celebrationFromKey,
+  outsideCelebrations,
+  pendingCelebrations,
+  pendingKey,
+  unseededAccountKeys,
+} from './celebrations';
 import type { PrizeContext } from './endPrize';
 
 /**
  * Cola de celebraciones por mostrar y registro de lo ya celebrado en este dispositivo.
  *
- * `tb_cele1` guarda las claves ya celebradas (`celebrations.ts`), un arreglo JSON de strings.
+ * `tb_cele2` guarda las claves ya celebradas (`celebrations.ts`), un arreglo JSON de strings.
  * La primera vez se siembra con lo que el jugador ya tiene (`seedCelebrated`), para que quien
- * ya jugaba no reciba de golpe todo lo que ganó antes. Es una clave nueva: no toca
- * `tb_best5` / `tb_hist5`. Si el almacenamiento falla, se sigue con lo que hay en memoria.
+ * ya jugaba no reciba de golpe todo lo que ganó antes (salvo, con sesión, los premios por invitar
+ * y por el porcentaje del reto: ver `observeCelebrations`). Si el almacenamiento falla, se sigue
+ * con lo que hay en memoria. La `tb_cele1` de antes del reinicio de datos ya no se lee.
  *
- * `tb_cele1p` guarda las claves de la cola que todavía no se ven: si se cierra la app (o se
+ * `tb_cele2p` guarda las claves de la cola que todavía no se ven: si se cierra la app (o se
  * recarga la web) justo después de la partida, se muestran al volver a abrirla.
  */
-export const CELEBRATED_KEY = 'tb_cele1';
-export const PENDING_KEY = 'tb_cele1p';
-/** Tope de claves guardadas (hoy son menos de 60 posibles: sobra). */
+export const CELEBRATED_KEY = 'tb_cele2';
+export const PENDING_KEY = 'tb_cele2p';
+/** Tope de claves guardadas (hoy son menos de 100 posibles: sobra). */
 const MAX_KEYS = 500;
 
-/** Lee `tb_cele1`: null si no existe o está dañado (entonces se siembra). */
+/** Lee `tb_cele2`: null si no existe o está dañado (entonces se siembra). */
 export function parseCelebrated(raw: string | null): Set<string> | null {
   if (!raw) return null;
   try {
@@ -106,7 +116,7 @@ const listeners = new Set<() => void>();
 function emit(next: CelebrationQueue) {
   queue = next;
   try {
-    if (next.items.length) storage.set(PENDING_KEY, JSON.stringify(next.items.map((c) => c.key)));
+    if (next.items.length) storage.set(PENDING_KEY, JSON.stringify(next.items.map(pendingKey)));
     else storage.remove(PENDING_KEY);
   } catch {}
   listeners.forEach((l) => {
@@ -132,22 +142,30 @@ export function offerCelebrations(list: readonly Celebration[], delayMs = 0, now
   return show.length;
 }
 
-/** Saca las primeras `n` celebraciones (las que ya se mostraron). */
-// ---------------------------------------------------------------- lo ganado justo después de una partida
+// ---------------------------------------------------------------- lo ganado fuera de la partida
 
 /**
- * Tiempo después de terminar una partida en que se celebra lo que llega tarde por ella (un fondo
+ * Tiempo después de terminar una partida en que se celebra lo que llega tarde por ella (una paleta
  * por los bloques extra de una misión, el mejor resultado de un reto como invitado). Fuera de esa
- * ventana todo cambio se registra sin celebrar.
+ * ventana esos cambios del dispositivo se registran sin celebrar.
  */
 export const AFTER_RUN_MS = 120_000;
 let armedUntil = 0;
+/** Hasta este instante se mira el resultado de la última partida: nada se muestra antes. */
+let resultUntil = 0;
 let prevSnap: Snapshot | null = null;
 
-/** Celebraciones de una partida que terminó: las ofrece y abre la ventana de `AFTER_RUN_MS`. */
+/**
+ * Celebraciones de una partida que terminó: las ofrece y abre la ventana de `AFTER_RUN_MS`. Lo que
+ * haya llegado a la cola durante la partida también espera `delayMs`.
+ */
 export function offerRunCelebrations(list: readonly Celebration[], delayMs = 0, now = Date.now()): number {
   armedUntil = now + AFTER_RUN_MS;
-  return offerCelebrations(list, delayMs, now);
+  resultUntil = now + delayMs;
+  const n = offerCelebrations(list, delayMs, now);
+  const q = current();
+  if (q.items.length && q.readyAt < resultUntil) emit({ items: q.items, readyAt: resultUntil });
+  return n;
 }
 
 /** Empezó otra partida: lo que cambie desde ahora ya no es de la anterior. */
@@ -156,25 +174,40 @@ export function disarmCelebrations() {
 }
 
 /**
- * Lo que tiene el jugador ahora (cada vez que cambia). Siembra `tb_cele1` la primera vez con todo
- * lo que ya tiene (`owned`), celebra lo que cambió en los datos de ESTE dispositivo (`local`,
- * `localPct`) solo dentro de la ventana después de una partida, y registra sin celebrar todo lo
- * demás que tenga: estadísticas de la cuenta que llegan del servidor (GET /me, inicio de sesión,
- * otro dispositivo), datos migrados, cambios de cuenta. Devuelve cuántas celebraciones agregó.
+ * Lo que tiene el jugador ahora (cada vez que cambia). Siembra `tb_cele2` la primera vez con todo
+ * lo que ya tiene (`owned`), en silencio; si en ese momento ya hay cuenta (equipo nuevo en el que
+ * se inició sesión antes de llegar al juego), deja fuera de la siembra sus premios por invitar y
+ * por el porcentaje del reto, para celebrarlos (B19). Celebra:
+ * - lo que cambió en los datos de ESTE dispositivo (`local`), solo dentro de la ventana después de
+ *   una partida;
+ * - con sesión (`account`: las estadísticas con las de la cuenta), los premios por invitar, por los
+ *   días seguidos y por el porcentaje del reto que todavía no estén registrados, cuando sea que
+ *   lleguen.
+ *
+ * Todo lo demás que tenga se registra sin celebrar: partidas de otro dispositivo, datos migrados.
+ * Devuelve cuántas celebraciones agregó.
  */
 export function observeCelebrations(
-  input: { viewer: string; local: CatalogStats; localPct: number | null; owned: () => readonly string[] },
+  input: { viewer: string; local: CatalogStats; account?: CatalogStats | null; owned: () => readonly string[] },
   ctx: PrizeContext,
   now = Date.now(),
 ): number {
-  seedCelebrated(input.owned);
-  const snap: Snapshot = { viewer: input.viewer, stats: input.local, dailyPct: input.localPct };
-  const found = now < armedUntil ? outsideCelebrations(prevSnap, snap, ctx) : [];
+  seedCelebrated(() => {
+    const held = input.account ? unseededAccountKeys(input.account, ctx) : null;
+    return input.owned().filter((k) => !held?.has(k));
+  });
+  const snap: Snapshot = { viewer: input.viewer, stats: input.local };
+  const found = [
+    ...(now < armedUntil ? outsideCelebrations(prevSnap, snap, ctx) : []),
+    ...(input.account ? accountCelebrations(input.account, ctx) : []),
+  ];
   prevSnap = snap;
-  const n = found.length ? offerCelebrations(found, 0, now) : 0;
+  const n = offerCelebrations(found, Math.max(0, resultUntil - now), now);
   absorbCelebrated(input.owned());
   return n;
 }
+
+/** Saca las primeras `n` celebraciones (las que ya se mostraron). */
 
 export function dropCelebrations(n: number) {
   const q = current();
@@ -198,5 +231,6 @@ export function resetCelebrationsForTests() {
   seen = null;
   queue = null;
   armedUntil = 0;
+  resultUntil = 0;
   prevSnap = null;
 }

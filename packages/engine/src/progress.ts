@@ -89,14 +89,14 @@ export function missMultFor(m: Milestone): number {
 export type TierId = 'madera' | 'bronce' | 'plata' | 'oro' | 'diamante';
 
 export interface TierStep {
-  /** Posición en TIERS (0 = Madera I … 6 = Diamante). */
+  /** Posición en TIERS (0 = Papel … 6 = Diamante). */
   index: number;
   tier: TierId;
-  /** 1–3 en madera; 1 en las demás. */
+  /** 1–3 en madera (Papel, Cartón y Madera); 1 en las demás. */
   step: number;
-  /** "Madera II", "Bronce"… */
+  /** "Papel", "Bronce"… */
   name: string;
-  /** Segundos jugados en una partida para ganarla (0 = terminar una partida). */
+  /** Segundos jugados en una partida para ganarla. */
   at: number;
   /** Requisito en palabras: "Llegar a las sumas y restas". */
   goal: string;
@@ -109,31 +109,34 @@ export interface TierRef {
 }
 
 const numAt = (n: number) => (n - 3) * NUM_STEP;
-const DIAMOND_AT = LIFE_STAGE_START + (LIFE_STAGE_FIRST - LIFE_STAGE_LAST) * LIFE_STAGE_STEP;
+/** Vida de los bloques (s) en la etapa final con la que se gana Diamante. */
+const DIAMOND_LIFE = 2;
+const DIAMOND_AT = LIFE_STAGE_START + (LIFE_STAGE_FIRST - DIAMOND_LIFE) * LIFE_STAGE_STEP;
 
 /** Insignias (umbrales provisorios, decisión D1: parten en las etapas del juego). */
 export const TIERS: readonly TierStep[] = [
-  { index: 0, tier: 'madera', step: 1, name: 'Madera I', at: 0, goal: 'Terminar una partida' },
-  { index: 1, tier: 'madera', step: 2, name: 'Madera II', at: numAt(5), goal: 'Llegar al 5' },
-  { index: 2, tier: 'madera', step: 3, name: 'Madera III', at: numAt(8), goal: 'Llegar al 8' },
+  { index: 0, tier: 'madera', step: 1, name: 'Papel', at: numAt(4), goal: 'Llegar al 4' },
+  { index: 1, tier: 'madera', step: 2, name: 'Cartón', at: numAt(6), goal: 'Llegar al 6' },
+  { index: 2, tier: 'madera', step: 3, name: 'Madera', at: numAt(8), goal: 'Llegar al 8' },
   { index: 3, tier: 'bronce', step: 1, name: 'Bronce', at: ADD_START, goal: 'Llegar a las sumas y restas' },
   { index: 4, tier: 'plata', step: 1, name: 'Plata', at: MUL_START, goal: 'Llegar a las multiplicaciones y divisiones' },
   { index: 5, tier: 'oro', step: 1, name: 'Oro', at: LIFE_STAGE_START, goal: 'Llegar a la etapa final' },
-  { index: 6, tier: 'diamante', step: 1, name: 'Diamante', at: DIAMOND_AT, goal: `Llegar a los bloques de ${LIFE_STAGE_LAST} s` },
+  { index: 6, tier: 'diamante', step: 1, name: 'Diamante', at: DIAMOND_AT, goal: `Llegar a los bloques de ${DIAMOND_LIFE} s` },
 ];
 
 /**
  * Índice de la insignia según la duración de la mejor partida (en ticks), o −1 si no hay
- * partidas. Compara enteros para que cliente y servidor den siempre lo mismo.
+ * partidas o la mejor no alcanza la primera. Compara enteros para que cliente y servidor den
+ * siempre lo mismo.
  */
 export function tierIndexForTicks(ticks: number | null | undefined): number {
-  if (ticks === null || ticks === undefined || !(ticks >= 0)) return -1;
-  let i = 0;
-  for (let j = 1; j < TIERS.length; j++) if (ticks >= TIERS[j].at * TICKS_PER_SECOND) i = j;
+  if (ticks === null || ticks === undefined) return -1;
+  let i = -1;
+  for (let j = 0; j < TIERS.length; j++) if (ticks >= TIERS[j].at * TICKS_PER_SECOND) i = j;
   return i;
 }
 
-/** Insignia según la duración de la mejor partida (ticks), o null si nunca terminó una. */
+/** Insignia según la duración de la mejor partida (ticks), o null si todavía no tiene ninguna. */
 export function tierForTicks(ticks: number | null | undefined): TierStep | null {
   const i = tierIndexForTicks(ticks);
   return i < 0 ? null : TIERS[i];

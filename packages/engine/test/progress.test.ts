@@ -70,18 +70,39 @@ describe('insignias', () => {
     expect(tierIndexForTicks(-1)).toBe(-1);
   });
 
+  it('con menos de 20 s no hay insignia', () => {
+    expect(tierIndexForTicks(0)).toBe(-1);
+    expect(tierForTicks(20 * TICKS_PER_SECOND - 1)).toBeNull();
+    expect(tierRefForTicks(0)).toBeNull();
+    expect(tierIndexForTicks(Number.NaN)).toBe(-1);
+    expect(tierForTicks(20 * TICKS_PER_SECOND)!.name).toBe('Papel');
+  });
+
   it('bordes exactos en ticks', () => {
-    expect(tierForTicks(0)!.name).toBe('Madera I');
-    for (const t of TIERS.slice(1)) {
+    for (const t of TIERS) {
       const at = t.at * TICKS_PER_SECOND;
-      expect(tierForTicks(at - 1)!.index).toBe(t.index - 1);
+      expect(tierIndexForTicks(at - 1)).toBe(t.index - 1);
       expect(tierForTicks(at)!.index).toBe(t.index);
     }
     expect(tierForTicks(10_000_000)!.tier).toBe('diamante');
   });
 
-  it('umbrales: 40, 100, 140, 275, 350 y 440 s', () => {
-    expect(TIERS.map((t) => t.at)).toEqual([0, 40, 100, 140, 275, 350, 440]);
+  it('umbrales: 20, 60, 100, 140, 275, 350 y 410 s', () => {
+    expect(TIERS.map((t) => t.at)).toEqual([20, 60, 100, 140, 275, 350, 410]);
+  });
+
+  it('nombres y requisitos; tier y step (viajan en la API) no cambian', () => {
+    expect(TIERS.map((t) => [t.index, t.tier, t.step, t.name, t.goal])).toEqual([
+      [0, 'madera', 1, 'Papel', 'Llegar al 4'],
+      [1, 'madera', 2, 'Cartón', 'Llegar al 6'],
+      [2, 'madera', 3, 'Madera', 'Llegar al 8'],
+      [3, 'bronce', 1, 'Bronce', 'Llegar a las sumas y restas'],
+      [4, 'plata', 1, 'Plata', 'Llegar a las multiplicaciones y divisiones'],
+      [5, 'oro', 1, 'Oro', 'Llegar a la etapa final'],
+      [6, 'diamante', 1, 'Diamante', 'Llegar a los bloques de 2 s'],
+    ]);
+    const twoSeconds = MILESTONES.find((m) => m.kind === 'life' && m.value === 2)!;
+    expect(TIERS[6].at).toBe(twoSeconds.at);
   });
 
   it('referencia compacta de ida y vuelta', () => {

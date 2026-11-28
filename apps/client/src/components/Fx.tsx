@@ -1,10 +1,21 @@
 import { COLORS } from '@tb/engine';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text } from 'react-native';
-import Animated, { Easing, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
-import { useActiveEffect, useActivePalette } from '@/cosmetics/active';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  Easing,
+  ReduceMotion,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withDelay,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
+import { getActiveCosmetics, useActiveEffect, useActivePalette } from '@/cosmetics/active';
+import type { EffectId } from '@/cosmetics/ids';
 import { getPalette, paletteColor } from '@/cosmetics/palettes';
 import { HEART } from '@/components/heart';
+import { BURST_LIFETIME, type Piece, frameAt, isShapeEffect, makePieces } from '@/lib/fxShapes';
 import { C } from '@/theme';
 import { Block, type BlockProps } from './Block';
 
@@ -12,8 +23,8 @@ const EASE_OUT = Easing.bezier(0, 0, 0.58, 1);
 
 // ---------------------------------------------------------------- partículas
 
-/** Efecto al destruir (premio cosmético): `normal`, `chispas`, `confeti` o `corazones`. */
-export type BurstEffect = 'normal' | 'chispas' | 'confeti' | 'corazones';
+/** Efecto al destruir (premio cosmético). */
+export type BurstEffect = EffectId;
 
 interface ParticleSpec {
   /** Ángulo y distancia del vuelo. */
@@ -73,8 +84,8 @@ function Particle({ x, y, spec }: { x: number; y: number; spec: ParticleSpec }) 
 const SPARK = '#fff3b0';
 
 /**
- * Partículas de un estallido según el efecto. Mismo número de partículas y duraciones dentro de
- * las de siempre (≤ 700 ms, el estallido se desmonta a los 750) en todos: mismo costo.
+ * Partículas de Clásico, Chispas, Confeti y Corazones (los demás efectos salen de
+ * `lib/fxShapes.ts`). Mismo número de partículas y duraciones ≤ 700 ms en los cuatro.
  */
 function makeSpecs(effect: BurstEffect, count: number, color: string, palette: readonly string[]): ParticleSpec[] {
   const r = Math.random;
@@ -97,26 +108,98 @@ function makeSpecs(effect: BurstEffect, count: number, color: string, palette: r
   });
 }
 
+// Pieza de un efecto de `fxShapes`: un solo valor compartido, y solo cambian opacidad y transform.
+const ShapePiece = memo(function ShapePiece({ x, y, piece }: { x: number; y: number; piece: Piece }) {
+  const { w, h, delay, dur, look, motion } = piece;
+  const p = useSharedValue(0);
+  useEffect(() => {
+    // `Never`: con "reducir movimiento" las piezas ya vienen suavizadas; el ajuste del sistema las
+    // haría saltar al final (invisibles).
+    const never = ReduceMotion.Never;
+    p.value = withDelay(delay, withTiming(1, { duration: dur, easing: Easing.linear, reduceMotion: never }), never);
+  }, [p, delay, dur]);
+  const style = useAnimatedStyle(() => {
+    const f = frameAt(motion, p.value);
+    return {
+      opacity: f.o,
+      transform: [{ translateX: f.x }, { translateY: f.y }, { rotate: `${f.r}deg` }, { scaleX: f.sx * f.s }, { scaleY: f.s }],
+    };
+  });
+  const place = { left: x + piece.ox - w / 2, top: y + piece.oy - h / 2, width: w, height: h };
+  if (look.type === 'text') {
+    return (
+      <Animated.Text
+        pointerEvents="none"
+        allowFontScaling={false}
+        selectable={false}
+        style={[styles.p, styles.pieceText, place, { fontSize: look.fontSize, lineHeight: h, color: look.color }, style]}
+      >
+        {look.text}
+      </Animated.Text>
+    );
+  }
+  const border = look.borderWidth ?? 0;
+  const glint = look.glint;
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        styles.p,
+        place,
+        {
+          borderRadius: look.radius,
+          backgroundColor: look.color,
+          borderWidth: border,
+          borderColor: look.borderColor,
+          backgroundImage: look.gradient,
+        },
+        style,
+      ]}
+    >
+      {glint ? (
+        // reflejo arriba a la izquierda, medido por dentro del borde
+        <View
+          style={[
+            styles.glint,
+            { left: (w - 2 * border) * 0.2, top: (h - 2 * border) * 0.16, width: glint, height: glint, borderRadius: glint / 2 },
+          ]}
+        />
+      ) : null}
+    </Animated.View>
+  );
+});
+
 const ENGINE_COLORS = new Set<string>(COLORS);
+
+/** Efecto con el que se dibuja un estallido: el forzado o, si es el de un bloque, el elegido. */
+function burstEffect(color: string, forced: BurstEffect | undefined, active: BurstEffect): BurstEffect {
+  return forced ?? (ENGINE_COLORS.has(color.toLowerCase()) ? active : 'normal');
+}
 
 /**
  * Explosión de partículas desde (x, y), como burst() de legacy. El color es el del motor y se
  * traduce a la paleta elegida. La forma sale del efecto elegido en la Colección, pero solo cuando
  * se destruye un bloque (su color está en `COLORS`): la trampa (`C.bad`) y el corazón siguen con
  * las partículas de siempre. `effect` lo fuerza (vistas previas; `'normal'` = las de siempre).
+ * `count` solo vale para Clásico, Chispas, Confeti y Corazones: los demás tienen un número fijo de
+ * piezas y, además, se suavizan con "reducir movimiento".
  */
 export function Burst({ x, y, color, count = 14, effect }: { x: number; y: number; color: string; count?: number; effect?: BurstEffect }) {
   const activeEffect = useActiveEffect() as BurstEffect;
   const palette = useActivePalette();
-  const [specs] = useState<ParticleSpec[]>(() => {
-    const eff = effect ?? (ENGINE_COLORS.has(color.toLowerCase()) ? activeEffect : 'normal');
-    return makeSpecs(eff, count, paletteColor(color, palette), getPalette(palette).colors);
+  const reduced = useReducedMotion();
+  const [burst] = useState(() => {
+    const eff = burstEffect(color, effect, activeEffect);
+    const shown = paletteColor(color, palette);
+    return isShapeEffect(eff)
+      ? { pieces: makePieces(eff, shown, reduced), specs: null }
+      : { pieces: null, specs: makeSpecs(eff, count, shown, getPalette(palette).colors) };
   });
   return (
     <>
-      {specs.map((s, i) => (
-        <Particle key={i} x={x} y={y} spec={s} />
-      ))}
+      {burst.pieces
+        ? burst.pieces.map((piece, i) => <ShapePiece key={i} x={x} y={y} piece={piece} />)
+        : burst.specs.map((s, i) => <Particle key={i} x={x} y={y} spec={s} />)}
     </>
   );
 }
@@ -195,7 +278,8 @@ export type FxSpec =
 
 type FxItem = FxSpec & { id: number };
 
-const LIFETIME: Record<FxSpec['kind'], number> = { burst: 750, float: 850, miss: 650, ghost: 320, banner: 1650 };
+/** Vida de cada cosa (ms); la de un estallido depende de su efecto (`BURST_LIFETIME`). */
+const LIFETIME: Record<Exclude<FxSpec['kind'], 'burst'>, number> = { float: 850, miss: 650, ghost: 320, banner: 1650 };
 
 /** Efectos de corta vida (partículas, textos, ✕, bloques que se apagan). */
 export function useFxList() {
@@ -213,11 +297,21 @@ export function useFxList() {
 
   const add = useCallback((spec: FxSpec) => {
     const id = nextId.current++;
-    setItems((prev) => [...prev, { ...spec, id } as FxItem]);
+    let item: FxSpec = spec;
+    let life: number;
+    if (spec.kind === 'burst') {
+      // el efecto se fija aquí, para que el dibujo y la vida coincidan
+      const effect = burstEffect(spec.color, spec.effect, getActiveCosmetics().effect as BurstEffect);
+      item = { ...spec, effect };
+      life = BURST_LIFETIME[effect] ?? BURST_LIFETIME.normal;
+    } else {
+      life = LIFETIME[spec.kind];
+    }
+    setItems((prev) => [...prev, { ...item, id } as FxItem]);
     const timer = setTimeout(() => {
       timers.current.delete(timer);
       setItems((prev) => prev.filter((i) => i.id !== id));
-    }, LIFETIME[spec.kind]);
+    }, life);
     timers.current.add(timer);
   }, []);
 
@@ -281,6 +375,8 @@ export function Flash({ style }: { style: ReturnType<typeof useHurtFx>['flashSty
 
 const styles = StyleSheet.create({
   p: { position: 'absolute' },
+  pieceText: { textAlign: 'center', includeFontPadding: false },
+  glint: { position: 'absolute', backgroundColor: 'rgba(255,255,255,0.9)' },
   glyphBox: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
   glyph: { fontWeight: '800', textAlign: 'center' },
   floatBox: { position: 'absolute', width: 120 },

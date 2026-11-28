@@ -46,9 +46,23 @@ let conCambios = false; // lo mueve el interruptor de arriba a la derecha (Ahora
 //   Ahora:       el nivel n empieza en 25 · n · (n − 1) bloques (el nivel 1 parte en 0).
 //   Con cambios: el nivel n empieza en 25 · n · (n + 1) bloques (el nivel 1 llega a los 50). CAMBIO-004.
 const LEVEL_FACTOR = 25;
-const NIVEL_MAX = 25; // hasta dónde se dibuja la recta
-// Niveles que desbloquean un fondo del campo (apps/client/src/cosmetics/catalog.ts)
+const NIVEL_MAX = 25; // hasta dónde se dibuja la recta en "Ahora"
+// "Ahora": niveles que desbloquean un fondo del campo (apps/client/src/cosmetics/catalog.ts)
 const PREMIOS_NIVEL = { 5: 'Grilla', 10: 'Estrellas', 20: 'Aurora' };
+
+/**
+ * Niveles que se marcan en celeste. Con cambios los fondos ya no se ganan por nivel (CAMBIO-025) y las paletas sí (CAMBIO-016 a
+ * 019): salen de PALETAS (coleccion.js, que ya está cargado cuando se puede mover el interruptor).
+ */
+function premiosNivel() {
+  if (!conCambios || typeof PALETAS === 'undefined') return PREMIOS_NIVEL;
+  const out = {};
+  PALETAS.forEach((p) => {
+    const n = p.nivelNuevo ?? (p.nuevo && p.req.tipo === 'nivel' ? p.req.nivel : null);
+    if (n != null) out[n] = p.n;
+  });
+  return out;
+}
 
 const inicioNivelHoy = (n) => LEVEL_FACTOR * n * (n - 1);
 const inicioNivelNuevo = (n) => LEVEL_FACTOR * n * (n + 1);
@@ -58,8 +72,12 @@ const fmt = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); // 2000 → 
 function dibujarRecta() {
   const cont = document.getElementById('rectaBloques');
   cont.innerHTML = '';
-  // la misma escala en los dos modos, para ver cuánto se mueve cada nivel
-  const max = Math.max(inicioNivelHoy(NIVEL_MAX), inicioNivelNuevo(NIVEL_MAX));
+  const premios = premiosNivel();
+  const nivelesPremio = Object.keys(premios).map(Number);
+  // con cambios la recta llega hasta la última paleta (nivel 30); en "Ahora", hasta el 25 como siempre
+  const nivelMax = Math.max(NIVEL_MAX, ...nivelesPremio);
+  // en cada modo caben las dos curvas (hoy y CAMBIO-004), para comparar posiciones dentro de la misma recta
+  const max = Math.max(inicioNivelHoy(nivelMax), inicioNivelNuevo(nivelMax));
   const x = (bloques) => `${(bloques / max) * 100}%`;
   const caja = document.createElement('div');
   caja.className = 'trackBox rectaBloques';
@@ -80,13 +98,13 @@ function dibujarRecta() {
     caja.appendChild(n);
   }
 
-  // Con cambios: dónde estaban hoy los niveles que dan premio (marca gris), para ver cuánto se mueven
+  // Con cambios: dónde empezarían con la curva de hoy los niveles que dan premio (marca gris), para ver cuánto se mueven
   if (conCambios) {
-    Object.keys(PREMIOS_NIVEL).map(Number).forEach((n) => {
+    nivelesPremio.forEach((n) => {
       const f = document.createElement('div');
       f.className = 'nivel fantasma';
       f.style.left = x(inicioNivelHoy(n));
-      f.title = `Hoy: nivel ${n} desde ${fmt(inicioNivelHoy(n))} bloques (${PREMIOS_NIVEL[n]})`;
+      f.title = `Curva de hoy: nivel ${n} desde ${fmt(inicioNivelHoy(n))} bloques (paleta ${premios[n]})`;
       caja.appendChild(f);
     });
   }
@@ -95,18 +113,24 @@ function dibujarRecta() {
   // se escribe si no choca con el anterior (los que dan premio siempre llevan número).
   const px = (n) => (inicioNivel(n) / max) * ancho;
   const SEPARACION = 16; // px mínimos entre dos números de nivel
-  const conNumero = Object.keys(PREMIOS_NIVEL).map(Number);
-  for (let n = 1; n <= NIVEL_MAX; n++) {
+  const conNumero = [...nivelesPremio];
+  for (let n = 1; n <= nivelMax; n++) {
     if (!conNumero.includes(n) && conNumero.every((m) => Math.abs(px(m) - px(n)) >= SEPARACION)) conNumero.push(n);
   }
-  for (let n = 1; n <= NIVEL_MAX; n++) {
+  let anterior = null; // último nivel con premio escrito en la fila de arriba
+  for (let n = 1; n <= nivelMax; n++) {
     const b = inicioNivel(n);
-    const premio = PREMIOS_NIVEL[n];
+    const premio = premios[n];
     const marca = document.createElement('div');
     marca.className = 'nivel' + (premio ? ' premio' : '');
     marca.style.left = x(b);
-    marca.title = `Nivel ${n}: desde ${fmt(b)} bloques${premio ? ` · desbloquea el fondo ${premio}` : ''}`;
+    marca.title = `Nivel ${n}: desde ${fmt(b)} bloques${premio ? ` · desbloquea ${conCambios ? 'la paleta' : 'el fondo'} ${premio}` : ''}`;
     if (conNumero.includes(n)) marca.innerHTML = `<span>${n}</span>`;
+    // dos niveles con premio pegados (p. ej. 15 y 16 en el celular): el segundo número baja una línea
+    if (premio) {
+      if (anterior !== null && px(n) - px(anterior) < SEPARACION) marca.classList.add('escalonado');
+      else anterior = n;
+    }
     caja.appendChild(marca);
   }
 
@@ -117,8 +141,17 @@ function dibujarRecta() {
   const f = document.getElementById('formulaNivel');
   if (f) {
     f.innerHTML = conCambios
-      ? 'Con cambios: el nivel n empieza en <b>25 · n · (n + 1)</b> bloques. De 0 a 49 no hay nivel; el <b>nivel 1 llega a los 50</b>. En gris, dónde estaban hoy los niveles de los fondos.'
+      ? 'Con cambios: el nivel n empieza en <b>25 · n · (n + 1)</b> bloques. De 0 a 49 no hay nivel; el <b>nivel 1 llega a los 50</b>. En gris, dónde empezarían con la curva de hoy los niveles que dan premio.'
       : 'Hoy: el nivel n empieza en <b>25 · n · (n − 1)</b> bloques. El nivel 1 parte en 0 y el nivel 2 llega a los 50.';
+  }
+
+  const nota = document.getElementById('notaRecta');
+  if (nota) {
+    nota.textContent =
+      'Arriba, bloques destruidos (más los de misiones). Abajo, en chico, el nivel al que llegas. ' +
+      (conCambios
+        ? 'En celeste, los niveles que desbloquean una paleta (CAMBIO-016); los fondos y los efectos ya no se ganan por nivel (CAMBIO-025).'
+        : 'En celeste, los niveles que desbloquean un fondo.');
   }
 }
 

@@ -1,57 +1,84 @@
-// Lee medidas-fondos.json y escribe RESULTADOS-FONDOS.md: por cada fondo y paleta translúcida, si pasa las reglas de palettes.test.ts
-// con el color efectivo sobre cada color de prueba del fondo, y el margen más justo de cada regla (positivo = sobra).
+// Lee medidas-fondos.json y escribe RESULTADOS-FONDOS.md.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const aqui = path.dirname(fileURLToPath(import.meta.url));
-const { casos, opacas } = JSON.parse(fs.readFileSync(path.join(aqui, 'medidas-fondos.json'), 'utf8'));
+const m = JSON.parse(fs.readFileSync(path.join(aqui, 'medidas-fondos.json'), 'utf8'));
 const cand = JSON.parse(fs.readFileSync(path.join(aqui, 'candidatas-fondos.json'), 'utf8'));
-const f = (x) => (x >= 0 ? '+' : '') + x.toFixed(Math.abs(x) >= 10 ? 1 : 3).replace('.', ',');
-const REGLAS = ['tono SAFE en rango Clásica ±5°', 'caso más difícil de tono', 'media de tono', 'contraste rojo en rango Clásica', 'caso más difícil de contraste', 'texto blanco ≥ Clásica', '9 colores #rrggbb distintos'];
-const CORTO = ['tono rango', 'tono difícil', 'tono media', 'rojo rango', 'rojo difícil', 'blanco', '9 distintos'];
+const n = (x, d = 2) => x.toFixed(d).replace('.', ',');
+const mas = (x) => (x >= 0 ? '+' : '') + n(x, Math.abs(x) >= 10 ? 1 : 3);
+const CORTO = {
+  'tono SAFE en rango Clásica ±5°': 'tono rango',
+  'caso más difícil de tono': 'tono difícil',
+  'media de tono': 'tono media',
+  'contraste rojo en rango Clásica': 'rojo rango',
+  'caso más difícil de contraste': 'rojo difícil',
+  'texto blanco ≥ Clásica': 'blanco',
+  '9 colores #rrggbb distintos': '9 distintos',
+};
 
-let md = '# Paletas sobre los fondos nuevos (CAMBIO-022)\n\nGenerado por `correr.sh` (`bash config_logros/herramientas/prueba-fondos/correr.sh`; no toca el juego ni `prueba-paletas`, solo importa su `reglas.ts`). Margen = lo que sobra (negativo = lo que falta). Para cada fondo se toma el peor caso entre sus colores de prueba (`prueba` de `FONDOS` en `coleccion.js`: el color principal y los extremos del degradé).\n\nOtras piezas: `barrido.spec.ts` (qué fondos dejan pasar a las tres translúcidas, escribe `barrido.json`), `ajustar.spec.ts` + `deseados.json` (cuánto oscurecer un color para que pase, escribe `ajustes.json`) y, para el muestreo del final, `muestrear.mjs` (lee una captura PNG de los campos sin bloques y un JSON con sus celdas) + `muestras.spec.ts`.\n\n';
-md += '## Opacas (control: no dependen del fondo)\n\n';
-const opFallan = opacas.filter((o) => o.reglas.some((r) => !r.ok));
-md += opFallan.length === 0 ? `Las ${opacas.length} paletas opacas (${opacas.map((o) => o.paleta).join(', ')}) pasan todas las reglas. Su color es el mismo sobre cualquier fondo.\n\n` : 'FALLAN: ' + opFallan.map((o) => o.paleta).join(', ') + '\n\n';
+const totalFondos = m.fondos.filter((f) => f.dibujado).length;
 
-md += '## Translúcidas sobre cada fondo\n\n| fondo | colores de prueba | paleta | ' + CORTO.join(' | ') + ' |\n|---|---|---|' + CORTO.map(() => '---').join('|') + '|\n';
-const filas = [];
-for (const fo of cand.fondos) {
-  for (const paleta of ['cristal', 'contorno', 'esmerilado']) {
-    const cs = casos.filter((c) => c.fondo === fo.id && c.paleta === paleta);
-    const celdas = REGLAS.map((r) => {
-      const ms = cs.map((c) => c.reglas.find((x) => x.regla === r));
-      const peor = ms.reduce((a, b) => (b.margen < a.margen ? b : a));
-      const ok = ms.every((m) => m.ok);
-      return { ok, txt: (ok ? 'pasa ' : '**FALLA** ') + (r.startsWith('9') ? '' : f(peor.margen)) };
-    });
-    filas.push({ fondo: fo.id, paleta, celdas });
-    md += `| ${fo.id} | ${fo.prueba.join(' ')} | ${paleta} | ${celdas.map((c) => c.txt).join(' | ')} |\n`;
-  }
-}
-const fallas = filas.filter((x) => x.celdas.some((c) => !c.ok));
-md += `\n**${filas.length - fallas.length} de ${filas.length} combinaciones pasan todas las reglas.**` + (fallas.length ? ' Fallan: ' + fallas.map((x) => `${x.fondo}/${x.paleta}`).join(', ') + '.' : '') + '\n';
+let md = `# Fondos nuevos y paletas (CAMBIO-022 y 026)
 
-// margen más justo por paleta translúcida, entre todos los fondos
-md += '\n## Margen más justo de cada regla por paleta (entre todos los fondos)\n\n| paleta | regla | margen | fondo |\n|---|---|---|---|\n';
-for (const paleta of ['cristal', 'contorno', 'esmerilado']) {
-  for (const r of ['contraste rojo en rango Clásica', 'caso más difícil de contraste', 'caso más difícil de tono', 'texto blanco ≥ Clásica']) {
-    let mejor = null;
-    for (const c of casos.filter((x) => x.paleta === paleta)) {
-      const m = c.reglas.find((x) => x.regla === r);
-      if (!mejor || m.margen < mejor.m.margen) mejor = { m, c };
-    }
-    md += `| ${paleta} | ${r} | ${f(mejor.m.margen)} | ${mejor.c.fondo} (${mejor.c.bg}) |\n`;
-  }
+Generado por \`correr.sh\` (\`bash config_logros/herramientas/prueba-fondos/correr.sh\`; no toca el juego ni \`prueba-paletas\`, solo importa su \`reglas.ts\`).
+
+## 1. Reglas de no ventaja (trampa roja ${m.trampa} y texto blanco)
+
+Se miden contra el color del bloque. Cristal, Contorno y Esmerilado se dibujan sobre un respaldo opaco \`${cand.respaldo}\`, así que **ningún color de bloque depende del fondo**: el resultado vale para los ${totalFondos} fondos. Margen = lo que sobra (negativo = lo que falta).
+
+| paleta | ${Object.values(CORTO).join(' | ')} |
+|---|${Object.values(CORTO).map(() => '---').join('|')}|
+`;
+for (const p of m.paletas) {
+  const celdas = Object.keys(CORTO).map((r) => {
+    const x = p.reglas.find((y) => y.regla === r);
+    return (x.ok ? 'pasa' : '**FALLA**') + (r.startsWith('9') ? '' : ' ' + mas(x.margen));
+  });
+  md += `| ${p.id} | ${celdas.join(' | ')} |\n`;
 }
-// colores realmente dibujados (muestrear.mjs + muestras.spec.ts), si existen
-const ruta = path.join(aqui, 'medidas-muestras.json');
-if (fs.existsSync(ruta)) {
-  const ms = JSON.parse(fs.readFileSync(ruta, 'utf8'));
-  md += '\n## Colores realmente dibujados (muestreo de una captura)\n\nSe toman 80 ventanas de 30 × 30 px por fondo (patrones, brillos y un cuadro de la animación incluidos) y se mide Cristal / Contorno / Esmerilado sobre el promedio de cada ventana. Cada celda es `ventanas que fallan / 80`.\n\n| fondo | cristal | contorno | esmerilado |\n|---|---|---|---|\n';
-  for (const [fo, ps] of Object.entries(ms)) md += `| ${fo} | ${ps.cristal.fallan} / ${ps.cristal.total} | ${ps.contorno.fallan} / ${ps.contorno.total} | ${ps.esmerilado.fallan} / ${ps.esmerilado.total} |\n`;
+const fallan = m.paletas.filter((p) => p.reglas.some((r) => !r.ok));
+md += `\n**${m.paletas.length - fallan.length} de ${m.paletas.length} paletas pasan todas las reglas.**${fallan.length ? ' Fallan: ' + fallan.map((p) => p.id).join(', ') + '.' : ''}\n`;
+
+md += `
+## 2. Los bloques contra cada fondo
+
+Esto **no es una regla del juego**: es una medida propia para comprobar que los bloques se recortan. Para cada fondo se compara cada una de las 14 × 9 casillas (color de relleno, sin contar bordes ni sombra) con lo dibujado (336 ventanas de 14 × 14 px de una captura del campo sin bloques, \`muestras.json\`; las animaciones quedan en un cuadro) y se anota el caso más justo. ΔE = diferencia de color CIEDE2000 (0 = iguales; sobre unas 10 se ven claramente distintos). Contraste = WCAG (1 = misma claridad).
+
+| fondo | ΔE mínimo | casilla y color de fondo | contraste mínimo | casilla y color de fondo | ventanas con ΔE < 10 | ventanas rojas |
+|---|---|---|---|---|---|---|
+`;
+for (const f of m.fondos) {
+  const d = f.dibujado;
+  if (!d) continue;
+  md += `| ${f.id} | ${n(d.deltaE.v, 1)} | ${d.deltaE.bloque} sobre ${d.deltaE.fondo} | ${n(d.contraste.v)} | ${d.contraste.bloque} sobre ${d.contraste.fondo} | ${d.justas} / ${d.total} | ${d.rojas} / ${d.total} |\n`;
 }
+md += `
+"Ventanas con ΔE < 10" = trozos del fondo donde al menos una de las 126 casillas queda por debajo de 10. "Ventana roja" = tono a 15° o menos del rojo puro, saturación ≥ 0,35 y luminosidad ≥ 0,12.
+
+## 3. El rojo de las trampas contra cada fondo
+
+El número rojo siempre va **sobre el bloque**, nunca sobre el fondo; esto solo comprueba que ningún fondo sea parecido a ese rojo.
+
+| fondo | ΔE mínimo con ${m.trampa} | color de fondo | contraste mínimo | color de fondo |
+|---|---|---|---|---|
+`;
+for (const f of m.fondos) {
+  const d = f.dibujado;
+  if (!d) continue;
+  md += `| ${f.id} | ${n(d.rojoDeltaE.v, 1)} | ${d.rojoDeltaE.fondo} | ${n(d.rojoContraste.v)} | ${d.rojoContraste.fondo} |\n`;
+}
+md += `
+## 4. Regla REDDISH
+
+\`REDDISH\` (${m.reddish.join(', ')}) es una lista de **colores de bloque** del motor: si al bloque le toca uno de ellos, una trampa roja usa la paleta \`SAFE\`. El motor no conoce el fondo del campo, así que ningún fondo la activa ni la desactiva.
+
+## Cómo repetir el muestreo
+
+Las secciones 2 y 3 usan \`muestras.json\`. Si cambia el dibujo de un fondo: captura a escala 1 los campos que cambiaron, sin bloques ni rótulos (unos 230 × 560 px cada uno), anota sus celdas (\`[{ "id", "x", "y", "w", "h" }]\`), corre \`node muestrear.mjs <captura.png> <celdas.json>\` y luego \`correr.sh\`.
+
+Control de la fórmula ΔE: negro–blanco ${n(m.formula.negroBlanco, 1)}, color consigo mismo ${n(m.formula.igual, 1)}, rojo–verde puros ${n(m.formula.rojoVerde, 1)}.
+`;
 fs.writeFileSync(path.join(aqui, 'RESULTADOS-FONDOS.md'), md);
 console.log(md);

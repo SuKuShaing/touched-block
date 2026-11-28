@@ -81,19 +81,19 @@ function run(js: string, url: string, ls: Mem, opts: { referrer?: string; ua?: s
 function oldStorage() {
   const ls = new Mem();
   const d = (n: number) => 1_790_000_000_000 + n * 86_400_000;
-  ls.setItem('tb_best5', '87');
-  ls.setItem('tb_hist5', JSON.stringify([{ k: 87, m: 1, d: d(3), t: 21600, s: 31 }, { k: 40, m: 2, d: d(1), t: 9000, s: 12 }]));
-  ls.setItem('tb_stats1', JSON.stringify({ bestTicks: 21600, bestStreak: 31, totalKilled: 1500, runs: 64, bonusXp: 120 }));
+  ls.setItem('tb_best6', '87');
+  ls.setItem('tb_hist6', JSON.stringify([{ k: 87, m: 1, d: d(3), t: 21600, s: 31 }, { k: 40, m: 2, d: d(1), t: 9000, s: 12 }]));
+  ls.setItem('tb_stats2', JSON.stringify({ bestTicks: 21600, bestStreak: 31, totalKilled: 1500, runs: 64, bonusXp: 120 }));
   ls.setItem('tb_set1', JSON.stringify({ sound: true }));
   ls.setItem('tb_onb1', '1');
   ls.setItem('tb_onb_adv1', '1');
   ls.setItem('tb_visits1', '7');
   ls.setItem('tb_last1', String(d(3)));
   ls.setItem('tb_unlock1', '1');
-  ls.setItem('tb_miss1', JSON.stringify({ '2026-11-10': ['a', 'b'] }));
-  ls.setItem('tb_cele1', JSON.stringify(['tier:0', 'tier:1']));
+  ls.setItem('tb_miss2', JSON.stringify({ '2026-11-10': ['a', 'b'] }));
+  ls.setItem('tb_cele2', JSON.stringify(['tier:0', 'tier:1']));
   ls.setItem(
-    'tb_daily1',
+    'tb_daily2',
     JSON.stringify({
       days: { '2026-11-10': { used: 1, runs: [{ k: 30, m: 1, t: 5000, s: 9, d: d(2) }] } },
       played: ['2026-11-09', '2026-11-10'],
@@ -103,7 +103,7 @@ function oldStorage() {
     }),
   );
   ls.setItem('tb_rt1', 'AbCdEfGhIjKlMnOpQrStUvWxYz0123456789_-abcde');
-  ls.setItem('tb_me1', JSON.stringify({ id: 'u1', username: 'jugador_viejo', displayName: 'Sebastián Ñuñez' }));
+  ls.setItem('tb_me2', JSON.stringify({ id: 'u1', username: 'jugador_viejo', displayName: 'Sebastián Ñuñez' }));
   ls.setItem('otro_proyecto', 'NO');
   return ls;
 }
@@ -151,34 +151,34 @@ describe('sitio nuevo: importar #tbmigrar', () => {
 
   it('un enlace fabricado (sin referrer de la web vieja) no cambia nada, pero se limpia', () => {
     const ls = new Mem();
-    ls.setItem('tb_best5', '10');
+    ls.setItem('tb_best6', '10');
     const r = run(NEW_JS, fromOld('/touched-block/?reto=X'), ls, { referrer: '' });
     expect(r.href).toBe(`${NUEVA}/?reto=X`);
-    expect(ls.obj()).toEqual({ tb_best5: '10' });
+    expect(ls.obj()).toEqual({ tb_best6: '10' });
     const r2 = run(NEW_JS, fromOld('/touched-block/'), ls, { referrer: 'https://evil.example/' });
     expect(r2.href).toBe(`${NUEVA}/`);
-    expect(ls.obj()).toEqual({ tb_best5: '10' });
+    expect(ls.obj()).toEqual({ tb_best6: '10' });
   });
 
   it('borra un #tbmigrar inválido o enorme sin romper', () => {
     const ls = new Mem();
     expect(run(NEW_JS, `${NUEVA}//x?a=1#tbmigrar=%%%`, ls, { referrer: VIEJA }).href).toBe(`${NUEVA}//x?a=1`);
     expect(run(NEW_JS, `${NUEVA}/#tbmigrar=${'A'.repeat(500_000)}`, ls, { referrer: VIEJA }).href).toBe(`${NUEVA}/`);
-    expect(ls.getItem('tb_best5')).toBeNull();
+    expect(ls.getItem('tb_best6')).toBeNull();
   });
 
   it('mezcla con lo que ya hay aquí sin bajar nada ni contar doble', () => {
     const ls = new Mem();
     const dn = 1_795_000_000_000;
-    ls.setItem('tb_best5', '120');
-    ls.setItem('tb_hist5', JSON.stringify([{ k: 120, m: 0, d: dn, t: 30000, s: 50 }]));
-    ls.setItem('tb_stats1', JSON.stringify({ bestTicks: 30000, bestStreak: 50, totalKilled: 120, runs: 1, bonusXp: 0 }));
+    ls.setItem('tb_best6', '120');
+    ls.setItem('tb_hist6', JSON.stringify([{ k: 120, m: 0, d: dn, t: 30000, s: 50 }]));
+    ls.setItem('tb_stats2', JSON.stringify({ bestTicks: 30000, bestStreak: 50, totalKilled: 120, runs: 1, bonusXp: 0 }));
     ls.setItem('tb_set1', JSON.stringify({ sound: false }));
     ls.setItem('tb_visits1', '2');
-    ls.setItem('tb_cele1', JSON.stringify(['tier:0', 'tier:2']));
-    ls.setItem('tb_miss1', JSON.stringify({ '2026-11-10': ['b', 'c'] }));
+    ls.setItem('tb_cele2', JSON.stringify(['tier:0', 'tier:2']));
+    ls.setItem('tb_miss2', JSON.stringify({ '2026-11-10': ['b', 'c'] }));
     ls.setItem(
-      'tb_daily1',
+      'tb_daily2',
       JSON.stringify({
         days: { '2026-11-10': { used: 1, runs: [{ k: 50, m: 0, t: 8000, s: 20, d: dn }], claim: { runId: 'r', claimToken: 't' } } },
         played: ['2026-11-10', '2026-11-16'],
@@ -188,18 +188,18 @@ describe('sitio nuevo: importar #tbmigrar', () => {
       }),
     );
     ls.setItem('tb_rt1', 'SesionNuevaSesionNuevaSesionNueva');
-    ls.setItem('tb_me1', JSON.stringify({ id: 'u2', username: 'nuevo' }));
+    ls.setItem('tb_me2', JSON.stringify({ id: 'u2', username: 'nuevo' }));
     const url = fromOld('/touched-block/');
     for (let i = 0; i < 2; i++) run(NEW_JS, url, ls, { referrer: VIEJA + '/' }); // dos veces: mismo resultado
-    expect(ls.getItem('tb_best5')).toBe('120');
-    expect(JSON.parse(ls.getItem('tb_stats1')!)).toEqual({ bestTicks: 30000, bestStreak: 50, totalKilled: 1500, runs: 64, bonusXp: 120 });
-    expect(JSON.parse(ls.getItem('tb_hist5')!).map((g: { k: number }) => g.k)).toEqual([120, 87, 40]);
+    expect(ls.getItem('tb_best6')).toBe('120');
+    expect(JSON.parse(ls.getItem('tb_stats2')!)).toEqual({ bestTicks: 30000, bestStreak: 50, totalKilled: 1500, runs: 64, bonusXp: 120 });
+    expect(JSON.parse(ls.getItem('tb_hist6')!).map((g: { k: number }) => g.k)).toEqual([120, 87, 40]);
     expect(ls.getItem('tb_set1')).toBe(JSON.stringify({ sound: false }));
     expect(ls.getItem('tb_visits1')).toBe('7');
     expect(ls.getItem('tb_onb1')).toBe('1');
-    expect(JSON.parse(ls.getItem('tb_cele1')!)).toEqual(['tier:0', 'tier:2', 'tier:1']);
-    expect(JSON.parse(ls.getItem('tb_miss1')!)).toEqual({ '2026-11-10': ['b', 'c', 'a'] });
-    const daily = JSON.parse(ls.getItem('tb_daily1')!);
+    expect(JSON.parse(ls.getItem('tb_cele2')!)).toEqual(['tier:0', 'tier:2', 'tier:1']);
+    expect(JSON.parse(ls.getItem('tb_miss2')!)).toEqual({ '2026-11-10': ['b', 'c', 'a'] });
+    const daily = JSON.parse(ls.getItem('tb_daily2')!);
     expect(daily.played).toEqual(['2026-11-09', '2026-11-10', '2026-11-16']);
     expect(daily.rulesSeen).toBe(true);
     expect(daily.yesterdaySeen).toBe('2026-11-10');
@@ -209,7 +209,38 @@ describe('sitio nuevo: importar #tbmigrar', () => {
     expect(daily.days['2026-11-10'].claim).toEqual({ runId: 'r', claimToken: 't' });
     // la sesión del sitio nuevo no se cambia
     expect(ls.getItem('tb_rt1')).toBe('SesionNuevaSesionNuevaSesionNueva');
-    expect(JSON.parse(ls.getItem('tb_me1')!).username).toBe('nuevo');
+    expect(JSON.parse(ls.getItem('tb_me2')!).username).toBe('nuevo');
+  });
+});
+
+describe('claves de antes del reinicio de datos', () => {
+  const OLD_KEYS = ['tb_best5', 'tb_hist5', 'tb_stats1', 'tb_daily1', 'tb_miss1', 'tb_cele1', 'tb_me1'];
+  const NEW_KEYS = ['tb_best6', 'tb_hist6', 'tb_stats2', 'tb_daily2', 'tb_miss2', 'tb_cele2', 'tb_me2'];
+  const RT = 'AbCdEfGhIjKlMnOpQrStUvWxYz0123456789_-abcde';
+
+  /** Un jugador de la web vieja de verdad: los mismos datos, con los nombres de antes. */
+  const beforeReset = () => {
+    const now = oldStorage();
+    const ls = new Mem();
+    ls.setItem('tb_rt1', RT);
+    ls.setItem('tb_onb1', '1');
+    OLD_KEYS.forEach((k, i) => ls.setItem(k, now.getItem(NEW_KEYS[i])!));
+    return ls;
+  };
+
+  it('la página vieja ya no las manda', () => {
+    const b = fromOld('/touched-block/', beforeReset()).split('#tbmigrar=')[1];
+    const json = JSON.parse(atob(b.replace(/-/g, '+').replace(/_/g, '/')));
+    expect(Object.keys(json.d).sort()).toEqual(['tb_onb1', 'tb_rt1']);
+  });
+
+  it('un fragmento que las trae no escribe ni las viejas ni las nuevas', () => {
+    // como lo arma una copia en caché de la página vieja (con sus claves de entonces)
+    const bytes = new TextEncoder().encode(JSON.stringify({ v: 1, d: beforeReset().obj() }));
+    const b = btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const ls = new Mem();
+    run(NEW_JS, `${NUEVA}/#tbmigrar=${b}`, ls, { referrer: VIEJA + '/' });
+    expect(ls.obj()).toEqual({ tb_rt1: RT, tb_onb1: '1', tb_mig1: '1' });
   });
 });
 
@@ -225,7 +256,7 @@ describe('sitio nuevo: ida y vuelta', () => {
     const fin = run(NEW_JS, vuelta, nuevo, { referrer: VIEJA + '/' });
     expect(fin.href).toBe(`${NUEVA}/?reto=K7M2QXAB`);
     expect(fin.replaced).toBeNull();
-    expect(nuevo.getItem('tb_best5')).toBe('87');
+    expect(nuevo.getItem('tb_best6')).toBe('87');
     // la siguiente visita ya no sale
     expect(run(NEW_JS, `${NUEVA}/`, nuevo).replaced).toBeNull();
   });

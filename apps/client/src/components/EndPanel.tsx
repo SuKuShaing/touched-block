@@ -9,6 +9,7 @@ import { session } from '@/api/session';
 import type { RunResult } from '@/api/types';
 import { type RunMode, type RunOptions, submitRun } from '@/game/rankedRun';
 import type { GameResult } from '@/game/types';
+import { outdatedText } from '@/lib/challenge';
 import { countryName, flag } from '@/lib/countries';
 import { markDailyClaimed } from '@/lib/daily';
 import { SITE_URL, inviteText, resultText, stageText } from '@/lib/shareText';
@@ -194,7 +195,7 @@ export function EndPanel({
       {phase.k === 'local' && phase.reason !== 'off' ? (
         <Text style={styles.note}>
           {phase.reason === 'outdated'
-            ? 'Hay una versión nueva del juego: recarga la página para volver al ranking.'
+            ? outdatedText('volver al ranking')
             : 'Sin conexión con el servidor: esta partida no entra al ranking.'}
         </Text>
       ) : null}

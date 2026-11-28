@@ -69,12 +69,22 @@ function haptic(ms: number) {
   }
 }
 
+/**
+ * El contexto en el que suena el juego, despierto (también para `synthAudio.native.ts`); null con
+ * el sonido apagado.
+ */
+export function liveContext(): AudioContext | null {
+  if (!getSettings().sound) return null;
+  const c = context();
+  if (c.state === 'suspended') c.resume().catch(() => {});
+  return c;
+}
+
 export const fx: Fx = {
   beep(f: number, d: number, type: Wave = 'square', v = 0.05) {
     try {
-      if (!getSettings().sound) return;
-      const c = context();
-      if (c.state === 'suspended') c.resume().catch(() => {});
+      const c = liveContext();
+      if (!c) return;
       const o = c.createOscillator();
       const g = c.createGain();
       o.type = type;

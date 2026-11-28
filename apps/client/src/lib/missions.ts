@@ -8,11 +8,11 @@ import { addBonusXp } from './stats';
 /**
  * Misiones del día (plan de jugabilidad, fase 5.2). Con sesión vienen de `GET /missions` (el
  * servidor premia). Como invitado se calculan aquí con las mismas funciones del motor
- * (`missionsFor`, `missionProgress`), sobre el historial local de hoy (`tb_hist5`) y las
- * partidas del reto de `tb_daily1`; el premio (`addBonusXp`) se da una sola vez por misión y
- * fecha, y los ids premiados se guardan en `tb_miss1`.
+ * (`missionsFor`, `missionProgress`), sobre el historial local de hoy (`tb_hist6`) y las
+ * partidas del reto de `tb_daily2`; el premio (`addBonusXp`) se da una sola vez por misión y
+ * fecha, y los ids premiados se guardan en `tb_miss2`.
  */
-export const MISSIONS_KEY = 'tb_miss1';
+export const MISSIONS_KEY = 'tb_miss2';
 
 /** Fechas con misiones premiadas que se recuerdan. */
 const DAYS_KEPT = 7;
@@ -22,13 +22,14 @@ const DAYS_KEPT = 7;
  * - partidas y bloques: todas las del día (historial normal más las del reto);
  * - mejor racha y duración: solo las partidas sin modificadores (las del reto cuentan si ese
  *   día no tiene modificador);
- * - `playedDaily`: terminó una partida del reto de esa fecha.
+ * - `playedDaily`: terminó una partida del reto de esa fecha;
+ * - `followedToday`: siempre false (seguir a un jugador requiere cuenta).
  * Las partidas normales cuentan por la hora en que terminaron (`d`, en el día local).
  */
 export function dayAggFrom(date: DateKey, hist: readonly HistEntry[], daily: readonly DailyRunLocal[]): DayAgg {
   const [from, to] = localDayRange(date);
   const plainDaily = dailyModsFor(date).mods === null;
-  const agg: DayAgg = { runs: 0, killed: 0, bestStreak: 0, maxTicks: 0, playedDaily: daily.length > 0 };
+  const agg: DayAgg = { runs: 0, killed: 0, bestStreak: 0, maxTicks: 0, playedDaily: daily.length > 0, followedToday: false };
   for (const g of hist) {
     if (!(g.d >= from && g.d < to)) continue;
     agg.runs++;
@@ -55,7 +56,7 @@ export function missionViews(date: DateKey, agg: DayAgg, rewarded: ReadonlySet<s
   });
 }
 
-// ---- premios del invitado (tb_miss1: { fecha: [ids] }) ----
+// ---- premios del invitado (tb_miss2: { fecha: [ids] }) ----
 
 function readRewarded(): Record<DateKey, string[]> {
   try {
@@ -107,18 +108,24 @@ export function guestMissions(date: DateKey, hist: readonly HistEntry[], daily: 
 
 // ---- pantalla final ----
 
+/**
+ * ¿Se muestra como cumplida? También la ya premiada que dejó de cumplirse: la API devuelve
+ * `done: false, rewarded: true` en "Sigue a un jugador hoy" si se deja de seguir después de cobrar.
+ */
+export const isMissionDone = (m: Pick<MissionView, 'done' | 'rewarded'>) => m.done || m.rewarded;
+
 /** Misiones que se cumplieron entre dos lecturas (para la pantalla final). Sin lectura previa, ninguna. */
 export function newlyCompleted(before: readonly MissionView[] | null | undefined, after: readonly MissionView[] | null | undefined): MissionView[] {
   if (!before || !after) return [];
-  const was = new Map(before.map((m) => [m.id, m.done]));
-  return after.filter((m) => m.done && was.has(m.id) && !was.get(m.id));
+  const was = new Map(before.map((m) => [m.id, isMissionDone(m)]));
+  return after.filter((m) => isMissionDone(m) && was.has(m.id) && !was.get(m.id));
 }
 
 /** Cuántas están cumplidas. */
-export const doneCount = (views: readonly MissionView[]) => views.filter((m) => m.done).length;
+export const doneCount = (views: readonly MissionView[]) => views.filter(isMissionDone).length;
 
 /** "9/15", "112/140 s", "Lista". */
 export function progressLabel(m: MissionView): string {
-  if (m.done) return 'Lista';
+  if (isMissionDone(m)) return 'Lista';
   return m.kind === 'reach' ? `${m.value}/${m.target} s` : `${m.value}/${m.target}`;
 }

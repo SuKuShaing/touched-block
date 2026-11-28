@@ -1,8 +1,10 @@
-import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback } from 'react';
+import { type Query, type QueryClient, keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect } from 'react';
 import { tierRefForTicks } from '@tb/engine';
 import { features } from '@/config';
+import { lastClosedDaily } from '@/lib/daily';
 import { ApiError } from './client';
+import type { DailyOverview } from './daily';
 import { fetchBlocks, fetchChallenge, fetchFollowing, fetchHealth, fetchLeaderboard, fetchMe, fetchMyRuns, fetchProfile } from './endpoints';
 import { session, useSession } from './session';
 import type { Leaderboard, Period, PlayerStats, Scope, TierRef } from './types';
@@ -16,9 +18,48 @@ export function useViewer() {
   return { ...s, key: s.user?.id ?? (s.status === 'authed' ? 'authed' : 'guest'), loggedIn: s.status === 'authed' };
 }
 
+/** Por cada QueryClient, para qué (usuario, fecha, último día cerrado) ya se volvió a pedir /me. */
+const meSyncedFor = new WeakMap<QueryClient, Set<string>>();
+
+/** Pide /me de nuevo, descartando la petición en vuelo (pudo salir antes de que el servidor guardara). */
+async function refetchMe(qc: QueryClient) {
+  await qc.cancelQueries({ queryKey: ['me'] });
+  await qc.invalidateQueries({ queryKey: ['me'] });
+}
+
+/**
+ * `GET /daily` con sesión es lo que guarda en la cuenta el porcentaje de los días ya cerrados: si
+ * `GET /me` salió antes, no lo trae (y no se celebraría hasta recargar). Por eso, al responder
+ * /daily a una cuenta que alguna vez jugó el reto, se vuelve a pedir /me: una vez por fecha y por
+ * día que se cierra, no en cada respuesta. Devuelve cómo dejar de mirar.
+ */
+export function watchDailyForMe(qc: QueryClient): () => void {
+  const check = (q: Query) => {
+    const [root, date, viewer] = q.queryKey;
+    if (root !== 'daily' || typeof date !== 'string' || viewer === 'guest') return;
+    const data = q.state.data as DailyOverview | undefined;
+    if (!data || !((data.streak?.best ?? 0) > 0)) return;
+    const done = meSyncedFor.get(qc) ?? new Set<string>();
+    meSyncedFor.set(qc, done);
+    const mark = `${String(viewer)}|${date}|${lastClosedDaily(date, q.state.dataUpdatedAt)}`;
+    if (done.has(mark)) return;
+    done.add(mark);
+    void refetchMe(qc).catch(() => {});
+  };
+  const cache = qc.getQueryCache();
+  const off = cache.subscribe((e) => {
+    if (e.type === 'updated' && e.action.type === 'success') check(e.query);
+  });
+  cache.findAll({ queryKey: ['daily'] }).forEach(check); // la respuesta pudo llegar antes
+  return off;
+}
+
 /** GET /me en segundo plano (actualiza invitados, corazones…); el valor vive en la sesión. */
 export function useMeRefresh() {
   const v = useViewer();
+  const qc = useQueryClient();
+  const watch = features.accounts && v.loggedIn;
+  useEffect(() => (watch ? watchDailyForMe(qc) : undefined), [qc, watch]);
   return useQuery({ queryKey: ['me', v.key], queryFn: fetchMe, enabled: features.accounts && v.loggedIn, staleTime: 15_000 });
 }
 

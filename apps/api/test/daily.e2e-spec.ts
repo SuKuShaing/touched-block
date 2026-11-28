@@ -1,4 +1,4 @@
-import { DAILY_LIVES, addDays, dailyModsFor, dailyNumber } from '@tb/engine';
+import { DAILY_LIVES, TICKS_PER_SECOND, TIERS, addDays, dailyModsFor, dailyNumber } from '@tb/engine';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { isWithinDateWindow, utcDateKey } from '../src/common/dates';
 import { DailyService, dailyClosesAt } from '../src/daily/daily.service';
@@ -160,11 +160,13 @@ describe('reto diario', () => {
   });
 
   it('ranking del día: mundo, país y amigos; no entra al ranking general', async () => {
+    // la insignia sale de las partidas normales (aquí, puesta a mano): Ana con la primera, Beto sin ninguna
+    await t.prisma.userStats.update({ where: { userId: ana.id }, data: { bestTicks: TIERS[0].at * TICKS_PER_SECOND } });
     let res = await t.http().get('/daily/leaderboard').query({ date: today }).set(bearer(beto)).expect(200);
     expect(res.body).toMatchObject({ scope: 'world', date: today, number, total: 2, me: { rank: 2, killed: 4 } });
     expect(res.body.entries.map((e: { username: string }) => e.username)).toEqual(['ana', 'beto']);
     expect(res.body.entries[0]).toMatchObject({ rank: 1, userId: ana.id, country: 'CL', killed: 5, isMe: false, tier: { tier: 'madera', step: 1 } });
-    expect(res.body.me.tier).toEqual({ tier: 'madera', step: 1 });
+    expect(res.body.me.tier).toBeNull();
 
     res = await t.http().get('/daily/leaderboard').query({ date: today, scope: 'country' }).set(bearer(beto)).expect(200);
     expect(res.body).toMatchObject({ country: 'AR', total: 1, me: { rank: 1 } });

@@ -1,4 +1,4 @@
-import type { TapInput } from '@tb/engine';
+import { RULES_VERSION, type TapInput } from '@tb/engine';
 import { browserCountry } from '@/lib/countries';
 import { auth } from '@/platform/auth';
 import { runPlatform } from '@/platform/runPlatform';
@@ -126,7 +126,11 @@ export const fetchBlocks = () => api<{ users: BlockedUser[] }>('GET', '/me/block
 
 // ---- partidas ----
 
-/** Cuerpo de POST /runs. Sin `mode` (o con `normal`) se manda solo el tamaño, como antes de la fase 3. */
+/**
+ * Cuerpo de POST /runs. Sin `mode` (o con `normal`) se manda solo el tamaño, como antes de la
+ * fase 3. En los retos (duel, daily) va además `rulesVersion`: sin la versión actual la API
+ * responde `409 client_outdated`, para no gastar un intento en una partida que no se podría validar.
+ */
 function startRunBody(body: StartRunBody) {
   return !body.mode || body.mode === 'normal'
     ? { fieldW: body.fieldW, fieldH: body.fieldH }
@@ -134,6 +138,7 @@ function startRunBody(body: StartRunBody) {
         fieldW: body.fieldW,
         fieldH: body.fieldH,
         mode: body.mode,
+        rulesVersion: RULES_VERSION,
         ...(body.mode === 'duel' && body.challenge ? { challenge: body.challenge } : {}),
         ...(body.mode === 'daily' && body.date ? { date: body.date } : {}),
       };

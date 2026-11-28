@@ -20,11 +20,11 @@ import { storage } from '@/platform/storage';
 /**
  * Reto diario en el cliente (plan de jugabilidad, fase 4): la fecha local del jugador (D7: el
  * reto cambia a la medianoche de cada uno), la cuenta regresiva, y lo que este dispositivo
- * recuerda en `tb_daily1`: intentos empezados (el invitado tiene 1, D8), partidas terminadas,
+ * recuerda en `tb_daily2`: intentos empezados (el invitado tiene 1, D8), partidas terminadas,
  * la partida de invitado por reclamar, si ya vio la hoja de reglas y el aviso de ayer, y las
  * fechas jugadas (racha del invitado). No depende de la versión de reglas.
  */
-export const DAILY_KEY = 'tb_daily1';
+export const DAILY_KEY = 'tb_daily2';
 
 /** Desde qué visita se presentan el reto diario y las misiones (la 1.ª es solo para jugar). */
 export const DAILY_FROM_VISIT = 2;
@@ -48,6 +48,19 @@ const PLAYED_MAX = 400;
 // ---------------------------------------------------------------- fechas
 
 const p2 = (n: number) => String(n).padStart(2, '0');
+
+/**
+ * Desde las 00:00 UTC de una fecha hasta que su ranking queda fijo (`dailyClosesAt` de la API: la
+ * medianoche en UTC−12 del día siguiente, más 3 h para terminar y reclamar partidas).
+ */
+const DAILY_CLOSES_AFTER_MS = 39 * 60 * 60 * 1000;
+
+/** El último día anterior a `date` cuyo ranking ya está cerrado en el instante `now`. */
+export function lastClosedDaily(date: DateKey, now: number): DateKey {
+  const closed = new Date(now - DAILY_CLOSES_AFTER_MS).toISOString().slice(0, 10);
+  const previous = addDays(date, -1);
+  return closed < previous ? closed : previous;
+}
 
 /** Fecha local del dispositivo como 'AAAA-MM-DD'. */
 export function localDateKey(now: Date = new Date()): DateKey {
@@ -199,7 +212,7 @@ export function weekStrip(today: DateKey, played: readonly string[]): WeekDay[] 
   });
 }
 
-// ---------------------------------------------------------------- tb_daily1
+// ---------------------------------------------------------------- tb_daily2
 
 /** Una partida del reto terminada en este dispositivo. */
 export interface DailyRunLocal {
@@ -229,7 +242,10 @@ export interface DailyLocal {
   rulesSeen: boolean;
   /** Fecha del último "Ayer quedaste…" que se mostró. */
   yesterdaySeen: DateKey | null;
-  /** Invitado: mejor "mejor que el N %" (0 en días con menos de 10 jugadores), o null. */
+  /**
+   * Invitado, para los logros: 0 si participó en algún reto, null si nunca. Un invitado no conoce
+   * el porcentaje de un día cerrado (no está en el ranking), así que no suma ninguno.
+   */
   bestPct: number | null;
 }
 
@@ -258,7 +274,7 @@ function parseDay(v: unknown): DailyDayLocal {
   return day;
 }
 
-/** Lee `tb_daily1` tolerando datos viejos o rotos. */
+/** Lee `tb_daily2` tolerando datos viejos o rotos. */
 export function parseDailyLocal(raw: string | null): DailyLocal {
   if (!raw) return { ...EMPTY_DAILY, days: {}, played: [] };
   try {
@@ -357,12 +373,14 @@ export function recordDailyFinish(
   );
 }
 
-/** Invitado: guarda dónde habría quedado (y su mejor porcentaje para el logro). */
+/**
+ * Invitado: guarda dónde habría quedado (para la tarjeta y la pantalla final) y que participó.
+ * Ese porcentaje es provisional (el ranking del día sigue abierto: quien juega temprano saldría con
+ * 100 %), así que para el logro "Mejor resultado en un reto diario" solo cuenta la participación.
+ */
 export function recordDailyGuestResult(date: DateKey, r: { rank: number; total: number; betterThanPct: number }) {
   if (!isDateKey(date)) return;
-  const pct = r.total >= PCT_MIN_PLAYERS ? nat(r.betterThanPct) : 0;
-  const bestPct = Math.max(loadDailyLocal().bestPct ?? 0, pct);
-  updateDay(date, (day) => ({ ...day, would: { rank: nat(r.rank), total: nat(r.total), pct: nat(r.betterThanPct) } }), { bestPct });
+  updateDay(date, (day) => ({ ...day, would: { rank: nat(r.rank), total: nat(r.total), pct: nat(r.betterThanPct) } }), { bestPct: 0 });
 }
 
 /** La partida de invitado de esa fecha ya se reclamó (o ya no se puede): se olvida. */
@@ -457,7 +475,7 @@ export interface DailyStatus extends DailyInfo {
 
 /**
  * Estado del reto de hoy para la tarjeta y la pantalla final. Con sesión manda el servidor
- * (intentos, mejor, racha); como invitado, `tb_daily1` (1 intento, D8). Los intentos que se
+ * (intentos, mejor, racha); como invitado, `tb_daily2` (1 intento, D8). Los intentos que se
  * empezaron en este dispositivo con una cuenta también cuentan para el invitado: cerrar sesión
  * no da intentos nuevos.
  */

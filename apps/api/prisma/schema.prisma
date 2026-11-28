@@ -302,6 +302,14 @@ model MissionReward {
   @@id([userId, date, missionId])
 }
 
+/// Marca de un reinicio de datos ya aplicado (scripts/reset-progress.mjs).
+model DataReset {
+  id        String   @id @db.VarChar(32)
+  appliedAt DateTime @default(now())
+  /// Lo que había antes de borrar (conteos).
+  details   Json?
+}
+
 /// Motivo de un reporte de jugador (moderación, guía 1.2 de Apple).
 enum ReportReason {
   offensive_name
